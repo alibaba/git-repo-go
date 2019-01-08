@@ -1,0 +1,6 @@
+/trash directory*
+/test-results
+/.prove
+repo-list.txt
+repo-write-list.txt
+*.inc
