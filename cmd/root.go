@@ -25,7 +25,15 @@ import (
 	"github.com/spf13/viper"
 )
 
-var cfgFile string
+var (
+	cfgFile string
+)
+
+// Define macros for git-repo
+const (
+	DefaultConfigFile = ".git-repo"
+	EnvPrefix         = "GIT_REPO"
+)
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -55,10 +63,12 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 
-	// Here you will define your flags and configuration settings.
-	// Cobra supports persistent flags, which, if defined here,
-	// will be global for your application.
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.git-repo.yaml)")
+	rootCmd.PersistentFlags().CountP("verbose", "v", "verbose mode")
+	rootCmd.PersistentFlags().BoolP("quiet", "q", false, "quiet mode")
+
+	viper.BindPFlag("verbose", rootCmd.PersistentFlags().Lookup("verbose"))
+	viper.BindPFlag("quiet", rootCmd.PersistentFlags().Lookup("quiet"))
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -76,13 +86,18 @@ func initConfig() {
 
 		// Search config in home directory with name ".git-repo" (without extension).
 		viper.AddConfigPath(home)
-		viper.SetConfigName(".git-repo")
+		viper.SetConfigName(DefaultConfigFile)
 	}
 
-	viper.AutomaticEnv() // read in environment variables that match
+	viper.SetEnvPrefix(EnvPrefix)
+	viper.AutomaticEnv()
+	viper.SetConfigType("yaml")
 
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err != nil {
-		fmt.Fprintf(os.Stderr, "ERROR: viper failed to read file %s: %s\n", viper.ConfigFileUsed(), err)
+		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
+			fmt.Fprintf(os.Stderr, "ERROR: viper failed to read file %s: %s\n", viper.ConfigFileUsed(), err)
+			os.Exit(1)
+		}
 	}
 }
