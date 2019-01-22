@@ -15,7 +15,18 @@
 package config
 
 import (
+	"fmt"
+	"os"
+	"path"
+
+	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/viper"
+)
+
+// Define macros for config
+const (
+	DefaultConfigPath = ".git-repo"
+	DefaultLogRotate  = 20 * 1024 * 1024
 )
 
 // GetVerbose gets --verbose option
@@ -26,4 +37,30 @@ func GetVerbose() int {
 // GetQuiet gets --quiet option
 func GetQuiet() bool {
 	return viper.GetBool("quiet")
+}
+
+// GetLogFile gets --logfile option
+func GetLogFile() string {
+	logfile := viper.GetString("logfile")
+	if logfile != "" && !path.IsAbs(logfile) {
+		// Find home directory.
+		home, err := homedir.Dir()
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		logfile = path.Join(home, DefaultConfigPath, logfile)
+	}
+	return logfile
+}
+
+// GetLogLevel gets --loglevel option
+func GetLogLevel() string {
+	return viper.GetString("loglevel")
+}
+
+// GetLogRotate gets logrotate size from config
+func GetLogRotate() int64 {
+	viper.SetDefault("logrotate", DefaultLogRotate)
+	return viper.GetInt64("logrotate")
 }

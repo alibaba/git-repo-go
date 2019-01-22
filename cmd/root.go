@@ -18,8 +18,10 @@ import (
 	"fmt"
 	"os"
 
+	"code.alibaba-inc.com/force/git-repo/config"
 	"code.alibaba-inc.com/force/git-repo/version"
 
+	"github.com/jiangxin/multi-log"
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -100,4 +102,12 @@ func initConfig() {
 			os.Exit(1)
 		}
 	}
+
+	log.Init(log.Options{
+		Verbose:       config.GetVerbose(),
+		Quiet:         config.GetQuiet(),
+		LogFile:       config.GetLogFile(),
+		LogLevel:      config.GetLogLevel(),
+		LogRotateSize: config.GetLogRotate(),
+	})
 }
