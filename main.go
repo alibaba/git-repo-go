@@ -16,8 +16,15 @@ package main
 
 import (
 	"code.alibaba-inc.com/force/git-repo/cmd"
+	"github.com/spf13/cobra"
 )
 
 func main() {
 	cmd.Execute()
+}
+
+func init() {
+	cobra.MousetrapHelpText = `git-repo: git extension for centrialized git workflow
+
+Please copy this program to where you git.exe located or execute PATH.`
 }
