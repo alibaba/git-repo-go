@@ -1,0 +1,15 @@
+* text=auto
+
+#sources
+*.go text
+*.c text
+*.h text
+*.sh text
+*.perl text
+Makefile text
+go.mod text
+go.sum text
+
+# Docs
+*.md text
+LICENSE text
