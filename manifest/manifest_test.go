@@ -114,7 +114,7 @@ func TestLoad(t *testing.T) {
 	err = ioutil.WriteFile(manifestFile, []byte(`
 <manifest>
   <remote name="aone" alias="origin" fetch="https://code.aone.alibaba-inc.com" review="https://code.aone.alibaba-inc.com" revision="default"></remote>
-  <default remote="origin" revision="master"></default>
+  <default remote="aone" revision="master"></default>
   <project name="platform/drivers" path="platform-drivers">
     <project name="platform/nic" path="nic"></project>
     <copyfile src="Makefile" dest="../Makefile"></copyfile>
@@ -128,7 +128,7 @@ func TestLoad(t *testing.T) {
 	assert.NotNil(m)
 	assert.Equal(
 		&Default{
-			Remote:   "origin",
+			Remote:   "aone",
 			Revision: "master",
 		}, m.Default)
 	assert.Equal(
@@ -174,7 +174,7 @@ func TestInclude(t *testing.T) {
 	err = ioutil.WriteFile(manifestFile, []byte(`
 <manifest>
   <remote name="aone" alias="origin" fetch="https://code.aone.alibaba-inc.com" review="https://code.aone.alibaba-inc.com" revision="default"></remote>
-  <default remote="origin" revision="master"></default>
+  <default remote="aone" revision="master"></default>
   <project name="platform/drivers" path="platform-drivers">
     <project name="platform/nic" path="nic"></project>
     <copyfile src="Makefile" dest="../Makefile"></copyfile>
@@ -202,6 +202,11 @@ func TestInclude(t *testing.T) {
 		"platform/manifest",
 		"platform/foo"},
 		projects)
+
+	// all project has valid remote
+	for _, p := range m.AllProjects() {
+		assert.NotNil(p.remote)
+	}
 }
 
 func TestLoadWithLocalManifest(t *testing.T) {
@@ -228,7 +233,7 @@ func TestLoadWithLocalManifest(t *testing.T) {
 	err = ioutil.WriteFile(manifestFile, []byte(`
 <manifest>
   <remote name="aone" alias="origin" fetch="https://code.aone.alibaba-inc.com" review="https://code.aone.alibaba-inc.com" revision="default"></remote>
-  <default remote="origin" revision="master"></default>
+  <default remote="aone" revision="master"></default>
   <project name="platform/drivers" path="platform-drivers">
     <project name="platform/nic" path="nic"></project>
     <copyfile src="Makefile" dest="../Makefile"></copyfile>
@@ -295,7 +300,7 @@ func TestCircularInclude(t *testing.T) {
 	err = ioutil.WriteFile(manifestFile, []byte(`
 <manifest>
   <remote name="aone" alias="origin" fetch="https://code.aone.alibaba-inc.com" review="https://code.aone.alibaba-inc.com" revision="default"></remote>
-  <default remote="origin" revision="master"></default>
+  <default remote="aone" revision="master"></default>
   <project name="platform/drivers" path="platform-drivers">
     <project name="platform/nic" path="nic"></project>
     <copyfile src="Makefile" dest="../Makefile"></copyfile>
