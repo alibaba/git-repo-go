@@ -87,3 +87,7 @@ func CompareVersion(_left, _right string) int {
 
 	return 1
 }
+
+func ValidateGitVersion() bool {
+	return CompareVersion(GetGitVersion(), MinGitVersion) >= 0
+}

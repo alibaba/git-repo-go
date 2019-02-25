@@ -64,6 +64,8 @@ func Execute() {
 
 func init() {
 	cobra.OnInitialize(initConfig)
+	cobra.OnInitialize(initLog)
+	cobra.OnInitialize(checkVersion)
 
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.git-repo.yaml)")
 	rootCmd.PersistentFlags().CountP("verbose", "v", "verbose mode")
@@ -71,6 +73,13 @@ func init() {
 
 	viper.BindPFlag("verbose", rootCmd.PersistentFlags().Lookup("verbose"))
 	viper.BindPFlag("quiet", rootCmd.PersistentFlags().Lookup("quiet"))
+}
+
+func checkVersion() {
+	if !version.ValidateGitVersion() {
+		log.Fatalf("Please install or upgrade git to version %s or above",
+			version.MinGitVersion)
+	}
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -102,7 +111,9 @@ func initConfig() {
 			os.Exit(1)
 		}
 	}
+}
 
+func initLog() {
 	log.Init(log.Options{
 		Verbose:       config.GetVerbose(),
 		Quiet:         config.GetQuiet(),
