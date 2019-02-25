@@ -16,9 +16,6 @@ import (
 
 // Macros for manifest
 const (
-	ManifestXMLFile   = "manifest.xml"
-	LocalManifestFile = "local_manifest.xml"
-	LocalManifestDir  = "local_manifests"
 	maxRecursiveDepth = 10
 )
 
@@ -312,7 +309,10 @@ func parseXML(file string, depth int) ([]*Manifest, error) {
 	ms = append(ms, m)
 
 	for _, i := range m.Includes {
-		f := path.AbsJoin(filepath.Dir(file), i.Name)
+		f, err := path.AbsJoin(filepath.Dir(file), i.Name)
+		if err != nil {
+			return nil, err
+		}
 
 		if depth > maxRecursiveDepth {
 			return nil, fmt.Errorf("exceeded maximum include depth (%d) while including\n"+
@@ -355,7 +355,7 @@ func Load(repoDir string) (*Manifest, error) {
 		manifests = []*Manifest{}
 	)
 
-	file = filepath.Join(repoDir, ManifestXMLFile)
+	file = filepath.Join(repoDir, config.ManifestXML)
 	if _, err = os.Stat(file); err != nil {
 		defaultXML := ""
 		manifestsDir := filepath.Join(repoDir, "manifests")
@@ -364,10 +364,10 @@ func Load(repoDir string) (*Manifest, error) {
 			return nil, fmt.Errorf("fail to read config from %s: %s", manifestsDir, err)
 		}
 		if cfg != nil {
-			defaultXML = cfg.Get(config.RepoDefaultManifestKey)
+			defaultXML = cfg.Get(config.CfgManifestName)
 		}
 		if defaultXML == "" {
-			defaultXML = config.RepoDefaultManifestXML
+			defaultXML = config.DefaultXML
 		}
 		file = filepath.Join(manifestsDir, defaultXML)
 	}
@@ -383,16 +383,16 @@ func Load(repoDir string) (*Manifest, error) {
 	}
 	manifests = append(manifests, ms...)
 
-	// load LocalManifestFile (obsolete)
+	// load local_manifest.xml (obsolete)
 	files := []string{}
-	file = filepath.Join(repoDir, LocalManifestFile)
-	dir = filepath.Join(repoDir, LocalManifestDir)
+	file = filepath.Join(repoDir, config.LocalManifestXML)
+	dir = filepath.Join(repoDir, config.LocalManifests)
 	if _, err = os.Stat(file); err == nil {
 		log.Warnf("%s is deprecated; put local manifests in `%s` instead", file, dir)
 		files = append(files, file)
 	}
 
-	// load xml files in LocalManifestDir
+	// load xml files in local_manifests
 	if _, err = os.Stat(dir); err == nil {
 		filepath.Walk(dir, func(name string, info os.FileInfo, err error) error {
 			if err != nil {

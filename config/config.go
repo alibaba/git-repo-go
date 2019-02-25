@@ -27,11 +27,28 @@ import (
 const (
 	DefaultConfigPath = ".git-repo"
 	DefaultLogRotate  = 20 * 1024 * 1024
+	DefaultLogLevel   = "warn"
 
-	RepoDefaultManifestKey = "repo.manifestDefault"
-	RepoDefaultManifestXML = "default.xml"
+	CfgRepoArchive    = "repo.archive"
+	CfgRepoDepth      = "repo.depth"
+	CfgRepoDissociate = "repo.dissociate"
+	CfgRepoMirror     = "repo.mirror"
+	CfgRepoReference  = "repo.reference"
+	CfgRepoSubmodules = "repo.submodules"
+	CfgManifestGroups = "manifest.groups"
+	CfgManifestName   = "manifest.name"
 
-	RepoDir = ".repo"
+	DotRepo          = ".repo"
+	ManifestsDotGit  = "manifests.git"
+	Manifests        = "manifests"
+	DefaultXML       = "default.xml"
+	ManifestXML      = "manifest.xml"
+	LocalManifestXML = "local_manifest.xml"
+	LocalManifests   = "local_manifests"
+	ProjectObjects   = "project-objects"
+	Projects         = "projects"
+
+	ViperEnvPrefix = "GIT_REPO"
 )
 
 // GetVerbose gets --verbose option
@@ -71,6 +88,13 @@ func GetLogLevel() string {
 
 // GetLogRotateSize gets logrotate size from config
 func GetLogRotateSize() int64 {
-	viper.SetDefault("logrotate", DefaultLogRotate)
 	return viper.GetInt64("logrotate")
+}
+
+func init() {
+	viper.SetDefault("logrotate", DefaultLogRotate)
+	viper.SetDefault("loglevel", DefaultLogLevel)
+
+	viper.SetEnvPrefix(ViperEnvPrefix)
+	viper.AutomaticEnv()
 }
