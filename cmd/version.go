@@ -26,8 +26,13 @@ var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "Display the version of git-repo",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Printf("git-repo version %s\n", version.GetVersion())
+		versionRun()
 	},
+}
+
+func versionRun() {
+	fmt.Printf("git-repo version %s\n", version.GetVersion())
+	fmt.Printf("git version %s\n", version.GetGitVersion())
 }
 
 func init() {
