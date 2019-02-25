@@ -1,29 +1,30 @@
 package cap
 
 import (
-	"fmt"
+	"os"
 	"runtime"
-)
 
-// Capabilities is used to check OS capabilities
-type Capabilities struct {
-}
-
-// Cap is instance of Capabilities
-var (
-	Cap *Capabilities
+	"github.com/mattn/go-isatty"
 )
 
 // Symlink checks whether symlink is available for current system
-func (v *Capabilities) Symlink() bool {
+func Symlink() bool {
 	if runtime.GOOS == "windows" {
 		return false
 	}
 
-	fmt.Printf("os: %s\n", runtime.GOOS)
 	return true
 }
 
-func init() {
-	Cap = &Capabilities{}
+// Isatty indicates current terminal is a interactive terminal
+func Isatty() bool {
+	if isatty.IsTerminal(os.Stdin.Fd()) &&
+		isatty.IsTerminal(os.Stdout.Fd()) {
+		return true
+	} else if isatty.IsCygwinTerminal(os.Stdin.Fd()) &&
+		isatty.IsCygwinTerminal(os.Stdout.Fd()) {
+		return true
+	}
+
+	return false
 }

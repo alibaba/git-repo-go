@@ -80,6 +80,9 @@ type Project struct {
 	Upstream   string `xml:"upstream,attr,omitempty"`
 	CloneDepth string `xml:"clone-depth,attr,omitempty"`
 	ForcePath  string `xml:"force-path,attr,omitempty"`
+
+	isMetaProject bool    `xml:"-"`
+	remote        *Remote `xml:"-"`
 }
 
 // Annotation is for annotation XML element
@@ -128,10 +131,15 @@ type Include struct {
 // AllProjects returns proejcts of a project recursively
 func (v *Project) AllProjects(pDir string) []Project {
 	var project Project
+
 	projects := []Project{}
 	if pDir != "" {
 		v.Path = filepath.Join(pDir, v.Path)
 	}
+
+	v.Name = filepath.Clean(filepath.ToSlash(v.Name))
+	v.Path = filepath.Clean(filepath.ToSlash(v.Path))
+
 	// remove field: Projects
 	if len(v.Projects) > 0 {
 		project = Project{
@@ -162,11 +170,46 @@ func (v *Project) AllProjects(pDir string) []Project {
 	return projects
 }
 
+// IsMetaProject indicates whether current project is a ManifestProject
+func (v *Project) IsMetaProject() bool {
+	return v.isMetaProject
+}
+
+// GetRemote returns Remote settings
+func (v *Project) GetRemote() *Remote {
+	return v.remote
+}
+
+// SetRemote sets Remote settings
+func (v *Project) SetRemote(r *Remote) {
+	v.remote = r
+}
+
 // AllProjects returns all projects of manifest
 func (v *Manifest) AllProjects() []Project {
 	projects := []Project{}
 	for _, p := range v.Projects {
 		projects = append(projects, p.AllProjects("")...)
+	}
+
+	remotes := make(map[string]*Remote)
+	for i := range v.Remotes {
+		remotes[v.Remotes[i].Name] = &v.Remotes[i]
+	}
+
+	// Set remote field of project
+	for i := range projects {
+		name := projects[i].Remote
+		if name == "" {
+			if v.Default != nil {
+				name = v.Default.Remote
+			}
+		}
+		if name != "" {
+			projects[i].remote = remotes[name]
+		}
+		// For include xml file, no remotes and no default,
+		// so project's remote maybe empty,
 	}
 	return projects
 }
@@ -227,6 +270,8 @@ func (v *Manifest) Merge(m *Manifest) error {
 		realPath[p.Path] = true
 	}
 	for _, p := range m.AllProjects() {
+		p.Name = cleanPath(p.Name)
+		p.Path = cleanPath(p.Path)
 		if realPath[p.Path] {
 			return fmt.Errorf("duplicate path for project '%s' in '%s'",
 				p.Path,
@@ -238,6 +283,7 @@ func (v *Manifest) Merge(m *Manifest) error {
 
 	rmPath := make(map[string]bool)
 	for _, r := range m.RemoveProjects {
+		r.Name = cleanPath(r.Name)
 		rmPath[r.Name] = true
 	}
 	ps := []Project{}
@@ -252,6 +298,7 @@ func (v *Manifest) Merge(m *Manifest) error {
 
 	extPath := make(map[string]ExtendProject)
 	for _, p := range m.ExtendProjects {
+		p.Name = cleanPath(p.Name)
 		extPath[p.Name] = p
 	}
 	for i, p := range v.Projects {
@@ -277,6 +324,10 @@ func (v *Manifest) Merge(m *Manifest) error {
 	return nil
 }
 
+func cleanPath(name string) string {
+	return filepath.Clean(strings.ReplaceAll(strings.TrimSuffix(name, ".git"), "\\", "/"))
+}
+
 func unmarshal(file string) (*Manifest, error) {
 	manifest := Manifest{}
 	if _, err := os.Stat(file); err != nil {
@@ -292,6 +343,7 @@ func unmarshal(file string) (*Manifest, error) {
 	if err != nil {
 		return nil, fmt.Errorf("fail to parse manifest file '%s': %s", file, err)
 	}
+
 	return &manifest, nil
 }
 
@@ -311,7 +363,7 @@ func parseXML(file string, depth int) ([]*Manifest, error) {
 	for _, i := range m.Includes {
 		f, err := path.AbsJoin(filepath.Dir(file), i.Name)
 		if err != nil {
-			return nil, err
+			return ms, err
 		}
 
 		if depth > maxRecursiveDepth {
@@ -358,9 +410,9 @@ func Load(repoDir string) (*Manifest, error) {
 	file = filepath.Join(repoDir, config.ManifestXML)
 	if _, err = os.Stat(file); err != nil {
 		defaultXML := ""
-		manifestsDir := filepath.Join(repoDir, "manifests")
-		cfg, err := goconfig.LoadDir(manifestsDir, false)
-		if err != nil {
+		manifestsDir := filepath.Join(repoDir, config.Manifests)
+		cfg, err := goconfig.Load(manifestsDir)
+		if err != nil && err != goconfig.ErrNotExist {
 			return nil, fmt.Errorf("fail to read config from %s: %s", manifestsDir, err)
 		}
 		if cfg != nil {
@@ -420,4 +472,14 @@ func Load(repoDir string) (*Manifest, error) {
 	}
 
 	return mergeManifests(manifests)
+}
+
+// ManifestsProject is a instance of Project
+var ManifestsProject = &Project{
+	Name:          "manifests",
+	Path:          "manifests",
+	Remote:        "origin",
+	Revision:      "refs/heads/master",
+	DestBranch:    "master",
+	isMetaProject: true,
 }
