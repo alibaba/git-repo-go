@@ -38,7 +38,6 @@ var (
 // Define macros for git-repo
 const (
 	DefaultConfigFile = ".git-repo"
-	EnvPrefix         = "GIT_REPO"
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -127,8 +126,6 @@ func initConfig() {
 		viper.SetConfigName(DefaultConfigFile)
 	}
 
-	viper.SetEnvPrefix(EnvPrefix)
-	viper.AutomaticEnv()
 	viper.SetConfigType("yaml")
 
 	// If a config file is found, read it in.
