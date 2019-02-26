@@ -88,6 +88,7 @@ func CompareVersion(_left, _right string) int {
 	return 1
 }
 
+// ValidateGitVersion is used to check installed git version
 func ValidateGitVersion() bool {
 	return CompareVersion(GetGitVersion(), MinGitVersion) >= 0
 }

@@ -15,12 +15,22 @@
 package main
 
 import (
+	"os"
+
 	"code.alibaba-inc.com/force/git-repo/cmd"
 	"github.com/spf13/cobra"
 )
 
 func main() {
-	cmd.Execute()
+	resp := cmd.Execute()
+
+	if resp.Err != nil {
+		if resp.IsUserError() {
+			resp.Cmd.Println("")
+			resp.Cmd.Println(resp.Cmd.UsageString())
+		}
+		os.Exit(-1)
+	}
 }
 
 func init() {

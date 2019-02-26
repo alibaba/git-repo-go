@@ -48,18 +48,34 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Version: version.GetVersion(),
-	// Uncomment the following line if your bare application
-	// has an action associated with it:
-	//	Run: func(cmd *cobra.Command, args []string) { },
+	// Do not want to show usage on every error
+	SilenceUsage: true,
+}
+
+// The Response value from Execute.
+type Response struct {
+	// Err is set when the command failed to execute.
+	Err error
+
+	// The command that was executed.
+	Cmd *cobra.Command
+}
+
+// IsUserError returns true is the Response error is a user error rather than a
+// system error.
+func (r Response) IsUserError() bool {
+	return r.Err != nil && isUserError(r.Err)
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
-func Execute() {
-	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
+func Execute() Response {
+	var resp Response
+
+	c, err := rootCmd.ExecuteC()
+	resp.Err = err
+	resp.Cmd = c
+	return resp
 }
 
 func init() {
