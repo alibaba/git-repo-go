@@ -17,6 +17,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"code.alibaba-inc.com/force/git-repo/config"
 	"code.alibaba-inc.com/force/git-repo/version"
@@ -28,13 +29,16 @@ import (
 )
 
 var (
-	cfgFile string
+	cfgFile    string
+	theRepoDir string
+	theWorkDir string
 )
 
 // Define macros for git-repo
 const (
 	DefaultConfigFile = ".git-repo"
 	EnvPrefix         = "GIT_REPO"
+	RepoDir           = ".repo"
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -49,7 +53,46 @@ This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Version: version.GetVersion(),
 	// Do not want to show usage on every error
-	SilenceUsage: true,
+	SilenceUsage:     true,
+	PersistentPreRun: findRepo,
+}
+
+// find .repo dir
+func findRepo(cmd *cobra.Command, args []string) {
+	if config.IsSingleMode() {
+		findRepoSingle(cmd, args)
+		return
+	}
+
+	cwd, err := os.Getwd()
+	if err != nil {
+		log.Fatal("cannot get current dir")
+	}
+	p, err := filepath.EvalSymlinks(cwd)
+	if err != nil {
+		log.Warnf("fail to call EvalSymlinks on %s", cwd)
+	}
+
+	for {
+		repoDir := filepath.Join(p, RepoDir)
+		if fi, err := os.Stat(repoDir); err == nil && fi.IsDir() {
+			theRepoDir = repoDir
+			theWorkDir = p
+			break
+		}
+
+		oldP := p
+		p = filepath.Dir(p)
+		if oldP == p {
+			// we reach the root dir
+			break
+		}
+	}
+}
+
+// find current repo rootdir
+func findRepoSingle(cmd *cobra.Command, args []string) {
+	// TODO: find git dir and worktree
 }
 
 // The Response value from Execute.
