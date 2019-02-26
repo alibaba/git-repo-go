@@ -39,6 +39,11 @@ func GetQuiet() bool {
 	return viper.GetBool("quiet")
 }
 
+// IsSingleMode checks --single option
+func IsSingleMode() bool {
+	return viper.GetBool("single")
+}
+
 // GetLogFile gets --logfile option
 func GetLogFile() string {
 	logfile := viper.GetString("logfile")

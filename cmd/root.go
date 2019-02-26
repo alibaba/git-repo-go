@@ -86,9 +86,11 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.git-repo.yaml)")
 	rootCmd.PersistentFlags().CountP("verbose", "v", "verbose mode")
 	rootCmd.PersistentFlags().BoolP("quiet", "q", false, "quiet mode")
+	rootCmd.PersistentFlags().Bool("single", false, "single mode, no manifest")
 
 	viper.BindPFlag("verbose", rootCmd.PersistentFlags().Lookup("verbose"))
 	viper.BindPFlag("quiet", rootCmd.PersistentFlags().Lookup("quiet"))
+	viper.BindPFlag("single", rootCmd.PersistentFlags().Lookup("single"))
 }
 
 func checkVersion() {
