@@ -2,6 +2,15 @@ package manifest
 
 import (
 	"encoding/xml"
+	"fmt"
+	"io/ioutil"
+	"os"
+	"path/filepath"
+)
+
+// Macros for manifest
+const (
+	ManifestXMLFile = "manifest.xml"
 )
 
 // Manifest is for toplevel XML structure
@@ -16,6 +25,7 @@ type Manifest struct {
 	ExtendProjects []ExtendProject `xml:"extend-project,omitempty"`
 	RepoHooks      *RepoHooks      `xml:"repo-hooks,omitempty"`
 	Includes       []Include       `xml:"include,omitempty"`
+	SourceFile     string          `xml:"-"`
 }
 
 // Remote is for remote XML element
@@ -107,4 +117,45 @@ type RepoHooks struct {
 // Include is for include XML element
 type Include struct {
 	Name string `xml:"name,attr,omitempty"`
+}
+
+func unmarshal(file string) (*Manifest, error) {
+	manifest := Manifest{}
+	if _, err := os.Stat(file); err != nil {
+		return nil, err
+	}
+
+	buf, err := ioutil.ReadFile(file)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read manifest file '%s': %s", file, err)
+	}
+
+	err = xml.Unmarshal(buf, &manifest)
+	if err != nil {
+		return nil, fmt.Errorf("fail to parse manifest file '%s': %s", file, err)
+	}
+	return &manifest, nil
+}
+
+func parseXML(file string) (*Manifest, error) {
+	m, err := unmarshal(file)
+	if err != nil {
+		return nil, err
+	}
+	return m, err
+}
+
+// Load will load and parse manifest XML file
+func Load(repoDir string) (*Manifest, error) {
+	var (
+		file string
+	)
+
+	// Ignore uninitialized repo
+	file = filepath.Join(repoDir, ManifestXMLFile)
+	if _, err := os.Stat(file); err != nil {
+		return nil, nil
+	}
+
+	return parseXML(file)
 }

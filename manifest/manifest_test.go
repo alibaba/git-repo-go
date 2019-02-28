@@ -2,8 +2,12 @@ package manifest
 
 import (
 	"encoding/xml"
+	"io/ioutil"
+	"os"
+	"path/filepath"
 	"testing"
 
+	"github.com/jiangxin/multi-log"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -12,54 +16,7 @@ var (
 	xmlData  []byte
 )
 
-func TestUnmarshal1(t *testing.T) {
-	var m Manifest
-	assert := assert.New(t)
-	data := `<?xml version="1.0" encoding="UTF-8"?>
-<manifest>
-  <project path="manifest"
-           name="tools/manifest" />
-  <project path="platform-manifest"
-           name="platform/manifest" />
-</manifest>`
-
-	err := xml.Unmarshal([]byte(data), &m)
-	assert.Nil(err)
-	assert.Equal(2, len(m.Projects))
-	assert.Equal("manifest", m.Projects[0].Path)
-	assert.Equal("tools/manifest", m.Projects[0].Name)
-	assert.Equal("platform-manifest", m.Projects[1].Path)
-	assert.Equal("platform/manifest", m.Projects[1].Name)
-}
-
-func TestMarshal1(t *testing.T) {
-	var m Manifest
-	assert := assert.New(t)
-
-	m = Manifest{
-		Projects: []Project{
-			Project{
-				Name: "tools/manifest",
-				Path: "manifest",
-			},
-			Project{
-				Name: "platform/manifest",
-				Path: "platform-manifest",
-			},
-		},
-	}
-
-	expected := `<manifest>
-  <project name="tools/manifest" path="manifest"></project>
-  <project name="platform/manifest" path="platform-manifest"></project>
-</manifest>`
-
-	actual, err := xml.MarshalIndent(&m, "", "  ")
-	assert.Nil(err)
-	assert.Equal(expected, string(actual))
-}
-
-func TestMarshal2(t *testing.T) {
+func TestMarshal(t *testing.T) {
 	assert := assert.New(t)
 
 	manifest = Manifest{
@@ -116,7 +73,7 @@ func TestMarshal2(t *testing.T) {
 	assert.Equal(expected, string(actual))
 }
 
-func TestUnmarshal2(t *testing.T) {
+func TestUnmarshal(t *testing.T) {
 	assert := assert.New(t)
 
 	m := Manifest{}
@@ -126,4 +83,69 @@ func TestUnmarshal2(t *testing.T) {
 	assert.Equal(manifest.Default, m.Default)
 	assert.Equal(manifest.Remotes, m.Remotes)
 	assert.Equal(manifest.Projects, m.Projects)
+}
+
+func TestLoad(t *testing.T) {
+	assert := assert.New(t)
+
+	tmpdir, err := ioutil.TempDir("", "git-repo")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer func(dir string) {
+		os.RemoveAll(dir)
+	}(tmpdir)
+
+	workDir := filepath.Join(tmpdir, "workdir")
+	repoDir := filepath.Join(workDir, ".repo")
+	manifestDir := filepath.Join(repoDir, ".repo", "manifests")
+	err = os.MkdirAll(manifestDir, 0755)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// load with missing manifest won't fail
+	m, err := Load(repoDir)
+	assert.Nil(err)
+	assert.Nil(m)
+
+	// create manifest.xml
+	manifestFile := filepath.Join(repoDir, "manifest.xml")
+	err = ioutil.WriteFile(manifestFile, []byte(`
+<manifest>
+  <remote name="aone" alias="origin" fetch="https://code.aone.alibaba-inc.com" review="https://code.aone.alibaba-inc.com" revision="default"></remote>
+  <default remote="origin" revision="master"></default>
+  <project name="platform/drivers" path="platform-drivers">
+    <project name="platform/nic" path="nic"></project>
+    <copyfile src="Makefile" dest="../Makefile"></copyfile>
+  </project>
+  <project name="platform/manifest" path="platform-manifest"></project>
+</manifest>`), 0644)
+	assert.Nil(err)
+
+	m, err = Load(repoDir)
+	assert.Nil(err)
+	assert.NotNil(m)
+	assert.Equal(
+		&Default{
+			Remote:   "origin",
+			Revision: "master",
+		}, m.Default)
+	assert.Equal(
+		[]Remote{Remote{
+			Name:     "aone",
+			Alias:    "origin",
+			Fetch:    "https://code.aone.alibaba-inc.com",
+			Review:   "https://code.aone.alibaba-inc.com",
+			Revision: "default"},
+		}, m.Remotes)
+	projects := []string{}
+	for _, p := range m.Projects {
+		projects = append(projects, p.Name)
+	}
+	// TODO: subprojects are not displayed!
+	assert.Equal([]string{
+		"platform/drivers",
+		"platform/manifest"},
+		projects)
 }

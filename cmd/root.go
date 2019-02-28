@@ -20,6 +20,7 @@ import (
 	"path/filepath"
 
 	"code.alibaba-inc.com/force/git-repo/config"
+	"code.alibaba-inc.com/force/git-repo/manifest"
 	"code.alibaba-inc.com/force/git-repo/version"
 
 	"github.com/jiangxin/multi-log"
@@ -29,9 +30,10 @@ import (
 )
 
 var (
-	cfgFile    string
-	theRepoDir string
-	theWorkDir string
+	cfgFile     string
+	theRepoDir  string
+	theWorkDir  string
+	theManifest *manifest.Manifest
 )
 
 // Define macros for git-repo
@@ -78,6 +80,7 @@ func findRepo(cmd *cobra.Command, args []string) {
 		if fi, err := os.Stat(repoDir); err == nil && fi.IsDir() {
 			theRepoDir = repoDir
 			theWorkDir = p
+			theManifest, _ = manifest.Load(theRepoDir)
 			break
 		}
 
