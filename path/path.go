@@ -5,17 +5,20 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+
+	"code.alibaba-inc.com/force/git-repo/config"
+	"github.com/jiangxin/multi-log"
 )
 
 func xdgConfigHome(file string) string {
 	home := os.Getenv("XDG_CONFIG_HOME")
 	if home != "" {
-		return fmt.Sprintf("%s/git/%s", home, file)
+		return filepath.Join(home, "git", file)
 	}
 
 	home = homeDir()
 	if home != "" {
-		return fmt.Sprintf("%s/.config/git/%s", home, file)
+		return filepath.Join(home, ".config", "git", file)
 	}
 	return ""
 }
@@ -73,7 +76,7 @@ func Abs(name string) string {
 		return name
 	}
 
-	if name[0] == '~' && (len(name) == 1 || name[1] == '/' || name[1] == '\\') {
+	if len(name) > 0 && name[0] == '~' && (len(name) == 1 || name[1] == '/' || name[1] == '\\') {
 		return expendHome(name)
 	}
 
@@ -87,9 +90,43 @@ func AbsJoin(dir, name string) string {
 		return name
 	}
 
-	if name[0] == '~' && (len(name) == 1 || name[1] == '/' || name[1] == '\\') {
+	if len(name) > 0 && name[0] == '~' && (len(name) == 1 || name[1] == '/' || name[1] == '\\') {
 		return expendHome(name)
 	}
 
 	return Abs(filepath.Join(dir, name))
+}
+
+// FindRepoRoot finds repo root path, where has a '.repo' subdir
+func FindRepoRoot(dir string) string {
+	var (
+		err error
+	)
+
+	if dir == "" {
+		dir, err = os.Getwd()
+		if err != nil {
+			log.Fatal("cannot get current dir")
+		}
+	}
+	p, err := filepath.EvalSymlinks(dir)
+	if err != nil {
+		log.Warnf("fail to call EvalSymlinks on %s", dir)
+		p = dir
+	}
+
+	for {
+		repoDir := filepath.Join(p, config.RepoDir)
+		if fi, err := os.Stat(repoDir); err == nil && fi.IsDir() {
+			return p
+		}
+
+		oldP := p
+		p = filepath.Dir(p)
+		if oldP == p {
+			// we reach the root dir
+			break
+		}
+	}
+	return ""
 }

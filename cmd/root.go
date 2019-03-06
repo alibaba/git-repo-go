@@ -17,7 +17,6 @@ package cmd
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"code.alibaba-inc.com/force/git-repo/config"
 	"code.alibaba-inc.com/force/git-repo/manifest"
@@ -40,7 +39,6 @@ var (
 const (
 	DefaultConfigFile = ".git-repo"
 	EnvPrefix         = "GIT_REPO"
-	RepoDir           = ".repo"
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -60,47 +58,7 @@ This tool is renamed as git-repo, so that wen can create git alias to run
 this command with special options.`,
 	Version: version.GetVersion(),
 	// Do not want to show usage on every error
-	SilenceUsage:     true,
-	PersistentPreRun: findRepo,
-}
-
-// find .repo dir
-func findRepo(cmd *cobra.Command, args []string) {
-	if config.IsSingleMode() {
-		findRepoSingle(cmd, args)
-		return
-	}
-
-	cwd, err := os.Getwd()
-	if err != nil {
-		log.Fatal("cannot get current dir")
-	}
-	p, err := filepath.EvalSymlinks(cwd)
-	if err != nil {
-		log.Warnf("fail to call EvalSymlinks on %s", cwd)
-	}
-
-	for {
-		repoDir := filepath.Join(p, RepoDir)
-		if fi, err := os.Stat(repoDir); err == nil && fi.IsDir() {
-			theRepoDir = repoDir
-			theWorkDir = p
-			theManifest, _ = manifest.Load(theRepoDir)
-			break
-		}
-
-		oldP := p
-		p = filepath.Dir(p)
-		if oldP == p {
-			// we reach the root dir
-			break
-		}
-	}
-}
-
-// find current repo rootdir
-func findRepoSingle(cmd *cobra.Command, args []string) {
-	// TODO: find git dir and worktree
+	SilenceUsage: true,
 }
 
 // The Response value from Execute.

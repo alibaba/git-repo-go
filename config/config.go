@@ -30,6 +30,8 @@ const (
 
 	RepoDefaultManifestKey = "repo.manifestDefault"
 	RepoDefaultManifestXML = "default.xml"
+
+	RepoDir = ".repo"
 )
 
 // GetVerbose gets --verbose option
