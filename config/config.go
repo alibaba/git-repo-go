@@ -27,6 +27,9 @@ import (
 const (
 	DefaultConfigPath = ".git-repo"
 	DefaultLogRotate  = 20 * 1024 * 1024
+
+	RepoDefaultManifestKey = "repo.manifestDefault"
+	RepoDefaultManifestXML = "default.xml"
 )
 
 // GetVerbose gets --verbose option

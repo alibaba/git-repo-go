@@ -8,7 +8,9 @@ import (
 	"path/filepath"
 	"strings"
 
+	"code.alibaba-inc.com/force/git-repo/config"
 	"code.alibaba-inc.com/force/git-repo/path"
+	"github.com/jiangxin/goconfig"
 	"github.com/jiangxin/multi-log"
 )
 
@@ -354,6 +356,21 @@ func Load(repoDir string) (*Manifest, error) {
 	)
 
 	file = filepath.Join(repoDir, ManifestXMLFile)
+	if _, err = os.Stat(file); err != nil {
+		defaultXML := ""
+		manifestsDir := filepath.Join(repoDir, "manifests")
+		cfg, err := goconfig.LoadDir(manifestsDir, false)
+		if err != nil {
+			return nil, fmt.Errorf("fail to read config from %s: %s", manifestsDir, err)
+		}
+		if cfg != nil {
+			defaultXML = cfg.Get(config.RepoDefaultManifestKey)
+		}
+		if defaultXML == "" {
+			defaultXML = config.RepoDefaultManifestXML
+		}
+		file = filepath.Join(manifestsDir, defaultXML)
+	}
 
 	// Ignore uninitialized repo
 	if _, err := os.Stat(file); err != nil {
