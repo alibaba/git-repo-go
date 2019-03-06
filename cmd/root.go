@@ -46,13 +46,18 @@ const (
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "git-repo",
-	Short: "A brief description of your application",
-	Long: `A longer description that spans multiple lines and likely contains
-examples and usage of using your application. For example:
+	Short: "A command line tool for centralized git workflow",
+	Long: `A command line tool for centralized git workflow.
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+Just like repo for the Android world, git-repo is a command line tool for
+centralized git workflow of git core.
+
+It can handle multiple repositories by using a manifest repository with
+a default.xml file. And it can also handle a single repository by using
+a '--single' opiton.
+
+This tool is renamed as git-repo, so that wen can create git alias to run
+this command with special options.`,
 	Version: version.GetVersion(),
 	// Do not want to show usage on every error
 	SilenceUsage:     true,
