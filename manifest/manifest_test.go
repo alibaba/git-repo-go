@@ -143,9 +143,63 @@ func TestLoad(t *testing.T) {
 	for _, p := range m.Projects {
 		projects = append(projects, p.Name)
 	}
-	// TODO: subprojects are not displayed!
 	assert.Equal([]string{
 		"platform/drivers",
+		"platform/nic",
 		"platform/manifest"},
+		projects)
+}
+
+func TestInclude(t *testing.T) {
+	assert := assert.New(t)
+
+	tmpdir, err := ioutil.TempDir("", "git-repo")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer func(dir string) {
+		os.RemoveAll(dir)
+	}(tmpdir)
+
+	workDir := filepath.Join(tmpdir, "workdir")
+	repoDir := filepath.Join(workDir, ".repo")
+	manifestDir := filepath.Join(repoDir, ".repo", "manifests")
+	err = os.MkdirAll(manifestDir, 0755)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// create manifest.xml
+	manifestFile := filepath.Join(repoDir, "manifest.xml")
+	err = ioutil.WriteFile(manifestFile, []byte(`
+<manifest>
+  <remote name="aone" alias="origin" fetch="https://code.aone.alibaba-inc.com" review="https://code.aone.alibaba-inc.com" revision="default"></remote>
+  <default remote="origin" revision="master"></default>
+  <project name="platform/drivers" path="platform-drivers">
+    <project name="platform/nic" path="nic"></project>
+    <copyfile src="Makefile" dest="../Makefile"></copyfile>
+  </project>
+  <project name="platform/manifest" path="platform-manifest"></project>
+  <include name="../manifest.inc"></include>
+</manifest>`), 0644)
+	assert.Equal(nil, err)
+
+	err = ioutil.WriteFile(filepath.Join(workDir, "manifest.inc"), []byte(`
+<manifest>
+  <project name="platform/foo" path="foo"/>
+</manifest>`), 0644)
+	assert.Equal(nil, err)
+
+	m, err := Load(repoDir)
+	assert.Equal(nil, err)
+	projects := []string{}
+	for _, p := range m.Projects {
+		projects = append(projects, p.Name)
+	}
+	assert.Equal([]string{
+		"platform/drivers",
+		"platform/nic",
+		"platform/manifest",
+		"platform/foo"},
 		projects)
 }

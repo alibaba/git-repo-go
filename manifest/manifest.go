@@ -6,6 +6,9 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
+
+	"code.alibaba-inc.com/force/git-repo/path"
 )
 
 // Macros for manifest
@@ -119,6 +122,158 @@ type Include struct {
 	Name string `xml:"name,attr,omitempty"`
 }
 
+// AllProjects returns proejcts of a project recursively
+func (v *Project) AllProjects(pDir string) []Project {
+	var project Project
+	projects := []Project{}
+	if pDir != "" {
+		v.Path = filepath.Join(pDir, v.Path)
+	}
+	// remove field: Projects
+	if len(v.Projects) > 0 {
+		project = Project{
+			Annotations: v.Annotations,
+			CopyFiles:   v.CopyFiles,
+			LinkFiles:   v.LinkFiles,
+			Name:        v.Name,
+			Path:        v.Path,
+			Remote:      v.Remote,
+			Revision:    v.Revision,
+			DestBranch:  v.DestBranch,
+			Groups:      v.Groups,
+			SyncC:       v.SyncC,
+			SyncS:       v.SyncS,
+			SyncTags:    v.SyncTags,
+			Upstream:    v.Upstream,
+			CloneDepth:  v.CloneDepth,
+			ForcePath:   v.ForcePath,
+		}
+		projects = append(projects, project)
+	} else {
+		projects = append(projects, *v)
+	}
+
+	for _, p := range v.Projects {
+		projects = append(projects, p.AllProjects(v.Path)...)
+	}
+	return projects
+}
+
+// AllProjects returns all projects of manifest
+func (v *Manifest) AllProjects() []Project {
+	projects := []Project{}
+	for _, p := range v.Projects {
+		projects = append(projects, p.AllProjects("")...)
+	}
+	return projects
+}
+
+// Merge will merge another manifest to self
+func (v *Manifest) Merge(m *Manifest) error {
+	if m.Notice != "" {
+		if v.Notice == "" {
+			v.Notice = m.Notice
+		} else {
+			return fmt.Errorf("duplicate notice in %s", m.SourceFile)
+		}
+	}
+
+	for _, r1 := range m.Remotes {
+		found := false
+		for _, r2 := range v.Remotes {
+			if r1.Name == r2.Name {
+				if r1 != r2 {
+					return fmt.Errorf("duplicate remote in %s", m.SourceFile)
+				}
+				found = true
+				break
+			}
+		}
+		if !found {
+			v.Remotes = append(v.Remotes, r1)
+		}
+	}
+
+	if m.Default != nil {
+		if v.Default != nil {
+			if v.Default != m.Default {
+				return fmt.Errorf("duplicate default in %s", m.SourceFile)
+			}
+		} else {
+			v.Default = m.Default
+		}
+	}
+
+	if m.Server != nil {
+		if v.Server != nil {
+			if v.Server != m.Server {
+				return fmt.Errorf("duplicate manifest-server in %s", m.SourceFile)
+			}
+		} else {
+			v.Server = m.Server
+		}
+	}
+
+	realPath := make(map[string]bool)
+	for _, p := range v.AllProjects() {
+		if realPath[p.Path] {
+			return fmt.Errorf("duplicate path for project '%s' in '%s'",
+				p.Path,
+				v.SourceFile)
+		}
+		realPath[p.Path] = true
+	}
+	for _, p := range m.AllProjects() {
+		if realPath[p.Path] {
+			return fmt.Errorf("duplicate path for project '%s' in '%s'",
+				p.Path,
+				m.SourceFile)
+		}
+		v.Projects = append(v.Projects, p)
+		realPath[p.Path] = true
+	}
+
+	rmPath := make(map[string]bool)
+	for _, r := range m.RemoveProjects {
+		rmPath[r.Name] = true
+	}
+	ps := []Project{}
+	for _, p := range v.AllProjects() {
+		if rmPath[p.Name] {
+			realPath[p.Path] = false
+		} else {
+			ps = append(ps, p)
+		}
+	}
+	v.Projects = ps
+
+	extPath := make(map[string]ExtendProject)
+	for _, p := range m.ExtendProjects {
+		extPath[p.Name] = p
+	}
+	for i, p := range v.Projects {
+		if p2, ok := extPath[p.Name]; ok {
+			if p2.Path == p.Path {
+				if p.Groups == "" {
+					v.Projects[i].Groups = p2.Groups
+				} else if p2.Groups != "" {
+					groups := []string{}
+					groups = append(groups, strings.Split(p.Groups, ",")...)
+					groups = append(groups, strings.Split(p2.Groups, ",")...)
+					v.Projects[i].Groups = strings.Join(groups, ",")
+				}
+				if p2.Revision != "" {
+					v.Projects[i].Revision = p2.Revision
+				}
+			}
+		}
+	}
+
+	// m.RepoHooks
+
+	return nil
+}
+
 func unmarshal(file string) (*Manifest, error) {
 	manifest := Manifest{}
 	if _, err := os.Stat(file); err != nil {
@@ -137,25 +292,63 @@ func unmarshal(file string) (*Manifest, error) {
 	return &manifest, nil
 }
 
-func parseXML(file string) (*Manifest, error) {
+func parseXML(file string) ([]*Manifest, error) {
+	ms := []*Manifest{}
+
 	m, err := unmarshal(file)
 	if err != nil {
-		return nil, err
+		return ms, err
 	}
-	return m, err
+	if m == nil {
+		return ms, nil
+	}
+	m.SourceFile = file
+	ms = append(ms, m)
+
+	for _, i := range m.Includes {
+		f := path.AbsJoin(filepath.Dir(file), i.Name)
+
+		subMs, err := parseXML(f)
+		if err != nil {
+			return ms, err
+		}
+		ms = append(ms, subMs...)
+	}
+
+	return ms, nil
+}
+
+func mergeManifests(ms []*Manifest) (*Manifest, error) {
+	manifest := &Manifest{}
+	for _, m := range ms {
+		err := manifest.Merge(m)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return manifest, nil
 }
 
 // Load will load and parse manifest XML file
 func Load(repoDir string) (*Manifest, error) {
 	var (
-		file string
+		file      string
+		err       error
+		manifests = []*Manifest{}
 	)
 
-	// Ignore uninitialized repo
 	file = filepath.Join(repoDir, ManifestXMLFile)
+
+	// Ignore uninitialized repo
 	if _, err := os.Stat(file); err != nil {
 		return nil, nil
 	}
 
-	return parseXML(file)
+	ms, err := parseXML(file)
+	if err != nil {
+		return nil, err
+	}
+	manifests = append(manifests, ms...)
+
+	return mergeManifests(manifests)
 }
