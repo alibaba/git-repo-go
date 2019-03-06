@@ -270,3 +270,56 @@ func TestLoadWithLocalManifest(t *testing.T) {
 		"platform/nic",
 		"tools/git-repo"}, projects)
 }
+
+func TestCircularInclude(t *testing.T) {
+	assert := assert.New(t)
+
+	tmpdir, err := ioutil.TempDir("", "git-repo")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer func(dir string) {
+		os.RemoveAll(dir)
+	}(tmpdir)
+
+	workDir := filepath.Join(tmpdir, "workdir")
+	repoDir := filepath.Join(workDir, ".repo")
+	manifestDir := filepath.Join(repoDir, ".repo", "manifests")
+	err = os.MkdirAll(manifestDir, 0755)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// create manifest.xml
+	manifestFile := filepath.Join(repoDir, "manifest.xml")
+	err = ioutil.WriteFile(manifestFile, []byte(`
+<manifest>
+  <remote name="aone" alias="origin" fetch="https://code.aone.alibaba-inc.com" review="https://code.aone.alibaba-inc.com" revision="default"></remote>
+  <default remote="origin" revision="master"></default>
+  <project name="platform/drivers" path="platform-drivers">
+    <project name="platform/nic" path="nic"></project>
+    <copyfile src="Makefile" dest="../Makefile"></copyfile>
+  </project>
+  <project name="platform/manifest" path="platform-manifest"></project>
+  <include name="../manifest.inc"></include>
+</manifest>`), 0644)
+	assert.Equal(nil, err)
+
+	err = ioutil.WriteFile(filepath.Join(workDir, "manifest.inc"), []byte(`
+<manifest>
+  <project name="platform/foo" path="foo"/>
+  <include name="manifest2.inc"/>
+</manifest>`), 0644)
+	assert.Equal(nil, err)
+
+	err = ioutil.WriteFile(filepath.Join(workDir, "manifest2.inc"), []byte(`
+<manifest>
+  <project name="platform/bar" path="bar"/>
+  <include name="manifest.inc"/>
+</manifest>`), 0644)
+	assert.Equal(nil, err)
+
+	m, err := Load(repoDir)
+	assert.Contains(err.Error(), "exceeded maximum include depth (10)")
+	assert.Equal(true, nil == m)
+}

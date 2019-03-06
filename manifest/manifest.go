@@ -17,6 +17,7 @@ const (
 	ManifestXMLFile   = "manifest.xml"
 	LocalManifestFile = "local_manifest.xml"
 	LocalManifestDir  = "local_manifests"
+	maxRecursiveDepth = 10
 )
 
 // Manifest is for toplevel XML structure
@@ -295,7 +296,7 @@ func unmarshal(file string) (*Manifest, error) {
 	return &manifest, nil
 }
 
-func parseXML(file string) ([]*Manifest, error) {
+func parseXML(file string, depth int) ([]*Manifest, error) {
 	ms := []*Manifest{}
 
 	m, err := unmarshal(file)
@@ -311,7 +312,18 @@ func parseXML(file string) ([]*Manifest, error) {
 	for _, i := range m.Includes {
 		f := path.AbsJoin(filepath.Dir(file), i.Name)
 
-		subMs, err := parseXML(f)
+		if depth > maxRecursiveDepth {
+			return nil, fmt.Errorf("exceeded maximum include depth (%d) while including\n"+
+				"\t%s\n"+
+				"from"+
+				"\t%s\n"+
+				"This might be due to circular includes",
+				maxRecursiveDepth,
+				f,
+				file)
+		}
+
+		subMs, err := parseXML(f, depth+1)
 		if err != nil {
 			return ms, err
 		}
@@ -348,7 +360,7 @@ func Load(repoDir string) (*Manifest, error) {
 		return nil, nil
 	}
 
-	ms, err := parseXML(file)
+	ms, err := parseXML(file, 1)
 	if err != nil {
 		return nil, err
 	}
@@ -383,7 +395,7 @@ func Load(repoDir string) (*Manifest, error) {
 	}
 
 	for _, file = range files {
-		ms, err := parseXML(file)
+		ms, err := parseXML(file, 1)
 		if err != nil {
 			return nil, err
 		}
