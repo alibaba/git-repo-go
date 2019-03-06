@@ -9,11 +9,14 @@ import (
 	"strings"
 
 	"code.alibaba-inc.com/force/git-repo/path"
+	"github.com/jiangxin/multi-log"
 )
 
 // Macros for manifest
 const (
-	ManifestXMLFile = "manifest.xml"
+	ManifestXMLFile   = "manifest.xml"
+	LocalManifestFile = "local_manifest.xml"
+	LocalManifestDir  = "local_manifests"
 )
 
 // Manifest is for toplevel XML structure
@@ -333,6 +336,7 @@ func mergeManifests(ms []*Manifest) (*Manifest, error) {
 func Load(repoDir string) (*Manifest, error) {
 	var (
 		file      string
+		dir       string
 		err       error
 		manifests = []*Manifest{}
 	)
@@ -349,6 +353,42 @@ func Load(repoDir string) (*Manifest, error) {
 		return nil, err
 	}
 	manifests = append(manifests, ms...)
+
+	// load LocalManifestFile (obsolete)
+	files := []string{}
+	file = filepath.Join(repoDir, LocalManifestFile)
+	dir = filepath.Join(repoDir, LocalManifestDir)
+	if _, err = os.Stat(file); err == nil {
+		log.Warnf("%s is deprecated; put local manifests in `%s` instead", file, dir)
+		files = append(files, file)
+	}
+
+	// load xml files in LocalManifestDir
+	if _, err = os.Stat(dir); err == nil {
+		filepath.Walk(dir, func(name string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+			if dir == name {
+				return nil
+			}
+			if info.IsDir() {
+				return nil
+			}
+			if strings.HasSuffix(name, ".xml") {
+				files = append(files, name)
+			}
+			return nil
+		})
+	}
+
+	for _, file = range files {
+		ms, err := parseXML(file)
+		if err != nil {
+			return nil, err
+		}
+		manifests = append(manifests, ms...)
+	}
 
 	return mergeManifests(manifests)
 }

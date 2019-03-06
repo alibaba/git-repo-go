@@ -203,3 +203,70 @@ func TestInclude(t *testing.T) {
 		"platform/foo"},
 		projects)
 }
+
+func TestLoadWithLocalManifest(t *testing.T) {
+	assert := assert.New(t)
+
+	tmpdir, err := ioutil.TempDir("", "git-repo")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer func(dir string) {
+		os.RemoveAll(dir)
+	}(tmpdir)
+
+	workDir := filepath.Join(tmpdir, "workdir")
+	repoDir := filepath.Join(workDir, ".repo")
+	manifestDir := filepath.Join(repoDir, ".repo", "manifests")
+	err = os.MkdirAll(manifestDir, 0755)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// create manifest.xml
+	manifestFile := filepath.Join(repoDir, "manifest.xml")
+	err = ioutil.WriteFile(manifestFile, []byte(`
+<manifest>
+  <remote name="aone" alias="origin" fetch="https://code.aone.alibaba-inc.com" review="https://code.aone.alibaba-inc.com" revision="default"></remote>
+  <default remote="origin" revision="master"></default>
+  <project name="platform/drivers" path="platform-drivers">
+    <project name="platform/nic" path="nic"></project>
+    <copyfile src="Makefile" dest="../Makefile"></copyfile>
+  </project>
+  <project name="platform/manifest" path="platform-manifest"></project>
+</manifest>`), 0644)
+	assert.Equal(nil, err)
+
+	// create local_manifest.xml
+	localManifestFile := filepath.Join(repoDir, "local_manifest.xml")
+	err = ioutil.WriteFile(localManifestFile, []byte(`
+<manifest>
+  <remove-project name="platform/manifest"></remove-project>
+</manifest>`), 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// create local_manifests/test.xml
+	localManifestFile = filepath.Join(repoDir, "local_manifests", "test.xml")
+	os.MkdirAll(filepath.Dir(localManifestFile), 0755)
+	err = ioutil.WriteFile(localManifestFile, []byte(`
+<manifest>
+  <project name="tools/git-repo" path="tools/git-repo"/>
+</manifest>`), 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// load all manifest and test
+	m, err := Load(repoDir)
+	assert.Equal(nil, err)
+	projects := []string{}
+	for _, p := range m.Projects {
+		projects = append(projects, p.Name)
+	}
+	assert.Equal([]string{
+		"platform/drivers",
+		"platform/nic",
+		"tools/git-repo"}, projects)
+}
