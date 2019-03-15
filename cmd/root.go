@@ -89,8 +89,8 @@ func Execute() Response {
 
 func init() {
 	cobra.OnInitialize(initConfig)
-	cobra.OnInitialize(initLog)
 	cobra.OnInitialize(checkVersion)
+	cobra.OnInitialize(initLog)
 
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.git-repo.yaml)")
 	rootCmd.PersistentFlags().CountP("verbose", "v", "verbose mode")
@@ -146,6 +146,6 @@ func initLog() {
 		Quiet:         config.GetQuiet(),
 		LogFile:       config.GetLogFile(),
 		LogLevel:      config.GetLogLevel(),
-		LogRotateSize: config.GetLogRotate(),
+		LogRotateSize: config.GetLogRotateSize(),
 	})
 }

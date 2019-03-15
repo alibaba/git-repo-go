@@ -69,8 +69,8 @@ func GetLogLevel() string {
 	return viper.GetString("loglevel")
 }
 
-// GetLogRotate gets logrotate size from config
-func GetLogRotate() int64 {
+// GetLogRotateSize gets logrotate size from config
+func GetLogRotateSize() int64 {
 	viper.SetDefault("logrotate", DefaultLogRotate)
 	return viper.GetInt64("logrotate")
 }
