@@ -1,5 +1,6 @@
 /trash directory*
 /test-results
+/test-repositories
 /.prove
 repo-list.txt
 repo-write-list.txt

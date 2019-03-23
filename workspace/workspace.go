@@ -79,7 +79,7 @@ func (v *WorkSpace) LinkManifest(name string) error {
 			if err != nil || filepath.Base(src) != name {
 				os.Remove(target)
 				src = filepath.Join(config.Manifests, name)
-				log.Errorf("will symlink '%s' to '%s'", src, target)
+				log.Debugf("will symlink '%s' to '%s'", src, target)
 				err = os.Symlink(src, target)
 				if err != nil {
 					return err

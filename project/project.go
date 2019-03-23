@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"code.alibaba-inc.com/force/git-repo/config"
@@ -183,8 +184,12 @@ func (v *Project) Checkout(branch, local string) error {
 	if strings.HasPrefix(branch, "refs/heads/") {
 		branch = strings.TrimPrefix(branch, "refs/heads/")
 		rev = fmt.Sprintf("refs/remotes/%s/%s", v.Remote, branch)
-	} else {
+	} else if strings.HasPrefix(branch, "refs/") {
 		rev = branch
+	} else if isHashRevision(branch) {
+		rev = branch
+	} else {
+		rev = fmt.Sprintf("refs/remotes/%s/%s", v.Remote, branch)
 	}
 
 	var cmdArgs []string
@@ -199,7 +204,7 @@ func (v *Project) Checkout(branch, local string) error {
 			"git",
 			"checkout",
 		}
-		if local != "" {
+		if local != "" && local != rev {
 			cmdArgs = append(cmdArgs, "-b", local)
 		}
 		cmdArgs = append(cmdArgs, rev)
@@ -207,7 +212,10 @@ func (v *Project) Checkout(branch, local string) error {
 
 	err = executeCommandIn(v.WorkDir, cmdArgs)
 	if err != nil {
-		return fmt.Errorf("fail to checkout %s: %s", v.Name, err)
+		return fmt.Errorf("fail to checkout %s, cmd:%s, error: %s",
+			v.Name,
+			strings.Join(cmdArgs, " "),
+			err)
 	}
 
 	return nil
@@ -423,4 +431,9 @@ func NewProject(project *manifest.Project, repoRoot, manifestURL string) *Projec
 	}
 
 	return &p
+}
+
+func isHashRevision(rev string) bool {
+	re := regexp.MustCompile(`^[0-9][a-f]{7,}$`)
+	return re.MatchString(rev)
 }

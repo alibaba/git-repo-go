@@ -61,8 +61,7 @@ var initCmd = &cobra.Command{
 }
 
 func initGetGroupStr(ws *workspace.WorkSpace) string {
-	allPlatforms := []string{"linux", "darwin", "windows", "aix",
-		"android", "freebsd", "netbsd", "openbsd", "plan9", "solaris"}
+	allPlatforms := []string{"linux", "darwin", "windows"}
 	groups := []string{}
 	for _, g := range strings.Split(initOptions.Groups, ",") {
 		g = strings.TrimSpace(g)
@@ -91,7 +90,7 @@ func initGetGroupStr(ws *workspace.WorkSpace) string {
 
 	groupStr := strings.Join(groups, ",")
 	if initOptions.Platform == "auto" &&
-		groupStr == "default,platform-"+platformize(runtime.GOOS) {
+		groupStr == "default,"+platformize(runtime.GOOS) {
 		groupStr = ""
 	}
 
@@ -241,8 +240,12 @@ func initCmdRunE() error {
 		changed = true
 	}
 
-	if groupStr := initGetGroupStr(ws); groupStr != "" {
-		cfg.Set(config.CfgManifestGroups, groupStr)
+	if groupStr := initGetGroupStr(ws); groupStr != cfg.Get(config.CfgManifestGroups) {
+		if groupStr != "" {
+			cfg.Set(config.CfgManifestGroups, groupStr)
+		} else {
+			cfg.Unset(config.CfgManifestGroups)
+		}
 		changed = true
 	}
 
