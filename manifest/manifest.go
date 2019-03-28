@@ -129,12 +129,18 @@ type Include struct {
 }
 
 // AllProjects returns proejcts of a project recursively
-func (v *Project) AllProjects(pDir string) []Project {
+func (v *Project) AllProjects(parent *Project) []Project {
 	var project Project
 
 	projects := []Project{}
-	if pDir != "" {
-		v.Path = filepath.Join(pDir, v.Path)
+	if parent != nil {
+		if parent.Path != "" {
+			v.Path = filepath.Join(parent.Path, v.Path)
+		}
+
+		if parent.Name != "" {
+			v.Name = filepath.Join(parent.Name, v.Name)
+		}
 	}
 
 	v.Name = filepath.Clean(filepath.ToSlash(v.Name))
@@ -165,7 +171,7 @@ func (v *Project) AllProjects(pDir string) []Project {
 	}
 
 	for _, p := range v.Projects {
-		projects = append(projects, p.AllProjects(v.Path)...)
+		projects = append(projects, p.AllProjects(v)...)
 	}
 	return projects
 }
@@ -189,7 +195,7 @@ func (v *Project) SetRemote(r *Remote) {
 func (v *Manifest) AllProjects() []Project {
 	projects := []Project{}
 	for _, p := range v.Projects {
-		projects = append(projects, p.AllProjects("")...)
+		projects = append(projects, p.AllProjects(nil)...)
 	}
 
 	remotes := make(map[string]*Remote)

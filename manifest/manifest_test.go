@@ -116,7 +116,7 @@ func TestLoad(t *testing.T) {
   <remote name="aone" alias="origin" fetch="https://code.aone.alibaba-inc.com" review="https://code.aone.alibaba-inc.com" revision="default"></remote>
   <default remote="aone" revision="master"></default>
   <project name="platform/drivers" path="platform-drivers">
-    <project name="platform/nic" path="nic"></project>
+    <project name="nic" path="nic"></project>
     <copyfile src="Makefile" dest="../Makefile"></copyfile>
   </project>
   <project name="platform/manifest" path="platform-manifest"></project>
@@ -145,7 +145,7 @@ func TestLoad(t *testing.T) {
 	}
 	assert.Equal([]string{
 		"platform/drivers",
-		"platform/nic",
+		"platform/drivers/nic",
 		"platform/manifest"},
 		projects)
 }
@@ -176,7 +176,7 @@ func TestInclude(t *testing.T) {
   <remote name="aone" alias="origin" fetch="https://code.aone.alibaba-inc.com" review="https://code.aone.alibaba-inc.com" revision="default"></remote>
   <default remote="aone" revision="master"></default>
   <project name="platform/drivers" path="platform-drivers">
-    <project name="platform/nic" path="nic"></project>
+    <project name="nic" path="nic"></project>
     <copyfile src="Makefile" dest="../Makefile"></copyfile>
   </project>
   <project name="platform/manifest" path="platform-manifest"></project>
@@ -198,7 +198,7 @@ func TestInclude(t *testing.T) {
 	}
 	assert.Equal([]string{
 		"platform/drivers",
-		"platform/nic",
+		"platform/drivers/nic",
 		"platform/manifest",
 		"platform/foo"},
 		projects)
@@ -235,7 +235,7 @@ func TestLoadWithLocalManifest(t *testing.T) {
   <remote name="aone" alias="origin" fetch="https://code.aone.alibaba-inc.com" review="https://code.aone.alibaba-inc.com" revision="default"></remote>
   <default remote="aone" revision="master"></default>
   <project name="platform/drivers" path="platform-drivers">
-    <project name="platform/nic" path="nic"></project>
+    <project name="nic" path="nic"></project>
     <copyfile src="Makefile" dest="../Makefile"></copyfile>
   </project>
   <project name="platform/manifest" path="platform-manifest"></project>
@@ -272,7 +272,7 @@ func TestLoadWithLocalManifest(t *testing.T) {
 	}
 	assert.Equal([]string{
 		"platform/drivers",
-		"platform/nic",
+		"platform/drivers/nic",
 		"tools/git-repo"}, projects)
 }
 
