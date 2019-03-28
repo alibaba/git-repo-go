@@ -159,7 +159,7 @@ func initCmdRunE() error {
 	}
 
 	// Find repo workspace and load it if exist
-	ws, err := workspace.NewWorkSpace2("", initOptions.ManifestURL)
+	ws, err := workspace.NewWorkSpaceInit("", initOptions.ManifestURL)
 	if err != nil {
 		log.Fatal(err)
 	}

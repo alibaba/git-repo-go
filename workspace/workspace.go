@@ -90,7 +90,8 @@ func (v *WorkSpace) LinkManifest(name string) error {
 	return nil
 }
 
-// Load will read manifest file and repository for workspace
+// Load will read manifest XML file and reset ManifestURL if it changed,
+// and reset URL of all projects in workspace.
 func (v *WorkSpace) Load(manifestURL string) error {
 	m, err := manifest.Load(filepath.Join(v.RootDir, config.DotRepo))
 	if err != nil {
@@ -115,30 +116,56 @@ func (v *WorkSpace) Load(manifestURL string) error {
 	return nil
 }
 
-// NewWorkSpace finds and loads repo root
+// NewWorkSpace finds and loads repo workspace. Will return an error if not found.
+//
+// 1. Searching a hidden `.repo` directory in `<dir>` or any parent directory.
+// 2. Returns a WorkSpace objects based on the toplevel directory of workspace.
+// 3. If cannot find valid repo workspace, return ErrRepoDirNotFound error.
 func NewWorkSpace(dir string) (*WorkSpace, error) {
-	return NewWorkSpace2(dir, "")
-}
-
-// NewWorkSpace2 finds repo root and load specific manifest file
-func NewWorkSpace2(dir, manifestURL string) (*WorkSpace, error) {
 	var (
 		err error
 	)
 
 	repoRoot, err := path.FindRepoRoot(dir)
-	if err != nil && err != errors.ErrRepoDirNotFound {
+	if err != nil {
 		return nil, err
 	}
-	if repoRoot == "" {
+
+	return newWorkSpace(repoRoot, "")
+}
+
+// NewWorkSpaceInit finds repo root and load specific manifest file.
+// If workspace is not found, will use <dir> as root of a new workspace.
+func NewWorkSpaceInit(dir, manifestURL string) (*WorkSpace, error) {
+	var (
+		err error
+	)
+
+	repoRoot, err := path.FindRepoRoot(dir)
+	if err != nil {
+		if err == errors.ErrRepoDirNotFound {
+			repoRoot = dir
+		} else {
+			return nil, err
+		}
+	}
+
+	return newWorkSpace(repoRoot, manifestURL)
+}
+
+func newWorkSpace(dir, manifestURL string) (*WorkSpace, error) {
+	var (
+		err error
+	)
+
+	if dir == "" {
 		dir, err = path.Abs(dir)
 		if err != nil {
 			return nil, err
 		}
-		repoRoot = dir
 	}
 
-	ws := WorkSpace{RootDir: repoRoot}
+	ws := WorkSpace{RootDir: dir}
 	err = ws.Load(manifestURL)
 	if err != nil {
 		return nil, err

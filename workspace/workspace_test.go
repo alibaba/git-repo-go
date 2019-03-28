@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"code.alibaba-inc.com/force/git-repo/config"
+	"code.alibaba-inc.com/force/git-repo/errors"
 	"code.alibaba-inc.com/force/git-repo/project"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/src-d/go-git.v4"
@@ -102,6 +103,30 @@ func TestNewLoadEmptyWorkSpace(t *testing.T) {
 	assert.Nil(err)
 
 	ws, err := NewWorkSpace(workdir)
+	assert.Equal(errors.ErrRepoDirNotFound, err)
+	assert.Nil(ws)
+}
+
+func TestNewLoadEmptyWorkSpaceInit(t *testing.T) {
+	var (
+		tmpdir string
+		err    error
+		assert = assert.New(t)
+	)
+
+	tmpdir, err = ioutil.TempDir("", "git-repo-")
+	if err != nil {
+		panic(err)
+	}
+	defer func(dir string) {
+		os.RemoveAll(dir)
+	}(tmpdir)
+
+	workdir := filepath.Join(tmpdir, "workdir")
+	err = os.MkdirAll(workdir, 0755)
+	assert.Nil(err)
+
+	ws, err := NewWorkSpaceInit(workdir, "")
 	assert.Nil(err)
 	assert.Equal(workdir, ws.RootDir)
 	assert.Nil(ws.Manifest)
