@@ -1,17 +1,33 @@
 # repo Manifest Format
 
-A repo manifest describes the structure of a repo client; that is
-the directories that are visible and where they should be obtained
-from with git.
+A repo manifest describes the structure of repositories and projects
+a repo client works on; that is the directories that are visible and
+where they should be obtained from with git.
 
 The basic structure of a manifest is a bare Git repository holding
-a single `default.xml` XML file in the top level directory.
+a single `default.xml` XML file, and it will be checkouted to the
+`manifests` workdir in `.repo` subdir from the top level directory.
 
 Manifests are inherently version controlled, since they are kept
 within a Git repository.  Updates to manifests are automatically
-obtained by clients during `repo sync`.
+obtained by clients during `git repo sync`.
 
 [TOC]
+
+
+## Location of the manifest files
+
+On systems which support symlink (Linux and Mac OSX), `git-repo`
+will read manifest from `.repo/manifest.xml`, which is a symlink
+from a xml file in `.repo/manifests` directory.
+
+On systems which do not support symlink (Windows), or not having
+a `.repo/manifest.xml` file, `git-repo` will read value of config
+variable `manifest.name` in repository `.repo/manifests.git` and
+use the specific xml file in `.repo/manifests` directory.
+
+User can use additional local manifests to override or extend.
+See the following section: Local Manifests.
 
 
 ## XML File Format
@@ -114,7 +130,9 @@ The root element of the file.
 
 One or more remote elements may be specified.  Each remote element
 specifies a Git URL shared by one or more projects and (optionally)
-the Gerrit review server those projects upload changes through.
+the Gerrit style review server (Gerrit or Git server enhanced by
+the execute-commands hook) those projects upload code-reviews
+through.
 
 Attribute `name`: A short name unique to this manifest file.  The
 name specified here is used as the remote name in each project's
@@ -138,8 +156,8 @@ This attribute is optional; if not specified then "git push"
 will use the same URL as the `fetch` attribute.
 
 Attribute `review`: Hostname of the Gerrit server where reviews
-are uploaded to by `repo upload`.  This attribute is optional;
-if not specified then `repo upload` will not function.
+are uploaded to by `git repo upload`.  This attribute is optional;
+if not specified then `git repo upload` will not function.
 
 Attribute `revision`: Name of a Git branch (e.g. `master` or
 `refs/heads/master`). Remotes with their own revision will override
@@ -253,7 +271,7 @@ the remote element is used if applicable, else the default
 element is used.
 
 Attribute `dest-branch`: Name of a Git branch (e.g. `master`).
-When using `repo upload`, changes will be submitted for code
+When using `git repo upload`, changes will be submitted for code
 review on this branch. If unspecified both here and in the
 default element, `revision` is used instead.
 
@@ -311,7 +329,7 @@ project.  Same syntax as the corresponding element of `project`.
 Zero or more annotation elements may be specified as children of a
 project element. Each element describes a name-value pair that will be
 exported into each project's environment during a 'forall' command,
-prefixed with REPO__.  In addition, there is an optional attribute
+prefixed with `REPO__`.  In addition, there is an optional attribute
 "keep" which accepts the case insensitive values "true" (default) or
 "false".  This attribute determines whether or not the annotation will
 be kept when exported with the manifest subcommand.
@@ -320,7 +338,7 @@ be kept when exported with the manifest subcommand.
 
 Zero or more copyfile elements may be specified as children of a
 project element. Each element describes a src-dest pair of files;
-the "src" file will be copied to the "dest" place during `repo sync`
+the "src" file will be copied to the "dest" place during `git repo sync`
 command.
 "src" is project relative, "dest" is relative to the top of the tree.
 
@@ -348,6 +366,9 @@ target manifest to include - it must be a usable manifest on its own.
 Attribute `name`: the manifest to include, specified relative to
 the manifest repository's root.
 
+Included manifest will be merged after the whole original manifest
+file is parsed.
+
 
 ## Local Manifests
 
@@ -369,7 +390,7 @@ For example:
                name="platform/manifest" />
     </manifest>
 
-Users may add projects to the local manifest(s) prior to a `repo sync`
+Users may add projects to the local manifest(s) prior to a `git repo sync`
 invocation, instructing repo to automatically download and manage
 these extra projects.
 
