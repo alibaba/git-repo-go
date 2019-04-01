@@ -331,13 +331,13 @@ func (v *Project) GetRemoteURL() (string, error) {
 		v.manifestURL = v.GitConfigRemoteURL()
 	}
 	if v.manifestURL == "" {
-		return "", fmt.Errorf("empty manifest url")
+		return "", fmt.Errorf("project '%s' has empty manifest url", v.Name)
 	}
 	if v.IsMetaProject() {
 		return v.manifestURL, nil
 	}
 	if v.GetRemote() == nil {
-		return "", fmt.Errorf("project has no remote: %s", v.Name)
+		return "", fmt.Errorf("project '%s' has no remote '%s'", v.Name, v.Remote)
 	}
 
 	u, err := urlJoin(v.manifestURL, v.GetRemote().Fetch, v.Name)

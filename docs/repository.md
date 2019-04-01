@@ -3,7 +3,7 @@
 Repository is a wrapper for bare object repository or non-bare work repository.
 
 Repository may has a reference repository, which has objects can be borrowed.
-See `OnceReference` field。
+See `LocalReference` field。
 
 
 # Go-Git

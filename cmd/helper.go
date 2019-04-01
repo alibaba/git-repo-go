@@ -49,3 +49,13 @@ func isUserError(err error) bool {
 
 	return userErrorRegexp.MatchString(err.Error())
 }
+
+func min(args ...uint64) uint64 {
+	m := args[0]
+	for _, arg := range args[1:] {
+		if arg < m {
+			m = arg
+		}
+	}
+	return m
+}

@@ -18,12 +18,13 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"regexp"
 
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/viper"
 )
 
-// Define macros for config
+// Exported macros
 const (
 	DefaultConfigPath = ".git-repo"
 	DefaultLogRotate  = 20 * 1024 * 1024
@@ -48,7 +49,14 @@ const (
 	ProjectObjects   = "project-objects"
 	Projects         = "projects"
 
+	MaxJobs = 32
+
 	ViperEnvPrefix = "GIT_REPO"
+)
+
+// Exported variables
+var (
+	CommitIDPattern = regexp.MustCompile(`^[0-9a-f]{40}([0-9a-f]{24})?$`)
 )
 
 // GetVerbose gets --verbose option
