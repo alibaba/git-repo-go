@@ -42,7 +42,7 @@ func TestProjectGitInit(t *testing.T) {
 	p := NewProject(&xmlProject, workdir, mURL)
 	u, err := p.GetRemoteURL()
 	assert.Nil(err)
-	assert.Equal("https://github.com/jiangxin/my/foo.git", u)
+	assert.Equal("https://github.com/my/foo.git", u)
 
 	assert.NotNil(p.WorkRepository)
 	// Call GitInit
@@ -50,7 +50,7 @@ func TestProjectGitInit(t *testing.T) {
 	err = p.GitInit()
 	assert.Nil(err)
 	// TODO: fix it
-	assert.Equal("https://github.com/jiangxin/my/foo.git",
+	assert.Equal("https://github.com/my/foo.git",
 		p.GitConfigRemoteURL())
 	return
 

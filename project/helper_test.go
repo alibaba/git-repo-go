@@ -6,61 +6,108 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestProjectUrlJoin(t *testing.T) {
-	assert := assert.New(t)
-	base := "https://github.com/jiangxin/manifest.git"
+func TestProjectUrlJoinManifest(t *testing.T) {
+	var (
+		u, base string
+		err     error
+	)
 
-	u, err := urlJoin(base, ".", "my/repo")
+	assert := assert.New(t)
+
+	///////////////////
+	base = "https://github.com/jiangxin/manifest.git"
+
+	u, err = urlJoin(base, ".", "repo")
 	assert.Nil(err)
-	assert.Equal("https://github.com/jiangxin/manifest/my/repo", u)
+	assert.Equal("https://github.com/jiangxin/repo", u)
 
 	u, err = urlJoin(base, "..", "my/repo")
 	assert.Nil(err)
-	assert.Equal("https://github.com/jiangxin/my/repo", u)
+	assert.Equal("https://github.com/my/repo", u)
 
 	u, err = urlJoin(base, "../..", "my/repo")
 	assert.Nil(err)
 	assert.Equal("https://github.com/my/repo", u)
 
-	u, err = urlJoin(base, "../../../..", "my/repo")
+	///////////////////
+	base = "https://github.com/jiangxin/manifest/"
+
+	u, err = urlJoin(base, ".", "repo")
+	assert.Nil(err)
+	assert.Equal("https://github.com/jiangxin/repo", u)
+
+	u, err = urlJoin(base, "..", "my/repo")
 	assert.Nil(err)
 	assert.Equal("https://github.com/my/repo", u)
 
+	u, err = urlJoin(base, "../..", "my/repo")
+	assert.Nil(err)
+	assert.Equal("https://github.com/my/repo", u)
+
+	///////////////////
 	base = "https://github.com/jiangxin/manifest.git/"
 
 	u, err = urlJoin(base, ".", "my/repo")
 	assert.Nil(err)
-	assert.Equal("https://github.com/jiangxin/manifest/my/repo", u)
+	assert.Equal("https://github.com/jiangxin/my/repo", u)
 
 	u, err = urlJoin(base, "..", "my/repo")
 	assert.Nil(err)
-	assert.Equal("https://github.com/jiangxin/my/repo", u)
+	assert.Equal("https://github.com/my/repo", u)
 
+	///////////////////
 	base = "ssh://git@github.com/jiangxin/manifest.git/"
 
 	u, err = urlJoin(base, "..", "my/repo")
 	assert.Nil(err)
-	assert.Equal("ssh://git@github.com/jiangxin/my/repo", u)
+	assert.Equal("ssh://git@github.com/my/repo", u)
 
-	base = "file:///root/manifest.git/"
+	///////////////////
+	base = "file:///root/manifest.git"
+
+	u, err = urlJoin(base, ".", "repo")
+	assert.Nil(err)
+	assert.Equal("file:///root/repo", u)
 
 	u, err = urlJoin(base, "..", "my/repo")
 	assert.Nil(err)
-	assert.Equal("file:///root/my/repo", u)
+	assert.Equal("file:///my/repo", u)
 
 	u, err = urlJoin(base, "../../..", "my/repo")
 	assert.Nil(err)
 	assert.Equal("file:///my/repo", u)
 
-	base = "git@github.com:jiangxin/manifest.git/"
+	///////////////////
+	base = "git@github.com:jiangxin/manifest.git"
+
+	u, err = urlJoin(base, ".", "repo")
+	assert.Nil(err)
+	assert.Equal("git@github.com:jiangxin/repo", u)
 
 	u, err = urlJoin(base, "..", "my/repo")
 	assert.Nil(err)
-	assert.Equal("git@github.com:jiangxin/my/repo", u)
+	assert.Equal("git@github.com:my/repo", u)
 
 	u, err = urlJoin(base, "../../..", "my/repo")
 	assert.Nil(err)
 	assert.Equal("git@github.com:my/repo", u)
+}
+
+func TestProjectUrlJoinAbs(t *testing.T) {
+	var (
+		u, base string
+		err     error
+	)
+
+	assert := assert.New(t)
+
+	///////////////////
+	base = "https://github.com/jiangxin/manifest.git"
+
+	u, err = urlJoin(base, "https://code.alibaba-inc.com/projects", "repo")
+	assert.Nil(err)
+	assert.Equal("https://code.alibaba-inc.com/projects/repo", u)
+
 }
 
 func TestMatchGroups(t *testing.T) {

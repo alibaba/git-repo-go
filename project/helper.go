@@ -14,7 +14,23 @@ const (
 	GroupNotDefault = "notdefault"
 )
 
-func urlJoin(manifestURL, fetchURL, name string) (string, error) {
+func urlJoin(u string, names ...string) (string, error) {
+	if len(names) == 0 {
+		return u, nil
+	}
+
+	// If names[0] is an URL, ignore u and start with name[0]
+	if strings.Contains(names[0], ":") {
+		return _urlJoin(names...)
+	}
+
+	// Remove last part of manifest url
+	paths := []string{u, ".."}
+	paths = append(paths, names...)
+	return _urlJoin(paths...)
+}
+
+func _urlJoin(names ...string) (string, error) {
 	var (
 		u            *url.URL
 		err          error
@@ -22,26 +38,41 @@ func urlJoin(manifestURL, fetchURL, name string) (string, error) {
 		mangleColumn = false
 	)
 
-	if strings.HasSuffix(manifestURL, "/") {
-		manifestURL = strings.TrimRight(manifestURL, "/")
+	if len(names) == 0 {
+		return "", nil
+	} else if len(names) == 1 {
+		return names[0], nil
 	}
-	if strings.HasSuffix(manifestURL, ".git") {
-		manifestURL = strings.TrimSuffix(manifestURL, ".git")
+
+	for strings.HasSuffix(names[0], "/") {
+		names[0] = strings.TrimRight(names[0], "/")
 	}
-	if !strings.Contains(manifestURL, "://") {
-		slices := strings.SplitN(manifestURL, ":", 2)
+	if names[0] == "" {
+		names[0] = "/"
+	}
+
+	// names[1] is an URL
+	if strings.Contains(names[1], ":") {
+		return _urlJoin(names[1:]...)
+	}
+
+	if !strings.Contains(names[0], "://") {
+		slices := strings.SplitN(names[0], ":", 2)
 		if len(slices) == 2 {
-			manifestURL = strings.Join(slices, "/")
+			names[0] = strings.Join(slices, "/")
 			mangleColumn = true
 		}
-		manifestURL = "gopher://" + manifestURL
+		names[0] = "gopher://" + names[0]
 		manglePrefix = true
 	}
-	u, err = url.Parse(manifestURL)
+	u, err = url.Parse(names[0])
 	if err != nil {
-		return "", fmt.Errorf("bad manifest url - %s: %s", manifestURL, err)
+		return "", fmt.Errorf("bad manifest url - %s: %s", names[0], err)
 	}
-	u.Path = filepath.Clean(filepath.Join(u.Path, fetchURL, name))
+
+	ps := []string{u.Path}
+	ps = append(ps, names[1:]...)
+	u.Path = filepath.Clean(filepath.Join(ps...))
 	joinURL := u.String()
 
 	if manglePrefix {
