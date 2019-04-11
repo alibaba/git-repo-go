@@ -1,50 +1,50 @@
 #!/bin/sh
 
-SHARED_REPOSITORIES_VERSION=0
+REPO_TEST_REPOSITORIES_VERSION=0
 
 # Create test repositories in .repositories
-SHARED_REPOSITORIES="${SHARNESS_TEST_SRCDIR}/test-repositories"
-SHARED_REPOSITORIES_VERSION_FILE="${SHARED_REPOSITORIES}/.VERSION"
+REPO_TEST_REPOSITORIES="${SHARNESS_TEST_SRCDIR}/test-repositories"
+REPO_TEST_REPOSITORIES_VERSION_FILE="${REPO_TEST_REPOSITORIES}/.VERSION"
 
-test_create_shared_repositories () {
+repo_create_test_repositories () {
 	# create lock
 	lockmsg="locked by $$"
 	while :
 	do
-		if test -f "${SHARED_REPOSITORIES}.lock"
+		if test -f "${REPO_TEST_REPOSITORIES}.lock"
 		then
-			if test "$lockmsg" = "$(cat "${SHARED_REPOSITORIES}.lock")"; then
+			if test "$lockmsg" = "$(cat "${REPO_TEST_REPOSITORIES}.lock")"; then
 				break
 			fi
-			echo >&2 "Another process is creating shared repositories: $(cat "${SHARED_REPOSITORIES}.lock")"
+			echo >&2 "Another process is creating shared repositories: $(cat "${REPO_TEST_REPOSITORIES}.lock")"
 			sleep 2
 
 		else
-			echo "$lockmsg" >"${SHARED_REPOSITORIES}.lock"
+			echo "$lockmsg" >"${REPO_TEST_REPOSITORIES}.lock"
 		fi
 	done
 
-	if test_shared_repositories_version
+	if test_repositories_is_uptodate
 	then
 		return
 	fi
 
 	# Remove whole shared repositories
-	echo >&2 "Will recreate shared repositories in $SHARED_REPOSITORIES"
-	rm -rf "$SHARED_REPOSITORIES"
+	echo >&2 "Will recreate shared repositories in $REPO_TEST_REPOSITORIES"
+	rm -rf "$REPO_TEST_REPOSITORIES"
 
 	# Start to create shared repositories
-	test_create_shared_repositories_real
+	repo_create_test_repositories_real
 
 	# create version file
-	echo ${SHARED_REPOSITORIES_VERSION} >${SHARED_REPOSITORIES_VERSION_FILE}
+	echo ${REPO_TEST_REPOSITORIES_VERSION} >${REPO_TEST_REPOSITORIES_VERSION_FILE}
 
 	# release the lock
-	rm -f "${SHARED_REPOSITORIES}.lock"
+	rm -f "${REPO_TEST_REPOSITORIES}.lock"
 }
 
-test_shared_repositories_version() {
-	if test "$(cat "$SHARED_REPOSITORIES_VERSION_FILE" 2>/dev/null)" = "${SHARED_REPOSITORIES_VERSION}"
+test_repositories_is_uptodate() {
+	if test "$(cat "$REPO_TEST_REPOSITORIES_VERSION_FILE" 2>/dev/null)" = "${REPO_TEST_REPOSITORIES_VERSION}"
 	then
 		return 0
 	fi
@@ -69,7 +69,7 @@ test_create_repository () {
 	name=${name%\.git}
 	dir=$(dirname $repo)
 
-	cd "$SHARED_REPOSITORIES" &&
+	cd "$REPO_TEST_REPOSITORIES" &&
 	if test -n "$dir" && test "$dir" != "."
 	then
 		mkdir -p "$dir"
@@ -88,13 +88,13 @@ test_create_repository () {
 	git add VERSION &&
 	git commit -m "bump version to 2.0-dev" &&
 	git push origin master maint v1.0 &&
-	cd "$SHARED_REPOSITORIES" &&
+	cd "$REPO_TEST_REPOSITORIES" &&
 	rm -rf "tmp-$name"
 }
 
 test_create_manifest_projects () {
 	# create manifest repository
-	cd "$SHARED_REPOSITORIES" &&
+	cd "$REPO_TEST_REPOSITORIES" &&
 	mkdir -p hello &&
 	git init --bare hello/manifests.git &&
 	git clone hello/manifests.git tmp-manifests &&
@@ -164,12 +164,12 @@ test_create_manifest_projects () {
 	git commit -m "Add new xml: releaes.xml" &&
 	git push origin master &&
 
-	cd "$SHARED_REPOSITORIES" &&
+	cd "$REPO_TEST_REPOSITORIES" &&
 	rm -rf "tmp-manifests"
 }
 
-test_create_shared_repositories_real () {
-	mkdir -p "$SHARED_REPOSITORIES" &&
+repo_create_test_repositories_real () {
+	mkdir -p "$REPO_TEST_REPOSITORIES" &&
 	(
 		test_create_repository hello/main.git &&
 		test_create_repository hello/project1.git &&
@@ -181,7 +181,7 @@ test_create_shared_repositories_real () {
 	)
 }
 
-if ! test_shared_repositories_version
+if ! test_repositories_is_uptodate
 then
-	test_create_shared_repositories
+	repo_create_test_repositories
 fi

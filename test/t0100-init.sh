@@ -5,7 +5,7 @@ test_description="git-repo init"
 . ./lib/sharness.sh
 
 # Create manifest repositories
-manifest_url="file://${SHARED_REPOSITORIES}/hello/manifests"
+manifest_url="file://${REPO_TEST_REPOSITORIES}/hello/manifests"
 
 test_expect_success "setup" '
 	# create .repo file as a barrier, not find .repo deeper
