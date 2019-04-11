@@ -3,7 +3,6 @@ package project
 import (
 	"fmt"
 	"io/ioutil"
-	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -306,48 +305,6 @@ func (v *Project) RemoteURL() string {
 		return ""
 	}
 	return u
-}
-
-func urlJoin(manifestURL, fetchURL, name string) (string, error) {
-	var (
-		u            *url.URL
-		err          error
-		manglePrefix = false
-		mangleColumn = false
-	)
-
-	if strings.HasSuffix(manifestURL, "/") {
-		manifestURL = strings.TrimRight(manifestURL, "/")
-	}
-	if strings.HasSuffix(manifestURL, ".git") {
-		manifestURL = strings.TrimSuffix(manifestURL, ".git")
-	}
-	if !strings.Contains(manifestURL, "://") {
-		slices := strings.SplitN(manifestURL, ":", 2)
-		if len(slices) == 2 {
-			manifestURL = strings.Join(slices, "/")
-			mangleColumn = true
-		}
-		manifestURL = "gopher://" + manifestURL
-		manglePrefix = true
-	}
-	u, err = url.Parse(manifestURL)
-	if err != nil {
-		return "", fmt.Errorf("bad manifest url - %s: %s", manifestURL, err)
-	}
-	u.Path = filepath.Clean(filepath.Join(u.Path, fetchURL, name))
-	joinURL := u.String()
-
-	if manglePrefix {
-		joinURL = strings.TrimPrefix(joinURL, "gopher://")
-		if mangleColumn {
-			slices := strings.SplitN(joinURL, "/", 2)
-			if len(slices) == 2 {
-				joinURL = strings.Join(slices, ":")
-			}
-		}
-	}
-	return joinURL, nil
 }
 
 // Config returns git config file parser
