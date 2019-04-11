@@ -1,6 +1,6 @@
 #!/bin/sh
 
-REPO_TEST_REPOSITORIES_VERSION=0
+REPO_TEST_REPOSITORIES_VERSION=1
 
 # Create test repositories in .repositories
 REPO_TEST_REPOSITORIES="${SHARNESS_TEST_SRCDIR}/test-repositories"
@@ -105,24 +105,24 @@ test_create_manifest_projects () {
 	<manifest>
 	  <remote  name="aone"
 	           alias="origin"
-		   fetch=".."
+		   fetch="."
 		   review="https://code.aone.alibaba-inc.com" />
 	  <remote  name="driver"
-		   fetch="../.."
+		   fetch=".."
 		   review="https://code.aone.alibaba-inc.com" />
 	  <default remote="aone"
 	           revision="master"
 		   sync-j="4" />
-	  <project name="hello/main" path="main" groups="app">
+	  <project name="main" path="main" groups="app">
 	    <copyfile src="VERSION" dest="../VERSION"></copyfile>
 	    <linkfile src="Makefile" dest="../Makefile"></linkfile>
 	  </project>
-	  <project name="hello/project1" path="projects/app1" groups="app">
-	    <project name="hello/project1/module1" path="module1" groups="app"/>
+	  <project name="project1" path="projects/app1" groups="app">
+	    <project name="module1" path="module1" groups="app"/>
 	  </project>
-	  <project name="hello/project2" path="projects/app2" groups="app"/>
+	  <project name="project2" path="projects/app2" groups="app"/>
 	  <project name="drivers/driver1" path="drivers/driver-1" groups="drivers" remote="driver" />
-	  <project name="drivers/driver2" path="drivers/driver-2" groups="drivers" remote="driver" />
+	  <project name="drivers/driver2" path="drivers/driver-2" groups="notdefault,drivers" remote="driver" />
 	</manifest>
 	EOF
 
@@ -133,35 +133,35 @@ test_create_manifest_projects () {
 	git branch maint &&
 	git push origin v1.0 maint master &&
 
-	cat >release.xml <<-EOF &&
+	cat >next.xml <<-EOF &&
 	<?xml version="1.0" encoding="UTF-8"?>
 	<manifest>
 	  <remote  name="aone"
 	           alias="origin"
-		   fetch=".."
+		   fetch="."
 		   revision="maint"
 		   review="https://code.aone.alibaba-inc.com" />
 	  <remote  name="driver"
-		   fetch="../.."
+		   fetch=".."
 		   revision="maint"
 		   review="https://code.aone.alibaba-inc.com" />
 	  <default remote="aone"
 	           revision="master"
 		   sync-j="4" />
-	  <project name="hello/main" path="main" groups="app">
+	  <project name="main" path="main" groups="app">
 	    <copyfile src="VERSION" dest="../VERSION"></copyfile>
 	    <linkfile src="Makefile" dest="../Makefile"></linkfile>
 	  </project>
-	  <project name="hello/project1" path="projects/app1" groups="app">
-	    <project name="hello/project1/module1" path="module1" groups="app"/>
+	  <project name="project1" path="projects/app1" groups="app">
+	    <project name="module1" path="module1" groups="notdefault,app"/>
 	  </project>
 	  <project name="drivers/driver1" path="drivers/driver-1" groups="drivers" remote="driver" />
-	  <project name="drivers/driver2" path="drivers/driver-2" groups="drivers" remote="driver" />
+	  <project name="drivers/driver2" path="drivers/driver-2" groups="notdefault,drivers" remote="driver" />
 	</manifest>
 	EOF
 
-	git add release.xml &&
-	git commit -m "Add new xml: releaes.xml" &&
+	git add next.xml &&
+	git commit -m "Add new xml: next.xml" &&
 	git push origin master &&
 
 	cd "$REPO_TEST_REPOSITORIES" &&
