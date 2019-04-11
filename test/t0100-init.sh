@@ -13,7 +13,7 @@ test_expect_success "setup" '
 	mkdir work
 '
 
-test_expect_success "git-repo init" '
+test_expect_success "git-repo init, manifest points to default.xml" '
 	(
 		cd work &&
 		git-repo init -u $manifest_url &&
@@ -21,11 +21,21 @@ test_expect_success "git-repo init" '
 		test -f .repo/manifest.xml &&
 		echo manifests/default.xml >expect &&
 		readlink .repo/manifest.xml >actual &&
-		test_cmp expect actual &&
+		test_cmp expect actual
+	)
+'
+test_expect_success "git-repo init, manifest.name set to default.xml" '
+	(
+		cd work &&
 		# git config variable manifest.name is set to default.xml
 		echo default.xml >expect &&
 		git -C .repo/manifests config manifest.name >actual &&
-		test_cmp expect actual &&
+		test_cmp expect actual
+	)
+'
+test_expect_success "git-repo init, default branch has two XML files" '
+	(
+		cd work &&
 		# Has two xml files
 		ls .repo/manifests/*.xml >actual &&
 		cat >expect<<-EOF &&
@@ -64,54 +74,29 @@ test_expect_success "test init -m <file>" '
 	)
 '
 
-test_expect_success "group test" '
-	(
-		cd work &&
-		# platform = auto
-		git-repo init --platform auto &&
-		echo platform- >expect &&
-		git -C .repo/manifests config manifest.groups | sed -e "s/-.*$/-/g">actual &&
-		test_cmp expect actual &&
-		# platform = all
-		git-repo init --platform all &&
-		echo "platform-linux,platform-darwin,platform-windows" >expect &&
-		git -C .repo/manifests config manifest.groups >actual &&
-		test_cmp expect actual &&
-		# platform = auto, group = default
-		git-repo init -g default --platform auto &&
-		printf "" >expect &&
-		test_must_fail git -C .repo/manifests config manifest.groups >actual &&
-		test_cmp expect actual &&
-		# -g app
-		git-repo init -g app &&
-		echo app >expect &&
-		git -C .repo/manifests config manifest.groups >actual &&
-		test_cmp expect actual &&
-		# usee default platform and group
-		git-repo init &&
-		printf "" >expect &&
-		test_must_fail git -C .repo/manifests config manifest.groups >actual &&
-		test_cmp expect actual &&
-		# -g app -p linux
-		git-repo init -g app -p linux &&
-		echo app,platform-linux >expect &&
-		git -C .repo/manifests config manifest.groups >actual &&
-		test_cmp expect actual
-	)
-'
-
-test_expect_success "switch branch" '
+test_expect_success "branch: maint, file: default.xml" '
 	(
 		cd work &&
 		git-repo init -u $manifest_url -b maint -m default.xml &&
 		# after init, manifest.xml links to manifests/default.xml
 		echo manifests/default.xml >expect &&
 		readlink .repo/manifest.xml >actual &&
-		test_cmp expect actual &&
+		test_cmp expect actual
+	)
+'
+test_expect_success "manifest.name set to default.xml" '
+	(
+		cd work &&
 		# git config variable manifest.name is set to default.xml
 		echo default.xml >expect &&
 		git -C .repo/manifests config manifest.name >actual &&
-		test_cmp expect actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success "branch: maint, no release.xml" '
+	(
+		cd work &&
 		# Branch switched, no release.xml
 		ls .repo/manifests/*.xml >actual &&
 		cat >expect<<-EOF &&
