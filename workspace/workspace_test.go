@@ -22,7 +22,7 @@ func testCreateManifests(repoRoot, manifestURL string) error {
 
 	// Create manifests.git repository
 	mProject := project.NewManifestProject(repoRoot, manifestURL)
-	err = mProject.GitInit(manifestURL, "")
+	err = mProject.GitInit()
 	if err != nil {
 		return err
 	}
@@ -126,7 +126,7 @@ func TestNewLoadEmptyWorkSpaceInit(t *testing.T) {
 	err = os.MkdirAll(workdir, 0755)
 	assert.Nil(err)
 
-	ws, err := NewWorkSpaceInit(workdir, "")
+	ws, err := NewWorkSpaceInit(workdir, "git@server:path/of/manifest.git")
 	assert.Nil(err)
 	assert.Equal(workdir, ws.RootDir)
 	assert.Nil(ws.Manifest)

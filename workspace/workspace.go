@@ -1,8 +1,10 @@
 package workspace
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 
 	"code.alibaba-inc.com/force/git-repo/cap"
 	"code.alibaba-inc.com/force/git-repo/config"
@@ -18,22 +20,24 @@ import (
 type WorkSpace struct {
 	RootDir         string
 	Manifest        *manifest.Manifest
-	ManifestProject *project.Project
+	ManifestProject *project.ManifestProject
 	Projects        []*project.Project
 	reference       string
+	projectByName   map[string][]*project.Project
+	projectByPath   map[string]*project.Project
 }
 
 // IsInitialized checks whether workspace is initialized
-func (v *WorkSpace) IsInitialized() bool {
-	if v.RootDir == "" || v.Manifest == nil || v.ManifestProject == nil {
+func IsInitialized(dir string) bool {
+	manifestsDir := filepath.Join(dir, config.DotRepo, config.Manifests)
+	if _, err := os.Stat(filepath.Join(manifestsDir, ".git")); err != nil {
 		return false
 	}
-
-	if v.ManifestProject.RemoteURL() == "" {
+	cfg, err := goconfig.Load(manifestsDir)
+	if err != nil {
 		return false
 	}
-
-	return true
+	return cfg.Get("remote.origin.url") != ""
 }
 
 // SetReference set reference for workspace
@@ -46,7 +50,11 @@ func (v *WorkSpace) ManifestURL() string {
 	if v.ManifestProject == nil {
 		return ""
 	}
-	return v.ManifestProject.RemoteURL()
+	u, err := v.ManifestProject.GetRemoteURL()
+	if err != nil {
+		log.Error(err)
+	}
+	return u
 }
 
 // GetReference returns reference
@@ -100,20 +108,134 @@ func (v *WorkSpace) Load(manifestURL string) error {
 
 	v.Manifest = m
 
+	return v.loadProjects(manifestURL)
+}
+
+// Override will read alternate manifest XML file to initialize workspace
+func (v *WorkSpace) Override(name string) error {
+	manifestFile := filepath.Join(v.RootDir, config.DotRepo, config.Manifests, name)
+	if _, err := os.Stat(manifestFile); err != nil {
+		return fmt.Errorf("cannot find manifest: %s", name)
+	}
+
+	m, err := manifest.LoadFile(filepath.Join(v.RootDir, config.DotRepo), manifestFile)
+	if err != nil {
+		return err
+	}
+	v.Manifest = m
+
+	return v.loadProjects("")
+}
+
+func (v *WorkSpace) loadProjects(manifestURL string) error {
+	var err error
 	// Set manifest project even v.Manifest is nil
 	v.ManifestProject = project.NewManifestProject(v.RootDir, manifestURL)
-	manifestURL = v.ManifestProject.RemoteURL()
+	manifestURL, err = v.ManifestProject.GetRemoteURL()
+	if err != nil {
+		return err
+	}
 
 	// Set projects
 	v.Projects = []*project.Project{}
+	v.projectByName = make(map[string][]*project.Project)
+	v.projectByPath = make(map[string]*project.Project)
 	if v.Manifest != nil {
-		for _, p := range v.Manifest.AllProjects() {
-			v.Projects = append(v.Projects,
-				project.NewProject(&p, v.RootDir, manifestURL))
+		for _, mp := range v.Manifest.AllProjects() {
+			p := project.NewProject(&mp, v.RootDir, manifestURL)
+			v.Projects = append(v.Projects, p)
+			if _, ok := v.projectByName[p.Name]; !ok {
+				v.projectByName[p.Name] = []*project.Project{}
+			}
+			v.projectByName[p.Name] = append(v.projectByName[p.Name], p)
+			v.projectByPath[p.Path] = p
 		}
 	}
 
 	return nil
+}
+
+// GetProjectsWithName returns projects which has matching name
+func (v WorkSpace) GetProjectsWithName(name string) []*project.Project {
+	return v.projectByName[name]
+}
+
+// GetProjectWithPath returns project which has matching path
+func (v WorkSpace) GetProjectWithPath(p string) *project.Project {
+	return v.projectByPath[p]
+}
+
+// GetProjectsOptions is options for GetProjects() function
+type GetProjectsOptions struct {
+	Groups       string
+	MissingOK    bool
+	SubmodulesOK bool
+}
+
+// GetProjects returns all matching projects
+func (v WorkSpace) GetProjects(o *GetProjectsOptions, args ...string) ([]*project.Project, error) {
+	var (
+		groups      string
+		result      = []*project.Project{}
+		allProjects = []*project.Project{}
+	)
+
+	groups = o.Groups
+	if groups == "" {
+		groups = v.ManifestProject.Config().Get(config.CfgManifestGroups)
+		if groups == "" {
+			groups = "default,platform-" + runtime.GOOS
+		}
+	}
+
+	if len(args) == 0 {
+		allProjects = v.Projects
+	} else {
+		for _, arg := range args {
+			ps := v.GetProjectsWithName(arg)
+			if len(ps) == 0 {
+				arg, _ = path.Abs(arg)
+				absPath := filepath.ToSlash(arg)
+				p := v.GetProjectWithPath(absPath)
+				if p != nil {
+					ps = append(ps, p)
+				}
+			}
+			if len(ps) == 0 {
+				return nil, errors.NoSuchProjectError(arg)
+			}
+			allProjects = append(allProjects, ps...)
+		}
+	}
+
+	derivedProjects := []*project.Project{}
+	for _, p := range allProjects {
+		if o.SubmodulesOK || p.IsSyncS() {
+			for _, sp := range p.GetSubmoduleProjects() {
+				derivedProjects = append(derivedProjects, sp)
+			}
+		}
+	}
+
+	if len(derivedProjects) > 0 {
+		allProjects = project.Join(allProjects, derivedProjects)
+	}
+
+	for _, p := range allProjects {
+		if !o.MissingOK && !p.Exists() {
+			if len(args) > 0 {
+				return nil, errors.ProjectNoExistError(p.Name)
+			}
+			continue
+		}
+		if p.MatchGroups(groups) {
+			result = append(result, p)
+		} else if len(args) > 0 {
+			return nil, errors.ProjectNotBelongToGroupsError(p.Name, groups)
+		}
+	}
+
+	return result, nil
 }
 
 // NewWorkSpace finds and loads repo workspace. Will return an error if not found.

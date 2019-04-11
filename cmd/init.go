@@ -26,6 +26,7 @@ import (
 	"code.alibaba-inc.com/force/git-repo/cap"
 	"code.alibaba-inc.com/force/git-repo/color"
 	"code.alibaba-inc.com/force/git-repo/config"
+	"code.alibaba-inc.com/force/git-repo/errors"
 	"code.alibaba-inc.com/force/git-repo/path"
 	"code.alibaba-inc.com/force/git-repo/workspace"
 	"github.com/jiangxin/goconfig"
@@ -159,21 +160,36 @@ func initCmdRunE() error {
 	}
 
 	// Find repo workspace and load it if exist
-	ws, err := workspace.NewWorkSpaceInit("", initOptions.ManifestURL)
+	cwd, err := os.Getwd()
 	if err != nil {
-		log.Fatal(err)
+		return err
+	}
+	repoRoot, err := path.FindRepoRoot(cwd)
+	if err != nil {
+		if err == errors.ErrRepoDirNotFound {
+			repoRoot = cwd
+		} else {
+			return fmt.Errorf("fail to find .repo: %s", err)
+		}
 	}
 
-	// if workspace is not initialized, check -u, and init it
-	if !ws.IsInitialized() {
+	// Check initialized or not
+	if !workspace.IsInitialized(repoRoot) {
 		isNew = true
 		if initOptions.ManifestURL == "" {
 			log.Fatal("option --manifest-url (-u) is required")
 		}
+	}
 
-		ws.ManifestProject.GitInit(initOptions.ManifestURL, initGuessManifestReference())
-	} else if initOptions.ManifestURL != "" && initOptions.ManifestURL != ws.ManifestURL() {
-		ws.ManifestProject.GitInit(initOptions.ManifestURL, initGuessManifestReference())
+	ws, err := workspace.NewWorkSpaceInit(repoRoot, initOptions.ManifestURL)
+	if err != nil {
+		return err
+	}
+
+	if isNew ||
+		initOptions.ManifestURL != "" && initOptions.ManifestURL != ws.ManifestURL() {
+		//TODO: ws.ManifestProject.GitInit(initOptions.ManifestURL, initGuessManifestReference())
+		ws.ManifestProject.GitInit()
 	}
 
 	// Fetch repositories

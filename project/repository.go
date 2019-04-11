@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
-	"code.alibaba-inc.com/force/git-repo/cap"
+	"code.alibaba-inc.com/force/git-repo/config"
 	"code.alibaba-inc.com/force/git-repo/path"
 	"github.com/jiangxin/goconfig"
 	"github.com/jiangxin/multi-log"
@@ -27,11 +28,12 @@ var (
 
 // Repository has repository related operations
 type Repository struct {
-	ProjectName   string // Project name
-	Path          string
-	RefSpecs      []string
-	OnceReference string // First clone/fetch, can use this as a reference
-	IsBare        bool
+	ProjectName    string // Project name
+	Path           string
+	RefSpecs       []string
+	LocalReference string // First clone/fetch, can use this as a reference
+	IsBare         bool
+	RemoteURL      string
 }
 
 // Name returns repository name
@@ -47,6 +49,57 @@ func (v *Repository) Exists() bool {
 	return path.IsGitDir(v.Path)
 }
 
+func (v *Repository) setRemote(remoteName, remoteURL string) error {
+	var err error
+
+	if remoteURL != "" {
+		v.RemoteURL = remoteURL
+	}
+	cfg := v.Config()
+	changed := false
+	if !v.IsBare {
+		cfg.Unset("core.bare")
+		cfg.Set("core.logAllRefUpdates", "true")
+		changed = true
+	}
+	if remoteName != "" && remoteURL != "" {
+		cfg.Set("remote."+remoteName+".url", v.RemoteURL)
+		changed = true
+	}
+	if changed {
+		err = cfg.Save(v.configFile())
+	}
+	return err
+}
+
+func (v *Repository) setAlternates(reference string) {
+	var err error
+
+	if reference != "" {
+		// create file: objects/info/alternates
+		altFile := filepath.Join(v.Path, "objects", "info", "alternates")
+		os.MkdirAll(filepath.Dir(altFile), 0755)
+		var f *os.File
+		f, err = os.OpenFile(altFile, os.O_CREATE|os.O_RDWR, 0644)
+		defer f.Close()
+		if err == nil {
+			relPath := filepath.Join(reference, "objects")
+			relPath, err = filepath.Rel(filepath.Join(v.Path, "objects"), relPath)
+			if err == nil {
+				_, err = f.WriteString(relPath + "\n")
+			}
+			if err != nil {
+				log.Errorf("fail to set info/alternates on %s: %s", v.Path, err)
+			}
+		}
+	}
+}
+
+// GitConfigRemoteURL returns remote url in git config
+func (v *Repository) GitConfigRemoteURL(name string) string {
+	return v.Config().Get("remote." + name + ".url")
+}
+
 // Init runs git-init on repository
 func (v *Repository) Init(remoteName, remoteURL, referenceGitDir string) error {
 	var err error
@@ -56,40 +109,24 @@ func (v *Repository) Init(remoteName, remoteURL, referenceGitDir string) error {
 		if err != nil {
 			return err
 		}
+		v.initMissing()
 	}
 
-	cfg := v.Config()
-	changed := false
-	if !v.IsBare {
-		cfg.Unset("core.bare")
-		cfg.Set("core.logAllRefUpdates", "true")
-		changed = true
-	}
 	if remoteName != "" && remoteURL != "" {
-		cfg.Set("remote."+remoteName+".url", remoteURL)
-		changed = true
-	}
-	if changed {
-		cfg.Save(v.configFile())
+		if !strings.HasSuffix(remoteURL, ".git") {
+			remoteURL += ".git"
+		}
+		u := v.GitConfigRemoteURL(remoteName)
+		if u != remoteURL {
+			err = v.setRemote(remoteName, remoteURL)
+			if err != nil {
+				return err
+			}
+		}
 	}
 
 	if referenceGitDir != "" {
-		// create file: objects/info/alternates
-		altFile := filepath.Join(v.Path, "objects", "info", "alternates")
-		os.MkdirAll(filepath.Dir(altFile), 0755)
-		var f *os.File
-		f, err = os.OpenFile(altFile, os.O_CREATE|os.O_RDWR, 0644)
-		defer f.Close()
-		if err == nil {
-			relPath := filepath.Join(referenceGitDir, "objects")
-			relPath, err = filepath.Rel(filepath.Join(v.Path, "objects"), relPath)
-			if err == nil {
-				_, err = f.WriteString(relPath + "\n")
-			}
-			if err != nil {
-				log.Errorf("fail to set info/alternates on %s: %s", v.Path, err)
-			}
-		}
+		v.setAlternates(referenceGitDir)
 	}
 	return nil
 }
@@ -106,6 +143,7 @@ func (v *Repository) initMissing() error {
 		"branches",
 		"hooks",
 		"info",
+		"refs",
 	}
 	files := map[string]string{
 		"description": fmt.Sprintf("Repository: %s, path: %s\n", v.Name(), v.Path),
@@ -114,7 +152,11 @@ func (v *Repository) initMissing() error {
 	}
 
 	for _, dir := range dirs {
-		if err = os.MkdirAll(filepath.Join(v.Path, dir), 0755); err != nil {
+		dir = filepath.Join(v.Path, dir)
+		if _, err = os.Stat(dir); err == nil {
+			continue
+		}
+		if err = os.MkdirAll(dir, 0755); err != nil {
 			return err
 		}
 	}
@@ -132,11 +174,18 @@ func (v *Repository) initMissing() error {
 		f.Close()
 	}
 
+	if !v.IsBare {
+		cfg := v.Config()
+		cfg.Unset("core.bare")
+		cfg.Set("core.logAllRefUpdates", "true")
+		cfg.Save(v.configFile())
+	}
+
 	return nil
 }
 
-// InitByAttach will init repository by attaching other repository
-func (v *Repository) InitByAttach(repo *Repository) error {
+// InitByLink will init repository by attaching other repository
+func (v *Repository) InitByLink(remoteName, remoteURL string, repo *Repository) error {
 	var err error
 
 	if !repo.Exists() {
@@ -149,55 +198,52 @@ func (v *Repository) InitByAttach(repo *Repository) error {
 		return err
 	}
 
-	if cap.Symlink() {
-		items := []string{
-			"objects",
-			"description",
-			"info",
-			"hooks",
-			"svn",
-			"rr-cache",
+	items := []string{
+		"objects",
+		"description",
+		"info",
+		"hooks",
+		"svn",
+		"rr-cache",
+	}
+	for _, item := range items {
+		source := filepath.Join(repo.Path, item)
+		target := filepath.Join(v.Path, item)
+		if _, err = os.Stat(source); err != nil {
+			continue
 		}
-		for _, item := range items {
-			source := filepath.Join(repo.Path, item)
-			target := filepath.Join(v.Path, item)
-			if _, err = os.Stat(source); err != nil {
-				continue
-			}
-			err = os.Symlink(source, target)
-			if err != nil {
-				break
-			}
-		}
-		v.initMissing()
-	} else {
-		err = v.Init("", "", "")
+		relpath, err := filepath.Rel(v.Path, source)
 		if err != nil {
-			return err
+			relpath = source
 		}
-		// create file: objects/info/alternates
-		altFile := filepath.Join(v.Path, "objects", "info", "alternates")
-		os.MkdirAll(filepath.Dir(altFile), 0755)
-		var f *os.File
-		f, err = os.OpenFile(altFile, os.O_CREATE|os.O_RDWR, 0644)
-		defer f.Close()
-		if err == nil {
-			relPath := filepath.Join(repo.Path, "objects")
-			relPath, err = filepath.Rel(filepath.Join(v.Path, "objects"), relPath)
+		err = os.Symlink(relpath, target)
+		if err != nil {
+			break
+		}
+	}
+	v.initMissing()
+
+	if remoteName != "" && remoteURL != "" {
+		if !strings.HasSuffix(remoteURL, ".git") {
+			remoteURL += ".git"
+		}
+		u := v.GitConfigRemoteURL(remoteName)
+		if u != remoteURL {
+			err = v.setRemote(remoteName, remoteURL)
 			if err != nil {
-				relPath = filepath.Join(repo.Path, "objects")
+				return err
 			}
-			_, err = f.WriteString(relPath + "\n")
 		}
 	}
-	if err != nil {
-		return fmt.Errorf("fail to create alternates file: %s", err)
-	}
+
 	return nil
 }
 
 func (v *Repository) isUnborn() bool {
 	repo := v.Raw()
+	if repo == nil {
+		return false
+	}
 	_, err := repo.Head()
 	return err != nil
 }
@@ -210,29 +256,63 @@ func (v *Repository) fetchRefSpecs() []string {
 	return DefaultRefSpecs
 }
 
-// Fetch runs git-fetch on repository
-func (v *Repository) Fetch(remote string) error {
-	var err error
+// HasAlternates checks if repository has defined alternates
+func (v *Repository) HasAlternates() bool {
+	altFile := filepath.Join(v.Path, "objects", "info", "alternates")
+	finfo, err := os.Stat(altFile)
+	if err != nil {
+		return false
+	}
+	if finfo.Size() == 0 {
+		return false
+	}
+	return true
+}
 
-	if v.isUnborn() && v.OnceReference != "" {
-		// fetch from reference repo first
-		if path.IsGitDir(v.OnceReference) {
-			// fetch first
-			cmdArgs := []string{
-				GIT,
-				"fetch",
-				v.OnceReference,
-			}
-			cmdArgs = append(cmdArgs, v.fetchRefSpecs()...)
-			err = executeCommandIn(v.Path, cmdArgs)
+func (v *Repository) applyCloneBundle() {
+	// TODO: download and clone from bundle file
+}
+
+// Fetch runs git-fetch on repository
+func (v *Repository) Fetch(remote string, o *config.FetchOptions) error {
+	var (
+		err           error
+		hasAlternates bool
+	)
+
+	if v.isUnborn() && v.LocalReference != "" && path.IsGitDir(v.LocalReference) {
+		hasAlternates = true
+
+		altFile := filepath.Join(v.Path, "objects", "info", "alternates")
+		os.MkdirAll(filepath.Dir(altFile), 0755)
+
+		var f *os.File
+		f, err = os.OpenFile(altFile, os.O_CREATE|os.O_RDWR, 0644)
+		defer f.Close()
+		if err == nil {
+			target := filepath.Join(v.LocalReference, "objects")
+			target, err = filepath.Rel(filepath.Join(v.Path, "objects"), target)
 			if err != nil {
-				log.Errorf("fail to fetch %s from reference: %s", v.Name(), err)
+				target = filepath.Join(v.LocalReference, "objects")
 			}
+			_, err = f.WriteString(target + "\n")
 		}
+	} else if v.HasAlternates() {
+		hasAlternates = true
 	}
 
-	remoteURL := v.Config().Get("remote." + remote + ".url")
-	if remoteURL == "" {
+	if o.CloneBundle && !hasAlternates {
+		v.applyCloneBundle()
+	}
+
+	// if o.GetCloneDepth()
+	/*
+		need_to_fetch = !(o.GetOptimizedFetch() &&
+			(config.CommitIDPattern.MatchString(self.revisionExpr) &&
+				self._CheckForImmutableRevision()))
+	*/
+
+	if v.RemoteURL == "" {
 		return fmt.Errorf("don't know where to fetch repo %s from remote %s", v.Name(), remote)
 	}
 
@@ -240,7 +320,7 @@ func (v *Repository) Fetch(remote string) error {
 		GIT,
 		"fetch",
 		"--prune",
-		remoteURL,
+		v.RemoteURL,
 	}
 	cmdArgs = append(cmdArgs, v.fetchRefSpecs()...)
 	err = executeCommandIn(v.Path, cmdArgs)
@@ -254,7 +334,7 @@ func (v *Repository) Fetch(remote string) error {
 func (v *Repository) Raw() *git.Repository {
 	repo, err := git.PlainOpen(v.Path)
 	if err != nil {
-		log.Fatalf("cannot open repo: %s", v.Path)
+		return nil
 	}
 	return repo
 }

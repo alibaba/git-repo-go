@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"code.alibaba-inc.com/force/git-repo/config"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
@@ -165,7 +166,7 @@ func TestRepositoryFetch(t *testing.T) {
 	assert.Nil(err)
 
 	// Fetch from workdir to reference refRepo
-	err = refRepo.Fetch(remote)
+	err = refRepo.Fetch(remote, &config.FetchOptions{})
 	assert.Nil(err)
 	head, err := refRepo.Raw().Head()
 	assert.Nil(err)
@@ -195,9 +196,9 @@ func TestRepositoryFetch(t *testing.T) {
 	// Create another repo
 	newRepoPath := filepath.Join(tmpdir, "repo.git")
 	newRepo := Repository{
-		Path:          newRepoPath,
-		OnceReference: refRepoPath,
-		IsBare:        false,
+		Path:           newRepoPath,
+		LocalReference: refRepoPath,
+		IsBare:         false,
 		RefSpecs: []string{
 			"+refs/heads/*:refs/remotes/origin/*",
 			"+refs/tags/*:refs/tags/*",
@@ -209,7 +210,7 @@ func TestRepositoryFetch(t *testing.T) {
 	assert.Nil(err)
 
 	// fetch from reference repo, then fetch from upstream
-	err = newRepo.Fetch(remote)
+	err = newRepo.Fetch(remote, &config.FetchOptions{})
 	assert.Nil(err)
 	reference, err := newRepo.Raw().Reference("refs/remotes/origin/master", true)
 	assert.Nil(err)

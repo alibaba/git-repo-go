@@ -50,7 +50,7 @@ type Default struct {
 	Revision   string `xml:"revision,attr,omitempty"`
 	DestBranch string `xml:"dest-branch,attr,omitempty"`
 	Upstream   string `xml:"upstream,attr,omitempty"`
-	SyncJ      string `xml:"sync-j,attr,omitempty"`
+	SyncJ      uint64 `xml:"sync-j,attr,omitempty"`
 	SyncC      string `xml:"sync-c,attr,omitempty"`
 	SyncS      string `xml:"sync-s,attr,omitempty"`
 	SyncTags   string `xml:"sync-tags,attr,omitempty"`
@@ -176,6 +176,30 @@ func (v *Project) AllProjects(parent *Project) []Project {
 	return projects
 }
 
+// IsSyncS indicates should sync submodule
+func (v Project) IsSyncS() bool {
+	if v.SyncS == "true" ||
+		v.SyncS == "yes" ||
+		v.SyncS == "t" ||
+		v.SyncS == "y" ||
+		v.SyncS == "on" {
+		return true
+	}
+	return false
+}
+
+// IsSyncC indicates should sync current branch
+func (v Project) IsSyncC() bool {
+	if v.SyncC == "true" ||
+		v.SyncC == "yes" ||
+		v.SyncC == "t" ||
+		v.SyncC == "y" ||
+		v.SyncC == "on" {
+		return true
+	}
+	return false
+}
+
 // IsMetaProject indicates whether current project is a ManifestProject
 func (v *Project) IsMetaProject() bool {
 	return v.isMetaProject
@@ -203,19 +227,35 @@ func (v *Manifest) AllProjects() []Project {
 		remotes[v.Remotes[i].Name] = &v.Remotes[i]
 	}
 
-	// Set remote field of project
 	for i := range projects {
-		name := projects[i].Remote
-		if name == "" {
-			if v.Default != nil {
-				name = v.Default.Remote
+		if v.Default != nil {
+			if projects[i].Remote == "" {
+				projects[i].Remote = v.Default.Remote
+			}
+			if projects[i].Revision == "" {
+				projects[i].Revision = v.Default.Revision
+			}
+			if projects[i].DestBranch == "" {
+				projects[i].DestBranch = v.Default.DestBranch
+			}
+			if projects[i].Upstream == "" {
+				projects[i].Upstream = v.Default.Upstream
+			}
+			if projects[i].SyncC == "" {
+				projects[i].SyncC = v.Default.SyncC
+			}
+			if projects[i].SyncS == "" {
+				projects[i].SyncS = v.Default.SyncS
+			}
+			if projects[i].SyncTags == "" {
+				projects[i].SyncTags = v.Default.SyncTags
 			}
 		}
-		if name != "" {
-			projects[i].remote = remotes[name]
+
+		// Set remote field of project
+		if projects[i].Remote != "" {
+			projects[i].SetRemote(remotes[projects[i].Remote])
 		}
-		// For include xml file, no remotes and no default,
-		// so project's remote maybe empty,
 	}
 	return projects
 }
@@ -407,10 +447,8 @@ func mergeManifests(ms []*Manifest) (*Manifest, error) {
 // Load will load and parse manifest XML file
 func Load(repoDir string) (*Manifest, error) {
 	var (
-		file      string
-		dir       string
-		err       error
-		manifests = []*Manifest{}
+		file string
+		err  error
 	)
 
 	file = filepath.Join(repoDir, config.ManifestXML)
@@ -428,6 +466,20 @@ func Load(repoDir string) (*Manifest, error) {
 			defaultXML = config.DefaultXML
 		}
 		file = filepath.Join(manifestsDir, defaultXML)
+	}
+	return LoadFile(repoDir, file)
+}
+
+// LoadFile will load specific manifest file inside repoDir
+func LoadFile(repoDir, file string) (*Manifest, error) {
+	var (
+		dir       string
+		err       error
+		manifests = []*Manifest{}
+	)
+
+	if !filepath.IsAbs(file) {
+		file = filepath.Join(repoDir, config.Manifests, file)
 	}
 
 	// Ignore uninitialized repo

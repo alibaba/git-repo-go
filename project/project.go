@@ -6,8 +6,10 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 
+	"code.alibaba-inc.com/force/git-repo/cap"
 	"code.alibaba-inc.com/force/git-repo/config"
 	"code.alibaba-inc.com/force/git-repo/manifest"
 	"github.com/jiangxin/goconfig"
@@ -27,7 +29,7 @@ type Project struct {
 }
 
 // IsRepoInitialized checks if repository is initialized
-func (v *Project) IsRepoInitialized() bool {
+func (v Project) IsRepoInitialized() bool {
 	if v.ObjectRepository != nil {
 		if !v.ObjectRepository.Exists() {
 			return false
@@ -42,37 +44,63 @@ func (v *Project) IsRepoInitialized() bool {
 	return true
 }
 
-// GitInit will init project's repositories
-func (v *Project) GitInit(manifestURL, referenceGitDir string) error {
-	if manifestURL != "" {
-		if !strings.HasSuffix(manifestURL, ".git") {
-			manifestURL += ".git"
-		}
-		v.manifestURL = manifestURL
+// RealPath is pull path of project workdir
+func (v Project) RealPath() string {
+	return filepath.Join(v.RepoRoot, v.Path)
+}
+
+// Exists indicates whether project exists or not
+func (v Project) Exists() bool {
+	if _, err := os.Stat(v.RealPath()); err != nil {
+		return false
 	}
-	remoteURL := v.RemoteURL()
+
+	if _, err := os.Stat(filepath.Join(v.RealPath(), ".git")); err != nil {
+		return false
+	}
+
+	return true
+}
+
+// GitInit will init project's repositories
+func (v *Project) GitInit() error {
+	var (
+		referenceGitDir string
+		remoteURL       string
+		err             error
+	)
+
+	remoteURL, err = v.GetRemoteURL()
+	if err != nil {
+		return err
+	}
+
 	if v.ObjectRepository != nil {
-		v.ObjectRepository.Init(v.Remote, remoteURL, referenceGitDir)
+		v.ObjectRepository.Init("", "", referenceGitDir)
 	}
 
 	if v.WorkRepository != nil {
 		if v.ObjectRepository == nil {
 			v.WorkRepository.Init(v.Remote, remoteURL, referenceGitDir)
 		} else {
-			v.WorkRepository.InitByAttach(v.ObjectRepository)
+			v.WorkRepository.InitByLink(v.Remote, remoteURL, v.ObjectRepository)
 		}
 	}
 	return nil
 }
 
 func (v *Project) fetchArchive(tarpath string) error {
+	u, err := v.GetRemoteURL()
+	if err != nil {
+		return err
+	}
 	cmdArgs := []string{
 		"git",
 		"archive",
 		"-v",
 		"-o",
 		tarpath,
-		"--remote=" + v.RemoteURL(),
+		"--remote=" + u,
 		"--prefix=" + v.Path,
 		v.Revision,
 	}
@@ -95,7 +123,17 @@ func (v *Project) extractArchive(tarpath string) error {
 func (v *Project) Fetch(o *config.FetchOptions) error {
 	var err error
 
-	remoteURL := v.RemoteURL()
+	if o == nil {
+		o = &config.FetchOptions{}
+	}
+
+	// Initial repository
+	v.GitInit()
+
+	remoteURL, err := v.GetRemoteURL()
+	if err != nil {
+		return err
+	}
 	if o.Archive && !v.IsMetaProject() {
 		if strings.HasPrefix(remoteURL, "http://") ||
 			strings.HasPrefix(remoteURL, "https://") {
@@ -120,14 +158,8 @@ func (v *Project) Fetch(o *config.FetchOptions) error {
 		return nil
 	}
 
-	if v.ObjectRepository != nil {
-		err = v.ObjectRepository.Fetch(v.Remote)
-		if err != nil {
-			return err
-		}
-	}
 	if v.WorkRepository != nil {
-		err = v.WorkRepository.Fetch(v.Remote)
+		err = v.WorkRepository.Fetch(v.Remote, o)
 		if err != nil {
 			return err
 		}
@@ -208,6 +240,7 @@ func (v *Project) Checkout(branch, local string) error {
 		}
 		cmdArgs = append(cmdArgs, rev)
 	}
+	cmdArgs = append(cmdArgs, "--")
 
 	err = executeCommandIn(v.WorkDir, cmdArgs)
 	if err != nil {
@@ -249,19 +282,31 @@ func (v *Project) Head() string {
 	return head.Name().String()
 }
 
+// SetManifestURL sets manifestURL and change remote url if is MetaProject
+func (v *Project) SetManifestURL(manifestURL string) error {
+	if manifestURL != "" && !strings.HasSuffix(manifestURL, ".git") {
+		manifestURL += ".git"
+	}
+	if v.manifestURL == manifestURL || manifestURL == "" {
+		return nil
+	}
+	v.manifestURL = manifestURL
+	if v.IsMetaProject() {
+		return v.SetGitRemoteURL(manifestURL)
+	}
+	return nil
+}
+
 // SetGitRemoteURL sets remote.<remote>.url setting in git config
-func (v *Project) SetGitRemoteURL(remote, remoteURL string) error {
+func (v *Project) SetGitRemoteURL(remoteURL string) error {
+	remote := v.Remote
 	if remote == "" {
-		if v.Remote != "" {
-			remote = v.Remote
-		} else {
-			remote = "origin"
-		}
+		remote = "origin"
 	}
 
-	repo := v.ObjectRepository
+	repo := v.WorkRepository
 	if repo == nil {
-		repo = v.WorkRepository
+		return fmt.Errorf("project '%s' has no working repository", v.Name)
 	}
 
 	cfg := repo.Config()
@@ -269,42 +314,38 @@ func (v *Project) SetGitRemoteURL(remote, remoteURL string) error {
 	return repo.SaveConfig(cfg)
 }
 
-// GetGitRemoteURL returns remote.<remote>.url setting in git config
-func (v *Project) GetGitRemoteURL() string {
+// GitConfigRemoteURL returns remote.<remote>.url setting in git config
+func (v *Project) GitConfigRemoteURL() string {
 	remote := v.Remote
 	if remote == "" {
 		remote = "origin"
 	}
 
-	repo := v.ObjectRepository
-	if repo == nil {
-		repo = v.WorkRepository
-	}
-
-	return repo.Config().Get("remote." + remote + ".url")
+	repo := v.WorkRepository
+	return repo.GitConfigRemoteURL(remote)
 }
 
-// RemoteURL returns new remtoe url user provided or from manifest repo url
-func (v *Project) RemoteURL() string {
+// GetRemoteURL returns new remtoe url user provided or from manifest repo url
+func (v *Project) GetRemoteURL() (string, error) {
 	if v.manifestURL == "" && v.IsMetaProject() {
-		v.manifestURL = v.GetGitRemoteURL()
+		v.manifestURL = v.GitConfigRemoteURL()
 	}
 	if v.manifestURL == "" {
-		return ""
+		return "", fmt.Errorf("empty manifest url")
 	}
 	if v.IsMetaProject() {
-		return v.manifestURL
+		return v.manifestURL, nil
 	}
 	if v.GetRemote() == nil {
-		log.Errorf("project has no remote: %s", v.Name)
-		return ""
+		return "", fmt.Errorf("project has no remote: %s", v.Name)
 	}
+
 	u, err := urlJoin(v.manifestURL, v.GetRemote().Fetch, v.Name)
 	if err != nil {
-		log.Errorf("fail to join url: %s", err)
-		return ""
+		return "", fmt.Errorf("fail to remote url for '%s': %s", v.Name, err)
 	}
-	return u
+	u += ".git"
+	return u, nil
 }
 
 // Config returns git config file parser
@@ -317,9 +358,16 @@ func (v *Project) SaveConfig(cfg goconfig.GitConfig) error {
 	return v.WorkRepository.SaveConfig(cfg)
 }
 
-// NewManifestProject returns a manifest project: a worktree with a seperate repository
-func NewManifestProject(repoRoot, manifestURL string) *Project {
-	return NewProject(manifest.ManifestsProject, repoRoot, manifestURL)
+// MatchGroups indecates if project belongs to special groups
+func (v Project) MatchGroups(expect string) bool {
+	return MatchGroups(expect, v.Groups)
+}
+
+// GetSubmoduleProjects returns submodule projects
+func (v Project) GetSubmoduleProjects() []*Project {
+	// TODO: return submodule projects
+	log.Panic("not implement GitSubmodules")
+	return nil
 }
 
 // NewProject returns a project: project worktree with a bared repo and a seperate repository
@@ -329,13 +377,16 @@ func NewProject(project *manifest.Project, repoRoot, manifestURL string) *Projec
 		workRepoPath   string
 	)
 
+	if manifestURL != "" && !strings.HasSuffix(manifestURL, ".git") {
+		manifestURL += ".git"
+	}
 	p := Project{
 		Project:     *project,
 		RepoRoot:    repoRoot,
 		manifestURL: manifestURL,
 	}
 
-	if !p.IsMetaProject() && p.manifestURL == "" {
+	if !p.IsMetaProject() && manifestURL == "" {
 		log.Panicf("unknown remote url for %s", p.Name)
 	}
 
@@ -345,7 +396,7 @@ func NewProject(project *manifest.Project, repoRoot, manifestURL string) *Projec
 		p.WorkDir = filepath.Join(repoRoot, p.Path)
 	}
 
-	if !p.IsMetaProject() {
+	if !p.IsMetaProject() && cap.Symlink() {
 		objectRepoPath = filepath.Join(
 			repoRoot,
 			config.DotRepo,
@@ -355,11 +406,7 @@ func NewProject(project *manifest.Project, repoRoot, manifestURL string) *Projec
 		p.ObjectRepository = &Repository{
 			ProjectName: p.Name,
 			Path:        objectRepoPath,
-			RefSpecs: []string{
-				"+refs/heads/*:refs/heads/*",
-				"+refs/tags/*:refs/tags/*",
-			},
-			IsBare: true,
+			IsBare:      true,
 		}
 	}
 
@@ -377,15 +424,22 @@ func NewProject(project *manifest.Project, repoRoot, manifestURL string) *Projec
 			p.Path+".git",
 		)
 	}
+
 	p.WorkRepository = &Repository{
 		ProjectName: p.Name,
 		Path:        workRepoPath,
 		RefSpecs: []string{
-			"+refs/heads/*:refs/remotes/origin/*",
+			fmt.Sprintf("+refs/heads/*:refs/remotes/%s/*", p.Remote),
 			"+refs/tags/*:refs/tags/*",
 		},
 		IsBare: false,
 	}
+
+	remoteURL, err := p.GetRemoteURL()
+	if err != nil {
+		log.Panicf("fail to get remote url for '%s': %s", p.Name, err)
+	}
+	p.WorkRepository.RemoteURL = remoteURL
 
 	return &p
 }
@@ -393,4 +447,89 @@ func NewProject(project *manifest.Project, repoRoot, manifestURL string) *Projec
 func isHashRevision(rev string) bool {
 	re := regexp.MustCompile(`^[0-9][a-f]{7,}$`)
 	return re.MatchString(rev)
+}
+
+// Join two group of projects, ignore duplicated projects
+func Join(group1, group2 []*Project) []*Project {
+	projectMap := make(map[string]bool)
+	result := make([]*Project, len(group1)+len(group2))
+
+	for _, p := range group1 {
+		if _, ok := projectMap[p.Path]; !ok {
+			projectMap[p.Path] = true
+			result = append(result, p)
+		}
+	}
+	for _, p := range group2 {
+		if _, ok := projectMap[p.Path]; !ok {
+			projectMap[p.Path] = true
+			result = append(result, p)
+		}
+	}
+	return result
+}
+
+// GroupByName returns a map using project name as index to group projects
+func GroupByName(projects []*Project) map[string][]*Project {
+	result := make(map[string][]*Project)
+	for _, p := range projects {
+		if _, ok := result[p.Name]; !ok {
+			result[p.Name] = []*Project{p}
+		} else {
+			result[p.Name] = append(result[p.Name], p)
+		}
+	}
+	return result
+}
+
+// PathEntry is used to group projects by path
+type PathEntry struct {
+	Path    string
+	Project *Project
+	Entries []*PathEntry
+}
+
+// GroupByPath returns a map using project path as index to group projects
+func GroupByPath(projects []*Project) *PathEntry {
+	pMap := make(map[string]*Project)
+	paths := []string{}
+	for _, p := range projects {
+		pMap[p.Path] = p
+		paths = append(paths, p.Path)
+	}
+	sort.Strings(paths)
+
+	rootEntry := &PathEntry{Path: "/"}
+	appendEntries(rootEntry, paths, pMap)
+	return rootEntry
+}
+
+func appendEntries(entry *PathEntry, paths []string, pMap map[string]*Project) {
+	var (
+		oldEntry, newEntry *PathEntry
+		i, j               int
+	)
+
+	for i = 0; i < len(paths); i++ {
+		for strings.HasSuffix(paths[i], "/") {
+			paths[i] = strings.TrimSuffix(paths[i], "/")
+		}
+		newEntry = &PathEntry{
+			Path:    paths[i],
+			Project: pMap[paths[i]],
+		}
+		if i > 0 && strings.HasPrefix(paths[i], paths[i-1]+"/") {
+			for j = i + 1; j < len(paths); j++ {
+				if !strings.HasPrefix(paths[j], paths[i-1]+"/") {
+					break
+
+				}
+			}
+			appendEntries(oldEntry, paths[i:j], pMap)
+			i = j - 1
+			continue
+		}
+		oldEntry = newEntry
+		entry.Entries = append(entry.Entries, newEntry)
+	}
 }
