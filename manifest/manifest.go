@@ -143,6 +143,9 @@ func (v *Project) AllProjects(parent *Project) []Project {
 		}
 	}
 
+	if strings.HasSuffix(v.Name, ".git") {
+		v.Name = strings.TrimSuffix(v.Name, ".git")
+	}
 	v.Name = filepath.Clean(filepath.ToSlash(v.Name))
 	v.Path = filepath.Clean(filepath.ToSlash(v.Path))
 
