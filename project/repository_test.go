@@ -42,11 +42,9 @@ func TestRepositoryInit(t *testing.T) {
 	// check git config
 	cfg := repo.Config()
 	assert.NotNil(cfg)
-	value, err := cfg.GetBool("core.bare", false)
-	assert.Nil(err)
+	value := cfg.GetBool("core.bare", false)
 	assert.True(value)
-	value, err = cfg.GetBool("core.logallrefupdates", false)
-	assert.Nil(err)
+	value = cfg.GetBool("core.logallrefupdates", false)
 	assert.False(value)
 	// check raw config
 	raw := repo.Raw()
@@ -68,11 +66,9 @@ func TestRepositoryInit(t *testing.T) {
 	// check git config
 	cfg = repo.Config()
 	assert.NotNil(cfg)
-	value, err = cfg.GetBool("core.bare", false)
-	assert.Nil(err)
+	value = cfg.GetBool("core.bare", false)
 	assert.False(value)
-	value, err = cfg.GetBool("core.logallrefupdates", false)
-	assert.Nil(err)
+	value = cfg.GetBool("core.logallrefupdates", false)
 	assert.True(value)
 	// check raw config
 	raw = repo.Raw()

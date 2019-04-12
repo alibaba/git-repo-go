@@ -149,7 +149,7 @@ func (v initCommand) initGetGroupStr(ws *workspace.WorkSpace) string {
 	}
 	platformize := func(x string) string { return "platform-" + x }
 	if v.O.Platform == "auto" {
-		isMirror, _ := ws.ManifestProject.Config().GetBool("repo.mirror", false)
+		isMirror := ws.ManifestProject.Config().GetBool("repo.mirror", false)
 		if !v.O.Mirror && !isMirror {
 			groups = append(groups, platformize(runtime.GOOS))
 		}

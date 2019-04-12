@@ -12,26 +12,22 @@ type ManifestProject struct {
 
 // MirrorEnabled checks if config variable repo.mirror is true
 func (v ManifestProject) MirrorEnabled() bool {
-	b, _ := v.Config().GetBool(config.CfgRepoMirror, false)
-	return b
+	return v.Config().GetBool(config.CfgRepoMirror, false)
 }
 
 // SubmoduleEnabled checks if config variable repo.submodules is true
 func (v ManifestProject) SubmoduleEnabled() bool {
-	b, _ := v.Config().GetBool(config.CfgRepoSubmodules, false)
-	return b
+	return v.Config().GetBool(config.CfgRepoSubmodules, false)
 }
 
 // ArchiveEnabled checks if config variable repo.archive is true
 func (v ManifestProject) ArchiveEnabled() bool {
-	b, _ := v.Config().GetBool(config.CfgRepoArchive, false)
-	return b
+	return v.Config().GetBool(config.CfgRepoArchive, false)
 }
 
 // DissociateEnabled checks if config variable repo.dissociate is true
 func (v ManifestProject) DissociateEnabled() bool {
-	b, _ := v.Config().GetBool(config.CfgRepoDissociate, false)
-	return b
+	return v.Config().GetBool(config.CfgRepoDissociate, false)
 }
 
 // NewManifestProject returns a manifest project: a worktree with a seperate repository
