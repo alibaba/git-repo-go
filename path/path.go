@@ -253,3 +253,16 @@ func SetHome(home string) {
 		os.Setenv("HOME", home)
 	}
 }
+
+// Exist check if path is exist.
+func Exist(name string) bool {
+	if _, err := os.Stat(name); err == nil {
+		return true
+	}
+	return false
+}
+
+// Exists check if path is exist.
+func Exists(name string) bool {
+	return Exist(name)
+}

@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"code.alibaba-inc.com/force/git-repo/config"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
@@ -153,8 +152,11 @@ func TestRepositoryFetch(t *testing.T) {
 	// Create a reference repo
 	refRepoPath := filepath.Join(tmpdir, "ref.git")
 	refRepo := Repository{
-		Path:   refRepoPath,
-		IsBare: true,
+		Path:     refRepoPath,
+		IsBare:   true,
+		Remote:   "origin",
+		Settings: &RepoSettings{},
+		Revision: "master",
 	}
 	remote = "origin"
 	remoteURL = repoDir
@@ -162,11 +164,10 @@ func TestRepositoryFetch(t *testing.T) {
 	assert.Nil(err)
 
 	// Fetch from workdir to reference refRepo
-	err = refRepo.Fetch(remote, &config.FetchOptions{})
+	err = refRepo.Fetch(remote, &FetchOptions{})
 	assert.Nil(err)
-	head, err := refRepo.Raw().Head()
+	_, err = refRepo.Raw().Reference("refs/remotes/origin/master", true)
 	assert.Nil(err)
-	assert.Equal(commitHash, head.Hash().String())
 
 	// Push commit in workdir to ref.git
 	err = ioutil.WriteFile(filename, []byte("hello world!\nBye\n"), 0644)
@@ -186,19 +187,15 @@ func TestRepositoryFetch(t *testing.T) {
 	commitHash2 := commit.String()
 	assert.NotEqual(commitHash, commitHash2)
 
-	// reference repo is not unborn
-	assert.False(refRepo.isUnborn())
-
 	// Create another repo
 	newRepoPath := filepath.Join(tmpdir, "repo.git")
 	newRepo := Repository{
-		Path:           newRepoPath,
-		LocalReference: refRepoPath,
-		IsBare:         false,
-		RefSpecs: []string{
-			"+refs/heads/*:refs/remotes/origin/*",
-			"+refs/tags/*:refs/tags/*",
-		},
+		Name:      "repo",
+		Path:      newRepoPath,
+		Reference: refRepoPath,
+		IsBare:    false,
+		Remote:    "origin",
+		Settings:  &RepoSettings{},
 	}
 	remote = "origin"
 	remoteURL = repoDir
@@ -206,7 +203,7 @@ func TestRepositoryFetch(t *testing.T) {
 	assert.Nil(err)
 
 	// fetch from reference repo, then fetch from upstream
-	err = newRepo.Fetch(remote, &config.FetchOptions{})
+	err = newRepo.Fetch(remote, &FetchOptions{})
 	assert.Nil(err)
 	reference, err := newRepo.Raw().Reference("refs/remotes/origin/master", true)
 	assert.Nil(err)

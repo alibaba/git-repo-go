@@ -3,6 +3,7 @@ package project
 import (
 	"fmt"
 	"io/ioutil"
+	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -12,6 +13,7 @@ import (
 	"code.alibaba-inc.com/force/git-repo/cap"
 	"code.alibaba-inc.com/force/git-repo/config"
 	"code.alibaba-inc.com/force/git-repo/manifest"
+	"code.alibaba-inc.com/force/git-repo/path"
 	"github.com/jiangxin/goconfig"
 	"github.com/jiangxin/multi-log"
 	"gopkg.in/src-d/go-git.v4"
@@ -25,6 +27,20 @@ type Project struct {
 	ObjectRepository *Repository
 	WorkRepository   *Repository
 	Settings         *RepoSettings
+}
+
+// FetchOptions is options for git fetch
+type FetchOptions struct {
+	RepoSettings
+
+	Quiet             bool
+	IsNew             bool
+	CurrentBranchOnly bool
+	CloneBundle       bool
+	ForceSync         bool
+	NoTags            bool
+	OptimizedFetch    bool
+	Prune             bool
 }
 
 // IsRepoInitialized checks if repository is initialized
@@ -56,6 +72,69 @@ func (v Project) ManifestURL() string {
 // RealPath is pull path of project workdir.
 func (v Project) RealPath() string {
 	return filepath.Join(v.RepoRoot(), v.Path)
+}
+
+// ReferencePath returns path of reference git dir
+func (v Project) ReferencePath() string {
+	var (
+		rdir = ""
+		err  error
+	)
+
+	if v.Settings.Reference == "" {
+		return ""
+	}
+
+	if !filepath.IsAbs(v.Settings.Reference) {
+		v.Settings.Reference, err = path.Abs(v.Settings.Reference)
+		if err != nil {
+			log.Errorf("bad reference path '%s': %s", v.Settings.Reference, err)
+			v.Settings.Reference = ""
+			return ""
+		}
+	}
+
+	if !v.IsMetaProject() {
+		rdir = filepath.Join(v.Settings.Reference, v.Name+".git")
+		if path.Exist(rdir) {
+			return rdir
+		}
+		rdir = filepath.Join(v.Settings.Reference,
+			config.DotRepo,
+			config.Projects,
+			v.Path+".git")
+		if path.Exist(rdir) {
+			return rdir
+		}
+		return ""
+	}
+
+	if v.Settings.ManifestURL != "" {
+		u, err := url.Parse(v.Settings.ManifestURL)
+		if err == nil {
+			dir := u.RequestURI()
+			if !strings.HasSuffix(dir, ".git") {
+				dir += ".git"
+			}
+			dirs := strings.Split(dir, "/")
+			for i := 1; i < len(dirs); i++ {
+				dir = filepath.Join(v.Settings.Reference, filepath.Join(dirs[i:]...))
+				if fi, err := os.Stat(dir); err == nil && fi.IsDir() {
+					rdir = dir
+					break
+				}
+			}
+		}
+	}
+
+	if rdir == "" {
+		dir := filepath.Join(v.Settings.Reference, config.DotRepo, config.ManifestsDotGit)
+		if fi, err := os.Stat(dir); err == nil && fi.IsDir() {
+			rdir = dir
+		}
+	}
+
+	return rdir
 }
 
 // Exists indicates whether project exists or not.
@@ -129,11 +208,11 @@ func (v *Project) extractArchive(tarpath string) error {
 }
 
 // Fetch will fetch from remote repository
-func (v *Project) Fetch(o *config.FetchOptions) error {
+func (v *Project) Fetch(o *FetchOptions) error {
 	var err error
 
 	if o == nil {
-		o = &config.FetchOptions{}
+		o = &FetchOptions{}
 	}
 
 	// Initial repository
@@ -349,11 +428,10 @@ func (v *Project) GetRemoteURL() (string, error) {
 		return "", fmt.Errorf("project '%s' has no remote '%s'", v.Name, v.Remote)
 	}
 
-	u, err := urlJoin(v.Settings.ManifestURL, v.GetRemote().Fetch, v.Name)
+	u, err := urlJoin(v.Settings.ManifestURL, v.GetRemote().Fetch, v.Name+".git")
 	if err != nil {
 		return "", fmt.Errorf("fail to remote url for '%s': %s", v.Name, err)
 	}
-	u += ".git"
 	return u, nil
 }
 
@@ -413,9 +491,11 @@ func NewProject(project *manifest.Project, s *RepoSettings) *Project {
 			p.Name+".git",
 		)
 		p.ObjectRepository = &Repository{
-			ProjectName: p.Name,
-			Path:        objectRepoPath,
-			IsBare:      true,
+			Name:     p.Name,
+			RelPath:  p.Path,
+			Path:     objectRepoPath,
+			IsBare:   true,
+			Settings: s,
 		}
 	}
 
@@ -435,13 +515,14 @@ func NewProject(project *manifest.Project, s *RepoSettings) *Project {
 	}
 
 	p.WorkRepository = &Repository{
-		ProjectName: p.Name,
-		Path:        workRepoPath,
-		RefSpecs: []string{
-			fmt.Sprintf("+refs/heads/*:refs/remotes/%s/*", p.Remote),
-			"+refs/tags/*:refs/tags/*",
-		},
-		IsBare: false,
+		Name:      p.Name,
+		RelPath:   p.Path,
+		Path:      workRepoPath,
+		Remote:    p.Remote,
+		Revision:  p.Revision,
+		IsBare:    false,
+		Reference: p.ReferencePath(),
+		Settings:  s,
 	}
 
 	remoteURL, err := p.GetRemoteURL()

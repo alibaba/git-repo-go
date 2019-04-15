@@ -17,9 +17,7 @@ package cmd
 import (
 	"bufio"
 	"fmt"
-	"net/url"
 	"os"
-	"path/filepath"
 	"runtime"
 	"strings"
 
@@ -28,6 +26,7 @@ import (
 	"code.alibaba-inc.com/force/git-repo/config"
 	"code.alibaba-inc.com/force/git-repo/errors"
 	"code.alibaba-inc.com/force/git-repo/path"
+	"code.alibaba-inc.com/force/git-repo/project"
 	"code.alibaba-inc.com/force/git-repo/workspace"
 	"github.com/jiangxin/goconfig"
 	"github.com/jiangxin/multi-log"
@@ -82,7 +81,8 @@ func (v *initCommand) Command() *cobra.Command {
 		"manifest branch or revision")
 	v.cmd.Flags().BoolVar(&v.O.CurrentBranchOnly,
 		"current-branch",
-		false, "fetch only current manifest branch from server")
+		false,
+		"fetch only current manifest branch from server")
 	v.cmd.Flags().StringVarP(&v.O.ManifestName,
 		"manifest-name",
 		"m",
@@ -115,12 +115,12 @@ func (v *initCommand) Command() *cobra.Command {
 	v.cmd.Flags().StringVarP(&v.O.Groups,
 		"groups",
 		"g",
-		"",
+		"default",
 		"restrict manifest projects to ones with specified group(s) [default|all|G1,G2,G3|G4,-G5,-G6]")
 	v.cmd.Flags().StringVarP(&v.O.Platform,
 		"platform",
 		"p",
-		"",
+		"auto",
 		"restrict manifest projects to ones with a specified platform group [auto|all|none|linux|darwin|...]")
 	v.cmd.Flags().BoolVar(&v.O.NoCloneBundle,
 		"no-clone-bundle",
@@ -138,7 +138,7 @@ func (v *initCommand) Command() *cobra.Command {
 	return v.cmd
 }
 
-func (v initCommand) initGetGroupStr(ws *workspace.WorkSpace) string {
+func (v initCommand) getGroups() string {
 	allPlatforms := []string{"linux", "darwin", "windows"}
 	groups := []string{}
 	for _, g := range strings.Split(v.O.Groups, ",") {
@@ -149,7 +149,7 @@ func (v initCommand) initGetGroupStr(ws *workspace.WorkSpace) string {
 	}
 	platformize := func(x string) string { return "platform-" + x }
 	if v.O.Platform == "auto" {
-		isMirror := ws.ManifestProject.Config().GetBool("repo.mirror", false)
+		isMirror := v.ws.ManifestProject.Config().GetBool("repo.mirror", false)
 		if !v.O.Mirror && !isMirror {
 			groups = append(groups, platformize(runtime.GOOS))
 		}
@@ -173,51 +173,6 @@ func (v initCommand) initGetGroupStr(ws *workspace.WorkSpace) string {
 	}
 
 	return groupStr
-}
-
-func (v initCommand) initGuessManifestReference() string {
-	var (
-		rdir = ""
-		err  error
-	)
-
-	if v.O.Reference == "" {
-		return ""
-	}
-
-	v.O.Reference, err = path.Abs(v.O.Reference)
-	if err != nil {
-		log.Errorf("bad --reference setting: %s", err)
-		v.O.Reference = ""
-		return ""
-	}
-
-	if v.O.ManifestURL != "" {
-		u, err := url.Parse(v.O.ManifestURL)
-		if err == nil {
-			dir := u.RequestURI()
-			if !strings.HasSuffix(dir, ".git") {
-				dir += ".git"
-			}
-			dirs := strings.Split(dir, "/")
-			for i := 1; i < len(dirs); i++ {
-				dir = filepath.Join(v.O.Reference, filepath.Join(dirs[i:]...))
-				if fi, err := os.Stat(dir); err == nil && fi.IsDir() {
-					rdir = dir
-					break
-				}
-			}
-		}
-	}
-
-	if rdir == "" {
-		dir := filepath.Join(v.O.Reference, config.DotRepo, config.ManifestsDotGit)
-		if fi, err := os.Stat(dir); err == nil && fi.IsDir() {
-			rdir = dir
-		}
-	}
-
-	return rdir
 }
 
 func (v initCommand) runE(args []string) error {
@@ -264,37 +219,47 @@ func (v initCommand) runE(args []string) error {
 	if err != nil {
 		return err
 	}
+	v.ws = ws
 
 	if isNew ||
-		v.O.ManifestURL != "" && v.O.ManifestURL != ws.ManifestURL() {
-		//TODO: ws.ManifestProject.GitInit(v.O.ManifestURL, v.initGuessManifestReference())
-		ws.ManifestProject.GitInit()
+		v.O.ManifestURL != "" && v.O.ManifestURL != v.ws.ManifestURL() {
+		v.ws.ManifestProject.Settings.ManifestURL = v.O.ManifestURL
+		v.ws.ManifestProject.GitInit()
 	}
 
 	// Update manifest project settings
-	s := ws.ManifestProject.ReadSettings()
+	s := v.ws.ManifestProject.ReadSettings()
 	changed := false
 	if v.cmd.Flags().Changed("manifest-url") && s.ManifestURL != v.O.ManifestURL {
 		changed = true
 		s.ManifestURL = v.O.ManifestURL
 	}
 
-	if v.cmd.Flags().Changed("manifest-name") && s.ManifestName != v.O.ManifestName {
+	// v.O.ManifestName has default value, and use it if setting is empty
+	if (v.cmd.Flags().Changed("manifest-name") && s.ManifestName != v.O.ManifestName) ||
+		s.ManifestName == "" {
 		changed = true
 		s.ManifestName = v.O.ManifestName
 	}
 
-	if v.cmd.Flags().Changed("groups") || s.Groups == "" {
-		groupStr := v.initGetGroupStr(ws)
-		if groupStr != s.Groups {
-			changed = true
-			s.Groups = v.O.Groups
-		}
+	// v.O.Groups has default value, and use it if setting is empty
+	groupStr := v.getGroups()
+	if (v.cmd.Flags().Changed("groups") && s.Groups != groupStr) || s.Groups == "" {
+		changed = true
+		s.Groups = groupStr
 	}
 
-	if v.cmd.Flags().Changed("reference") && s.Reference != v.O.Reference {
-		changed = true
-		s.Reference = v.O.Reference
+	if v.cmd.Flags().Changed("reference") {
+		if v.O.Reference != "" {
+			v.O.Reference, err = path.Abs(v.O.Reference)
+			if err != nil {
+				v.O.Reference = ""
+			}
+		}
+		if s.Reference != v.O.Reference {
+			changed = true
+			s.Reference = v.O.Reference
+		}
 	}
 
 	if v.cmd.Flags().Changed("depth") && s.Depth != v.O.Depth {
@@ -332,85 +297,68 @@ Either delete the .repo folder in this workspace, or initialize in another locat
 	}
 
 	if changed {
-		err = ws.ManifestProject.SaveSettings(s)
+		err = v.ws.ManifestProject.SaveSettings(s)
 		if err != nil {
 			return err
 		}
 	}
 
-	// Fetch repositories
+	// Set branch name to fetch/checkout for manifest project
 	if v.O.ManifestBranch != "" {
-		ws.ManifestProject.Revision = v.O.ManifestBranch
+		v.ws.ManifestProject.Revision = v.O.ManifestBranch
+		v.ws.ManifestProject.WorkRepository.Revision = v.O.ManifestBranch
 	}
+	// Fetch repositories
+	fetchOptions := project.FetchOptions{
+		RepoSettings: *s,
 
-	fetchOptions := config.FetchOptions{
-		Quiet:             config.GetQuiet(),
-		IsNew:             isNew,
-		CurrentBranchOnly: v.O.CurrentBranchOnly,
 		CloneBundle:       !v.O.NoCloneBundle,
+		CurrentBranchOnly: v.O.CurrentBranchOnly,
 		ForceSync:         false,
+		IsNew:             isNew,
 		NoTags:            v.O.NoTags,
-		Archive:           v.O.Archive,
 		OptimizedFetch:    false,
 		Prune:             false,
-		Submodules:        v.O.Submodules,
+		Quiet:             config.GetQuiet(),
 	}
 
-	err = ws.ManifestProject.Fetch(&fetchOptions)
+	err = v.ws.ManifestProject.Fetch(&fetchOptions)
 	if err != nil && isNew &&
-		ws.ManifestProject.WorkRepository.Path != "" {
+		v.ws.ManifestProject.WorkRepository.Path != "" {
 		// Better delete the manifest git dir if we created it; otherwise next
 		// time (when user fixes problems) we won't go through the "isNew" logic.
-		os.RemoveAll(ws.ManifestProject.WorkRepository.Path)
+		os.RemoveAll(v.ws.ManifestProject.WorkRepository.Path)
 	}
 
-	// sync repository, and only sync current branch if v.O.CurrentBranchOnly == true
-	// Fetch from remote
-
-	/*
-	   if v.O.manifest_branch:
-	     m.MetaBranchSwitch(submodules=v.O.submodules)
-
-	   syncbuf = SyncBuffer(m.config)
-	   m.Sync_LocalHalf(syncbuf, submodules=v.O.submodules)
-	   syncbuf.Finish()
-
-	   if is_new or m.CurrentBranch is None:
-	     if not m.StartBranch('default'):
-	       print('fatal: cannot create default in manifest', file=sys.stderr)
-	       sys.exit(1)
-
-	*/
-
 	// Checkout
-	err = ws.ManifestProject.Checkout(v.O.ManifestBranch, "default")
+	err = v.ws.ManifestProject.Checkout(v.O.ManifestBranch, "default")
 	if err != nil {
 		return err
 	}
 
-	err = ws.LinkManifest()
+	err = v.ws.LinkManifest()
 	if err != nil {
 		return err
 	}
 
 	if cap.Isatty() {
-		if v.O.ConfigName || v.initShouldConfigUser(ws) {
-			v.initConfigureUser(ws)
+		if v.O.ConfigName || v.shouldConfigUser() {
+			v.configureUser()
 		}
-		v.initConfigureColor(ws)
+		v.configureColor()
 	}
 
 	return nil
 }
 
-func (v initCommand) initShouldConfigUser(ws *workspace.WorkSpace) bool {
+func (v initCommand) shouldConfigUser() bool {
 	var (
 		userName  = "user.name"
 		userEmail = "user.email"
 		err       error
 	)
 
-	cfg := ws.Config()
+	cfg := v.ws.Config()
 	if cfg.Get(userName) == "" || cfg.Get(userEmail) == "" {
 		gc, _ := goconfig.GlobalConfig()
 		sc, _ := goconfig.SystemConfig()
@@ -435,7 +383,7 @@ func (v initCommand) initShouldConfigUser(ws *workspace.WorkSpace) bool {
 			}
 		}
 
-		err = ws.SaveConfig(cfg)
+		err = v.ws.SaveConfig(cfg)
 		if err != nil {
 			log.Error(err)
 			return true
@@ -463,14 +411,14 @@ func (v initCommand) userInput(prompt, value string) string {
 	return text
 }
 
-func (v initCommand) initConfigureUser(ws *workspace.WorkSpace) {
+func (v initCommand) configureUser() {
 	var (
 		userName  = "user.name"
 		userEmail = "user.email"
 	)
 
 	for {
-		cfg := ws.Config()
+		cfg := v.ws.Config()
 		name := v.userInput("Your Name", cfg.Get(userName))
 		email := v.userInput("Your Email", cfg.Get(userEmail))
 		fmt.Println("")
@@ -480,14 +428,14 @@ func (v initCommand) initConfigureUser(ws *workspace.WorkSpace) {
 		if confirm == "y" || confirm == "yes" || confirm == "t" || confirm == "true" || confirm == "on" {
 			cfg.Set(userName, name)
 			cfg.Set(userEmail, email)
-			ws.SaveConfig(cfg)
+			v.ws.SaveConfig(cfg)
 			break
 		}
 	}
 }
 
-func (v initCommand) initConfigureColor(ws *workspace.WorkSpace) {
-	cfg := ws.Config()
+func (v initCommand) configureColor() {
+	cfg := v.ws.Config()
 	for _, k := range []string{"color.ui", "color.diff", "color.status"} {
 		if cfg.Get(k) != "" {
 			return
@@ -515,7 +463,7 @@ func (v initCommand) initConfigureColor(ws *workspace.WorkSpace) {
 	confirm := strings.ToLower(v.userInput("", "n"))
 	if confirm == "y" || confirm == "yes" || confirm == "t" || confirm == "true" || confirm == "on" {
 		cfg.Set("color.ui", "auto")
-		ws.SaveConfig(cfg)
+		v.ws.SaveConfig(cfg)
 	}
 }
 

@@ -12,6 +12,7 @@ type RepoSettings struct {
 	ManifestName string
 	Groups       string
 	Reference    string
+	Revision     string
 	Depth        int
 	Archive      bool
 	Dissociate   bool
@@ -24,7 +25,7 @@ type ManifestProject struct {
 	Project
 }
 
-// readSettings reads settings from manifest project
+// ReadSettings reads settings from manifest project
 func (v *ManifestProject) ReadSettings() *RepoSettings {
 	cfg := v.Config()
 
@@ -129,7 +130,7 @@ func NewManifestProject(repoRoot, mURL string) *ManifestProject {
 			})),
 	}
 	p.ReadSettings()
-	if mURL != "" && p.Settings.ManifestURL != mURL {
+	if mURL != "" && p.Settings.ManifestURL == "" {
 		p.Settings.ManifestURL = mURL
 	}
 	return &p
