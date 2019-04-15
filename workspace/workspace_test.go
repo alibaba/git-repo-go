@@ -1,6 +1,7 @@
 package workspace
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -24,7 +25,7 @@ func testCreateManifests(repoRoot, manifestURL string) error {
 	mProject := project.NewManifestProject(repoRoot, manifestURL)
 	err = mProject.GitInit()
 	if err != nil {
-		return err
+		return fmt.Errorf("GitInit error: %s", err)
 	}
 
 	// Create manifests workdir

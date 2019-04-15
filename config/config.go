@@ -30,14 +30,15 @@ const (
 	DefaultLogRotate  = 20 * 1024 * 1024
 	DefaultLogLevel   = "warn"
 
-	CfgRepoArchive    = "repo.archive"
-	CfgRepoDepth      = "repo.depth"
-	CfgRepoDissociate = "repo.dissociate"
-	CfgRepoMirror     = "repo.mirror"
-	CfgRepoReference  = "repo.reference"
-	CfgRepoSubmodules = "repo.submodules"
-	CfgManifestGroups = "manifest.groups"
-	CfgManifestName   = "manifest.name"
+	CfgRepoArchive     = "repo.archive"
+	CfgRepoDepth       = "repo.depth"
+	CfgRepoDissociate  = "repo.dissociate"
+	CfgRepoMirror      = "repo.mirror"
+	CfgRepoReference   = "repo.reference"
+	CfgRepoSubmodules  = "repo.submodules"
+	CfgManifestGroups  = "manifest.groups"
+	CfgManifestName    = "manifest.name"
+	CfgRemoteOriginURL = "remote.origin.url"
 
 	DotRepo          = ".repo"
 	ManifestsDotGit  = "manifests.git"

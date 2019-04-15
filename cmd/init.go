@@ -224,6 +224,7 @@ func (v initCommand) runE(args []string) error {
 	var (
 		err   error
 		isNew bool
+		ws    *workspace.WorkSpace
 	)
 
 	if v.O.Archive && v.O.Mirror {
@@ -251,14 +252,15 @@ func (v initCommand) runE(args []string) error {
 	}
 
 	// Check initialized or not
-	if !workspace.IsInitialized(repoRoot) {
+	if !workspace.Exists(repoRoot) {
 		isNew = true
 		if v.O.ManifestURL == "" {
 			log.Fatal("option --manifest-url (-u) is required")
 		}
+		ws, err = workspace.NewWorkSpaceInit(repoRoot, v.O.ManifestURL)
+	} else {
+		ws, err = workspace.NewWorkSpace(repoRoot)
 	}
-
-	ws, err := workspace.NewWorkSpaceInit(repoRoot, v.O.ManifestURL)
 	if err != nil {
 		return err
 	}
@@ -267,6 +269,73 @@ func (v initCommand) runE(args []string) error {
 		v.O.ManifestURL != "" && v.O.ManifestURL != ws.ManifestURL() {
 		//TODO: ws.ManifestProject.GitInit(v.O.ManifestURL, v.initGuessManifestReference())
 		ws.ManifestProject.GitInit()
+	}
+
+	// Update manifest project settings
+	s := ws.ManifestProject.ReadSettings()
+	changed := false
+	if v.cmd.Flags().Changed("manifest-url") && s.ManifestURL != v.O.ManifestURL {
+		changed = true
+		s.ManifestURL = v.O.ManifestURL
+	}
+
+	if v.cmd.Flags().Changed("manifest-name") && s.ManifestName != v.O.ManifestName {
+		changed = true
+		s.ManifestName = v.O.ManifestName
+	}
+
+	if v.cmd.Flags().Changed("groups") || s.Groups == "" {
+		groupStr := v.initGetGroupStr(ws)
+		if groupStr != s.Groups {
+			changed = true
+			s.Groups = v.O.Groups
+		}
+	}
+
+	if v.cmd.Flags().Changed("reference") && s.Reference != v.O.Reference {
+		changed = true
+		s.Reference = v.O.Reference
+	}
+
+	if v.cmd.Flags().Changed("depth") && s.Depth != v.O.Depth {
+		changed = true
+		s.Depth = v.O.Depth
+	}
+
+	if v.cmd.Flags().Changed("archive") && s.Archive != v.O.Archive {
+		changed = true
+		if !isNew {
+			log.Fatal(`--archive is only supported when initializing a new workspace.
+Either delete the .repo folder in this workspace, or initialize in another location.`)
+		}
+
+	}
+
+	if v.cmd.Flags().Changed("dissociate") && s.Dissociate != v.O.Dissociate {
+		changed = true
+		s.Dissociate = v.O.Dissociate
+	}
+
+	if v.cmd.Flags().Changed("mirror") && s.Mirror != v.O.Mirror {
+		changed = true
+		s.Mirror = v.O.Mirror
+		if !isNew {
+			log.Fatal(`--mirror is only supported when initializing a new workspace.
+Either delete the .repo folder in this workspace, or initialize in another location.`)
+		}
+
+	}
+
+	if v.cmd.Flags().Changed("submodules") && s.Submodules != v.O.Submodules {
+		changed = true
+		s.Submodules = v.O.Submodules
+	}
+
+	if changed {
+		err = ws.ManifestProject.SaveSettings(s)
+		if err != nil {
+			return err
+		}
 	}
 
 	// Fetch repositories
@@ -319,74 +388,9 @@ func (v initCommand) runE(args []string) error {
 		return err
 	}
 
-	err = ws.LinkManifest(v.O.ManifestName)
+	err = ws.LinkManifest()
 	if err != nil {
 		return err
-	}
-
-	// Save settings to gitcofig of manifest project
-	cfg := ws.ManifestProject.Config()
-	changed := false
-
-	if v.O.Reference != "" {
-		cfg.Set(config.CfgRepoReference, v.O.Reference)
-		changed = true
-	}
-
-	if groupStr := v.initGetGroupStr(ws); groupStr != cfg.Get(config.CfgManifestGroups) {
-		if groupStr != "" {
-			cfg.Set(config.CfgManifestGroups, groupStr)
-		} else {
-			cfg.Unset(config.CfgManifestGroups)
-		}
-		changed = true
-	}
-
-	if v.O.Dissociate {
-		cfg.Set(config.CfgRepoDissociate, true)
-		changed = true
-	}
-
-	if v.O.Archive {
-		if isNew {
-			cfg.Set(config.CfgRepoArchive, true)
-			changed = true
-		} else {
-			log.Fatal(`--archive is only supported when initializing a new workspace.
-Either delete the .repo folder in this workspace, or initialize in another location.`)
-		}
-	}
-
-	if v.O.Mirror {
-		if isNew {
-			cfg.Set(config.CfgRepoMirror, true)
-			changed = true
-		} else {
-			log.Fatal(`--mirror is only supported when initializing a new workspace.
-Either delete the .repo folder in this workspace, or initialize in another location.`)
-		}
-	}
-
-	if v.O.Submodules {
-		cfg.Set(config.CfgRepoSubmodules, true)
-		changed = true
-	}
-
-	if v.O.ManifestName != "" {
-		cfg.Set(config.CfgManifestName, v.O.ManifestName)
-		changed = true
-	}
-
-	if v.O.Depth > 0 {
-		cfg.Set(config.CfgRepoDepth, v.O.Depth)
-		changed = true
-	}
-
-	if changed {
-		err = ws.ManifestProject.SaveConfig(cfg)
-		if err != nil {
-			return fmt.Errorf("fail to save manifest config: %s", err)
-		}
 	}
 
 	if cap.Isatty() {

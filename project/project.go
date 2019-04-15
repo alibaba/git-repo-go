@@ -21,11 +21,10 @@ import (
 type Project struct {
 	manifest.Project
 
-	RepoRoot         string
 	WorkDir          string
 	ObjectRepository *Repository
 	WorkRepository   *Repository
-	manifestURL      string
+	Settings         *RepoSettings
 }
 
 // IsRepoInitialized checks if repository is initialized
@@ -44,12 +43,22 @@ func (v Project) IsRepoInitialized() bool {
 	return true
 }
 
-// RealPath is pull path of project workdir
-func (v Project) RealPath() string {
-	return filepath.Join(v.RepoRoot, v.Path)
+// RepoRoot returns root dir of repo workspace.
+func (v Project) RepoRoot() string {
+	return v.Settings.RepoRoot
 }
 
-// Exists indicates whether project exists or not
+// ManifestURL returns manifest URL
+func (v Project) ManifestURL() string {
+	return v.Settings.ManifestURL
+}
+
+// RealPath is pull path of project workdir.
+func (v Project) RealPath() string {
+	return filepath.Join(v.RepoRoot(), v.Path)
+}
+
+// Exists indicates whether project exists or not.
 func (v Project) Exists() bool {
 	if _, err := os.Stat(v.RealPath()); err != nil {
 		return false
@@ -105,7 +114,7 @@ func (v *Project) fetchArchive(tarpath string) error {
 		v.Revision,
 	}
 
-	return executeCommandIn(v.RepoRoot, cmdArgs)
+	return executeCommandIn(v.RepoRoot(), cmdArgs)
 }
 
 func (v *Project) extractArchive(tarpath string) error {
@@ -116,7 +125,7 @@ func (v *Project) extractArchive(tarpath string) error {
 		tarpath,
 	}
 
-	return executeCommandIn(v.RepoRoot, cmdArgs)
+	return executeCommandIn(v.RepoRoot(), cmdArgs)
 }
 
 // Fetch will fetch from remote repository
@@ -150,7 +159,7 @@ func (v *Project) Fetch(o *config.FetchOptions) error {
 		if err != nil {
 			return fmt.Errorf("fail to extract tarball %s: %s", tarpath, err)
 		}
-		err = os.Remove(filepath.Join(v.RepoRoot, tarpath))
+		err = os.Remove(filepath.Join(v.RepoRoot(), tarpath))
 		if err != nil {
 			return fmt.Errorf("cannot remove tarball %s: %s", tarpath, err)
 		}
@@ -287,10 +296,10 @@ func (v *Project) SetManifestURL(manifestURL string) error {
 	if manifestURL != "" && !strings.HasSuffix(manifestURL, ".git") {
 		manifestURL += ".git"
 	}
-	if v.manifestURL == manifestURL || manifestURL == "" {
+	if v.Settings.ManifestURL == manifestURL || manifestURL == "" {
 		return nil
 	}
-	v.manifestURL = manifestURL
+	v.Settings.ManifestURL = manifestURL
 	if v.IsMetaProject() {
 		return v.SetGitRemoteURL(manifestURL)
 	}
@@ -327,20 +336,20 @@ func (v *Project) GitConfigRemoteURL() string {
 
 // GetRemoteURL returns new remtoe url user provided or from manifest repo url
 func (v *Project) GetRemoteURL() (string, error) {
-	if v.manifestURL == "" && v.IsMetaProject() {
-		v.manifestURL = v.GitConfigRemoteURL()
+	if v.Settings.ManifestURL == "" && v.IsMetaProject() {
+		v.Settings.ManifestURL = v.GitConfigRemoteURL()
 	}
-	if v.manifestURL == "" {
+	if v.Settings.ManifestURL == "" {
 		return "", fmt.Errorf("project '%s' has empty manifest url", v.Name)
 	}
 	if v.IsMetaProject() {
-		return v.manifestURL, nil
+		return v.Settings.ManifestURL, nil
 	}
 	if v.GetRemote() == nil {
 		return "", fmt.Errorf("project '%s' has no remote '%s'", v.Name, v.Remote)
 	}
 
-	u, err := urlJoin(v.manifestURL, v.GetRemote().Fetch, v.Name)
+	u, err := urlJoin(v.Settings.ManifestURL, v.GetRemote().Fetch, v.Name)
 	if err != nil {
 		return "", fmt.Errorf("fail to remote url for '%s': %s", v.Name, err)
 	}
@@ -371,34 +380,34 @@ func (v Project) GetSubmoduleProjects() []*Project {
 }
 
 // NewProject returns a project: project worktree with a bared repo and a seperate repository
-func NewProject(project *manifest.Project, repoRoot, manifestURL string) *Project {
+func NewProject(project *manifest.Project, s *RepoSettings) *Project {
 	var (
 		objectRepoPath string
 		workRepoPath   string
 	)
 
-	if manifestURL != "" && !strings.HasSuffix(manifestURL, ".git") {
-		manifestURL += ".git"
+	// TODO: move to RepoSetting initial function
+	if s.ManifestURL != "" && !strings.HasSuffix(s.ManifestURL, ".git") {
+		s.ManifestURL += ".git"
 	}
 	p := Project{
-		Project:     *project,
-		RepoRoot:    repoRoot,
-		manifestURL: manifestURL,
+		Project:  *project,
+		Settings: s,
 	}
 
-	if !p.IsMetaProject() && manifestURL == "" {
+	if !p.IsMetaProject() && s.ManifestURL == "" {
 		log.Panicf("unknown remote url for %s", p.Name)
 	}
 
 	if p.IsMetaProject() {
-		p.WorkDir = filepath.Join(repoRoot, config.DotRepo, p.Path)
+		p.WorkDir = filepath.Join(p.RepoRoot(), config.DotRepo, p.Path)
 	} else {
-		p.WorkDir = filepath.Join(repoRoot, p.Path)
+		p.WorkDir = filepath.Join(p.RepoRoot(), p.Path)
 	}
 
 	if !p.IsMetaProject() && cap.Symlink() {
 		objectRepoPath = filepath.Join(
-			repoRoot,
+			p.RepoRoot(),
 			config.DotRepo,
 			config.ProjectObjects,
 			p.Name+".git",
@@ -412,13 +421,13 @@ func NewProject(project *manifest.Project, repoRoot, manifestURL string) *Projec
 
 	if p.IsMetaProject() {
 		workRepoPath = filepath.Join(
-			repoRoot,
+			p.RepoRoot(),
 			config.DotRepo,
 			p.Path+".git",
 		)
 	} else {
 		workRepoPath = filepath.Join(
-			repoRoot,
+			p.RepoRoot(),
 			config.DotRepo,
 			config.Projects,
 			p.Path+".git",

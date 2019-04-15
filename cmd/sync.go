@@ -557,6 +557,7 @@ func (v syncCommand) runE(args []string) error {
 	}
 
 	allProjects, err := ws.GetProjects(&workspace.GetProjectsOptions{
+		Groups:       ws.Settings().Groups,
 		MissingOK:    true,
 		SubmodulesOK: v.O.FetchSubmodules,
 	}, args...)

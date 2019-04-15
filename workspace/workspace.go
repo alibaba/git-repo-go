@@ -22,13 +22,12 @@ type WorkSpace struct {
 	Manifest        *manifest.Manifest
 	ManifestProject *project.ManifestProject
 	Projects        []*project.Project
-	reference       string
 	projectByName   map[string][]*project.Project
 	projectByPath   map[string]*project.Project
 }
 
-// IsInitialized checks whether workspace is initialized
-func IsInitialized(dir string) bool {
+// Exists checks whether workspace is exist
+func Exists(dir string) bool {
 	manifestsDir := filepath.Join(dir, config.DotRepo, config.Manifests)
 	if _, err := os.Stat(filepath.Join(manifestsDir, ".git")); err != nil {
 		return false
@@ -40,26 +39,14 @@ func IsInitialized(dir string) bool {
 	return cfg.Get("remote.origin.url") != ""
 }
 
-// SetReference set reference for workspace
-func (v *WorkSpace) SetReference(reference string) {
-	v.reference = reference
-}
-
 // ManifestURL returns URL of manifest project
 func (v *WorkSpace) ManifestURL() string {
-	if v.ManifestProject == nil {
-		return ""
-	}
-	u, err := v.ManifestProject.GetRemoteURL()
-	if err != nil {
-		log.Error(err)
-	}
-	return u
+	return v.Settings().ManifestURL
 }
 
-// GetReference returns reference
-func (v *WorkSpace) GetReference() string {
-	return v.reference
+// Settings returns manifest project's Settings
+func (v *WorkSpace) Settings() *project.RepoSettings {
+	return v.ManifestProject.Settings
 }
 
 // Config returns git config file parser
@@ -73,20 +60,14 @@ func (v *WorkSpace) SaveConfig(cfg goconfig.GitConfig) error {
 }
 
 // LinkManifest creates link of manifest.xml
-func (v *WorkSpace) LinkManifest(name string) error {
-	if name != "" {
-		cfg := v.Config()
-		if cfg.Get(config.CfgManifestName) != name {
-			cfg.Set(config.CfgManifestName, name)
-			v.SaveConfig(cfg)
-		}
-
+func (v *WorkSpace) LinkManifest() error {
+	if v.Settings().ManifestName != "" {
 		if cap.Symlink() {
 			target := filepath.Join(v.RootDir, config.DotRepo, config.ManifestXML)
 			src, err := os.Readlink(target)
-			if err != nil || filepath.Base(src) != name {
+			if err != nil || filepath.Base(src) != v.Settings().ManifestName {
 				os.Remove(target)
-				src = filepath.Join(config.Manifests, name)
+				src = filepath.Join(config.Manifests, v.Settings().ManifestName)
 				log.Debugf("will symlink '%s' to '%s'", src, target)
 				err = os.Symlink(src, target)
 				if err != nil {
@@ -128,13 +109,8 @@ func (v *WorkSpace) Override(name string) error {
 }
 
 func (v *WorkSpace) loadProjects(manifestURL string) error {
-	var err error
 	// Set manifest project even v.Manifest is nil
 	v.ManifestProject = project.NewManifestProject(v.RootDir, manifestURL)
-	manifestURL, err = v.ManifestProject.GetRemoteURL()
-	if err != nil {
-		return err
-	}
 
 	// Set projects
 	v.Projects = []*project.Project{}
@@ -142,7 +118,7 @@ func (v *WorkSpace) loadProjects(manifestURL string) error {
 	v.projectByPath = make(map[string]*project.Project)
 	if v.Manifest != nil {
 		for _, mp := range v.Manifest.AllProjects() {
-			p := project.NewProject(&mp, v.RootDir, manifestURL)
+			p := project.NewProject(&mp, v.ManifestProject.Settings)
 			v.Projects = append(v.Projects, p)
 			if _, ok := v.projectByName[p.Name]; !ok {
 				v.projectByName[p.Name] = []*project.Project{}
