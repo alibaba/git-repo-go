@@ -32,8 +32,9 @@ import (
 )
 
 type syncCommand struct {
-	cmd *cobra.Command
-	ws  *workspace.WorkSpace
+	cmd          *cobra.Command
+	ws           *workspace.WorkSpace
+	FetchOptions project.FetchOptions
 
 	O struct {
 		ForceBroken            bool
@@ -237,7 +238,7 @@ func (v syncCommand) NetworkHalf(allProjects []*project.Project) error {
 	// TODO 3: sort projects by its fetch time (reverse order),
 	for _, projects := range project.GroupByName(allProjects) {
 		for _, p := range projects {
-			err = p.Fetch(nil)
+			err = p.Fetch(&v.FetchOptions)
 			if err != nil && !v.O.ForceBroken {
 				break
 			}
@@ -535,6 +536,18 @@ func (v syncCommand) runE(args []string) error {
 
 	if v.O.ManifestName != "" {
 		ws.Override(v.O.ManifestName)
+	}
+
+	v.FetchOptions = project.FetchOptions{
+		RepoSettings: *(ws.Settings()),
+
+		Quiet:             config.GetQuiet(),
+		CloneBundle:       !v.O.NoCloneBundle,
+		CurrentBranchOnly: v.O.CurrentBranchOnly,
+		ForceSync:         v.O.ForceSync,
+		NoTags:            v.O.NoTags,
+		OptimizedFetch:    v.O.OptimizedFetch,
+		Prune:             v.O.Prune,
 	}
 
 	smartSyncManifestName := "smart_sync_override.xml"
