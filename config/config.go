@@ -50,6 +50,13 @@ const (
 	ProjectObjects   = "project-objects"
 	Projects         = "projects"
 
+	REF_CHANGES = "refs/changes/"
+	REF_MR      = "refs/merge-requests/"
+	REF_HEADS   = "refs/heads/"
+	REF_TAGS    = "refs/tags/"
+	REF_PUB     = "refs/published/"
+	REF_M       = "refs/remotes/m/"
+
 	MaxJobs = 32
 
 	ViperEnvPrefix = "GIT_REPO"

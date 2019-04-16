@@ -308,6 +308,7 @@ Either delete the .repo folder in this workspace, or initialize in another locat
 		v.ws.ManifestProject.Revision = v.O.ManifestBranch
 		v.ws.ManifestProject.WorkRepository.Revision = v.O.ManifestBranch
 	}
+
 	// Fetch repositories
 	fetchOptions := project.FetchOptions{
 		RepoSettings: *s,

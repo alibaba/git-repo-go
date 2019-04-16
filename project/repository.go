@@ -127,6 +127,10 @@ func (v *Repository) Init(remoteName, remoteURL, referenceGitDir string) error {
 	if referenceGitDir != "" {
 		v.setAlternates(referenceGitDir)
 	}
+
+	// TODO: Link hooks files in ../hooks/ dir to repository's hook dir.
+	// TODO: Only copy 'commit-msg' hook, when: 1. gerrit mode, 2. defined v.Remote.Review
+
 	return nil
 }
 

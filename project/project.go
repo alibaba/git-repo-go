@@ -17,6 +17,7 @@ import (
 	"github.com/jiangxin/goconfig"
 	"github.com/jiangxin/multi-log"
 	"gopkg.in/src-d/go-git.v4"
+	"gopkg.in/src-d/go-git.v4/plumbing"
 )
 
 // Project inherits manifest's Project and has two related repositories
@@ -174,6 +175,8 @@ func (v *Project) GitInit() error {
 			v.WorkRepository.InitByLink(v.Remote, remoteURL, v.ObjectRepository)
 		}
 	}
+
+	// TODO: install hooks
 	return nil
 }
 
@@ -280,6 +283,38 @@ func (v *Project) PrepareWorkdir() error {
 	return nil
 }
 
+func (v Project) CleanPublishedCache() error {
+	raw := v.WorkRepository.Raw()
+	if raw == nil {
+		return nil
+	}
+	pubMap := make(map[string]string)
+	headsMap := make(map[string]string)
+	refs, _ := raw.References()
+	refs.ForEach(func(ref *plumbing.Reference) error {
+		if ref.Type() == plumbing.HashReference {
+			if strings.HasPrefix(string(ref.Name()), config.REF_PUB) {
+				pubMap[string(ref.Name())] = ref.Hash().String()
+			} else if strings.HasPrefix(string(ref.Name()), config.REF_HEADS) {
+				headsMap[string(ref.Name())] = ref.Hash().String()
+			}
+			fmt.Println(ref)
+		}
+		return nil
+	})
+
+	for name, _ := range pubMap {
+		branch := strings.TrimPrefix(name, config.REF_PUB)
+		branch = config.REF_HEADS + name
+		if _, ok := headsMap[branch]; !ok {
+			log.Infof("will delete obsolete ref: %s", name)
+			raw.Storer.RemoveReference(plumbing.ReferenceName(name))
+		}
+	}
+
+	return nil
+}
+
 // Checkout will checkout branch
 func (v *Project) Checkout(branch, local string) error {
 	var (
@@ -291,6 +326,18 @@ func (v *Project) Checkout(branch, local string) error {
 	if err != nil {
 		return err
 	}
+
+	// TODO: CleanPublishedCache: clean published ref, which has not related head
+
+	// TODO: get revision id for v.Revision, if v.Revision is a branch, map to remote ref, and get revision id
+
+	// TODO: HEAD branch, if not exist, set to empty
+
+	// TODO: for empty head or detached head
+
+	//       TODO: if rebase in progress, fail
+	//       TODO: if head points to revid
+	//             TODO: if head points to revid
 
 	// Run checkout
 	if branch == "" {
