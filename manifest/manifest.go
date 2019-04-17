@@ -74,6 +74,7 @@ type Project struct {
 	Revision   string `xml:"revision,attr,omitempty"`
 	DestBranch string `xml:"dest-branch,attr,omitempty"`
 	Groups     string `xml:"groups,attr,omitempty"`
+	Rebase     string `xml:"rebase,attr,omitempty"`
 	SyncC      string `xml:"sync-c,attr,omitempty"`
 	SyncS      string `xml:"sync-s,attr,omitempty"`
 	SyncTags   string `xml:"sync-tags,attr,omitempty"`
@@ -161,6 +162,7 @@ func (v *Project) AllProjects(parent *Project) []Project {
 			Revision:    v.Revision,
 			DestBranch:  v.DestBranch,
 			Groups:      v.Groups,
+			Rebase:      v.Rebase,
 			SyncC:       v.SyncC,
 			SyncS:       v.SyncS,
 			SyncTags:    v.SyncTags,
@@ -179,28 +181,40 @@ func (v *Project) AllProjects(parent *Project) []Project {
 	return projects
 }
 
-// IsSyncS indicates should sync submodule
-func (v Project) IsSyncS() bool {
-	if v.SyncS == "true" ||
-		v.SyncS == "yes" ||
-		v.SyncS == "t" ||
-		v.SyncS == "y" ||
-		v.SyncS == "on" {
+func isTrue(value string, def bool) bool {
+	if value == "" {
+		return def
+	}
+	value = strings.ToLower(value)
+	if value == "true" ||
+		value == "yes" ||
+		value == "1" ||
+		value == "t" ||
+		value == "y" ||
+		value == "on" {
 		return true
 	}
 	return false
 }
 
+// IsRebase causes repo sync using rebase instead of reset.
+func (v Project) IsRebase() bool {
+	return isTrue(v.Rebase, true)
+}
+
+// IsSyncS indicates should sync submodule
+func (v Project) IsSyncS() bool {
+	return isTrue(v.SyncS, false)
+}
+
 // IsSyncC indicates should sync current branch
 func (v Project) IsSyncC() bool {
-	if v.SyncC == "true" ||
-		v.SyncC == "yes" ||
-		v.SyncC == "t" ||
-		v.SyncC == "y" ||
-		v.SyncC == "on" {
-		return true
-	}
-	return false
+	return isTrue(v.SyncC, false)
+}
+
+// IsSyncTags indicates should sync tags
+func (v Project) IsSyncTags() bool {
+	return isTrue(v.SyncTags, true)
 }
 
 // IsMetaProject indicates whether current project is a ManifestProject

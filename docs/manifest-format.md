@@ -80,6 +80,7 @@ following DTD:
   <!ATTLIST project revision    CDATA #IMPLIED>
   <!ATTLIST project dest-branch CDATA #IMPLIED>
   <!ATTLIST project groups      CDATA #IMPLIED>
+  <!ATTLIST project rebase      CDATA #IMPLIED>
   <!ATTLIST project sync-c      CDATA #IMPLIED>
   <!ATTLIST project sync-s      CDATA #IMPLIED>
   <!ATTLIST default sync-tags   CDATA #IMPLIED>
