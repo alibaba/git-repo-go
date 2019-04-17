@@ -13,35 +13,50 @@ test_expect_success "setup" '
 	mkdir work
 '
 
-test_expect_success "git-repo init, manifest points to default.xml" '
+test_expect_success "git-repo init -u" '
 	(
 		cd work &&
-		git-repo init -u $manifest_url &&
-		# after init, manifest.xml links to manifests/default.xml
+		git-repo init -u $manifest_url
+	)
+'
+
+test_expect_success "manifest points to default.xml" '
+	(
+		cd work &&
 		test -f .repo/manifest.xml &&
 		echo manifests/default.xml >expect &&
 		readlink .repo/manifest.xml >actual &&
 		test_cmp expect actual
 	)
 '
-test_expect_success "git-repo init, manifest.name set to default.xml" '
+
+test_expect_success "git config variable manifest.name = default.xml" '
 	(
 		cd work &&
-		# git config variable manifest.name is set to default.xml
 		echo default.xml >expect &&
 		git -C .repo/manifests config manifest.name >actual &&
 		test_cmp expect actual
 	)
 '
-test_expect_success "git-repo init, default branch has two XML files" '
+
+test_expect_success "two xml files checkout" '
 	(
 		cd work &&
 		# Has two xml files
 		ls .repo/manifests/*.xml >actual &&
 		cat >expect<<-EOF &&
 		.repo/manifests/default.xml
-		.repo/manifests/release.xml
+		.repo/manifests/next.xml
 		EOF
+		test_cmp expect actual
+	)
+'
+
+test_expect_success "current branch = default" '
+	(
+		cd work &&
+		echo "ref: refs/heads/default" >expect &&
+		cp .repo/manifests.git/HEAD actual &&
 		test_cmp expect actual
 	)
 '
@@ -58,17 +73,17 @@ test_expect_success "test init in subdir" '
 	)
 '
 
-test_expect_success "test init -m <file>" '
+test_expect_success "switch file: test init -m <file>" '
 	(
 		cd work &&
-		git-repo init -u $manifest_url -b master -m release.xml &&
-		# after init, manifest.xml links to manifests/release.xml
+		git-repo init -u $manifest_url -b master -m next.xml &&
+		# manifest.xml => manifests/next.xml
 		test -f .repo/manifest.xml &&
-		echo manifests/release.xml >expect &&
+		echo manifests/next.xml >expect &&
 		readlink .repo/manifest.xml >actual &&
 		test_cmp expect actual &&
-		# git config variable manifest.name is set to default.xml
-		echo release.xml >expect &&
+		# git config variable manifest.name => next.xml
+		echo next.xml >expect &&
 		git -C .repo/manifests config manifest.name >actual &&
 		test_cmp expect actual
 	)
@@ -86,13 +101,14 @@ test_expect_success "switch branch: maint, file: default.xml" '
 	(
 		cd work &&
 		git-repo init -u $manifest_url -b maint -m default.xml &&
-		# after init, manifest.xml links to manifests/default.xml
+		# manifest.xml => manifests/default.xml
 		echo manifests/default.xml >expect &&
 		readlink .repo/manifest.xml >actual &&
 		test_cmp expect actual
 	)
 '
-test_expect_success "manifest.name set to default.xml" '
+
+test_expect_success "manifest.name => default.xml" '
 	(
 		cd work &&
 		# git config variable manifest.name is set to default.xml
@@ -102,14 +118,14 @@ test_expect_success "manifest.name set to default.xml" '
 	)
 '
 
-test_expect_success "branch: maint, no release.xml" '
+test_expect_success "branch: maint, no next.xml" '
 	(
 		cd work &&
 		# Branch switched, no release.xml
-		ls .repo/manifests/*.xml >actual &&
 		cat >expect<<-EOF &&
 		.repo/manifests/default.xml
 		EOF
+		ls .repo/manifests/*.xml >actual &&
 		test_cmp expect actual
 	)
 '

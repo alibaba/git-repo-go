@@ -307,8 +307,7 @@ Either delete the .repo folder in this workspace, or initialize in another locat
 
 	// Set branch name to fetch/checkout for manifest project
 	if v.O.ManifestBranch != "" {
-		v.ws.ManifestProject.Revision = v.O.ManifestBranch
-		v.ws.ManifestProject.WorkRepository.Revision = v.O.ManifestBranch
+		v.ws.ManifestProject.SetRevision(v.O.ManifestBranch)
 	}
 
 	// Fetch repositories
@@ -340,13 +339,19 @@ Either delete the .repo folder in this workspace, or initialize in another locat
 	checkoutOptions := project.CheckoutOptions{
 		RepoSettings: *s,
 
-		Quiet:       config.GetQuiet(),
-		LocalBranch: "default",
-		DetachHead:  false,
+		Quiet:      config.GetQuiet(),
+		DetachHead: false,
 	}
 	err = v.ws.ManifestProject.SyncLocalHalf(&checkoutOptions)
 	if err != nil {
 		return err
+	}
+
+	if isNew || v.ws.ManifestProject.GetHead() == "" {
+		err := v.ws.ManifestProject.StartBranch("default", "")
+		if err != nil {
+			return fmt.Errorf("cannot create default in manifest: %s", err)
+		}
 	}
 
 	err = v.ws.LinkManifest()

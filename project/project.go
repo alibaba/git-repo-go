@@ -49,9 +49,8 @@ type FetchOptions struct {
 type CheckoutOptions struct {
 	RepoSettings
 
-	Quiet       bool
-	DetachHead  bool
-	LocalBranch string
+	Quiet      bool
+	DetachHead bool
 }
 
 // IsRepoInitialized checks if repository is initialized
@@ -452,6 +451,7 @@ func (v Project) UpdateBranchTracking(branch, remote, track string) {
 	cfg := v.Config()
 	if track == "" {
 		cfg.Unset("branch." + branch + ".merge")
+		cfg.Unset("branch." + branch + ".remote")
 		v.SaveConfig(cfg)
 		return
 	}
@@ -465,8 +465,12 @@ func (v Project) UpdateBranchTracking(branch, remote, track string) {
 	if !IsHead(track) {
 		track = config.RefsHeads + track
 	}
+
 	cfg.Set("branch."+branch+".merge", track)
-	cfg.Set("branch."+branch+".remote", remote)
+	if remote != "" {
+		cfg.Set("branch."+branch+".remote", remote)
+	}
+
 	v.SaveConfig(cfg)
 }
 
@@ -1074,4 +1078,60 @@ func appendEntries(entry *PathEntry, paths []string, pMap map[string]*Project) {
 		oldEntry = newEntry
 		entry.Entries = append(entry.Entries, newEntry)
 	}
+}
+
+// StartBranch creates new branch
+func (v Project) StartBranch(branch, track string) error {
+	var err error
+
+	if track == "" {
+		track = v.Revision
+	}
+	if IsHead(branch) {
+		branch = strings.TrimPrefix(branch, config.RefsHeads)
+	}
+
+	// Branch is already the current branch
+	head := v.GetHead()
+	if head == config.RefsHeads+branch {
+		return nil
+	}
+
+	// Checkout if branch is already exist in repository
+	if v.RevisionIsValid(config.RefsHeads + branch) {
+		cmdArgs := []string{
+			GIT,
+			"checkout",
+			branch,
+			"--",
+		}
+		return executeCommandIn(v.WorkDir, cmdArgs)
+	}
+
+	// Get revid from already fetched tracking for v.Revision
+	revid, err := v.ResolveRemoteTracking(v.Revision)
+	remote := v.Remote
+	if remote == "" {
+		remote = "origin"
+	}
+
+	// Create a new branch
+	cmdArgs := []string{
+		GIT,
+		"checkout",
+		"-b",
+		branch,
+	}
+	if revid != "" {
+		cmdArgs = append(cmdArgs, revid)
+	}
+	cmdArgs = append(cmdArgs, "--")
+	err = executeCommandIn(v.WorkDir, cmdArgs)
+	if err != nil {
+		return err
+	}
+
+	// Create remote tracking
+	v.UpdateBranchTracking(branch, remote, v.Revision)
+	return nil
 }
