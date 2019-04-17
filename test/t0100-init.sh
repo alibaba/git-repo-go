@@ -74,7 +74,15 @@ test_expect_success "test init -m <file>" '
 	)
 '
 
-test_expect_success "branch: maint, file: default.xml" '
+test_expect_success "detached manifest, drop default branch" '
+	(
+		cd work/.repo/manifests &&
+		git checkout HEAD^0 &&
+		git branch -D default
+	)
+'
+
+test_expect_success "switch branch: maint, file: default.xml" '
 	(
 		cd work &&
 		git-repo init -u $manifest_url -b maint -m default.xml &&
@@ -101,6 +109,20 @@ test_expect_success "branch: maint, no release.xml" '
 		ls .repo/manifests/*.xml >actual &&
 		cat >expect<<-EOF &&
 		.repo/manifests/default.xml
+		EOF
+		test_cmp expect actual
+	)
+'
+
+test_expect_success "switch branch: master, next.xml is back" '
+	(
+		cd work &&
+		git-repo init -u $manifest_url -b master &&
+		# Has two xml files
+		ls .repo/manifests/*.xml >actual &&
+		cat >expect<<-EOF &&
+		.repo/manifests/default.xml
+		.repo/manifests/next.xml
 		EOF
 		test_cmp expect actual
 	)

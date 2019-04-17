@@ -2,6 +2,7 @@ package project
 
 import (
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/url"
 	"os"
@@ -44,6 +45,15 @@ type FetchOptions struct {
 	Prune             bool
 }
 
+// CheckoutOptions is options for git fetch
+type CheckoutOptions struct {
+	RepoSettings
+
+	Quiet       bool
+	DetachHead  bool
+	LocalBranch string
+}
+
 // IsRepoInitialized checks if repository is initialized
 func (v Project) IsRepoInitialized() bool {
 	if v.ObjectRepository != nil {
@@ -68,11 +78,6 @@ func (v Project) RepoRoot() string {
 // ManifestURL returns manifest URL
 func (v Project) ManifestURL() string {
 	return v.Settings.ManifestURL
-}
-
-// RealPath is pull path of project workdir.
-func (v Project) RealPath() string {
-	return filepath.Join(v.RepoRoot(), v.Path)
 }
 
 // ReferencePath returns path of reference git dir
@@ -140,11 +145,11 @@ func (v Project) ReferencePath() string {
 
 // Exists indicates whether project exists or not.
 func (v Project) Exists() bool {
-	if _, err := os.Stat(v.RealPath()); err != nil {
+	if _, err := os.Stat(v.WorkDir); err != nil {
 		return false
 	}
 
-	if _, err := os.Stat(filepath.Join(v.RealPath(), ".git")); err != nil {
+	if _, err := os.Stat(filepath.Join(v.WorkDir, ".git")); err != nil {
 		return false
 	}
 
@@ -210,8 +215,8 @@ func (v *Project) extractArchive(tarpath string) error {
 	return executeCommandIn(v.RepoRoot(), cmdArgs)
 }
 
-// Fetch will fetch from remote repository
-func (v *Project) Fetch(o *FetchOptions) error {
+// SyncNetworkHalf will fetch from remote repository
+func (v *Project) SyncNetworkHalf(o *FetchOptions) error {
 	var err error
 
 	if o == nil {
@@ -245,8 +250,7 @@ func (v *Project) Fetch(o *FetchOptions) error {
 		if err != nil {
 			return fmt.Errorf("cannot remove tarball %s: %s", tarpath, err)
 		}
-		// TODO: CopyAndLinkFiles()
-		return nil
+		return v.CopyAndLinkFiles()
 	}
 
 	if v.WorkRepository != nil {
@@ -283,7 +287,10 @@ func (v *Project) PrepareWorkdir() error {
 	return nil
 }
 
+// CleanPublishedCache removes obsolete refs/published/ references.
 func (v Project) CleanPublishedCache() error {
+	var err error
+
 	raw := v.WorkRepository.Raw()
 	if raw == nil {
 		return nil
@@ -293,9 +300,9 @@ func (v Project) CleanPublishedCache() error {
 	refs, _ := raw.References()
 	refs.ForEach(func(ref *plumbing.Reference) error {
 		if ref.Type() == plumbing.HashReference {
-			if strings.HasPrefix(string(ref.Name()), config.REF_PUB) {
+			if strings.HasPrefix(string(ref.Name()), config.RefsPub) {
 				pubMap[string(ref.Name())] = ref.Hash().String()
-			} else if strings.HasPrefix(string(ref.Name()), config.REF_HEADS) {
+			} else if strings.HasPrefix(string(ref.Name()), config.RefsHeads) {
 				headsMap[string(ref.Name())] = ref.Hash().String()
 			}
 			fmt.Println(ref)
@@ -303,23 +310,323 @@ func (v Project) CleanPublishedCache() error {
 		return nil
 	})
 
-	for name, _ := range pubMap {
-		branch := strings.TrimPrefix(name, config.REF_PUB)
-		branch = config.REF_HEADS + name
+	for name := range pubMap {
+		branch := config.RefsHeads + strings.TrimPrefix(name, config.RefsPub)
 		if _, ok := headsMap[branch]; !ok {
 			log.Infof("will delete obsolete ref: %s", name)
-			raw.Storer.RemoveReference(plumbing.ReferenceName(name))
+			err = raw.Storer.RemoveReference(plumbing.ReferenceName(name))
+			if err != nil {
+				log.Errorf("fail to remove reference '%s'", name)
+			} else {
+				log.Infof("removed reference '%s'", name)
+			}
 		}
 	}
 
 	return nil
 }
 
-// Checkout will checkout branch
-func (v *Project) Checkout(branch, local string) error {
+// ResolveRevision checks and resolves reference to revid
+func (v Project) ResolveRevision(rev string) (string, error) {
+	if rev == "" {
+		return "", nil
+	}
+
+	raw := v.WorkRepository.Raw()
+	if raw == nil {
+		return "", fmt.Errorf("repository for %s is missing, fail to parse %s", v.Name, rev)
+	}
+
+	if rev == "" {
+		log.Errorf("empty revision to resolve for proejct '%s'", v.Name)
+	}
+
+	revid, err := raw.ResolveRevision(plumbing.Revision(rev))
+	if err != nil {
+		return "", err
+	}
+	return revid.String(), nil
+}
+
+// ResolveRemoteTracking returns revision id of current remote tracking branch
+func (v Project) ResolveRemoteTracking(rev string) (string, error) {
+	raw := v.WorkRepository.Raw()
+	if raw == nil {
+		return "", fmt.Errorf("repository for %s is missing, fail to parse %s", v.Name, v.Revision)
+	}
+
+	if rev == "" {
+		log.Errorf("empty Revision for proejct '%s'", v.Name)
+	}
+	if !IsSha(rev) {
+		if IsHead(rev) {
+			rev = strings.TrimPrefix(rev, config.RefsHeads)
+		}
+		if !strings.HasPrefix(rev, config.Refs) {
+			rev = fmt.Sprintf("%s%s/%s",
+				config.RefsRemotes,
+				v.Remote,
+				rev)
+		}
+	}
+	revid, err := raw.ResolveRevision(plumbing.Revision(rev))
+	if err != nil {
+		return "", fmt.Errorf("revision %s in %s not found", rev, v.Name)
+	}
+	return revid.String(), nil
+}
+
+// GetHead returns head branch.
+func (v Project) GetHead() string {
+	return v.WorkRepository.GetHead()
+}
+
+// IsRebaseInProgress checks whether is in middle of a rebase.
+func (v Project) IsRebaseInProgress() bool {
+	return v.WorkRepository.IsRebaseInProgress()
+}
+
+// RevisionIsValid checks if revision is valid
+func (v Project) RevisionIsValid(revision string) bool {
+	return v.WorkRepository.RevisionIsValid(revision)
+}
+
+// Revlist works like rev-list
+func (v Project) Revlist(args ...string) ([]string, error) {
+	return v.WorkRepository.Revlist(args...)
+}
+
+// RemoteTrackBranch gets remote tracking branch
+func (v Project) RemoteTrackBranch(branch string) string {
+	return v.WorkRepository.RemoteTrackBranch(branch)
+}
+
+// PublishedReference forms published reference for specific branch.
+func (v Project) PublishedReference(branch string) string {
+	pub := config.RefsPub + branch
+
+	if v.RevisionIsValid(pub) {
+		return pub
+	}
+	return ""
+}
+
+// PublishedRevision resolves published reference to revision id.
+func (v Project) PublishedRevision(branch string) string {
+	raw := v.WorkRepository.Raw()
+	pub := config.RefsPub + branch
+
+	if raw == nil {
+		return ""
+	}
+
+	revid, err := raw.ResolveRevision(plumbing.Revision(pub))
+	if err == nil {
+		return revid.String()
+	}
+	return ""
+}
+
+// IsClean indicates worktree is clean or dirty.
+func (v *Project) IsClean() (bool, error) {
+	raw := v.WorkRepository.Raw()
+	if raw == nil {
+		return false, fmt.Errorf("fail to get repository of %s", v.Name)
+	}
+
+	wt, err := raw.Worktree()
+	if err != nil {
+		return false, fmt.Errorf("fail to get worktree of %s: %s", v.Name, err)
+	}
+
+	status, err := wt.Status()
+	if err != nil {
+		return false, fmt.Errorf("fail to get worktree status of %s: %s", v.Name, err)
+	}
+
+	return status.IsClean(), nil
+}
+
+// UpdateBranchTracking updates branch tracking info.
+func (v Project) UpdateBranchTracking(branch, remote, track string) {
+	cfg := v.Config()
+	if track == "" {
+		cfg.Unset("branch." + branch + ".merge")
+		v.SaveConfig(cfg)
+		return
+	}
+
+	if IsSha(track) {
+		return
+	}
+	if IsRef(track) && !IsHead(track) {
+		return
+	}
+	if !IsHead(track) {
+		track = config.RefsHeads + track
+	}
+	cfg.Set("branch."+branch+".merge", track)
+	cfg.Set("branch."+branch+".remote", remote)
+	v.SaveConfig(cfg)
+}
+
+// CheckoutRevision runs git checkout
+func (v Project) CheckoutRevision(args ...string) error {
+	cmdArgs := []string{
+		GIT,
+		"checkout",
+	}
+	cmdArgs = append(cmdArgs, args...)
+	cmdArgs = append(cmdArgs, "--")
+	return executeCommandIn(v.WorkDir, cmdArgs)
+}
+
+// HardReset runs git reset --hard
+func (v Project) HardReset(args ...string) error {
+	cmdArgs := []string{
+		GIT,
+		"reset",
+		"--hard",
+	}
+	cmdArgs = append(cmdArgs, args...)
+	cmdArgs = append(cmdArgs, "--")
+	return executeCommandIn(v.WorkDir, cmdArgs)
+}
+
+// Rebase runs git rebase
+func (v Project) Rebase(args ...string) error {
+	cmdArgs := []string{
+		GIT,
+		"rebase",
+	}
+	cmdArgs = append(cmdArgs, args...)
+	cmdArgs = append(cmdArgs, "--")
+	return executeCommandIn(v.WorkDir, cmdArgs)
+}
+
+// FastForward runs git merge
+func (v Project) FastForward(args ...string) error {
+	cmdArgs := []string{
+		GIT,
+		"merge",
+	}
+	cmdArgs = append(cmdArgs, args...)
+	cmdArgs = append(cmdArgs, "--")
+	return executeCommandIn(v.WorkDir, cmdArgs)
+}
+
+// SubmoduleUpdate runs git submodule update
+func (v Project) SubmoduleUpdate(args ...string) error {
+	cmdArgs := []string{
+		GIT,
+		"submodule",
+		"update",
+		"--init",
+		"--recursive",
+	}
+	cmdArgs = append(cmdArgs, args...)
+	cmdArgs = append(cmdArgs, "--")
+	return executeCommandIn(v.WorkDir, cmdArgs)
+}
+
+// CopyFile copy files from src to dest
+func (v Project) CopyFile(src, dest string) error {
+	srcAbs := filepath.Clean(filepath.Join(v.WorkDir, src))
+	destAbs := filepath.Clean(filepath.Join(v.RepoRoot(), dest))
+
+	if !strings.HasPrefix(srcAbs, v.RepoRoot()) {
+		return fmt.Errorf("fail to copy file, src file '%s' beyond repo root '%s'", src, v.RepoRoot())
+	}
+
+	if !strings.HasPrefix(destAbs, v.RepoRoot()) {
+		return fmt.Errorf("fail to copy file, dest file '%s' beyond repo root '%s'", dest, v.RepoRoot())
+	}
+
+	finfo, err := os.Stat(srcAbs)
+	if err != nil {
+		return nil
+	}
+
+	if !path.Exists(filepath.Dir(destAbs)) {
+		os.MkdirAll(filepath.Dir(destAbs), 0755)
+	}
+
+	srcFile, err := os.Open(srcAbs)
+	if err != nil {
+		return fmt.Errorf("fail to open '%s': %s", srcAbs, err)
+	}
+	defer srcFile.Close()
+
+	destFile, err := os.OpenFile(destAbs, os.O_RDWR|os.O_CREATE, finfo.Mode())
+	if err != nil {
+		return fmt.Errorf("fail to open '%s': %s", destAbs, err)
+	}
+	defer destFile.Close()
+
+	_, err = io.Copy(srcFile, destFile)
+	if err != nil {
+		return fmt.Errorf("fail to copy file: %s", err)
+	}
+	return nil
+}
+
+// LinkFile copy files from src to dest
+func (v Project) LinkFile(src, dest string) error {
+	if !cap.Symlink() {
+		return v.CopyFile(src, dest)
+	}
+
+	srcAbs := filepath.Clean(filepath.Join(v.WorkDir, src))
+	destAbs := filepath.Clean(filepath.Join(v.RepoRoot(), dest))
+
+	if !strings.HasPrefix(srcAbs, v.RepoRoot()) {
+		return fmt.Errorf("fail to copy file, src file '%s' beyond repo root '%s'", src, v.RepoRoot())
+	}
+
+	if !strings.HasPrefix(destAbs, v.RepoRoot()) {
+		return fmt.Errorf("fail to copy file, dest file '%s' beyond repo root '%s'", dest, v.RepoRoot())
+	}
+
+	_, err := os.Stat(src)
+	if err != nil {
+		return nil
+	}
+
+	destDir := filepath.Dir(destAbs)
+	if !path.Exists(destDir) {
+		os.MkdirAll(destDir, 0755)
+	}
+	srcRel, err := filepath.Rel(destDir, srcAbs)
+	if err != nil {
+		srcRel = srcAbs
+	}
+	return os.Link(srcRel, destAbs)
+}
+
+// CopyAndLinkFiles copies and links files
+func (v Project) CopyAndLinkFiles() error {
+	var err error
+
+	for _, f := range v.CopyFiles {
+		err = v.CopyFile(f.Src, f.Dest)
+		if err != nil {
+			return err
+		}
+	}
+
+	for _, f := range v.LinkFiles {
+		err = v.LinkFile(f.Src, f.Dest)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// SyncLocalHalf will checkout/rebase branch.
+func (v Project) SyncLocalHalf(o *CheckoutOptions) error {
 	var (
 		err error
-		rev string
 	)
 
 	err = v.PrepareWorkdir()
@@ -327,65 +634,164 @@ func (v *Project) Checkout(branch, local string) error {
 		return err
 	}
 
-	// TODO: CleanPublishedCache: clean published ref, which has not related head
+	// Remove obsolete refs/published/ references
+	v.CleanPublishedCache()
 
-	// TODO: get revision id for v.Revision, if v.Revision is a branch, map to remote ref, and get revision id
-
-	// TODO: HEAD branch, if not exist, set to empty
-
-	// TODO: for empty head or detached head
-
-	//       TODO: if rebase in progress, fail
-	//       TODO: if head points to revid
-	//             TODO: if head points to revid
-
-	// Run checkout
-	if branch == "" {
-		if v.Revision != "" {
-			branch = v.Revision
-		} else {
-			branch = "master"
-		}
-	}
-	if strings.HasPrefix(branch, "refs/heads/") {
-		branch = strings.TrimPrefix(branch, "refs/heads/")
-		rev = fmt.Sprintf("refs/remotes/%s/%s", v.Remote, branch)
-	} else if strings.HasPrefix(branch, "refs/") {
-		rev = branch
-	} else if isHashRevision(branch) {
-		rev = branch
-	} else {
-		rev = fmt.Sprintf("refs/remotes/%s/%s", v.Remote, branch)
-	}
-
-	var cmdArgs []string
-	if v.Head() != "" {
-		cmdArgs = []string{
-			"git",
-			"rebase",
-			rev,
-		}
-	} else {
-		cmdArgs = []string{
-			"git",
-			"checkout",
-		}
-		if local != "" && local != rev {
-			cmdArgs = append(cmdArgs, "-b", local)
-		}
-		cmdArgs = append(cmdArgs, rev)
-	}
-	cmdArgs = append(cmdArgs, "--")
-
-	err = executeCommandIn(v.WorkDir, cmdArgs)
-	if err != nil {
-		return fmt.Errorf("fail to checkout %s, cmd:%s, error: %s",
-			v.Name,
-			strings.Join(cmdArgs, " "),
+	// Get revision id of already fetch v.Revision, will checkout to revid later.
+	revid, err := v.ResolveRemoteTracking(v.Revision)
+	if err != nil || revid == "" {
+		return fmt.Errorf("cannot checkout, invalid remote tracking branch '%s': %s",
+			v.Revision,
 			err)
 	}
 
-	return nil
+	// Read current branch to 'branch' and parsed revision to 'headid'
+	// If repository is in detached head mode, or has invalid HEAD, branch is empty.
+	branch := ""
+	head := v.GetHead()
+	headid, err := v.ResolveRevision(head)
+	if err == nil && headid != "" {
+		if IsHead(head) {
+			branch = strings.TrimPrefix(head, config.RefsHeads)
+		}
+	}
+
+	// Currently on a detached HEAD.  The user is assumed to
+	// not have any local modifications worth worrying about.
+	if branch == "" || o.DetachHead {
+		if v.IsRebaseInProgress() {
+			return fmt.Errorf("prior sync failed; rebase still in progress")
+		}
+
+		if headid == revid {
+			return v.CopyAndLinkFiles()
+		}
+
+		if headid != "" {
+			localChanges, err := v.Revlist(headid, "--not", revid)
+			if err != nil {
+				log.Warnf("rev-list failed: %s", err)
+			}
+			if len(localChanges) > 0 {
+				log.Notef("discarding %d commits", len(localChanges))
+			}
+		}
+		err = v.CheckoutRevision(revid)
+		if err == nil && o.Submodules {
+			err = v.SubmoduleUpdate()
+		}
+		if err != nil {
+			return err
+		}
+		return v.CopyAndLinkFiles()
+	}
+
+	// We have a branch, check whether tracking branch is set properly.
+	track := v.RemoteTrackBranch(branch)
+
+	if track != v.Revision {
+		if v.Revision != "" {
+			log.Notef("manifest switched %s...%s", track, v.Revision)
+		} else {
+			log.Notef("manifest no longer tracks %s", track)
+		}
+
+		// Update remote tracking, or delete tracking if v.Revision is empty
+		v.UpdateBranchTracking(branch, v.Remote, v.Revision)
+	}
+
+	// No need to checkout
+	if headid == revid {
+		return v.CopyAndLinkFiles()
+	}
+
+	// No track, no loose.
+	if track == "" {
+		log.Notef("leaving %s; does not track upstream", branch)
+		err = v.CheckoutRevision(revid)
+		if err == nil && o.Submodules {
+			err = v.SubmoduleUpdate()
+		}
+		if err != nil {
+			return err
+		}
+		return v.CopyAndLinkFiles()
+	}
+
+	remoteChanges, err := v.Revlist(revid, "--not", headid)
+	if err != nil {
+		log.Errorf("rev-list failed: %s", err)
+	}
+
+	// No remote changes, no update.
+	if len(remoteChanges) == 0 {
+		return v.CopyAndLinkFiles()
+	}
+
+	pubid := v.PublishedRevision(branch)
+	// Local branched is published.
+	if pubid != "" {
+		notMerged, err := v.Revlist(pubid, "--not", revid)
+		if err != nil {
+			return fmt.Errorf("fail to check publish status for branch '%s': %s",
+				branch,
+				err)
+		}
+		// Has unpublished changes, fail to update.
+		if len(notMerged) > 0 {
+			if len(remoteChanges) > 0 {
+				log.Errorf("branch %s is published (but not merged) and is now "+
+					"%d commits behind", branch, len(remoteChanges))
+			}
+			return fmt.Errorf("branch %s is published (but not merged)", branch)
+		}
+		// Since last published, no other local changes.
+		if pubid == headid {
+			err = v.FastForward(revid)
+			if err == nil && o.Submodules {
+				err = v.SubmoduleUpdate()
+			}
+			if err != nil {
+				return err
+			}
+			return v.CopyAndLinkFiles()
+		}
+	}
+
+	// Failed if worktree is dirty.
+	if ok, _ := v.IsClean(); !ok {
+		return fmt.Errorf("worktree of %s is dirty, checkout failed", v.Name)
+	}
+
+	localChanges, err := v.Revlist(headid, "--not", revid)
+	if err != nil {
+		log.Warnf("rev-list for local changes failed: %s", err)
+	}
+
+	if v.IsRebase() {
+		err = v.Rebase(revid)
+		if err != nil {
+			return err
+		}
+	} else if len(localChanges) > 0 {
+		err = v.HardReset(revid)
+		if err != nil {
+			return err
+		}
+	} else {
+		err = v.FastForward(revid)
+		if err != nil {
+			return err
+		}
+	}
+
+	if o.Submodules {
+		err = v.SubmoduleUpdate()
+		if err != nil {
+			return err
+		}
+	}
+	return v.CopyAndLinkFiles()
 }
 
 // GitRepository returns go-git's repository object for project worktree
@@ -511,7 +917,6 @@ func NewProject(project *manifest.Project, s *RepoSettings) *Project {
 		workRepoPath   string
 	)
 
-	// TODO: move to RepoSetting initial function
 	if s.ManifestURL != "" && !strings.HasSuffix(s.ManifestURL, ".git") {
 		s.ManifestURL += ".git"
 	}

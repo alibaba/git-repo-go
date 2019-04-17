@@ -238,7 +238,7 @@ func (v syncCommand) NetworkHalf(allProjects []*project.Project) error {
 	// TODO 3: sort projects by its fetch time (reverse order),
 	for _, projects := range project.GroupByName(allProjects) {
 		for _, p := range projects {
-			err = p.Fetch(&v.FetchOptions)
+			err = p.SyncNetworkHalf(&v.FetchOptions)
 			if err != nil && !v.O.ForceBroken {
 				break
 			}
@@ -250,11 +250,17 @@ func (v syncCommand) NetworkHalf(allProjects []*project.Project) error {
 
 func (v syncCommand) checkoutEntries(entries *project.PathEntry) {
 	p := entries.Project
+	checkoutOptions := project.CheckoutOptions{
+		Quiet:      config.GetQuiet(),
+		DetachHead: false,
+	}
+
 	if p != nil {
 		// TODO 1: mulple jobs using go routine
 		// TODO 2: checkout project
 		log.Notef("Start checkout %s", p.Path)
-		p.Checkout(p.Revision, "")
+
+		p.SyncLocalHalf(&checkoutOptions)
 	}
 	for _, entry := range entries.Entries {
 		v.checkoutEntries(entry)

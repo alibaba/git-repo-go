@@ -50,12 +50,14 @@ const (
 	ProjectObjects   = "project-objects"
 	Projects         = "projects"
 
-	REF_CHANGES = "refs/changes/"
-	REF_MR      = "refs/merge-requests/"
-	REF_HEADS   = "refs/heads/"
-	REF_TAGS    = "refs/tags/"
-	REF_PUB     = "refs/published/"
-	REF_M       = "refs/remotes/m/"
+	RefsChanges = "refs/changes/"
+	RefsMr      = "refs/merge-requests/"
+	RefsHeads   = "refs/heads/"
+	RefsTags    = "refs/tags/"
+	RefsPub     = "refs/published/"
+	RefsM       = "refs/remotes/m/"
+	Refs        = "refs/"
+	RefsRemotes = "refs/remotes/"
 
 	MaxJobs = 32
 

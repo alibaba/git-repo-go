@@ -5,6 +5,8 @@ import (
 	"net/url"
 	"path/filepath"
 	"strings"
+
+	"code.alibaba-inc.com/force/git-repo/config"
 )
 
 // const for project
@@ -127,4 +129,36 @@ func MatchGroups(match, groups string) bool {
 
 	return matched
 
+}
+
+// IsSha indecates revision is a commit id (hash).
+func IsSha(revision string) bool {
+	if config.CommitIDPattern.MatchString(revision) {
+		return true
+	}
+	return false
+}
+
+// IsTag indecates revision is a tag.
+func IsTag(revision string) bool {
+	if strings.HasPrefix(revision, config.RefsTags) {
+		return true
+	}
+	return false
+}
+
+// IsHead indecates revision is a branch.
+func IsHead(revision string) bool {
+	if strings.HasPrefix(revision, config.RefsHeads) {
+		return true
+	}
+	return false
+}
+
+// IsRef indecates revision is a ref.
+func IsRef(revision string) bool {
+	if strings.HasPrefix(revision, "refs/") {
+		return true
+	}
+	return false
 }

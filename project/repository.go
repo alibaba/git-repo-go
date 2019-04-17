@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -63,6 +64,7 @@ func (v *Repository) setRemote(remoteName, remoteURL string) error {
 	}
 	if remoteName != "" && remoteURL != "" {
 		cfg.Set("remote."+remoteName+".url", v.RemoteURL)
+		cfg.Set("remote."+remoteName+".fetch", "+refs/heads/*:refs/remotes/"+remoteName+"/*")
 		changed = true
 	}
 	if changed {
@@ -276,7 +278,8 @@ func (v *Repository) applyCloneBundle() {
 	// TODO: download and clone from bundle file
 }
 
-func (v Repository) currentBranch() string {
+// GetHead returns current branch name
+func (v Repository) GetHead() string {
 	f, err := os.Open(filepath.Join(v.Path, "HEAD"))
 	if err != nil {
 		return ""
@@ -293,17 +296,15 @@ func (v Repository) currentBranch() string {
 	return ""
 }
 
-func (v Repository) remoteTrackBranch() string {
-	branch := v.currentBranch()
-	if branch == "" {
-		return ""
-	}
-
-	cfg := v.Config()
-	return cfg.Get("branch." + branch + ".merge")
+// IsRebaseInProgress checks whether is in middle of a rebase.
+func (v Repository) IsRebaseInProgress() bool {
+	return path.Exists(filepath.Join(v.Path, "rebase-apply")) ||
+		path.Exists(filepath.Join(v.Path, "rebase-merge")) ||
+		path.Exists(filepath.Join(v.Path, ".dotest"))
 }
 
-func (v *Repository) revisionVerify(revision string) bool {
+// RevisionIsValid returns true if revision can be resolved
+func (v Repository) RevisionIsValid(revision string) bool {
 	raw := v.Raw()
 
 	if raw == nil {
@@ -313,6 +314,61 @@ func (v *Repository) revisionVerify(revision string) bool {
 		return true
 	}
 	return false
+}
+
+// Revlist works like rev-list
+// TODO: Hack go-git plumbing/revlist package to replace git exec
+func (v Repository) Revlist(args ...string) ([]string, error) {
+	result := []string{}
+	cmdArgs := []string{
+		"git",
+		"rev-list",
+	}
+
+	cmdArgs = append(cmdArgs, args...)
+
+	cmd := exec.Command(cmdArgs[0], cmdArgs[1:]...)
+	cmd.Dir = v.Path
+	cmd.Stdin = nil
+	cmd.Stderr = nil
+	out, err := cmd.StdoutPipe()
+	if err != nil {
+		return nil, err
+	}
+	if err = cmd.Start(); err != nil {
+		return nil, err
+	}
+
+	r := bufio.NewReader(out)
+	for {
+		line, err := r.ReadString('\n')
+		line = strings.TrimSpace(line)
+		if len(line) > 0 {
+			result = append(result, line)
+		}
+		if err != nil {
+			break
+		}
+	}
+
+	if err = cmd.Wait(); err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+// RemoteTrackBranch gets remote tracking branch
+func (v Repository) RemoteTrackBranch(branch string) string {
+	if branch == "" {
+		branch = v.GetHead()
+	}
+	if branch == "" {
+		return ""
+	}
+	branch = strings.TrimPrefix(branch, config.RefsHeads)
+
+	cfg := v.Config()
+	return cfg.Get("branch." + branch + ".merge")
 }
 
 // Fetch runs git-fetch on repository
@@ -352,17 +408,17 @@ func (v *Repository) Fetch(remote string, o *FetchOptions) error {
 	}
 
 	if v.Revision == "" {
-		v.Revision = v.remoteTrackBranch()
+		v.Revision = v.RemoteTrackBranch("")
 		if v.Revision == "" {
 			log.Warnf("cannot get tracking branch for project '%s'", v.Name)
 			v.Revision = "master"
 		}
 	}
 
-	isSha := v.isSha(v.Revision)
-	isTag := v.isTag(v.Revision)
+	isSha := IsSha(v.Revision)
+	isTag := IsTag(v.Revision)
 
-	if o.OptimizedFetch && isSha && v.revisionVerify(v.Revision) {
+	if o.OptimizedFetch && isSha && v.RevisionIsValid(v.Revision) {
 		return nil
 	}
 
@@ -374,7 +430,7 @@ func (v *Repository) Fetch(remote string, o *FetchOptions) error {
 	}
 	if o.CurrentBranchOnly {
 		if isSha || isTag {
-			if v.revisionVerify(v.Revision) {
+			if v.RevisionIsValid(v.Revision) {
 				return nil
 			}
 		}
@@ -445,20 +501,6 @@ func (v *Repository) Fetch(remote string, o *FetchOptions) error {
 		}
 	}
 	return nil
-}
-
-func (v Repository) isSha(revision string) bool {
-	if config.CommitIDPattern.MatchString(revision) {
-		return true
-	}
-	return false
-}
-
-func (v Repository) isTag(revision string) bool {
-	if strings.HasPrefix(revision, "refs/tags") {
-		return true
-	}
-	return false
 }
 
 // Raw returns go-git repository object

@@ -323,16 +323,26 @@ Either delete the .repo folder in this workspace, or initialize in another locat
 		Quiet:             config.GetQuiet(),
 	}
 
-	err = v.ws.ManifestProject.Fetch(&fetchOptions)
-	if err != nil && isNew &&
-		v.ws.ManifestProject.WorkRepository.Path != "" {
+	err = v.ws.ManifestProject.SyncNetworkHalf(&fetchOptions)
+	if err != nil && isNew {
+		if !strings.HasPrefix(v.ws.ManifestProject.WorkRepository.Path, v.ws.RootDir) ||
+			v.ws.RootDir == "" {
+			log.Fatalf("manifest workdir '%s' beyond repo root '%s'", v.ws.ManifestProject.WorkRepository.Path, v.ws.RootDir)
+		}
 		// Better delete the manifest git dir if we created it; otherwise next
 		// time (when user fixes problems) we won't go through the "isNew" logic.
 		os.RemoveAll(v.ws.ManifestProject.WorkRepository.Path)
 	}
 
 	// Checkout
-	err = v.ws.ManifestProject.Checkout(v.O.ManifestBranch, "default")
+	checkoutOptions := project.CheckoutOptions{
+		RepoSettings: *s,
+
+		Quiet:       config.GetQuiet(),
+		LocalBranch: "default",
+		DetachHead:  false,
+	}
+	err = v.ws.ManifestProject.SyncLocalHalf(&checkoutOptions)
 	if err != nil {
 		return err
 	}
