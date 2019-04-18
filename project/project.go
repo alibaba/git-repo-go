@@ -681,12 +681,41 @@ func (v Project) SyncLocalHalf(o *CheckoutOptions) error {
 	// Read current branch to 'branch' and parsed revision to 'headid'
 	// If repository is in detached head mode, or has invalid HEAD, branch is empty.
 	branch := ""
+	track := ""
 	head := v.GetHead()
 	headid, err := v.ResolveRevision(head)
 	if err == nil && headid != "" {
 		if IsHead(head) {
 			branch = strings.TrimPrefix(head, config.RefsHeads)
 		}
+	}
+
+	// We have a branch, check whether tracking branch is set properly.
+	if branch != "" {
+		track = v.RemoteTrackBranch(branch)
+	}
+
+	PostUpdate := func(update bool) error {
+		var err error
+
+		if branch != "" && track != v.Revision {
+			if v.Revision != "" {
+				log.Notef("manifest switched %s...%s", track, v.Revision)
+			} else {
+				log.Notef("manifest no longer tracks %s", track)
+			}
+
+			// Update remote tracking, or delete tracking if v.Revision is empty
+			v.UpdateBranchTracking(branch, v.Remote, v.Revision)
+		}
+
+		if update && o.Submodules {
+			err = v.SubmoduleUpdate()
+			if err != nil {
+				return err
+			}
+		}
+		return v.CopyAndLinkFiles()
 	}
 
 	// Currently on a detached HEAD.  The user is assumed to
@@ -697,7 +726,7 @@ func (v Project) SyncLocalHalf(o *CheckoutOptions) error {
 		}
 
 		if headid == revid {
-			return v.CopyAndLinkFiles()
+			return PostUpdate(false)
 		}
 
 		if headid != "" {
@@ -710,45 +739,26 @@ func (v Project) SyncLocalHalf(o *CheckoutOptions) error {
 			}
 		}
 		err = v.CheckoutRevision(revid)
-		if err == nil && o.Submodules {
-			err = v.SubmoduleUpdate()
-		}
 		if err != nil {
 			return err
 		}
-		return v.CopyAndLinkFiles()
-	}
 
-	// We have a branch, check whether tracking branch is set properly.
-	track := v.RemoteTrackBranch(branch)
-
-	if track != v.Revision {
-		if v.Revision != "" {
-			log.Notef("manifest switched %s...%s", track, v.Revision)
-		} else {
-			log.Notef("manifest no longer tracks %s", track)
-		}
-
-		// Update remote tracking, or delete tracking if v.Revision is empty
-		v.UpdateBranchTracking(branch, v.Remote, v.Revision)
+		return PostUpdate(true)
 	}
 
 	// No need to checkout
 	if headid == revid {
-		return v.CopyAndLinkFiles()
+		return PostUpdate(false)
 	}
 
 	// No track, no loose.
 	if track == "" {
 		log.Notef("leaving %s; does not track upstream", branch)
 		err = v.CheckoutRevision(revid)
-		if err == nil && o.Submodules {
-			err = v.SubmoduleUpdate()
-		}
 		if err != nil {
 			return err
 		}
-		return v.CopyAndLinkFiles()
+		return PostUpdate(true)
 	}
 
 	remoteChanges, err := v.Revlist(revid, "--not", headid)
@@ -758,7 +768,7 @@ func (v Project) SyncLocalHalf(o *CheckoutOptions) error {
 
 	// No remote changes, no update.
 	if len(remoteChanges) == 0 {
-		return v.CopyAndLinkFiles()
+		return PostUpdate(false)
 	}
 
 	pubid := v.PublishedRevision(branch)
@@ -781,13 +791,10 @@ func (v Project) SyncLocalHalf(o *CheckoutOptions) error {
 		// Since last published, no other local changes.
 		if pubid == headid {
 			err = v.FastForward(revid)
-			if err == nil && o.Submodules {
-				err = v.SubmoduleUpdate()
-			}
 			if err != nil {
 				return err
 			}
-			return v.CopyAndLinkFiles()
+			return PostUpdate(true)
 		}
 	}
 
@@ -818,13 +825,7 @@ func (v Project) SyncLocalHalf(o *CheckoutOptions) error {
 		}
 	}
 
-	if o.Submodules {
-		err = v.SubmoduleUpdate()
-		if err != nil {
-			return err
-		}
-	}
-	return v.CopyAndLinkFiles()
+	return PostUpdate(true)
 }
 
 // GitRepository returns go-git's repository object for project worktree
