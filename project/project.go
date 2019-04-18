@@ -435,6 +435,7 @@ func (v Project) IsClean() (bool, error) {
 	cmdArgs := []string{
 		GIT,
 		"status",
+		"-uno",
 		"--porcelain",
 		"--",
 	}
