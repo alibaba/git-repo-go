@@ -244,7 +244,9 @@ func (v initCommand) runE(args []string) error {
 
 	// v.O.Groups has default value, and use it if setting is empty
 	groupStr := v.getGroups()
-	if (v.cmd.Flags().Changed("groups") && s.Groups != groupStr) || s.Groups == "" {
+	if ((v.cmd.Flags().Changed("groups") || v.cmd.Flags().Changed("platform")) &&
+		s.Groups != groupStr) ||
+		s.Groups == "" {
 		changed = true
 		s.Groups = groupStr
 	}
