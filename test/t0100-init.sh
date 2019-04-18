@@ -61,6 +61,17 @@ test_expect_success "current branch = default" '
 	)
 '
 
+test_expect_success "remote track: master" '
+	(
+		cd work &&
+		cat >expect <<-EOF &&
+		refs/heads/master
+		EOF
+		git -C .repo/manifests config branch.default.merge >actual &&
+		test_cmp expect actual
+	)
+'
+
 test_expect_success "test init in subdir" '
 	(
 		cd work &&
@@ -85,6 +96,30 @@ test_expect_success "switch file: test init -m <file>" '
 		# git config variable manifest.name => next.xml
 		echo next.xml >expect &&
 		git -C .repo/manifests config manifest.name >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success "switch branch: maint, no rollback" '
+	(
+		cd work &&
+		git-repo init -u $manifest_url -b maint &&
+		cat >expect<<-EOF &&
+		.repo/manifests/default.xml
+		.repo/manifests/next.xml
+		EOF
+		ls .repo/manifests/*.xml >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success "after switch, remote track: maint" '
+	(
+		cd work &&
+		cat >expect <<-EOF &&
+		refs/heads/maint
+		EOF
+		git -C .repo/manifests config branch.default.merge >actual &&
 		test_cmp expect actual
 	)
 '
@@ -140,6 +175,17 @@ test_expect_success "switch branch: master, next.xml is back" '
 		.repo/manifests/default.xml
 		.repo/manifests/next.xml
 		EOF
+		test_cmp expect actual
+	)
+'
+
+test_expect_success "again, remote track: master" '
+	(
+		cd work &&
+		cat >expect <<-EOF &&
+		refs/heads/master
+		EOF
+		git -C .repo/manifests config branch.default.merge >actual &&
 		test_cmp expect actual
 	)
 '
