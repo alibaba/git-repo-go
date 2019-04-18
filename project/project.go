@@ -1,11 +1,13 @@
 package project
 
 import (
+	"bufio"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"net/url"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"sort"
@@ -427,23 +429,49 @@ func (v Project) PublishedRevision(branch string) string {
 }
 
 // IsClean indicates worktree is clean or dirty.
-func (v *Project) IsClean() (bool, error) {
-	raw := v.WorkRepository.Raw()
-	if raw == nil {
-		return false, fmt.Errorf("fail to get repository of %s", v.Name)
+// TODO: go-git failed with invalid checksum
+func (v Project) IsClean() (bool, error) {
+	status := []string{}
+	cmdArgs := []string{
+		GIT,
+		"status",
+		"--porcelain",
+		"--",
 	}
 
-	wt, err := raw.Worktree()
+	cmd := exec.Command(cmdArgs[0], cmdArgs[1:]...)
+	cmd.Dir = v.WorkDir
+	cmd.Stdin = nil
+	cmd.Stderr = nil
+	out, err := cmd.StdoutPipe()
 	if err != nil {
-		return false, fmt.Errorf("fail to get worktree of %s: %s", v.Name, err)
+		return false, err
+	}
+	if err = cmd.Start(); err != nil {
+		return false, err
 	}
 
-	status, err := wt.Status()
-	if err != nil {
-		return false, fmt.Errorf("fail to get worktree status of %s: %s", v.Name, err)
+	r := bufio.NewReader(out)
+	for {
+		line, err := r.ReadString('\n')
+		line = strings.TrimSpace(line)
+		if len(line) > 0 {
+			status = append(status, line)
+		}
+		if err != nil {
+			break
+		}
 	}
 
-	return status.IsClean(), nil
+	if err = cmd.Wait(); err != nil {
+		return false, err
+	}
+
+	if len(status) == 0 {
+		return true, nil
+	}
+
+	return false, nil
 }
 
 // UpdateBranchTracking updates branch tracking info.
