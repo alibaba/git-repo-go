@@ -306,6 +306,10 @@ Either delete the .repo folder in this workspace, or initialize in another locat
 	}
 
 	// Set branch name to fetch/checkout for manifest project
+	if v.O.ManifestBranch == "" {
+		// Use current tracking branch as default
+		v.O.ManifestBranch = s.ManifestBranch
+	}
 	if v.O.ManifestBranch != "" {
 		v.ws.ManifestProject.SetRevision(v.O.ManifestBranch)
 	}

@@ -1,23 +1,26 @@
 package project
 
 import (
+	"strings"
+
 	"code.alibaba-inc.com/force/git-repo/config"
 	"code.alibaba-inc.com/force/git-repo/manifest"
 )
 
 // RepoSettings holds settings in manifest project
 type RepoSettings struct {
-	RepoRoot     string
-	ManifestURL  string
-	ManifestName string
-	Groups       string
-	Reference    string
-	Revision     string
-	Depth        int
-	Archive      bool
-	Dissociate   bool
-	Mirror       bool
-	Submodules   bool
+	RepoRoot       string
+	ManifestURL    string
+	ManifestName   string
+	ManifestBranch string
+	Groups         string
+	Reference      string
+	Revision       string
+	Depth          int
+	Archive        bool
+	Dissociate     bool
+	Mirror         bool
+	Submodules     bool
 }
 
 // ManifestProject is a special type of project
@@ -32,6 +35,7 @@ func (v *ManifestProject) ReadSettings() *RepoSettings {
 	s := v.Settings
 	s.ManifestURL = cfg.Get(config.CfgRemoteOriginURL)
 	s.ManifestName = cfg.Get(config.CfgManifestName)
+	s.ManifestBranch = strings.TrimPrefix(cfg.Get(config.CfgBranchDefaultMerge), config.RefsHeads)
 	s.Groups = cfg.Get(config.CfgManifestGroups)
 	s.Reference = cfg.Get(config.CfgRepoReference)
 	s.Depth = cfg.GetInt(config.CfgRepoDepth, 0)

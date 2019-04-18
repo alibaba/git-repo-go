@@ -124,6 +124,18 @@ test_expect_success "after switch, remote track: maint" '
 	)
 '
 
+test_expect_success "no -b for repo init, use previous branch" '
+	(
+		cd work &&
+		git-repo init -u $manifest_url &&
+		cat >expect <<-EOF &&
+		refs/heads/maint
+		EOF
+		git -C .repo/manifests config branch.default.merge >actual &&
+		test_cmp expect actual
+	)
+'
+
 test_expect_success "detached manifest, drop default branch" '
 	(
 		cd work/.repo/manifests &&
