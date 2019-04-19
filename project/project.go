@@ -481,19 +481,15 @@ func (v Project) IsClean() (bool, error) {
 // UpdateBranchTracking updates branch tracking info.
 func (v Project) UpdateBranchTracking(branch, remote, track string) {
 	cfg := v.Config()
-	if track == "" {
+	if track == "" ||
+		IsSha(track) ||
+		(IsRef(track) && !IsHead(track)) {
 		cfg.Unset("branch." + branch + ".merge")
 		cfg.Unset("branch." + branch + ".remote")
 		v.SaveConfig(cfg)
 		return
 	}
 
-	if IsSha(track) {
-		return
-	}
-	if IsRef(track) && !IsHead(track) {
-		return
-	}
 	if !IsHead(track) {
 		track = config.RefsHeads + track
 	}
