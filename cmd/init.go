@@ -213,22 +213,40 @@ func (v initCommand) runE(args []string) error {
 			log.Fatal("option --manifest-url (-u) is required")
 		}
 		ws, err = workspace.NewWorkSpaceInit(repoRoot, v.O.ManifestURL)
+		v.ws = ws
+		if err != nil {
+			return err
+		}
+		ws.ManifestProject.GitInit()
+		// Reload settings
+		ws.ManifestProject.ReadSettings()
 	} else {
 		ws, err = workspace.NewWorkSpace(repoRoot)
+		v.ws = ws
+		if err != nil {
+			return err
+		}
+		if v.O.ManifestURL != "" && v.O.ManifestURL != ws.ManifestURL() {
+			ws.ManifestProject.Settings.ManifestURL = v.O.ManifestURL
+			ws.ManifestProject.GitInit()
+		}
 	}
-	if err != nil {
-		return err
-	}
-	v.ws = ws
 
-	if isNew ||
-		v.O.ManifestURL != "" && v.O.ManifestURL != v.ws.ManifestURL() {
-		v.ws.ManifestProject.Settings.ManifestURL = v.O.ManifestURL
-		v.ws.ManifestProject.GitInit()
+	if v.O.ManifestBranch != "" {
+		v.ws.ManifestProject.SetRevision(v.O.ManifestBranch)
+	} else if isNew {
+		v.ws.ManifestProject.SetRevision("master")
+	} else {
+		track := v.ws.ManifestProject.RemoteTrackBranch("")
+		if track != "" {
+			v.ws.ManifestProject.SetRevision(track)
+		} else {
+			v.ws.ManifestProject.SetRevision("")
+		}
 	}
 
 	// Update manifest project settings
-	s := v.ws.ManifestProject.ReadSettings()
+	s := v.ws.ManifestProject.Settings
 	changed := false
 	if v.cmd.Flags().Changed("manifest-url") && s.ManifestURL != v.O.ManifestURL {
 		changed = true
@@ -303,15 +321,6 @@ Either delete the .repo folder in this workspace, or initialize in another locat
 		if err != nil {
 			return err
 		}
-	}
-
-	// Set branch name to fetch/checkout for manifest project
-	if v.O.ManifestBranch == "" {
-		// Use current tracking branch as default
-		v.O.ManifestBranch = s.ManifestBranch
-	}
-	if v.O.ManifestBranch != "" {
-		v.ws.ManifestProject.SetRevision(v.O.ManifestBranch)
 	}
 
 	// Fetch repositories

@@ -633,9 +633,8 @@ func (v Project) LinkFile(src, dest string) error {
 	}
 	if cap.Symlink() {
 		return os.Symlink(srcRel, destAbs)
-	} else {
-		return os.Link(srcRel, destAbs)
 	}
+	return os.Link(srcRel, destAbs)
 }
 
 // CopyAndLinkFiles copies and links files
@@ -675,6 +674,10 @@ func (v Project) SyncLocalHalf(o *CheckoutOptions) error {
 	err = v.PrepareWorkdir()
 	if err != nil {
 		return err
+	}
+
+	if v.Revision == "" {
+		return nil
 	}
 
 	// Remove obsolete refs/published/ references
