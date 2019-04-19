@@ -190,44 +190,59 @@ func (v syncCommand) CallManifestServerRPC() {
 }
 
 func (v syncCommand) updateManifestProject() error {
+	var err error
+
+	ws := v.WorkSpace()
+	mp := ws.ManifestProject
+	s := mp.ReadSettings()
+	track := mp.RemoteTrackBranch("")
+
+	if track == "" {
+		return nil
+	}
+
+	// Get current manifest project tracking version
+	oldrev, _ := mp.ResolveRemoteTracking(track)
+
+	// Fetch repositories
+	fetchOptions := project.FetchOptions{
+		RepoSettings: *s,
+
+		CloneBundle:       !v.O.NoCloneBundle,
+		CurrentBranchOnly: v.O.CurrentBranchOnly,
+		ForceSync:         false,
+		NoTags:            v.O.NoTags,
+		OptimizedFetch:    false,
+		Prune:             false,
+		Quiet:             config.GetQuiet(),
+	}
+
+	err = mp.SyncNetworkHalf(&fetchOptions)
+	if err != nil {
+		return err
+	}
+
+	// No update found in manifest project
+	newrev, _ := mp.ResolveRemoteTracking(track)
+	if oldrev == newrev {
+		return nil
+	}
+
+	// Checkout
+	checkoutOptions := project.CheckoutOptions{
+		RepoSettings: *s,
+
+		Quiet:      config.GetQuiet(),
+		DetachHead: false,
+	}
+	err = mp.SyncLocalHalf(&checkoutOptions)
+	if err != nil {
+		return err
+	}
+
+	// TODO: Reload Manifest
+
 	return nil
-	// TODO: sync manifest project
-	/*
-		mp = v.ws.ManifestProject
-		mp.PreSync()
-	*/
-
-	/*
-	   mp = self.manifest.manifestProject
-	   mp.PreSync()
-
-	   if opt.repo_upgraded:
-	     _PostRepoUpgrade(self.manifest, quiet=opt.quiet)
-
-	   if not opt.local_only:
-	     start = time.time()
-	     success = mp.Sync_NetworkHalf(quiet=opt.quiet,
-	                                   current_branch_only=opt.current_branch_only,
-	                                   no_tags=opt.no_tags,
-	                                   optimized_fetch=opt.optimized_fetch,
-	                                   submodules=self.manifest.HasSubmodules)
-	     finish = time.time()
-	     self.event_log.AddSync(mp, event_log.TASK_SYNC_NETWORK,
-	                            start, finish, success)
-
-	   if mp.HasChanges:
-	     syncbuf = SyncBuffer(mp.config)
-	     start = time.time()
-	     mp.Sync_LocalHalf(syncbuf, submodules=self.manifest.HasSubmodules)
-	     clean = syncbuf.Finish()
-	     self.event_log.AddSync(mp, event_log.TASK_SYNC_LOCAL,
-	                            start, time.time(), clean)
-	     if not clean:
-	       sys.exit(1)
-	     self._ReloadManifest(manifest_name)
-	     if opt.jobs is None:
-	       self.jobs = self.manifest.default.sync_j
-	*/
 }
 
 func (v syncCommand) NetworkHalf(allProjects []*project.Project) error {
