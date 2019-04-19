@@ -272,17 +272,19 @@ func (v *Project) PrepareWorkdir() error {
 
 	gitdir := filepath.Join(v.WorkDir, ".git")
 	if _, err = os.Stat(gitdir); err != nil {
-		if gitdir != v.WorkRepository.Path {
-			relDir, err := filepath.Rel(v.WorkDir, v.WorkRepository.Path)
-			if err != nil {
-				relDir = v.WorkRepository.Path
-			}
-			err = ioutil.WriteFile(gitdir,
-				[]byte("gitdir: "+relDir+"\n"),
-				0644)
-			if err != nil {
-				return fmt.Errorf("fail to create gitdir for %s: %s", v.Name, err)
-			}
+		// Remove index file for fresh checkout
+		idxfile := filepath.Join(v.WorkRepository.Path, "index")
+		err = os.Remove(idxfile)
+
+		relDir, err := filepath.Rel(v.WorkDir, v.WorkRepository.Path)
+		if err != nil {
+			relDir = v.WorkRepository.Path
+		}
+		err = ioutil.WriteFile(gitdir,
+			[]byte("gitdir: "+relDir+"\n"),
+			0644)
+		if err != nil {
+			return fmt.Errorf("fail to create gitdir for %s: %s", v.Name, err)
 		}
 	}
 	return nil
