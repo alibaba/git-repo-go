@@ -97,4 +97,33 @@ test_expect_success "git-repo sync (-l), checkouted" '
 	)
 '
 
+test_expect_success "create project.list" '
+	(
+		cd work &&
+		test -f .repo/project.list &&
+		cat >expect<<-EOF &&
+		drivers/driver-1
+		main
+		projects/app1
+		projects/app1/module1
+		projects/app2
+		EOF
+		cp .repo/project.list actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success "copy and link files" '
+	(
+		cd work &&
+		test -f .repo/project.list &&
+		cat >expect<<-EOF &&
+		main/Makefile
+		EOF
+		readlink Makefile >actual &&
+		test_cmp expect actual &&
+		test_cmp VERSION main/VERSION
+	)
+'
+
 test_done

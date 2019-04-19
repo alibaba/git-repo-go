@@ -1,6 +1,6 @@
 #!/bin/sh
 
-REPO_TEST_REPOSITORIES_VERSION=1
+REPO_TEST_REPOSITORIES_VERSION=2
 
 # Create test repositories in .repositories
 REPO_TEST_REPOSITORIES="${SHARNESS_TEST_SRCDIR}/test-repositories"
@@ -82,7 +82,7 @@ test_create_repository () {
 	echo "all:\n\t@echo \"$name: \$(shell cat VERSION)\"\n">Makefile &&
 	git add README.md VERSION Makefile &&
 	git commit -m "initial" &&
-	git tag v1.0 &&
+	git tag -m v1.0 v1.0 &&
 	git branch maint &&
 	echo v2.0-dev >VERSION &&
 	git add VERSION &&
@@ -114,8 +114,8 @@ test_create_manifest_projects () {
 	           revision="master"
 		   sync-j="4" />
 	  <project name="main" path="main" groups="app">
-	    <copyfile src="VERSION" dest="../VERSION"></copyfile>
-	    <linkfile src="Makefile" dest="../Makefile"></linkfile>
+	    <copyfile src="VERSION" dest="VERSION"></copyfile>
+	    <linkfile src="Makefile" dest="Makefile"></linkfile>
 	  </project>
 	  <project name="project1" path="projects/app1" groups="app">
 	    <project name="module1" path="module1" groups="app"/>
@@ -149,8 +149,8 @@ test_create_manifest_projects () {
 	           revision="master"
 		   sync-j="4" />
 	  <project name="main" path="main" groups="app">
-	    <copyfile src="VERSION" dest="../VERSION"></copyfile>
-	    <linkfile src="Makefile" dest="../Makefile"></linkfile>
+	    <copyfile src="VERSION" dest="VERSION"></copyfile>
+	    <linkfile src="Makefile" dest="Makefile"></linkfile>
 	  </project>
 	  <project name="project1" path="projects/app1" groups="app">
 	    <project name="module1" path="module1" groups="notdefault,app"/>

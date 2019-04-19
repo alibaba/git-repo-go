@@ -2,6 +2,7 @@ package project
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -598,7 +599,7 @@ func (v Project) CopyFile(src, dest string) error {
 	}
 	defer destFile.Close()
 
-	_, err = io.Copy(srcFile, destFile)
+	_, err = io.Copy(destFile, srcFile)
 	if err != nil {
 		return fmt.Errorf("fail to copy file: %s", err)
 	}
@@ -607,10 +608,6 @@ func (v Project) CopyFile(src, dest string) error {
 
 // LinkFile copy files from src to dest
 func (v Project) LinkFile(src, dest string) error {
-	if !cap.Symlink() {
-		return v.CopyFile(src, dest)
-	}
-
 	srcAbs := filepath.Clean(filepath.Join(v.WorkDir, src))
 	destAbs := filepath.Clean(filepath.Join(v.RepoRoot(), dest))
 
@@ -622,7 +619,7 @@ func (v Project) LinkFile(src, dest string) error {
 		return fmt.Errorf("fail to copy file, dest file '%s' beyond repo root '%s'", dest, v.RepoRoot())
 	}
 
-	_, err := os.Stat(src)
+	_, err := os.Stat(srcAbs)
 	if err != nil {
 		return nil
 	}
@@ -635,25 +632,40 @@ func (v Project) LinkFile(src, dest string) error {
 	if err != nil {
 		srcRel = srcAbs
 	}
-	return os.Link(srcRel, destAbs)
+	if path.Exists(destAbs) {
+		os.Remove(destAbs)
+	}
+	if cap.Symlink() {
+		return os.Symlink(srcRel, destAbs)
+	} else {
+		return os.Link(srcRel, destAbs)
+	}
 }
 
 // CopyAndLinkFiles copies and links files
 func (v Project) CopyAndLinkFiles() error {
-	var err error
+	var (
+		err  error
+		errs = []string{}
+	)
 
 	for _, f := range v.CopyFiles {
 		err = v.CopyFile(f.Src, f.Dest)
 		if err != nil {
-			return err
+			errs = append(errs,
+				fmt.Sprintf("fail to copy file from %s to %s: %s", f.Src, f.Dest, err))
 		}
 	}
 
 	for _, f := range v.LinkFiles {
 		err = v.LinkFile(f.Src, f.Dest)
 		if err != nil {
-			return err
+			errs = append(errs,
+				fmt.Sprintf("fail to link file from %s to %s: %s", f.Src, f.Dest, err))
 		}
+	}
+	if len(errs) > 0 {
+		return errors.New(strings.Join(errs, "\n"))
 	}
 	return nil
 }
