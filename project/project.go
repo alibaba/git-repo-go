@@ -713,7 +713,11 @@ func (v Project) SyncLocalHalf(o *CheckoutOptions) error {
 
 		if branch != "" && track != v.Revision {
 			if v.Revision != "" {
-				log.Notef("manifest switched %s...%s", track, v.Revision)
+				if track == "" {
+					log.Notef("manifest switched to %s", v.Revision)
+				} else {
+					log.Notef("manifest switched %s...%s", track, v.Revision)
+				}
 			} else {
 				log.Notef("manifest no longer tracks %s", track)
 			}
@@ -767,7 +771,11 @@ func (v Project) SyncLocalHalf(o *CheckoutOptions) error {
 	// No track, no loose.
 	if track == "" {
 		log.Notef("leaving %s; does not track upstream", branch)
-		err = v.CheckoutRevision(revid)
+		if branch != "" {
+			err = v.HardReset(revid)
+		} else {
+			err = v.CheckoutRevision(revid)
+		}
 		if err != nil {
 			return err
 		}
