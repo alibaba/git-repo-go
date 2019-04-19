@@ -1,6 +1,6 @@
 #!/bin/sh
 
-REPO_TEST_REPOSITORIES_VERSION=2
+REPO_TEST_REPOSITORIES_VERSION=3
 
 # Create test repositories in .repositories
 REPO_TEST_REPOSITORIES="${SHARNESS_TEST_SRCDIR}/test-repositories"
@@ -107,6 +107,52 @@ test_create_manifest_projects () {
 	           alias="origin"
 		   fetch="."
 		   review="https://code.aone.alibaba-inc.com" />
+	  <default remote="aone"
+	           revision="master"
+		   sync-j="4" />
+	  <project name="main" path="main" groups="app">
+	    <copyfile src="VERSION" dest="VERSION"></copyfile>
+	    <linkfile src="Makefile" dest="Makefile"></linkfile>
+	  </project>
+	</manifest>
+	EOF
+
+	git add default.xml &&
+	git commit -m "Version 0.1" &&
+	git tag -m v0.1 v0.1 &&
+
+	cat >default.xml <<-EOF &&
+	<?xml version="1.0" encoding="UTF-8"?>
+	<manifest>
+	  <remote  name="aone"
+	           alias="origin"
+		   fetch="."
+		   review="https://code.aone.alibaba-inc.com" />
+	  <default remote="aone"
+	           revision="master"
+		   sync-j="4" />
+	  <project name="main" path="main" groups="app">
+	    <copyfile src="VERSION" dest="VERSION"></copyfile>
+	    <linkfile src="Makefile" dest="Makefile"></linkfile>
+	  </project>
+	  <project name="project1" path="projects/app1" groups="app">
+	    <project name="module1" path="module1" groups="app"/>
+	  </project>
+	  <project name="project2" path="projects/app2" groups="app"/>
+	</manifest>
+	EOF
+
+	git add default.xml &&
+	git commit -m "Version 0.2" &&
+	git tag -m v0.2 v0.2 &&
+
+	cat >default.xml <<-EOF &&
+	<?xml version="1.0" encoding="UTF-8"?>
+	<manifest>
+	  <remote  name="aone"
+	           alias="origin"
+		   fetch="."
+		   review="https://code.aone.alibaba-inc.com" />
 	  <remote  name="driver"
 		   fetch=".."
 		   review="https://code.aone.alibaba-inc.com" />
@@ -127,11 +173,11 @@ test_create_manifest_projects () {
 	EOF
 
 	git add default.xml &&
-	git commit -m "initial" &&
+	git commit -m "Version 1.0" &&
 	git push -u origin master &&
 	git tag -m v1.0 v1.0 &&
 	git branch maint &&
-	git push origin v1.0 maint master &&
+	git push --tags origin maint master &&
 
 	cat >next.xml <<-EOF &&
 	<?xml version="1.0" encoding="UTF-8"?>
@@ -161,8 +207,9 @@ test_create_manifest_projects () {
 	EOF
 
 	git add next.xml &&
-	git commit -m "Add new xml: next.xml" &&
-	git push origin master &&
+	git commit -m "Version 2.0" &&
+	git tag -m v2.0 v2.0
+	git push --tags origin master &&
 
 	cd "$REPO_TEST_REPOSITORIES" &&
 	rm -rf "tmp-manifests"
