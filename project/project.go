@@ -708,6 +708,9 @@ func (v Project) SyncLocalHalf(o *CheckoutOptions) error {
 		track = v.RemoteTrackBranch(branch)
 	}
 
+	log.Debugf("Fetch (head: %s, branch: %s, track: %s, headid: %s, revid: %s)",
+		head, branch, track, headid, revid)
+
 	PostUpdate := func(update bool) error {
 		var err error
 
@@ -755,7 +758,9 @@ func (v Project) SyncLocalHalf(o *CheckoutOptions) error {
 				log.Notef("discarding %d commits", len(localChanges))
 			}
 		}
-		err = v.CheckoutRevision(revid)
+
+		log.Debugf("detached head, force checkout: %s", revid)
+		err = v.CheckoutRevision("--force", revid)
 		if err != nil {
 			return err
 		}
@@ -774,7 +779,7 @@ func (v Project) SyncLocalHalf(o *CheckoutOptions) error {
 		if branch != "" {
 			err = v.HardReset(revid)
 		} else {
-			err = v.CheckoutRevision(revid)
+			err = v.CheckoutRevision("--force", revid)
 		}
 		if err != nil {
 			return err
