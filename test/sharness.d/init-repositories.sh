@@ -1,6 +1,6 @@
 #!/bin/sh
 
-REPO_TEST_REPOSITORIES_VERSION=3
+REPO_TEST_REPOSITORIES_VERSION=4
 
 # Create test repositories in .repositories
 REPO_TEST_REPOSITORIES="${SHARNESS_TEST_SRCDIR}/test-repositories"
@@ -78,16 +78,28 @@ test_create_repository () {
 	git clone "$repo" "tmp-$name" &&
 	cd "tmp-$name" &&
 	echo "# projecct: $name" >README.md &&
-	echo v1.0 >VERSION &&
+	echo v0.1.0 >VERSION &&
 	echo "all:\n\t@echo \"$name: \$(shell cat VERSION)\"\n">Makefile &&
 	git add README.md VERSION Makefile &&
-	git commit -m "initial" &&
-	git tag -m v1.0 v1.0 &&
-	git branch maint &&
-	echo v2.0-dev >VERSION &&
-	git add VERSION &&
-	git commit -m "bump version to 2.0-dev" &&
-	git push origin master maint v1.0 &&
+	git commit -m "Version 0.1.0" &&
+	git tag -m v0.1.0 v0.1.0 &&
+	echo v0.2.0 >VERSION &&
+	git add -u &&
+	git commit -m "Version 0.2.0" &&
+	git tag -m v0.2.0 v0.2.0 &&
+	echo v0.3.0 >VERSION &&
+	git add -u &&
+	git commit -m "Version 0.3.0" &&
+	git tag -m v0.3.0 v0.3.0 &&
+	echo v1.0.0 >VERSION &&
+	git add -u &&
+	git commit -m "Version 1.0.0" &&
+	git tag -m v1.0.0 v1.0.0 &&
+	git branch maint v1.0.0 &&
+	echo v2.0.0-dev >VERSION &&
+	git add -u &&
+	git commit -m "Version 2.0.0-dev" &&
+	git push --tags origin master maint &&
 	cd "$REPO_TEST_REPOSITORIES" &&
 	rm -rf "tmp-$name"
 }
@@ -108,7 +120,7 @@ test_create_manifest_projects () {
 		   fetch="."
 		   review="https://code.aone.alibaba-inc.com" />
 	  <default remote="aone"
-	           revision="master"
+	           revision="refs/tags/v0.1.0"
 		   sync-j="4" />
 	  <project name="main" path="main" groups="app">
 	    <copyfile src="VERSION" dest="VERSION"></copyfile>
@@ -129,16 +141,15 @@ test_create_manifest_projects () {
 		   fetch="."
 		   review="https://code.aone.alibaba-inc.com" />
 	  <default remote="aone"
-	           revision="master"
+	           revision="refs/tags/v0.2.0"
 		   sync-j="4" />
 	  <project name="main" path="main" groups="app">
 	    <copyfile src="VERSION" dest="VERSION"></copyfile>
 	    <linkfile src="Makefile" dest="Makefile"></linkfile>
 	  </project>
-	  <project name="project1" path="projects/app1" groups="app">
+	  <project name="project1" path="projects/app1" groups="app" revision="refs/tags/v0.1.0">
 	    <project name="module1" path="module1" groups="app"/>
 	  </project>
-	  <project name="project2" path="projects/app2" groups="app"/>
 	</manifest>
 	EOF
 
@@ -157,14 +168,14 @@ test_create_manifest_projects () {
 		   fetch=".."
 		   review="https://code.aone.alibaba-inc.com" />
 	  <default remote="aone"
-	           revision="master"
+	           revision="maint"
 		   sync-j="4" />
 	  <project name="main" path="main" groups="app">
 	    <copyfile src="VERSION" dest="VERSION"></copyfile>
 	    <linkfile src="Makefile" dest="Makefile"></linkfile>
 	  </project>
 	  <project name="project1" path="projects/app1" groups="app">
-	    <project name="module1" path="module1" groups="app"/>
+	    <project name="module1" path="module1" groups="app" revision="refs/tags/v0.2.0" />
 	  </project>
 	  <project name="project2" path="projects/app2" groups="app"/>
 	  <project name="drivers/driver1" path="drivers/driver-1" groups="drivers" remote="driver" />
@@ -174,10 +185,35 @@ test_create_manifest_projects () {
 
 	git add default.xml &&
 	git commit -m "Version 1.0" &&
-	git push -u origin master &&
 	git tag -m v1.0 v1.0 &&
 	git branch maint &&
-	git push --tags origin maint master &&
+
+	cat >default.xml <<-EOF &&
+	<?xml version="1.0" encoding="UTF-8"?>
+	<manifest>
+	  <remote  name="aone"
+	           alias="origin"
+		   fetch="."
+		   review="https://code.aone.alibaba-inc.com" />
+	  <remote  name="driver"
+		   fetch=".."
+	           revision="maint"
+		   review="https://code.aone.alibaba-inc.com" />
+	  <default remote="aone"
+	           revision="master"
+		   sync-j="4" />
+	  <project name="main" path="main" groups="app">
+	    <copyfile src="VERSION" dest="VERSION"></copyfile>
+	    <linkfile src="Makefile" dest="Makefile"></linkfile>
+	  </project>
+	  <project name="project1" path="projects/app1" groups="app">
+	    <project name="module1" path="module1" groups="app" revision="refs/tags/v1.0.0" />
+	  </project>
+	  <project name="project2" path="projects/app2" groups="app"/>
+	  <project name="drivers/driver1" path="drivers/driver-1" groups="drivers" remote="driver" />
+	  <project name="drivers/driver2" path="drivers/driver-2" groups="notdefault,drivers" remote="driver" />
+	</manifest>
+	EOF
 
 	cat >next.xml <<-EOF &&
 	<?xml version="1.0" encoding="UTF-8"?>
@@ -185,11 +221,11 @@ test_create_manifest_projects () {
 	  <remote  name="aone"
 	           alias="origin"
 		   fetch="."
-		   revision="maint"
+		   revision="master"
 		   review="https://code.aone.alibaba-inc.com" />
 	  <remote  name="driver"
 		   fetch=".."
-		   revision="maint"
+		   revision="master"
 		   review="https://code.aone.alibaba-inc.com" />
 	  <default remote="aone"
 	           revision="master"
@@ -203,13 +239,14 @@ test_create_manifest_projects () {
 	  </project>
 	  <project name="drivers/driver1" path="drivers/driver-1" groups="drivers" remote="driver" />
 	  <project name="drivers/driver2" path="drivers/driver-2" groups="notdefault,drivers" remote="driver" />
+	  <project name="drivers/driver3" path="drivers/driver-3" groups="drivers" remote="driver" />
 	</manifest>
 	EOF
 
-	git add next.xml &&
+	git add default.xml next.xml &&
 	git commit -m "Version 2.0" &&
 	git tag -m v2.0 v2.0
-	git push --tags origin master &&
+	git push --tags origin maint master &&
 
 	cd "$REPO_TEST_REPOSITORIES" &&
 	rm -rf "tmp-manifests"
@@ -224,6 +261,7 @@ repo_create_test_repositories_real () {
 		test_create_repository hello/project2.git &&
 		test_create_repository drivers/driver1.git &&
 		test_create_repository drivers/driver2.git &&
+		test_create_repository drivers/driver3.git &&
 		test_create_manifest_projects
 	)
 }
