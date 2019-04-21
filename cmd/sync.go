@@ -154,13 +154,17 @@ func (v *syncCommand) Command() *cobra.Command {
 
 func (v *syncCommand) WorkSpace() *workspace.WorkSpace {
 	if v.ws == nil {
-		var err error
-		v.ws, err = workspace.NewWorkSpace("")
-		if err != nil {
-			log.Fatal(err)
-		}
+		v.reloadWorkSpace()
 	}
 	return v.ws
+}
+
+func (v *syncCommand) reloadWorkSpace() {
+	var err error
+	v.ws, err = workspace.NewWorkSpace("")
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func (v *syncCommand) defaultJobs() uint64 {
@@ -188,7 +192,7 @@ func (v syncCommand) CallManifestServerRPC() {
 	log.Panic("not implement CallManifestServerRPC")
 }
 
-func (v syncCommand) updateManifestProject() error {
+func (v *syncCommand) updateManifestProject() error {
 	var err error
 
 	ws := v.WorkSpace()
@@ -200,8 +204,8 @@ func (v syncCommand) updateManifestProject() error {
 		return nil
 	}
 
-	// Get current manifest project tracking version
-	oldrev, _ := mp.ResolveRemoteTracking(track)
+	// Get current manifest version
+	oldrev, _ := mp.ResolveRevision("HEAD")
 
 	// Fetch repositories
 	fetchOptions := project.FetchOptions{
@@ -239,7 +243,8 @@ func (v syncCommand) updateManifestProject() error {
 		return err
 	}
 
-	// TODO: Reload Manifest
+	// : Reload Manifest
+	v.reloadWorkSpace()
 
 	return nil
 }
@@ -408,7 +413,7 @@ func (v syncCommand) removeObsoletePaths(oldPaths, newPaths []string) error {
 		}
 
 		if _, err := os.Stat(gitdir); err != nil {
-			log.Debug("cannot find gitdir '%s' when removing obsolete path", gitdir)
+			log.Debugf("cannot find gitdir '%s' when removing obsolete path", gitdir)
 			continue
 		}
 
@@ -589,6 +594,7 @@ func (v syncCommand) runE(args []string) error {
 	if err != nil {
 		return err
 	}
+	ws = v.WorkSpace()
 
 	allProjects, err := ws.GetProjects(&workspace.GetProjectsOptions{
 		Groups:       ws.Settings().Groups,
