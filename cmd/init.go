@@ -40,19 +40,20 @@ type initCommand struct {
 	O struct {
 		ManifestURL       string
 		ManifestBranch    string
-		CurrentBranchOnly bool
 		ManifestName      string
-		Mirror            bool
-		Reference         string
-		Dissociate        bool
-		Depth             int
 		Archive           bool
-		Submodules        bool
+		ConfigName        bool
+		CurrentBranchOnly bool
+		Depth             int
+		DetachHead        bool
+		Dissociate        bool
 		Groups            string
-		Platform          string
+		Mirror            bool
 		NoCloneBundle     bool
 		NoTags            bool
-		ConfigName        bool
+		Platform          string
+		Reference         string
+		Submodules        bool
 	}
 }
 
@@ -88,6 +89,11 @@ func (v *initCommand) Command() *cobra.Command {
 		"m",
 		"default.xml",
 		"initial manifest file")
+	v.cmd.Flags().BoolVarP(&v.O.DetachHead,
+		"detach",
+		"d",
+		false,
+		"remove default branch to make manifest project detached")
 	v.cmd.Flags().BoolVar(&v.O.Mirror,
 		"mirror",
 		false,
@@ -360,7 +366,17 @@ Either delete the .repo folder in this workspace, or initialize in another locat
 		return err
 	}
 
-	if isNew || v.ws.ManifestProject.GetHead() == "" {
+	if v.O.DetachHead {
+		if v.ws.ManifestProject.GetHead() != "" {
+			if err = v.ws.ManifestProject.DetachHead(); err != nil {
+				return nil
+			}
+
+			if err = v.ws.ManifestProject.DeleteBranch("refs/heads/default"); err != nil {
+				return nil
+			}
+		}
+	} else if isNew || v.ws.ManifestProject.GetHead() == "" {
 		err := v.ws.ManifestProject.StartBranch("default", "")
 		if err != nil {
 			return fmt.Errorf("cannot create default in manifest: %s", err)

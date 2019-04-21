@@ -542,3 +542,20 @@ func (v *Repository) SaveConfig(cfg goconfig.GitConfig) error {
 	}
 	return cfg.Save(v.configFile())
 }
+
+// DeleteBranch deletes a branch
+func (v Repository) DeleteBranch(branch string) error {
+	// TODO: go-git fail to delete a branch
+	// TODO: return v.Raw().DeleteBranch(branch)
+	if IsHead(branch) {
+		branch = strings.TrimPrefix(branch, config.RefsHeads)
+	}
+	cmdArgs := []string{
+		GIT,
+		"branch",
+		"-D",
+		branch,
+		"--",
+	}
+	return executeCommandIn(v.Path, cmdArgs)
+}

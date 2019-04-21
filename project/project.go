@@ -1191,3 +1191,19 @@ func (v Project) StartBranch(branch, track string) error {
 	v.UpdateBranchTracking(branch, remote, v.Revision)
 	return nil
 }
+
+// DetachHead makes detached HEAD
+func (v Project) DetachHead() error {
+	cmdArgs := []string{
+		GIT,
+		"checkout",
+		"HEAD^0",
+		"--",
+	}
+	return executeCommandIn(v.WorkDir, cmdArgs)
+}
+
+// DeleteBranch deletes a branch
+func (v Project) DeleteBranch(branch string) error {
+	return v.WorkRepository.DeleteBranch(branch)
+}

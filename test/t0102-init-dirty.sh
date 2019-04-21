@@ -23,18 +23,19 @@ test_expect_success "git-repo init -b maint" '
 test_expect_success "edit default.xml" '
 	(
 		cd work/.repo/manifests &&
+		test -f default.xml &&
 		echo >>default.xml
 	)
 '
 
-test_expect_success "git-repo init again without update" '
+test_expect_success "no upstream changed, init ok" '
 	(
 		cd work &&
 		git-repo init -u $manifest_url
 	)
 '
 
-test_expect_success "git-repo init uppdate failed because of dirty" '
+test_expect_success "init -b to change branch, failed for dirty" '
 	(
 		cd work &&
 		cat >expect<<-EOF &&
@@ -45,7 +46,7 @@ test_expect_success "git-repo init uppdate failed because of dirty" '
 	)
 '
 
-test_expect_success "update failed, remote track not changed" '
+test_expect_success "no change for remote track" '
 	(
 		cd work &&
 		cat >expect <<-EOF &&
@@ -56,7 +57,7 @@ test_expect_success "update failed, remote track not changed" '
 	)
 '
 
-test_expect_success "detached and remove default branch" '
+test_expect_success "detached by hand" '
 	(
 		cd work/.repo/manifests &&
 		git checkout HEAD^0 &&
@@ -64,12 +65,76 @@ test_expect_success "detached and remove default branch" '
 	)
 '
 
-test_expect_success "git-repo init ok for detached project even dirty" '
+test_expect_success "switch and ignore dirty" '
 	(
 		cd work &&
 		git-repo init -u $manifest_url -b master &&
 		cat >expect <<-EOF &&
 		refs/heads/master
+		EOF
+		git -C .repo/manifests config branch.default.merge >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success "detached using init --detach command" '
+	(
+		cd work &&
+		git-repo init --detach
+	)
+'
+
+test_expect_success "touble detach" '
+	(
+		cd work &&
+		git-repo init --detach
+	)
+'
+
+test_expect_success "init switched to a tag" '
+	(
+		cd work &&
+		git-repo init -u $manifest_url -b refs/tags/v0.1
+	)
+'
+
+test_expect_success "tag points to version 0.1" '
+	(
+		cd work &&
+		cat >expect<<-EOF &&
+		Version 0.1
+		EOF
+		git -C .repo/manifests log -1 --pretty="%s">actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success "has one xml file" '
+	(
+		cd work &&
+		# Has two xml files
+		ls .repo/manifests/*.xml >actual &&
+		cat >expect<<-EOF &&
+		.repo/manifests/default.xml
+		EOF
+		test_cmp expect actual
+	)
+'
+
+test_expect_success "edit default.xml" '
+	(
+		cd work/.repo/manifests &&
+		test -f default.xml &&
+		echo >>default.xml
+	)
+'
+
+test_expect_success "switch from tag and ignore dirty" '
+	(
+		cd work &&
+		git-repo init -u $manifest_url -b maint &&
+		cat >expect <<-EOF &&
+		refs/heads/maint
 		EOF
 		git -C .repo/manifests config branch.default.merge >actual &&
 		test_cmp expect actual
