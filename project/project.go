@@ -431,9 +431,12 @@ func (v Project) PublishedRevision(branch string) string {
 	return ""
 }
 
-// IsClean indicates worktree is clean or dirty.
-// TODO: go-git failed with invalid checksum
-func (v Project) IsClean() (bool, error) {
+// IsClean checks whether repository dir is clean
+func IsClean(dir string) (bool, error) {
+	if !path.Exists(dir) {
+		return false, fmt.Errorf("dir %s does not exist", dir)
+	}
+
 	status := []string{}
 	cmdArgs := []string{
 		GIT,
@@ -444,7 +447,7 @@ func (v Project) IsClean() (bool, error) {
 	}
 
 	cmd := exec.Command(cmdArgs[0], cmdArgs[1:]...)
-	cmd.Dir = v.WorkDir
+	cmd.Dir = dir
 	cmd.Stdin = nil
 	cmd.Stderr = nil
 	out, err := cmd.StdoutPipe()
@@ -476,6 +479,12 @@ func (v Project) IsClean() (bool, error) {
 	}
 
 	return false, nil
+}
+
+// IsClean indicates worktree is clean or dirty.
+// TODO: go-git failed with invalid checksum
+func (v Project) IsClean() (bool, error) {
+	return IsClean(v.WorkDir)
 }
 
 // UpdateBranchTracking updates branch tracking info.

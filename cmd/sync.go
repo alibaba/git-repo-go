@@ -28,7 +28,6 @@ import (
 	"code.alibaba-inc.com/force/git-repo/workspace"
 	"github.com/jiangxin/multi-log"
 	"github.com/spf13/cobra"
-	"gopkg.in/src-d/go-git.v4"
 )
 
 type syncCommand struct {
@@ -333,6 +332,25 @@ func (v syncCommand) findGitWorktree(dir string) []string {
 	return result
 }
 
+func (v syncCommand) removeEmptyDirs(dir string) {
+	var (
+		root   = v.ws.RootDir
+		oldDir = dir
+	)
+
+	for {
+		if !strings.HasPrefix(dir, root) {
+			break
+		}
+		os.Remove(dir)
+		dir = filepath.Dir(dir)
+		if dir == oldDir {
+			break
+		}
+		oldDir = dir
+	}
+}
+
 func (v syncCommand) removeWorktree(dir string, gitTrees []string) error {
 	var err error
 
@@ -390,34 +408,17 @@ func (v syncCommand) removeObsoletePaths(oldPaths, newPaths []string) error {
 		}
 
 		if _, err := os.Stat(gitdir); err != nil {
+			log.Debug("cannot find gitdir '%s' when removing obsolete path", gitdir)
 			continue
 		}
 
-		// Check if workdir is dirty or not
-		r, err := git.PlainOpen(workdir)
-		if err == git.ErrRepositoryNotExists {
+		isClean, err := project.IsClean(workdir)
+		if err != nil {
+			log.Infof("fail to remove '%s': %s", p, err)
 			continue
-		} else if err != nil {
-			return fmt.Errorf("cannot open repository '%s': %s",
-				p,
-				err)
 		}
 
-		wt, err := r.Worktree()
-		if err != nil {
-			return fmt.Errorf("fail to get worktree of '%s': %s",
-				p,
-				err)
-		}
-
-		status, err := wt.Status()
-		if err != nil {
-			return fmt.Errorf("fail to get worktree status of '%s': %s",
-				p,
-				err)
-		}
-
-		if !status.IsClean() {
+		if !isClean {
 			return fmt.Errorf(`Cannot remove project "%s": uncommitted changes are present.
 Please commit changes, then run sync again`,
 				p)
@@ -437,6 +438,7 @@ Please commit changes, then run sync again`,
 		if err != nil {
 			return fmt.Errorf("fail to remove '%s': %s", workdir, err)
 		}
+		v.removeEmptyDirs(workdir)
 
 		// Remove project repository
 		if _, err = os.Stat(workRepoPath); err != nil {
@@ -447,10 +449,8 @@ Please commit changes, then run sync again`,
 			if err != nil {
 				return err
 			}
+			v.removeEmptyDirs(workRepoPath)
 		}
-
-		// Repove object repository if has no other references
-		// TODO: get object repository path, and drop it if no record in manifest
 	}
 
 	return nil
