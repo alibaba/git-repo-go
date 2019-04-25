@@ -147,7 +147,7 @@ func TestProjectMatchGroups(t *testing.T) {
 	assert.True(p.MatchGroups(mGroups))
 }
 
-func TestGroupByName(t *testing.T) {
+func TestIndexByName(t *testing.T) {
 	assert := assert.New(t)
 	projects := []*Project{
 		&Project{
@@ -187,7 +187,7 @@ name: Group2/Name2, path-1: app/2-2-1
 name: Group2/Name2, path-2: app/2-2-2
 name: Group3/Name1, path-1: app/3-1`
 	actual := []string{}
-	for name, ps := range GroupByName(projects) {
+	for name, ps := range IndexByName(projects) {
 		for i, p := range ps {
 			actual = append(actual, fmt.Sprintf("name: %s, path-%d: %s", name, i+1, p.Path))
 		}
@@ -196,7 +196,7 @@ name: Group3/Name1, path-1: app/3-1`
 	assert.Equal(expect, strings.Join(actual, "\n"))
 }
 
-func TestGroupByPath(t *testing.T) {
+func TestProjectsTree(t *testing.T) {
 	assert := assert.New(t)
 	projects := []*Project{
 		&Project{
@@ -240,7 +240,7 @@ func TestGroupByPath(t *testing.T) {
 path: app2, name: Group2/App
 path: app3/name1, name: Group3/Name1`
 	actual := []string{}
-	entry := GroupByPath(projects)
+	entry := ProjectsTree(projects)
 	for _, e := range entry.Entries {
 		actual = append(actual, fmt.Sprintf("path: %s, name: %s", e.Project.Path, e.Project.Name))
 	}

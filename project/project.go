@@ -1128,8 +1128,8 @@ func Join(group1, group2 []*Project) []*Project {
 	return result
 }
 
-// GroupByName returns a map using project name as index to group projects
-func GroupByName(projects []*Project) map[string][]*Project {
+// IndexByName returns a map using project name as index to group projects
+func IndexByName(projects []*Project) map[string][]*Project {
 	result := make(map[string][]*Project)
 	for _, p := range projects {
 		if _, ok := result[p.Name]; !ok {
@@ -1141,6 +1141,15 @@ func GroupByName(projects []*Project) map[string][]*Project {
 	return result
 }
 
+// IndexByPath returns a map using project path as index to group projects
+func IndexByPath(projects []*Project) map[string]*Project {
+	result := make(map[string]*Project)
+	for _, p := range projects {
+		result[p.Path] = p
+	}
+	return result
+}
+
 // PathEntry is used to group projects by path
 type PathEntry struct {
 	Path    string
@@ -1148,8 +1157,8 @@ type PathEntry struct {
 	Entries []*PathEntry
 }
 
-// GroupByPath returns a map using project path as index to group projects
-func GroupByPath(projects []*Project) *PathEntry {
+// ProjectsTree returns a map using project path as index to group projects
+func ProjectsTree(projects []*Project) *PathEntry {
 	pMap := make(map[string]*Project)
 	paths := []string{}
 	for _, p := range projects {

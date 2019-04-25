@@ -16,6 +16,7 @@ package cmd
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -250,25 +251,77 @@ func (v *syncCommand) updateManifestProject() error {
 }
 
 func (v syncCommand) NetworkHalf(allProjects []*project.Project) error {
-	var err error
+	var (
+		err  error
+		errs []error
+	)
 
-	// TODO 1: run go routine for multiple jobs
-	// TODO 2: loop until all projects fetch, or the same projects failed twice
-	// TODO 3: sort projects by its fetch time (reverse order),
-	for _, projects := range project.GroupByName(allProjects) {
-		for _, p := range projects {
-			err = p.SyncNetworkHalf(&v.FetchOptions)
-			if err != nil && !v.O.ForceBroken {
-				break
+	jobs := v.O.Jobs
+	if jobs < 1 {
+		jobs = 1
+	}
+
+	// TODO 1. Record fetch time, save time and project name to JSON
+	// TODO 2. Sort projects by its fetch time (reverse order).
+
+	projectsByName := project.IndexByName(allProjects)
+	jobTasks := make(chan string, jobs)
+	jobResults := make(chan error, jobs)
+
+	worker := func(i int) {
+		var (
+			err      error
+			name     string
+			projects []*project.Project
+			p        *project.Project
+		)
+
+		log.Debugf("start NetworkHalf worker #%d", i)
+		for name = range jobTasks {
+			projects = projectsByName[name]
+			for _, p = range projects {
+				log.Debugf("worker #%d: sync %s", i, p.Name)
+				err = p.SyncNetworkHalf(&v.FetchOptions)
+				jobResults <- err
 			}
 		}
 	}
 
-	return nil
+	for i := 0; i < jobs; i++ {
+		go worker(i)
+	}
+
+	go func() {
+		for name := range projectsByName {
+			jobTasks <- name
+		}
+
+		close(jobTasks)
+	}()
+
+	for i := 0; i < len(projectsByName); i++ {
+		err = <-jobResults
+		if err != nil {
+			errs = append(errs, err)
+		}
+	}
+
+	if len(errs) == 0 {
+		return nil
+	}
+
+	errMsg := ""
+	for _, err = range errs {
+		errMsg += err.Error() + "\n"
+	}
+	return errors.New(errMsg)
 }
 
 func (v syncCommand) checkoutEntries(entries *project.PathEntry) error {
-	var err error
+	var (
+		err error
+	)
+
 	p := entries.Project
 	checkoutOptions := project.CheckoutOptions{
 		Quiet:      config.GetQuiet(),
@@ -286,6 +339,7 @@ func (v syncCommand) checkoutEntries(entries *project.PathEntry) error {
 		}
 	}
 	for _, entry := range entries.Entries {
+		// TODO: run in another worker
 		err = v.checkoutEntries(entry)
 		if err != nil {
 			return err
@@ -295,7 +349,7 @@ func (v syncCommand) checkoutEntries(entries *project.PathEntry) error {
 }
 
 func (v syncCommand) LocalHalf(allProjects []*project.Project) error {
-	entries := project.GroupByPath(allProjects)
+	entries := project.ProjectsTree(allProjects)
 	return v.checkoutEntries(entries)
 }
 
