@@ -50,7 +50,7 @@ type Default struct {
 	Revision   string `xml:"revision,attr,omitempty"`
 	DestBranch string `xml:"dest-branch,attr,omitempty"`
 	Upstream   string `xml:"upstream,attr,omitempty"`
-	SyncJ      uint64 `xml:"sync-j,attr,omitempty"`
+	SyncJ      int    `xml:"sync-j,attr,omitempty"`
 	SyncC      string `xml:"sync-c,attr,omitempty"`
 	SyncS      string `xml:"sync-s,attr,omitempty"`
 	SyncTags   string `xml:"sync-tags,attr,omitempty"`

@@ -42,7 +42,7 @@ type syncCommand struct {
 		NetworkOnly            bool
 		DetachHead             bool
 		CurrentBranchOnly      bool
-		Jobs                   uint64
+		Jobs                   int
 		ManifestName           string
 		NoCloneBundle          bool
 		ManifestServerUsername string
@@ -99,7 +99,7 @@ func (v *syncCommand) Command() *cobra.Command {
 		"c",
 		false,
 		"fetch only current branch from server")
-	v.cmd.Flags().Uint64VarP(&v.O.Jobs,
+	v.cmd.Flags().IntVarP(&v.O.Jobs,
 		"jobs",
 		"j",
 		v.defaultJobs(),
@@ -167,10 +167,10 @@ func (v *syncCommand) reloadWorkSpace() {
 	}
 }
 
-func (v *syncCommand) defaultJobs() uint64 {
+func (v *syncCommand) defaultJobs() int {
 	rlimit := syscall.Rlimit{}
 	syscall.Getrlimit(syscall.RLIMIT_NOFILE, &rlimit)
-	defaultJobs := min((rlimit.Cur-5)/3, config.MaxJobs)
+	defaultJobs := min(int(rlimit.Cur-5)/3, config.MaxJobs)
 
 	// When running test cases in cmd/, function `defaultJobs` will be evaluated.
 	// Do not call `v.WorkSpace()` function, which will fail if not in a workspace.
