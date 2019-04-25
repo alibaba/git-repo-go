@@ -224,6 +224,9 @@ func (v WorkSpace) GetProjects(o *GetProjectsOptions, args ...string) ([]*projec
 		allProjects = []*project.Project{}
 	)
 
+	if o == nil {
+		o = &GetProjectsOptions{}
+	}
 	groups = o.Groups
 	if groups == "" {
 		groups = v.ManifestProject.Config().Get(config.CfgManifestGroups)

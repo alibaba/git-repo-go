@@ -1254,7 +1254,7 @@ func (v Project) StartBranch(branch, track string) error {
 	}
 
 	// Create remote tracking
-	v.UpdateBranchTracking(branch, remote, v.Revision)
+	v.UpdateBranchTracking(branch, remote, track)
 	return nil
 }
 

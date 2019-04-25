@@ -162,3 +162,18 @@ func IsRef(revision string) bool {
 	}
 	return false
 }
+
+// IsImmutable indecates revision is a tag or sha or change.
+func IsImmutable(revision string) bool {
+	if IsSha(revision) || IsTag(revision) {
+		return true
+	}
+	if IsHead(revision) {
+		return false
+	}
+	if strings.HasPrefix(revision, "refs/") {
+		return true
+	}
+	// is a head
+	return false
+}
