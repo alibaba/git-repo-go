@@ -267,7 +267,8 @@ func (v syncCommand) NetworkHalf(allProjects []*project.Project) error {
 	return nil
 }
 
-func (v syncCommand) checkoutEntries(entries *project.PathEntry) {
+func (v syncCommand) checkoutEntries(entries *project.PathEntry) error {
+	var err error
 	p := entries.Project
 	checkoutOptions := project.CheckoutOptions{
 		Quiet:      config.GetQuiet(),
@@ -279,18 +280,23 @@ func (v syncCommand) checkoutEntries(entries *project.PathEntry) {
 		// TODO 2: checkout project
 		log.Notef("Start checkout %s", p.Path)
 
-		p.SyncLocalHalf(&checkoutOptions)
+		err = p.SyncLocalHalf(&checkoutOptions)
+		if err != nil {
+			return err
+		}
 	}
 	for _, entry := range entries.Entries {
-		v.checkoutEntries(entry)
+		err = v.checkoutEntries(entry)
+		if err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
 func (v syncCommand) LocalHalf(allProjects []*project.Project) error {
 	entries := project.GroupByPath(allProjects)
-	v.checkoutEntries(entries)
-
-	return nil
+	return v.checkoutEntries(entries)
 }
 
 // findObsoletePaths returns obsolete paths.

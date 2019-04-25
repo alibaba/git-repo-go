@@ -717,8 +717,8 @@ func (v Project) SyncLocalHalf(o *CheckoutOptions) error {
 		track = v.RemoteTrackBranch(branch)
 	}
 
-	log.Debugf("Fetch (head: %s, branch: %s, track: %s, headid: %s, revid: %s)",
-		head, branch, track, headid, revid)
+	log.Debugf("Fetch (project, %s, head: %s, branch: %s, track: %s, headid: %s, revid: %s, revision: %s)",
+		v.Name, head, branch, track, headid, revid, v.Revision)
 
 	PostUpdate := func(update bool) error {
 		var err error
@@ -803,6 +803,7 @@ func (v Project) SyncLocalHalf(o *CheckoutOptions) error {
 
 	// No remote changes, no update.
 	if len(remoteChanges) == 0 {
+		log.Debugf("no remote changes found for project %s", v.Name)
 		return PostUpdate(false)
 	}
 
@@ -817,6 +818,7 @@ func (v Project) SyncLocalHalf(o *CheckoutOptions) error {
 		}
 		// Has unpublished changes, fail to update.
 		if len(notMerged) > 0 {
+			log.Debugf("has %d unpublished commit(s) for project %s", len(notMerged), v.Name)
 			if len(remoteChanges) > 0 {
 				log.Errorf("branch %s is published (but not merged) and is now "+
 					"%d commits behind", branch, len(remoteChanges))
@@ -825,6 +827,7 @@ func (v Project) SyncLocalHalf(o *CheckoutOptions) error {
 		}
 		// Since last published, no other local changes.
 		if pubid == headid {
+			log.Debugf("all local commits are published for project %s", v.Name)
 			err = v.FastForward(revid)
 			if err != nil {
 				return err
