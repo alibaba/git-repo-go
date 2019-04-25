@@ -22,6 +22,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"sync"
 	"syscall"
 
 	"code.alibaba-inc.com/force/git-repo/config"
@@ -237,7 +238,7 @@ func (v *syncCommand) updateManifestProject() error {
 		RepoSettings: *s,
 
 		Quiet:      config.GetQuiet(),
-		DetachHead: false,
+		DetachHead: v.O.DetachHead,
 	}
 	err = mp.SyncLocalHalf(&checkoutOptions)
 	if err != nil {
@@ -317,40 +318,79 @@ func (v syncCommand) NetworkHalf(allProjects []*project.Project) error {
 	return errors.New(errMsg)
 }
 
-func (v syncCommand) checkProjects(tree *project.Tree) error {
+func (v syncCommand) LocalHalf(allProjects []*project.Project) error {
 	var (
-		err error
+		err  error
+		errs []error
+		wg   sync.WaitGroup
 	)
 
-	p := tree.Project
+	jobs := v.O.Jobs
+	if jobs < 1 {
+		jobs = 1
+	}
+
+	jobTasks := make(chan *project.Tree, jobs)
+
 	checkoutOptions := project.CheckoutOptions{
-		Quiet:      config.GetQuiet(),
+		Quiet: config.GetQuiet(),
+		// TODO: why fixed detached head mode?
 		DetachHead: false,
 	}
 
-	if p != nil {
-		// TODO 1: mulple jobs using go routine
-		// TODO 2: checkout project
-		log.Notef("Start checkout %s", p.Path)
+	wg.Add(len(allProjects))
 
-		err = p.SyncLocalHalf(&checkoutOptions)
-		if err != nil {
-			return err
+	worker := func(i int) {
+		var (
+			err  error
+			tree *project.Tree
+			p    *project.Project
+		)
+
+		log.Debugf("start LocalHalf worker #%d", i)
+		for tree = range jobTasks {
+			p = tree.Project
+			if p != nil {
+				log.Debugf("worker #%d: checkout %s", i, p.Name)
+				err = p.SyncLocalHalf(&checkoutOptions)
+				if err != nil {
+					errs = append(errs, err)
+				}
+			}
+
+			go func(tree project.Tree) {
+				for _, t := range tree.Trees {
+					jobTasks <- t
+				}
+			}(*tree)
+
+			// if p is nil, it's root tree
+			if p != nil {
+				log.Debugf("worker #%d: done %s", i, p.Name)
+				wg.Done()
+			}
 		}
 	}
-	for _, entry := range tree.Trees {
-		// TODO: run in another worker
-		err = v.checkProjects(entry)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
 
-func (v syncCommand) LocalHalf(allProjects []*project.Project) error {
+	for i := 0; i < jobs; i++ {
+		go worker(i)
+	}
+
 	tree := project.ProjectsTree(allProjects)
-	return v.checkProjects(tree)
+	jobTasks <- tree
+
+	wg.Wait()
+	close(jobTasks)
+
+	if len(errs) == 0 {
+		return nil
+	}
+
+	errMsg := ""
+	for _, err = range errs {
+		errMsg += err.Error() + "\n"
+	}
+	return errors.New(errMsg)
 }
 
 // findObsoletePaths returns obsolete paths.

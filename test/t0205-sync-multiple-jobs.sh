@@ -27,10 +27,10 @@ test_expect_success "git-repo sync (-n), default jobs" '
 	)
 '
 
-test_expect_success "git-repo sync (-n), 10 jobs" '
+test_expect_success "git-repo sync (-n), 100 jobs" '
 	(
 		cd work &&
-		git-repo sync -n -j 10
+		git-repo sync -n -j 100
 	)
 '
 
@@ -48,5 +48,32 @@ test_expect_success "git-repo sync (-n), 0 job" '
 	)
 '
 
+test_expect_success "git-repo sync (-l), default jobs" '
+	(
+		cd work &&
+		git-repo sync -l
+	)
+'
+
+test_expect_success "git-repo sync (-l), 0 job" '
+	(
+		cd work &&
+		git-repo sync -l -j 0
+	)
+'
+
+test_expect_success "git-repo sync (-l), 1 job" '
+	(
+		cd work &&
+		git-repo sync -l -j 1
+	)
+'
+
+test_expect_success "git-repo sync (-l), 100 jobs" '
+	(
+		cd work &&
+		git-repo sync -l -j 100
+	)
+'
 
 test_done
