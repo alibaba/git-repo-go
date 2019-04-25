@@ -190,3 +190,41 @@ func TestLoadWorkSpace(t *testing.T) {
 	ws.Load("")
 	assert.Equal(3, len(ws.Projects))
 }
+
+func TestManifestsProjectName(t *testing.T) {
+	var (
+		expect string
+		actual string
+		URL    = "https://code.alibaba-inc.com/my/test/repository"
+	)
+
+	assert := assert.New(t)
+
+	expect = "manifests"
+	actual = manifestsProjectName("", ".")
+	assert.Equal(expect, actual)
+
+	expect = "manifests"
+	actual = manifestsProjectName(URL, "")
+	assert.Equal(expect, actual)
+
+	expect = "repository"
+	actual = manifestsProjectName(URL, ".")
+	assert.Equal(expect, actual)
+
+	expect = "test/repository"
+	actual = manifestsProjectName(URL, "..")
+	assert.Equal(expect, actual)
+
+	expect = "my/test/repository"
+	actual = manifestsProjectName(URL, "../..")
+	assert.Equal(expect, actual)
+
+	expect = "my/test/repository"
+	actual = manifestsProjectName(URL, "../../")
+	assert.Equal(expect, actual)
+
+	expect = "code.alibaba-inc.com/my/test/repository"
+	actual = manifestsProjectName(URL, "../../../../../../..")
+	assert.Equal(expect, actual)
+}

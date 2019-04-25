@@ -395,6 +395,12 @@ Either delete the .repo folder in this workspace, or initialize in another locat
 		v.configureColor()
 	}
 
+	if v.O.Mirror {
+		log.Notef("repo mirror has been initialized in %s", v.ws.RootDir)
+	} else {
+		log.Notef("repo has been initialized in %s", v.ws.RootDir)
+	}
+
 	return nil
 }
 

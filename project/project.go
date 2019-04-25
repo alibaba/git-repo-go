@@ -1058,6 +1058,51 @@ func NewProject(project *manifest.Project, s *RepoSettings) *Project {
 	return &p
 }
 
+// NewMirrorProject returns a mirror project
+func NewMirrorProject(project *manifest.Project, s *RepoSettings) *Project {
+	var (
+		repoPath string
+	)
+
+	if s.ManifestURL != "" && !strings.HasSuffix(s.ManifestURL, ".git") {
+		s.ManifestURL += ".git"
+	}
+	p := Project{
+		Project:  *project,
+		Settings: s,
+	}
+
+	if !p.IsMetaProject() && s.ManifestURL == "" {
+		log.Panicf("unknown remote url for %s", p.Name)
+	}
+
+	p.WorkDir = ""
+
+	repoPath = filepath.Join(
+		p.RepoRoot(),
+		p.Name+".git",
+	)
+
+	p.WorkRepository = &Repository{
+		Name:      p.Name,
+		RelPath:   p.Path,
+		Path:      repoPath,
+		Remote:    p.Remote,
+		Revision:  p.Revision,
+		IsBare:    true,
+		Reference: p.ReferencePath(),
+		Settings:  s,
+	}
+
+	remoteURL, err := p.GetRemoteURL()
+	if err != nil {
+		log.Panicf("fail to get remote url for '%s': %s", p.Name, err)
+	}
+	p.WorkRepository.RemoteURL = remoteURL
+
+	return &p
+}
+
 func isHashRevision(rev string) bool {
 	re := regexp.MustCompile(`^[0-9][a-f]{7,}$`)
 	return re.MatchString(rev)

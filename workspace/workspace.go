@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 
 	"code.alibaba-inc.com/force/git-repo/cap"
 	"code.alibaba-inc.com/force/git-repo/config"
@@ -108,17 +109,84 @@ func (v *WorkSpace) Override(name string) error {
 	return v.loadProjects("")
 }
 
+func (v *WorkSpace) manifestsProjectName() string {
+	if v.Manifest == nil {
+		return "manifests"
+	}
+
+	u := v.ManifestProject.ManifestURL()
+	fetch := ""
+	for _, r := range v.Manifest.Remotes {
+		if r.Fetch != "" && r.Fetch[0] == '.' {
+			if len(fetch) < len(r.Fetch) {
+				fetch = r.Fetch
+			}
+		}
+	}
+	return manifestsProjectName(u, fetch)
+
+}
+func manifestsProjectName(url, fetch string) string {
+	if strings.Contains(url, "://") {
+		url = strings.SplitN(url, "://", 2)[1]
+	}
+	if strings.HasSuffix(url, ".git") {
+		url = strings.TrimSuffix(url, ".git")
+	}
+
+	if url == "" || fetch == "" {
+		return "manifests"
+	}
+
+	level := 1
+	for _, dir := range strings.Split(fetch, "/") {
+		if dir == ".." {
+			level++
+		} else if dir != "" && dir != "." {
+			level--
+		}
+	}
+
+	dirs := strings.Split(url, "/")
+	if level > len(dirs) {
+		level = len(dirs)
+	}
+	if level == 0 {
+		return "manifests"
+	}
+
+	return filepath.Join(dirs[len(dirs)-level:]...)
+}
+
 func (v *WorkSpace) loadProjects(manifestURL string) error {
+	var p *project.Project
 	// Set manifest project even v.Manifest is nil
 	v.ManifestProject = project.NewManifestProject(v.RootDir, manifestURL)
+	s := v.ManifestProject.Settings
 
 	// Set projects
 	v.Projects = []*project.Project{}
 	v.projectByName = make(map[string][]*project.Project)
 	v.projectByPath = make(map[string]*project.Project)
+
 	if v.Manifest != nil {
-		for _, mp := range v.Manifest.AllProjects() {
-			p := project.NewProject(&mp, v.ManifestProject.Settings)
+		allProjects := v.Manifest.AllProjects()
+		if s.Mirror {
+			mp := *manifest.ManifestsProject
+			mp.Name = v.manifestsProjectName()
+			allProjects = append(allProjects, mp)
+		}
+
+		for _, mp := range allProjects {
+			if s.Mirror {
+				p = project.NewMirrorProject(&mp, v.ManifestProject.Settings)
+				// Only save one of projects with the same name
+				if _, ok := v.projectByName[p.Name]; ok {
+					continue
+				}
+			} else {
+				p = project.NewProject(&mp, v.ManifestProject.Settings)
+			}
 			v.Projects = append(v.Projects, p)
 			if _, ok := v.projectByName[p.Name]; !ok {
 				v.projectByName[p.Name] = []*project.Project{}

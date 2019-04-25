@@ -475,12 +475,20 @@ func (v *Repository) Fetch(remote string, o *FetchOptions) error {
 			cmdArgs = append(cmdArgs, fmt.Sprintf("+%s:%s", v.Revision, v.Revision))
 		} else if strings.HasPrefix(v.Revision, "refs/heads/") || !strings.HasPrefix(v.Revision, "refs/") {
 			branch := strings.TrimPrefix(v.Revision, "refs/heads/")
-			cmdArgs = append(cmdArgs, fmt.Sprintf("+refs/heads/%s:refs/remotes/%s/%s", branch, v.Remote, branch))
+			if v.IsBare {
+				cmdArgs = append(cmdArgs, fmt.Sprintf("+refs/heads/%s:refs/heads/%s", branch, branch))
+			} else {
+				cmdArgs = append(cmdArgs, fmt.Sprintf("+refs/heads/%s:refs/remotes/%s/%s", branch, v.Remote, branch))
+			}
 		} else {
 			cmdArgs = append(cmdArgs, fmt.Sprintf("+%s:%s", v.Revision, v.Revision))
 		}
 	} else {
-		cmdArgs = append(cmdArgs, fmt.Sprintf("+refs/heads/*:refs/remotes/%s/*", v.Remote))
+		if v.IsBare {
+			cmdArgs = append(cmdArgs, "+refs/heads/*:refs/heads/*")
+		} else {
+			cmdArgs = append(cmdArgs, fmt.Sprintf("+refs/heads/*:refs/remotes/%s/*", v.Remote))
+		}
 	}
 
 	err = executeCommandIn(v.Path, cmdArgs)

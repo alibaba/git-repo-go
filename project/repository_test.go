@@ -166,7 +166,7 @@ func TestRepositoryFetch(t *testing.T) {
 	// Fetch from workdir to reference refRepo
 	err = refRepo.Fetch(remote, &FetchOptions{})
 	assert.Nil(err)
-	_, err = refRepo.Raw().Reference("refs/remotes/origin/master", true)
+	_, err = refRepo.Raw().Reference("refs/heads/master", true)
 	assert.Nil(err)
 
 	// Push commit in workdir to ref.git
