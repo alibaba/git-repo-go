@@ -317,12 +317,12 @@ func (v syncCommand) NetworkHalf(allProjects []*project.Project) error {
 	return errors.New(errMsg)
 }
 
-func (v syncCommand) checkoutEntries(entries *project.PathEntry) error {
+func (v syncCommand) checkProjects(tree *project.Tree) error {
 	var (
 		err error
 	)
 
-	p := entries.Project
+	p := tree.Project
 	checkoutOptions := project.CheckoutOptions{
 		Quiet:      config.GetQuiet(),
 		DetachHead: false,
@@ -338,9 +338,9 @@ func (v syncCommand) checkoutEntries(entries *project.PathEntry) error {
 			return err
 		}
 	}
-	for _, entry := range entries.Entries {
+	for _, entry := range tree.Trees {
 		// TODO: run in another worker
-		err = v.checkoutEntries(entry)
+		err = v.checkProjects(entry)
 		if err != nil {
 			return err
 		}
@@ -349,8 +349,8 @@ func (v syncCommand) checkoutEntries(entries *project.PathEntry) error {
 }
 
 func (v syncCommand) LocalHalf(allProjects []*project.Project) error {
-	entries := project.ProjectsTree(allProjects)
-	return v.checkoutEntries(entries)
+	tree := project.ProjectsTree(allProjects)
+	return v.checkProjects(tree)
 }
 
 // findObsoletePaths returns obsolete paths.

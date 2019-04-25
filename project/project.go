@@ -1150,15 +1150,15 @@ func IndexByPath(projects []*Project) map[string]*Project {
 	return result
 }
 
-// PathEntry is used to group projects by path
-type PathEntry struct {
+// Tree is used to group projects by path
+type Tree struct {
 	Path    string
 	Project *Project
-	Entries []*PathEntry
+	Trees   []*Tree
 }
 
 // ProjectsTree returns a map using project path as index to group projects
-func ProjectsTree(projects []*Project) *PathEntry {
+func ProjectsTree(projects []*Project) *Tree {
 	pMap := make(map[string]*Project)
 	paths := []string{}
 	for _, p := range projects {
@@ -1167,14 +1167,14 @@ func ProjectsTree(projects []*Project) *PathEntry {
 	}
 	sort.Strings(paths)
 
-	rootEntry := &PathEntry{Path: "/"}
-	appendEntries(rootEntry, paths, pMap)
-	return rootEntry
+	root := &Tree{Path: "/"}
+	treeAppend(root, paths, pMap)
+	return root
 }
 
-func appendEntries(entry *PathEntry, paths []string, pMap map[string]*Project) {
+func treeAppend(tree *Tree, paths []string, pMap map[string]*Project) {
 	var (
-		oldEntry, newEntry *PathEntry
+		oldEntry, newEntry *Tree
 		i, j               int
 	)
 
@@ -1182,7 +1182,7 @@ func appendEntries(entry *PathEntry, paths []string, pMap map[string]*Project) {
 		for strings.HasSuffix(paths[i], "/") {
 			paths[i] = strings.TrimSuffix(paths[i], "/")
 		}
-		newEntry = &PathEntry{
+		newEntry = &Tree{
 			Path:    paths[i],
 			Project: pMap[paths[i]],
 		}
@@ -1193,12 +1193,12 @@ func appendEntries(entry *PathEntry, paths []string, pMap map[string]*Project) {
 
 				}
 			}
-			appendEntries(oldEntry, paths[i:j], pMap)
+			treeAppend(oldEntry, paths[i:j], pMap)
 			i = j - 1
 			continue
 		}
 		oldEntry = newEntry
-		entry.Entries = append(entry.Entries, newEntry)
+		tree.Trees = append(tree.Trees, newEntry)
 	}
 }
 

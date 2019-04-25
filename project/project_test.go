@@ -240,8 +240,8 @@ func TestProjectsTree(t *testing.T) {
 path: app2, name: Group2/App
 path: app3/name1, name: Group3/Name1`
 	actual := []string{}
-	entry := ProjectsTree(projects)
-	for _, e := range entry.Entries {
+	tree := ProjectsTree(projects)
+	for _, e := range tree.Trees {
 		actual = append(actual, fmt.Sprintf("path: %s, name: %s", e.Project.Path, e.Project.Name))
 	}
 	assert.Equal(expect, strings.Join(actual, "\n"))
@@ -249,14 +249,14 @@ path: app3/name1, name: Group3/Name1`
 	expect = `path: app2/name1, name: Group2/Name1
 path: app2/name2, name: Group2/Name2`
 	actual = []string{}
-	for _, e := range entry.Entries[1].Entries {
+	for _, e := range tree.Trees[1].Trees {
 		actual = append(actual, fmt.Sprintf("path: %s, name: %s", e.Project.Path, e.Project.Name))
 	}
 	assert.Equal(expect, strings.Join(actual, "\n"))
 
 	expect = "path: app2/name2/sub1, name: Group2/Name2/sub1"
 	actual = []string{}
-	for _, e := range entry.Entries[1].Entries[1].Entries {
+	for _, e := range tree.Trees[1].Trees[1].Trees {
 		actual = append(actual, fmt.Sprintf("path: %s, name: %s", e.Project.Path, e.Project.Name))
 	}
 	assert.Equal(expect, strings.Join(actual, "\n"))
