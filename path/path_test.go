@@ -357,6 +357,10 @@ func TestFindRepoRoot(t *testing.T) {
 	repodir := filepath.Join(tmpdir, "a")
 	workdir := filepath.Join(repodir, "b", "c")
 
+	assert.Nil(os.MkdirAll(repodir, 0755))
+	repodir, err = filepath.EvalSymlinks(repodir)
+	assert.Nil(err)
+
 	assert.Nil(os.MkdirAll(workdir, 0755))
 	dir, err = FindRepoRoot(workdir)
 	assert.Equal(errors.ErrRepoDirNotFound, err)

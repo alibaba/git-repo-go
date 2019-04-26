@@ -157,10 +157,13 @@ func TestLoadWorkSpace(t *testing.T) {
 	err = testCreateManifests(workdir, mURL)
 	assert.Nil(err)
 
+	realWorkdir, err := filepath.EvalSymlinks(workdir)
+	assert.Nil(err)
+
 	// Missing manfest.xml link
 	ws, err := NewWorkSpace(workdir)
 	assert.Nil(err)
-	assert.Equal(workdir, ws.RootDir)
+	assert.Equal(realWorkdir, ws.RootDir)
 	assert.Nil(ws.Manifest)
 	assert.NotNil(ws.ManifestProject)
 	assert.Equal(0, len(ws.Projects))
