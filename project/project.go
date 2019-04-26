@@ -1273,3 +1273,27 @@ func (v Project) DetachHead() error {
 func (v Project) DeleteBranch(branch string) error {
 	return v.WorkRepository.DeleteBranch(branch)
 }
+
+// RemoteTracking returns name of current remote tracking branch
+func (v Project) RemoteTracking(rev string) string {
+	if rev == "" || IsSha(rev) {
+		return ""
+	}
+	if IsHead(rev) {
+		rev = strings.TrimPrefix(rev, config.RefsHeads)
+	}
+	if IsRef(rev) {
+		return ""
+	}
+	return v.Config().Get("branch." + rev + ".merge")
+}
+
+func (v Project) GetUploadableBranch(branch string) string {
+	if branch == "" {
+		branch = v.GetHead()
+		if branch == "" {
+			return ""
+		}
+	}
+	return ""
+}
