@@ -1,10 +1,31 @@
 #!/bin/sh
 
-REPO_TEST_REPOSITORIES_VERSION=4
+REPO_TEST_REPOSITORIES_VERSION=5
 
 # Create test repositories in .repositories
 REPO_TEST_REPOSITORIES="${SHARNESS_TEST_SRCDIR}/test-repositories"
 REPO_TEST_REPOSITORIES_VERSION_FILE="${REPO_TEST_REPOSITORIES}/.VERSION"
+
+# Use fixed commit auther and committer
+GIT_AUTHOR_EMAIL=author@example.com
+GIT_AUTHOR_NAME='A U Thor'
+GIT_COMMITTER_EMAIL=committer@example.com
+GIT_COMMITTER_NAME='C O Mitter'
+export GIT_AUTHOR_EMAIL GIT_AUTHOR_NAME
+export GIT_COMMITTER_EMAIL GIT_COMMITTER_NAME
+
+# Use fixed commit time
+test_tick () {
+	if test -z "${test_tick+set}"
+	then
+		test_tick=1112911993
+	else
+		test_tick=$(($test_tick + 60))
+	fi
+	GIT_COMMITTER_DATE="$test_tick -0700"
+	GIT_AUTHOR_DATE="$test_tick -0700"
+	export GIT_COMMITTER_DATE GIT_AUTHOR_DATE
+}
 
 repo_create_test_repositories () {
 	# create lock
@@ -74,6 +95,7 @@ test_create_repository () {
 	then
 		mkdir -p "$dir"
 	fi &&
+
 	git init --bare "$repo" &&
 	git clone "$repo" "tmp-$name" &&
 	cd "tmp-$name" &&
@@ -81,24 +103,24 @@ test_create_repository () {
 	echo v0.1.0 >VERSION &&
 	echo "all:\n\t@echo \"$name: \$(shell cat VERSION)\"\n">Makefile &&
 	git add README.md VERSION Makefile &&
-	git commit -m "Version 0.1.0" &&
-	git tag -m v0.1.0 v0.1.0 &&
+	test_tick && git commit -m "Version 0.1.0" &&
+	test_tick && git tag -m v0.1.0 v0.1.0 &&
 	echo v0.2.0 >VERSION &&
 	git add -u &&
-	git commit -m "Version 0.2.0" &&
-	git tag -m v0.2.0 v0.2.0 &&
+	test_tick && git commit -m "Version 0.2.0" &&
+	test_tick && git tag -m v0.2.0 v0.2.0 &&
 	echo v0.3.0 >VERSION &&
 	git add -u &&
-	git commit -m "Version 0.3.0" &&
-	git tag -m v0.3.0 v0.3.0 &&
+	test_tick && git commit -m "Version 0.3.0" &&
+	test_tick && git tag -m v0.3.0 v0.3.0 &&
 	echo v1.0.0 >VERSION &&
 	git add -u &&
-	git commit -m "Version 1.0.0" &&
-	git tag -m v1.0.0 v1.0.0 &&
+	test_tick && git commit -m "Version 1.0.0" &&
+	test_tick && git tag -m v1.0.0 v1.0.0 &&
 	git branch maint v1.0.0 &&
 	echo v2.0.0-dev >VERSION &&
 	git add -u &&
-	git commit -m "Version 2.0.0-dev" &&
+	test_tick && git commit -m "Version 2.0.0-dev" &&
 	git push --tags origin master maint &&
 	cd "$REPO_TEST_REPOSITORIES" &&
 	rm -rf "tmp-$name"
@@ -130,8 +152,8 @@ test_create_manifest_projects () {
 	EOF
 
 	git add default.xml &&
-	git commit -m "Version 0.1" &&
-	git tag -m v0.1 v0.1 &&
+	test_tick && git commit -m "Version 0.1" &&
+	test_tick && git tag -m v0.1 v0.1 &&
 
 	cat >default.xml <<-EOF &&
 	<?xml version="1.0" encoding="UTF-8"?>
@@ -154,8 +176,8 @@ test_create_manifest_projects () {
 	EOF
 
 	git add default.xml &&
-	git commit -m "Version 0.2" &&
-	git tag -m v0.2 v0.2 &&
+	test_tick && git commit -m "Version 0.2" &&
+	test_tick && git tag -m v0.2 v0.2 &&
 
 	cat >default.xml <<-EOF &&
 	<?xml version="1.0" encoding="UTF-8"?>
@@ -184,8 +206,8 @@ test_create_manifest_projects () {
 	EOF
 
 	git add default.xml &&
-	git commit -m "Version 1.0" &&
-	git tag -m v1.0 v1.0 &&
+	test_tick && git commit -m "Version 1.0" &&
+	test_tick && git tag -m v1.0 v1.0 &&
 	git branch maint &&
 
 	cat >default.xml <<-EOF &&
@@ -244,8 +266,8 @@ test_create_manifest_projects () {
 	EOF
 
 	git add default.xml next.xml &&
-	git commit -m "Version 2.0" &&
-	git tag -m v2.0 v2.0
+	test_tick && git commit -m "Version 2.0" &&
+	test_tick && git tag -m v2.0 v2.0
 	git push --tags origin maint master &&
 
 	cd "$REPO_TEST_REPOSITORIES" &&
