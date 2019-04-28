@@ -2,6 +2,7 @@ package workspace
 
 import (
 	"fmt"
+	"net/http"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -25,6 +26,8 @@ type WorkSpace struct {
 	Projects        []*project.Project
 	projectByName   map[string][]*project.Project
 	projectByPath   map[string]*project.Project
+	RemoteMap       map[string]project.Remote
+	httpClient      *http.Client
 }
 
 // Exists checks whether workspace is exist
@@ -163,6 +166,9 @@ func (v *WorkSpace) loadProjects(manifestURL string) error {
 	// Set manifest project even v.Manifest is nil
 	v.ManifestProject = project.NewManifestProject(v.RootDir, manifestURL)
 	s := v.ManifestProject.Settings
+
+	// Set RemoteMap
+	v.RemoteMap = make(map[string]project.Remote)
 
 	// Set projects
 	v.Projects = []*project.Project{}

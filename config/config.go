@@ -20,6 +20,7 @@ import (
 	"path"
 	"regexp"
 
+	"github.com/jiangxin/goconfig"
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/viper"
 )
@@ -30,16 +31,18 @@ const (
 	DefaultLogRotate  = 20 * 1024 * 1024
 	DefaultLogLevel   = "warn"
 
-	CfgRepoArchive        = "repo.archive"
-	CfgRepoDepth          = "repo.depth"
-	CfgRepoDissociate     = "repo.dissociate"
-	CfgRepoMirror         = "repo.mirror"
-	CfgRepoReference      = "repo.reference"
-	CfgRepoSubmodules     = "repo.submodules"
-	CfgManifestGroups     = "manifest.groups"
-	CfgManifestName       = "manifest.name"
-	CfgRemoteOriginURL    = "remote.origin.url"
-	CfgBranchDefaultMerge = "branch.default.merge"
+	CfgRepoArchive           = "repo.archive"
+	CfgRepoDepth             = "repo.depth"
+	CfgRepoDissociate        = "repo.dissociate"
+	CfgRepoMirror            = "repo.mirror"
+	CfgRepoReference         = "repo.reference"
+	CfgRepoSubmodules        = "repo.submodules"
+	CfgManifestGroups        = "manifest.groups"
+	CfgManifestName          = "manifest.name"
+	CfgRemoteOriginURL       = "remote.origin.url"
+	CfgBranchDefaultMerge    = "branch.default.merge"
+	CfgManifestRemoteType    = "manifest.remote.%s.type"
+	CfgManifestRemoteSSHInfo = "manifest.remote.%s.sshinfo"
 
 	DotRepo          = ".repo"
 	ManifestsDotGit  = "manifests.git"
@@ -59,6 +62,10 @@ const (
 	RefsM       = "refs/remotes/m/"
 	Refs        = "refs/"
 	RefsRemotes = "refs/remotes/"
+
+	RemoteTypeGerrit  = "gerrit"
+	RemoteTypeAGit    = "agit"
+	RemoteTypeUnknown = "unknown"
 
 	MaxJobs = 32
 
@@ -108,6 +115,22 @@ func GetLogLevel() string {
 // GetLogRotateSize gets logrotate size from config
 func GetLogRotateSize() int64 {
 	return viper.GetInt64("logrotate")
+}
+
+// NoCertChecks indicates whether ignore ssl cert checks
+func NoCertChecks() bool {
+	var verify bool
+
+	if viper.GetBool("no-cert-checks") {
+		return true
+	}
+
+	cfg, err := goconfig.LoadAll("")
+	if err != nil {
+		return false
+	}
+	verify = cfg.GetBool("http.sslverify", true)
+	return !verify
 }
 
 func init() {

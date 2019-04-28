@@ -19,6 +19,7 @@ import (
 	"github.com/jiangxin/multi-log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
+	"github.com/spf13/viper"
 )
 
 type uploadCommand struct {
@@ -37,7 +38,6 @@ type uploadCommand struct {
 		WIP           bool
 		PushOptions   []string
 		DestBranch    string
-		NoCertChecks  bool
 		BypassHooks   bool
 		AllowAllHooks bool
 	}
@@ -121,8 +121,7 @@ func (v *uploadCommand) Command() *cobra.Command {
 		"D",
 		"",
 		"Submit for review on this target branch")
-	v.cmd.Flags().BoolVar(&v.O.NoCertChecks,
-		"no-cert-checks",
+	v.cmd.Flags().Bool("no-cert-checks",
 		false,
 		"Disable verifying ssl certs (unsafe)")
 	v.cmd.Flags().BoolVar(&v.O.BypassHooks,
@@ -135,6 +134,8 @@ func (v *uploadCommand) Command() *cobra.Command {
 		"Run the upload hook without prompting")
 
 	v.cmd.Flags().MarkHidden("auto-topic")
+
+	viper.BindPFlag("no-cert-checks", v.cmd.Flags().Lookup("no-cert-checks"))
 
 	return v.cmd
 
@@ -162,6 +163,10 @@ func (v uploadCommand) runE(args []string) error {
 	)
 
 	ws := v.WorkSpace()
+	err := ws.LoadRemotes()
+	if err != nil {
+		return err
+	}
 
 	allProjects, err := ws.GetProjects(nil, args...)
 	if err != nil {

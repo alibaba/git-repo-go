@@ -42,6 +42,7 @@ type Remote struct {
 	PushURL  string `xml:"pushurl,attr,omitempty"`
 	Review   string `xml:"review,attr,omitempty"`
 	Revision string `xml:"revision,attr,omitempty"`
+	Type     string `xml:"type,attr,omitempty"`
 }
 
 // Default is for default XML element
@@ -83,7 +84,7 @@ type Project struct {
 	ForcePath  string `xml:"force-path,attr,omitempty"`
 
 	isMetaProject  bool    `xml:"-"`
-	manifestRemote *Remote `xml:"-"`
+	ManifestRemote *Remote `xml:"-"`
 }
 
 // Annotation is for annotation XML element
@@ -222,16 +223,6 @@ func (v *Project) IsMetaProject() bool {
 	return v.isMetaProject
 }
 
-// GetManifestRemote returns Remote settings
-func (v *Project) GetManifestRemote() *Remote {
-	return v.manifestRemote
-}
-
-// SetManifestRemote sets Remote settings
-func (v *Project) SetManifestRemote(r *Remote) {
-	v.manifestRemote = r
-}
-
 // AllProjects returns all projects of manifest
 func (v *Manifest) AllProjects() []Project {
 	projects := []Project{}
@@ -271,7 +262,7 @@ func (v *Manifest) AllProjects() []Project {
 
 		// Set remote field of project
 		if projects[i].RemoteName != "" {
-			projects[i].SetManifestRemote(remotes[projects[i].RemoteName])
+			projects[i].ManifestRemote = remotes[projects[i].RemoteName]
 		}
 	}
 	return projects

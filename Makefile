@@ -22,9 +22,11 @@ git-repo: $(shell find . -name '*.go')
 	$(call message,Building $@)
 	$(GOBUILD)  -ldflags "-X $(PKG)/version.Version=$(REPO_VERSION)"
 
-test: $(TARGETS)
+golint:
 	$(call message,Testing git-repo using golint for coding style)
 	@golint ./...
+
+test: golint $(TARGETS)
 	$(call message,Testing git-repo for unit tests)
 	@go test $(LOCAL_PACKAGES)
 	$(call message,Testing git-repo for integration tests)

@@ -28,6 +28,7 @@ type Project struct {
 	ObjectRepository *Repository
 	WorkRepository   *Repository
 	Settings         *RepoSettings
+	Remote           Remote
 }
 
 // RepoRoot returns root dir of repo workspace.
@@ -306,11 +307,11 @@ func (v *Project) GetRemoteURL() (string, error) {
 	if v.IsMetaProject() {
 		return v.Settings.ManifestURL, nil
 	}
-	if v.GetManifestRemote() == nil {
+	if v.ManifestRemote == nil {
 		return "", fmt.Errorf("project '%s' has no remote '%s'", v.Name, v.RemoteName)
 	}
 
-	u, err := urlJoin(v.Settings.ManifestURL, v.GetManifestRemote().Fetch, v.Name+".git")
+	u, err := urlJoin(v.Settings.ManifestURL, v.ManifestRemote.Fetch, v.Name+".git")
 	if err != nil {
 		return "", fmt.Errorf("fail to remote url for '%s': %s", v.Name, err)
 	}

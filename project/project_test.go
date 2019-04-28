@@ -35,10 +35,10 @@ func TestProjectGitInit(t *testing.T) {
 		Revision:   "refs/heads/master",
 		DestBranch: "refs/heads/master",
 	}
-	xmlProject.SetManifestRemote(&manifest.Remote{
+	xmlProject.ManifestRemote = &manifest.Remote{
 		Name:  "origin",
 		Fetch: "..",
-	})
+	}
 	p := NewProject(&xmlProject, &RepoSettings{
 		RepoRoot:    workdir,
 		ManifestURL: mURL,
@@ -96,10 +96,10 @@ func TestProjectMatchGroups(t *testing.T) {
 		Revision:   "refs/heads/master",
 		DestBranch: "refs/heads/master",
 	}
-	xmlProject.SetManifestRemote(&manifest.Remote{
+	xmlProject.ManifestRemote = &manifest.Remote{
 		Name:  "origin",
 		Fetch: "..",
-	})
+	}
 	p := NewProject(&xmlProject, &RepoSettings{
 		RepoRoot:    workdir,
 		ManifestURL: mURL,
