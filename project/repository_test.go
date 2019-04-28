@@ -152,11 +152,11 @@ func TestRepositoryFetch(t *testing.T) {
 	// Create a reference repo
 	refRepoPath := filepath.Join(tmpdir, "ref.git")
 	refRepo := Repository{
-		Path:     refRepoPath,
-		IsBare:   true,
-		Remote:   "origin",
-		Settings: &RepoSettings{},
-		Revision: "master",
+		Path:       refRepoPath,
+		IsBare:     true,
+		RemoteName: "origin",
+		Settings:   &RepoSettings{},
+		Revision:   "master",
 	}
 	remote = "origin"
 	remoteURL = repoDir
@@ -190,12 +190,12 @@ func TestRepositoryFetch(t *testing.T) {
 	// Create another repo
 	newRepoPath := filepath.Join(tmpdir, "repo.git")
 	newRepo := Repository{
-		Name:      "repo",
-		Path:      newRepoPath,
-		Reference: refRepoPath,
-		IsBare:    false,
-		Remote:    "origin",
-		Settings:  &RepoSettings{},
+		Name:       "repo",
+		Path:       newRepoPath,
+		Reference:  refRepoPath,
+		IsBare:     false,
+		RemoteName: "origin",
+		Settings:   &RepoSettings{},
 	}
 	remote = "origin"
 	remoteURL = repoDir

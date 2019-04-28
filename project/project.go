@@ -177,9 +177,9 @@ func (v *Project) GitInit() error {
 
 	if v.WorkRepository != nil {
 		if v.ObjectRepository == nil {
-			v.WorkRepository.Init(v.Remote, remoteURL, referenceGitDir)
+			v.WorkRepository.Init(v.RemoteName, remoteURL, referenceGitDir)
 		} else {
-			v.WorkRepository.InitByLink(v.Remote, remoteURL, v.ObjectRepository)
+			v.WorkRepository.InitByLink(v.RemoteName, remoteURL, v.ObjectRepository)
 		}
 	}
 
@@ -256,7 +256,7 @@ func (v *Project) SyncNetworkHalf(o *FetchOptions) error {
 	}
 
 	if v.WorkRepository != nil {
-		err = v.WorkRepository.Fetch(v.Remote, o)
+		err = v.WorkRepository.Fetch(v.RemoteName, o)
 		if err != nil {
 			return err
 		}
@@ -369,7 +369,7 @@ func (v Project) ResolveRemoteTracking(rev string) (string, error) {
 		if !strings.HasPrefix(rev, config.Refs) {
 			rev = fmt.Sprintf("%s%s/%s",
 				config.RefsRemotes,
-				v.Remote,
+				v.RemoteName,
 				rev)
 		}
 	}
@@ -735,7 +735,7 @@ func (v Project) SyncLocalHalf(o *CheckoutOptions) error {
 			}
 
 			// Update remote tracking, or delete tracking if v.Revision is empty
-			v.UpdateBranchTracking(branch, v.Remote, v.Revision)
+			v.UpdateBranchTracking(branch, v.RemoteName, v.Revision)
 		}
 
 		if update && o.Submodules {
@@ -912,7 +912,7 @@ func (v *Project) SetManifestURL(manifestURL string) error {
 
 // SetGitRemoteURL sets remote.<remote>.url setting in git config
 func (v *Project) SetGitRemoteURL(remoteURL string) error {
-	remote := v.Remote
+	remote := v.RemoteName
 	if remote == "" {
 		remote = "origin"
 	}
@@ -929,7 +929,7 @@ func (v *Project) SetGitRemoteURL(remoteURL string) error {
 
 // GitConfigRemoteURL returns remote.<remote>.url setting in git config
 func (v *Project) GitConfigRemoteURL() string {
-	remote := v.Remote
+	remote := v.RemoteName
 	if remote == "" {
 		remote = "origin"
 	}
@@ -950,7 +950,7 @@ func (v *Project) GetRemoteURL() (string, error) {
 		return v.Settings.ManifestURL, nil
 	}
 	if v.GetRemote() == nil {
-		return "", fmt.Errorf("project '%s' has no remote '%s'", v.Name, v.Remote)
+		return "", fmt.Errorf("project '%s' has no remote '%s'", v.Name, v.RemoteName)
 	}
 
 	u, err := urlJoin(v.Settings.ManifestURL, v.GetRemote().Fetch, v.Name+".git")
@@ -1039,14 +1039,14 @@ func NewProject(project *manifest.Project, s *RepoSettings) *Project {
 	}
 
 	p.WorkRepository = &Repository{
-		Name:      p.Name,
-		RelPath:   p.Path,
-		Path:      workRepoPath,
-		Remote:    p.Remote,
-		Revision:  p.Revision,
-		IsBare:    false,
-		Reference: p.ReferencePath(),
-		Settings:  s,
+		Name:       p.Name,
+		RelPath:    p.Path,
+		Path:       workRepoPath,
+		RemoteName: p.RemoteName,
+		Revision:   p.Revision,
+		IsBare:     false,
+		Reference:  p.ReferencePath(),
+		Settings:   s,
 	}
 
 	remoteURL, err := p.GetRemoteURL()
@@ -1084,14 +1084,14 @@ func NewMirrorProject(project *manifest.Project, s *RepoSettings) *Project {
 	)
 
 	p.WorkRepository = &Repository{
-		Name:      p.Name,
-		RelPath:   p.Path,
-		Path:      repoPath,
-		Remote:    p.Remote,
-		Revision:  p.Revision,
-		IsBare:    true,
-		Reference: p.ReferencePath(),
-		Settings:  s,
+		Name:       p.Name,
+		RelPath:    p.Path,
+		Path:       repoPath,
+		RemoteName: p.RemoteName,
+		Revision:   p.Revision,
+		IsBare:     true,
+		Reference:  p.ReferencePath(),
+		Settings:   s,
 	}
 
 	remoteURL, err := p.GetRemoteURL()
@@ -1232,7 +1232,7 @@ func (v Project) StartBranch(branch, track string) error {
 
 	// Get revid from already fetched tracking for v.Revision
 	revid, err := v.ResolveRemoteTracking(v.Revision)
-	remote := v.Remote
+	remote := v.RemoteName
 	if remote == "" {
 		remote = "origin"
 	}

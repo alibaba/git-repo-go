@@ -31,17 +31,17 @@ var (
 
 // Repository has repository related operations
 type Repository struct {
-	Name      string // Project name
-	RelPath   string // Project relative path
-	Path      string // Repository real path
-	RefSpecs  []string
-	IsBare    bool
-	RemoteURL string
-	Reference string
-	Remote    string // Project Remote field from manifest xml
-	Revision  string // Projeect Revision from manifest xml
-	Settings  *RepoSettings
-	raw       *git.Repository
+	Name       string // Project name
+	RelPath    string // Project relative path
+	Path       string // Repository real path
+	RefSpecs   []string
+	IsBare     bool
+	RemoteURL  string
+	Reference  string
+	RemoteName string // Project RemoteName field from manifest xml
+	Revision   string // Projeect Revision from manifest xml
+	Settings   *RepoSettings
+	raw        *git.Repository
 }
 
 // Exists checks repository layout
@@ -478,7 +478,7 @@ func (v *Repository) Fetch(remote string, o *FetchOptions) error {
 			if v.IsBare {
 				cmdArgs = append(cmdArgs, fmt.Sprintf("+refs/heads/%s:refs/heads/%s", branch, branch))
 			} else {
-				cmdArgs = append(cmdArgs, fmt.Sprintf("+refs/heads/%s:refs/remotes/%s/%s", branch, v.Remote, branch))
+				cmdArgs = append(cmdArgs, fmt.Sprintf("+refs/heads/%s:refs/remotes/%s/%s", branch, v.RemoteName, branch))
 			}
 		} else {
 			cmdArgs = append(cmdArgs, fmt.Sprintf("+%s:%s", v.Revision, v.Revision))
@@ -487,7 +487,7 @@ func (v *Repository) Fetch(remote string, o *FetchOptions) error {
 		if v.IsBare {
 			cmdArgs = append(cmdArgs, "+refs/heads/*:refs/heads/*")
 		} else {
-			cmdArgs = append(cmdArgs, fmt.Sprintf("+refs/heads/*:refs/remotes/%s/*", v.Remote))
+			cmdArgs = append(cmdArgs, fmt.Sprintf("+refs/heads/*:refs/remotes/%s/*", v.RemoteName))
 		}
 	}
 

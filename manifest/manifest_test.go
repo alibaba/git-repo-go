@@ -30,8 +30,8 @@ func TestMarshal(t *testing.T) {
 			},
 		},
 		Default: &Default{
-			Remote:   "origin",
-			Revision: "master",
+			RemoteName: "origin",
+			Revision:   "master",
 		},
 		Projects: []Project{
 			Project{
@@ -128,8 +128,8 @@ func TestLoad(t *testing.T) {
 	assert.NotNil(m)
 	assert.Equal(
 		&Default{
-			Remote:   "aone",
-			Revision: "master",
+			RemoteName: "aone",
+			Revision:   "master",
 		}, m.Default)
 	assert.Equal(
 		[]Remote{Remote{

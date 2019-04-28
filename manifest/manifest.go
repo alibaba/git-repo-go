@@ -46,7 +46,7 @@ type Remote struct {
 
 // Default is for default XML element
 type Default struct {
-	Remote     string `xml:"remote,attr,omitempty"`
+	RemoteName string `xml:"remote,attr,omitempty"`
 	Revision   string `xml:"revision,attr,omitempty"`
 	DestBranch string `xml:"dest-branch,attr,omitempty"`
 	Upstream   string `xml:"upstream,attr,omitempty"`
@@ -70,7 +70,7 @@ type Project struct {
 
 	Name       string `xml:"name,attr,omitempty"`
 	Path       string `xml:"path,attr,omitempty"`
-	Remote     string `xml:"remote,attr,omitempty"`
+	RemoteName string `xml:"remote,attr,omitempty"`
 	Revision   string `xml:"revision,attr,omitempty"`
 	DestBranch string `xml:"dest-branch,attr,omitempty"`
 	Groups     string `xml:"groups,attr,omitempty"`
@@ -158,7 +158,7 @@ func (v *Project) AllProjects(parent *Project) []Project {
 			LinkFiles:   v.LinkFiles,
 			Name:        v.Name,
 			Path:        v.Path,
-			Remote:      v.Remote,
+			RemoteName:  v.RemoteName,
 			Revision:    v.Revision,
 			DestBranch:  v.DestBranch,
 			Groups:      v.Groups,
@@ -246,8 +246,8 @@ func (v *Manifest) AllProjects() []Project {
 
 	for i := range projects {
 		if v.Default != nil {
-			if projects[i].Remote == "" {
-				projects[i].Remote = v.Default.Remote
+			if projects[i].RemoteName == "" {
+				projects[i].RemoteName = v.Default.RemoteName
 			}
 			if projects[i].Revision == "" {
 				projects[i].Revision = v.Default.Revision
@@ -270,8 +270,8 @@ func (v *Manifest) AllProjects() []Project {
 		}
 
 		// Set remote field of project
-		if projects[i].Remote != "" {
-			projects[i].SetRemote(remotes[projects[i].Remote])
+		if projects[i].RemoteName != "" {
+			projects[i].SetRemote(remotes[projects[i].RemoteName])
 		}
 	}
 	return projects
@@ -553,7 +553,7 @@ func LoadFile(repoDir, file string) (*Manifest, error) {
 var ManifestsProject = &Project{
 	Name:          "manifests",
 	Path:          "manifests",
-	Remote:        "origin",
+	RemoteName:    "origin",
 	Revision:      "refs/heads/master",
 	DestBranch:    "master",
 	isMetaProject: true,

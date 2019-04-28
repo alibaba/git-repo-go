@@ -31,7 +31,7 @@ func TestProjectGitInit(t *testing.T) {
 	xmlProject := manifest.Project{
 		Name:       "my/foo",
 		Path:       "dir/foo",
-		Remote:     "origin",
+		RemoteName: "origin",
 		Revision:   "refs/heads/master",
 		DestBranch: "refs/heads/master",
 	}
@@ -92,7 +92,7 @@ func TestProjectMatchGroups(t *testing.T) {
 	xmlProject := manifest.Project{
 		Name:       "my/foo",
 		Path:       "dir/foo",
-		Remote:     "origin",
+		RemoteName: "origin",
 		Revision:   "refs/heads/master",
 		DestBranch: "refs/heads/master",
 	}
