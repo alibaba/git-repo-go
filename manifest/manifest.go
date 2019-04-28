@@ -82,8 +82,8 @@ type Project struct {
 	CloneDepth string `xml:"clone-depth,attr,omitempty"`
 	ForcePath  string `xml:"force-path,attr,omitempty"`
 
-	isMetaProject bool    `xml:"-"`
-	remote        *Remote `xml:"-"`
+	isMetaProject  bool    `xml:"-"`
+	manifestRemote *Remote `xml:"-"`
 }
 
 // Annotation is for annotation XML element
@@ -222,14 +222,14 @@ func (v *Project) IsMetaProject() bool {
 	return v.isMetaProject
 }
 
-// GetRemote returns Remote settings
-func (v *Project) GetRemote() *Remote {
-	return v.remote
+// GetManifestRemote returns Remote settings
+func (v *Project) GetManifestRemote() *Remote {
+	return v.manifestRemote
 }
 
-// SetRemote sets Remote settings
-func (v *Project) SetRemote(r *Remote) {
-	v.remote = r
+// SetManifestRemote sets Remote settings
+func (v *Project) SetManifestRemote(r *Remote) {
+	v.manifestRemote = r
 }
 
 // AllProjects returns all projects of manifest
@@ -271,7 +271,7 @@ func (v *Manifest) AllProjects() []Project {
 
 		// Set remote field of project
 		if projects[i].RemoteName != "" {
-			projects[i].SetRemote(remotes[projects[i].RemoteName])
+			projects[i].SetManifestRemote(remotes[projects[i].RemoteName])
 		}
 	}
 	return projects

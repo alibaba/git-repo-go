@@ -949,11 +949,11 @@ func (v *Project) GetRemoteURL() (string, error) {
 	if v.IsMetaProject() {
 		return v.Settings.ManifestURL, nil
 	}
-	if v.GetRemote() == nil {
+	if v.GetManifestRemote() == nil {
 		return "", fmt.Errorf("project '%s' has no remote '%s'", v.Name, v.RemoteName)
 	}
 
-	u, err := urlJoin(v.Settings.ManifestURL, v.GetRemote().Fetch, v.Name+".git")
+	u, err := urlJoin(v.Settings.ManifestURL, v.GetManifestRemote().Fetch, v.Name+".git")
 	if err != nil {
 		return "", fmt.Errorf("fail to remote url for '%s': %s", v.Name, err)
 	}

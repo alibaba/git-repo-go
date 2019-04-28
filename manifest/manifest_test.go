@@ -205,7 +205,7 @@ func TestInclude(t *testing.T) {
 
 	// all project has valid remote
 	for _, p := range m.AllProjects() {
-		assert.NotNil(p.remote)
+		assert.NotNil(p.GetManifestRemote())
 	}
 }
 
