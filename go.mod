@@ -16,6 +16,7 @@ require (
 	golang.org/x/crypto v0.0.0-20190320223903-b7391e95e576 // indirect
 	golang.org/x/net v0.0.0-20190311183353-d8887717615a // indirect
 	golang.org/x/sys v0.0.0-20190322080309-f49334f85ddc // indirect
+	gopkg.in/h2non/gock.v1 v1.0.14
 	gopkg.in/src-d/go-git.v4 v4.10.0
 )
 
