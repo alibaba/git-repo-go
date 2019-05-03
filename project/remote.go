@@ -19,7 +19,7 @@ var (
 type Remote interface {
 	GetSSHInfo() *SSHInfo
 	GetRemote() *manifest.Remote
-	Type() string
+	GetType() string
 }
 
 // SSHInfo wraps host and port which ssh_info returned
@@ -28,72 +28,6 @@ type SSHInfo struct {
 	Port   int    `json:"port,omitempty"`
 	Type   string `json:"type,omitempty"`
 	Expire int64  `json:"expire,omitempty"`
-}
-
-// GerritRemote is Gerrit remote server
-type GerritRemote struct {
-	manifest.Remote
-
-	SSHInfo *SSHInfo
-}
-
-// GetSSHInfo returns SSHInfo field of GerritRemote
-func (v *GerritRemote) GetSSHInfo() *SSHInfo {
-	return v.SSHInfo
-}
-
-// GetRemote returns manifest remote field of GerritRemote
-func (v *GerritRemote) GetRemote() *manifest.Remote {
-	return &v.Remote
-}
-
-// Type returns type of remote
-func (v *GerritRemote) Type() string {
-	return config.RemoteTypeGerrit
-}
-
-// AliRemote is Alibaba remote server
-type AliRemote struct {
-	manifest.Remote
-
-	SSHInfo *SSHInfo
-}
-
-// GetSSHInfo returns SSHInfo field of AliRemote
-func (v *AliRemote) GetSSHInfo() *SSHInfo {
-	return v.SSHInfo
-}
-
-// GetRemote returns manifest remote field of AliRemote
-func (v *AliRemote) GetRemote() *manifest.Remote {
-	return &v.Remote
-}
-
-// Type returns type of remote
-func (v *AliRemote) Type() string {
-	return config.RemoteTypeAGit
-}
-
-// UnknownRemote is unknown remote server
-type UnknownRemote struct {
-	manifest.Remote
-
-	SSHInfo *SSHInfo
-}
-
-// GetSSHInfo returns SSHInfo field of UnknownRemote
-func (v *UnknownRemote) GetSSHInfo() *SSHInfo {
-	return v.SSHInfo
-}
-
-// GetRemote returns manifest remote field of UnknownRemote
-func (v *UnknownRemote) GetRemote() *manifest.Remote {
-	return &v.Remote
-}
-
-// Type returns type of remote
-func (v *UnknownRemote) Type() string {
-	return config.RemoteTypeUnknown
 }
 
 func newSSHInfo(data string) (*SSHInfo, error) {
@@ -159,7 +93,7 @@ func NewRemote(r *manifest.Remote, remoteType, data string) (Remote, error) {
 			SSHInfo: sshInfo,
 		}
 	case config.RemoteTypeAGit:
-		remote = &AliRemote{
+		remote = &AGitRemote{
 			Remote:  *r,
 			SSHInfo: sshInfo,
 		}

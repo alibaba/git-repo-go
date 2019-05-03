@@ -35,7 +35,7 @@ func TestLoadRemoteReviewUrlHasGerritSuffix(t *testing.T) {
 	assert.NotNil(remote.GetSSHInfo())
 	assert.Equal("ssh.example.com", remote.GetSSHInfo().Host)
 	assert.Equal(22, remote.GetSSHInfo().Port)
-	assert.Equal("gerrit", remote.Type())
+	assert.Equal("gerrit", remote.GetType())
 }
 
 func TestLoadRemoteReviewUrlHasAGitSuffix(t *testing.T) {
@@ -65,7 +65,7 @@ func TestLoadRemoteReviewUrlHasAGitSuffix(t *testing.T) {
 	assert.NotNil(remote.GetSSHInfo())
 	assert.Equal("ssh.example.com", remote.GetSSHInfo().Host)
 	assert.Equal(22, remote.GetSSHInfo().Port)
-	assert.Equal("agit", remote.Type())
+	assert.Equal("agit", remote.GetType())
 }
 
 func TestLoadRemoteSSHInfoDefaultGerrit(t *testing.T) {
@@ -95,7 +95,7 @@ func TestLoadRemoteSSHInfoDefaultGerrit(t *testing.T) {
 	assert.NotNil(remote.GetSSHInfo())
 	assert.Equal("ssh.example.com", remote.GetSSHInfo().Host)
 	assert.Equal(22, remote.GetSSHInfo().Port)
-	assert.Equal("gerrit", remote.Type())
+	assert.Equal("gerrit", remote.GetType())
 }
 
 func TestLoadRemoteManifestOverrideDefaultType(t *testing.T) {
@@ -125,7 +125,7 @@ func TestLoadRemoteManifestOverrideDefaultType(t *testing.T) {
 	assert.NotNil(remote.GetSSHInfo())
 	assert.Equal("ssh.example.com", remote.GetSSHInfo().Host)
 	assert.Equal(22, remote.GetSSHInfo().Port)
-	assert.Equal("agit", remote.Type())
+	assert.Equal("agit", remote.GetType())
 }
 
 func TestLoadRemoteBadSSHInfo(t *testing.T) {
@@ -182,7 +182,7 @@ func TestLoadRemoteJSON(t *testing.T) {
 	assert.NotNil(remote)
 	assert.Equal("ssh.example.com", remote.GetSSHInfo().Host)
 	assert.Equal(22, remote.GetSSHInfo().Port)
-	assert.Equal("agit", remote.Type())
+	assert.Equal("agit", remote.GetType())
 }
 
 func TestLoadRemoteEmptyReview(t *testing.T) {
@@ -204,7 +204,7 @@ func TestLoadRemoteEmptyReview(t *testing.T) {
 	assert.Nil(err)
 	assert.NotNil(remote)
 	assert.Nil(remote.GetSSHInfo())
-	assert.Equal("unknown", remote.Type())
+	assert.Equal("unknown", remote.GetType())
 	assert.Equal("origin", remote.GetRemote().Name)
 	assert.Equal("", remote.GetRemote().Review)
 }
@@ -228,7 +228,7 @@ func TestLoadRemoteSSHProtocolReview(t *testing.T) {
 	assert.Nil(err)
 	assert.NotNil(remote)
 	assert.Nil(remote.GetSSHInfo())
-	assert.Equal("gerrit", remote.Type())
+	assert.Equal("gerrit", remote.GetType())
 	assert.Equal("ssh://git@example.com", remote.GetRemote().Review)
 }
 
@@ -258,7 +258,7 @@ func TestLoadRemoteNotAvailable(t *testing.T) {
 	assert.Nil(err)
 	assert.NotNil(remote)
 	assert.Nil(remote.GetSSHInfo())
-	assert.Equal("gerrit", remote.Type())
+	assert.Equal("gerrit", remote.GetType())
 	assert.Equal("https://example.com", remote.GetRemote().Review)
 }
 
@@ -288,6 +288,6 @@ func TestLoadRemoteHTTPStatus404(t *testing.T) {
 	assert.Nil(err)
 	assert.NotNil(remote)
 	assert.Nil(remote.GetSSHInfo())
-	assert.Equal("unknown", remote.Type())
+	assert.Equal("unknown", remote.GetType())
 	assert.Equal("https://example.com", remote.GetRemote().Review)
 }
