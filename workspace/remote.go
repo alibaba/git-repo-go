@@ -32,6 +32,7 @@ func (v *WorkSpace) LoadRemotes() error {
 	}
 
 	cfg := v.ManifestProject.Config()
+	changed := false
 	for _, r := range v.Manifest.Remotes {
 		t := cfg.Get(fmt.Sprintf(config.CfgManifestRemoteType, r.Name))
 		if t != "" {
@@ -47,8 +48,19 @@ func (v *WorkSpace) LoadRemotes() error {
 				return err
 			}
 			v.RemoteMap[r.Name] = remote
-			// TODO: set git config
+
+			// Write back to git config
+			if remote.GetType() != "" && remote.GetSSHInfo() != nil {
+				cfg.Set(fmt.Sprintf(config.CfgManifestRemoteType, r.Name),
+					remote.GetType())
+				cfg.Set(fmt.Sprintf(config.CfgManifestRemoteSSHInfo, r.Name),
+					remote.GetSSHInfo().String())
+				changed = true
+			}
 		}
+	}
+	if changed {
+		v.ManifestProject.SaveConfig(cfg)
 	}
 
 	for i := range v.Projects {

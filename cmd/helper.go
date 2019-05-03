@@ -3,8 +3,11 @@
 package cmd
 
 import (
+	"bufio"
 	"fmt"
+	"os"
 	"regexp"
+	"strings"
 )
 
 // commandError is an error used to signal different error situations in command handling.
@@ -58,4 +61,29 @@ func min(args ...int) int {
 		}
 	}
 	return m
+}
+
+func userInput(prompt, defaultValue string) string {
+	fmt.Print(prompt)
+	reader := bufio.NewReader(os.Stdin)
+	text, _ := reader.ReadString('\n')
+	text = strings.TrimSpace(text)
+
+	if text == "" {
+		return defaultValue
+	}
+	return text
+}
+
+func answerIsTrue(answer string) bool {
+	answer = strings.ToLower(strings.TrimSpace(answer))
+	if answer == "y" ||
+		answer == "yes" ||
+		answer == "t" ||
+		answer == "true" ||
+		answer == "on" ||
+		answer == "1" {
+		return true
+	}
+	return false
 }

@@ -15,11 +15,24 @@
 package cmd
 
 import (
+	"fmt"
+	"os"
+	"regexp"
+	"strings"
+
+	"code.alibaba-inc.com/force/git-repo/config"
+	"code.alibaba-inc.com/force/git-repo/editor"
+	"code.alibaba-inc.com/force/git-repo/project"
 	"code.alibaba-inc.com/force/git-repo/workspace"
 	"github.com/jiangxin/multi-log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
+)
+
+const (
+	// UnusualCommitThreshold defines threshold of number of commits to confirm
+	UnusualCommitThreshold = 5
 )
 
 type uploadCommand struct {
@@ -156,12 +169,308 @@ func (v *uploadCommand) reloadWorkSpace() {
 	}
 }
 
-func (v uploadCommand) runE(args []string) error {
+func (v uploadCommand) UploadSingleBranch(branch *project.ReviewableBranch, people [][]string) error {
 	var (
-		failed    = []string{}
-		execError error
+		answer bool
 	)
 
+	p := branch.Project
+	remote := p.Remote.GetRemote()
+	key := fmt.Sprintf("review.%s.autoupload", remote.Review)
+	commitList := branch.Commits()
+	cfg := p.Config()
+	if cfg.HasKey(key) {
+		answer = cfg.GetBool(key, false)
+		if !answer {
+			return fmt.Errorf("upload blocked by %s = false", key)
+		}
+	} else {
+		destBranch := ""
+		if v.O.DestBranch != "" {
+			destBranch = v.O.DestBranch
+		} else if p.DestBranch != "" {
+			destBranch = p.DestBranch
+		} else if remote.Revision != "" {
+			destBranch = remote.Revision
+		}
+
+		draftStr := ""
+		if v.O.Draft {
+			draftStr = " (draft)"
+		}
+		fmt.Printf("Upload project %s/ to remote branch %s%s:",
+			p.Path, destBranch, draftStr)
+		fmt.Printf("  branch %s (%2d commit(s)):",
+			branch.Branch.Name,
+			len(commitList))
+		for _, commit := range commitList {
+			fmt.Printf("         %s", commit)
+		}
+
+		input := userInput(
+			fmt.Sprintf("to %s (y/N)? ", remote.Review),
+			"N")
+		if answerIsTrue(input) {
+			answer = true
+		}
+		if !answer {
+			return fmt.Errorf("upload aborted by user")
+		}
+	}
+
+	if len(commitList) > UnusualCommitThreshold {
+		fmt.Printf("ATTENTION: You are uploading an unusually high number of commits.\n")
+		fmt.Println("YOU PROBABLY DO NOT MEAN TO DO THIS. (Did you rebase across branches?)")
+		input := userInput("If you are sure you intend to do this, type 'yes': ", "N")
+		if answerIsTrue(input) {
+			answer = true
+		}
+		if !answer {
+			return fmt.Errorf("upload aborted by user")
+		}
+	}
+
+	return v.UploadAndReport([]project.ReviewableBranch{*branch}, people)
+}
+
+func (v uploadCommand) UploadMultipleBranches(branchesMap map[string][]project.ReviewableBranch, people [][]string) error {
+	var (
+		projectPattern = regexp.MustCompile(`^#?\s*project\s*([^\s]+)/:$`)
+		branchPattern  = regexp.MustCompile(`^\s*branch\s*([^\s(]+)\s*\(.*`)
+		ok             bool
+	)
+
+	projectsIdx := make(map[string]project.Project)
+	branchesIdx := make(map[string]map[string]project.ReviewableBranch)
+
+	script := []string{"# Uncomment the branches to upload:"}
+	for _, branches := range branchesMap {
+		p := branches[0].Project
+		script = append(script, "#")
+		script = append(script, fmt.Sprintf("# project %s/:", p.Path))
+
+		b := make(map[string]project.ReviewableBranch)
+		for _, branch := range branches {
+			name := branch.Branch.Name
+			// date := branch.date
+			commitList := branch.Commits()
+
+			if len(b) > 0 {
+				script = append(script, "#")
+			}
+			var destBranch string
+			if v.O.DestBranch != "" {
+				destBranch = v.O.DestBranch
+			} else if branch.Project.DestBranch != "" {
+				destBranch = branch.Project.DestBranch
+			} else {
+				destBranch = branch.Project.Revision
+			}
+			script = append(script,
+				fmt.Sprintf("#  branch %s (%2d commit(s)) to remote branch %s:",
+					name,
+					len(commitList),
+					destBranch))
+			for i := range commitList {
+				if i < 10 {
+					script = append(script,
+						fmt.Sprintf("#         %s", commitList[i]))
+				} else if i == len(commitList)-1 {
+					script = append(script, "#         ... ...")
+				}
+			}
+			b[name] = branch
+		}
+
+		projectsIdx[p.Path] = *p
+		branchesIdx[p.Name] = b
+	}
+
+	editor := editor.Editor{}
+	script = append(script, "")
+	script = strings.Split(editor.EditString(strings.Join(script, "\n")), "\n")
+
+	todo := []project.ReviewableBranch{}
+
+	hasProject := false
+	for _, line := range script {
+		var p project.Project
+
+		if m := projectPattern.FindStringSubmatch(line); m != nil {
+			name := m[1]
+			if p, ok = projectsIdx[name]; !ok {
+				log.Fatalf("project %s not available for upload", name)
+			}
+			hasProject = true
+			continue
+		}
+
+		if m := branchPattern.FindStringSubmatch(line); m != nil {
+			name := m[1]
+			if !hasProject {
+				log.Fatalf("project for branch %s not in script", name)
+			}
+			if branch, ok := branchesIdx[p.Name][name]; ok {
+				todo = append(todo, branch)
+			} else {
+				log.Fatalf("branch %s not in %s", name, p.Path)
+			}
+		}
+	}
+	if len(todo) == 0 {
+		log.Fatal("nothing uncommented for upload")
+	}
+
+	hasManyCommits := false
+	for _, branch := range todo {
+		if len(branch.Commits()) > UnusualCommitThreshold {
+			hasManyCommits = true
+			break
+		}
+	}
+	if hasManyCommits {
+		fmt.Println("ATTENTION: One or more branches has an unusually high number of commits.")
+		fmt.Println("YOU PROBABLY DO NOT MEAN TO DO THIS. (Did you rebase across branches?)")
+		input := userInput("If you are sure you intend to do this, type 'yes': ", "N")
+		if !answerIsTrue(input) {
+			return fmt.Errorf("upload aborted by user")
+		}
+	}
+
+	return v.UploadAndReport(todo, people)
+}
+
+func (v uploadCommand) UploadAndReport(branches []project.ReviewableBranch, origPeople [][]string) error {
+
+	haveErrors := false
+	for _, branch := range branches {
+		people := [][]string{[]string{}, []string{}}
+		copy(people[0], origPeople[0])
+		copy(people[1], origPeople[1])
+		branch.AppendReviewers(people)
+		isClean, err := branch.Project.IsClean()
+		if err != nil {
+			log.Error(err)
+		}
+		cfg := branch.Project.Config()
+		if !isClean {
+			key := fmt.Sprintf("review.%s.autoupload", branch.Project.Remote.GetRemote().Review)
+			if !cfg.HasKey(key) {
+				fmt.Printf("Uncommitted changes in " + branch.Project.Name)
+				fmt.Printf(" (did you forget to amend?):\n")
+				input := userInput(
+					fmt.Sprintf("Continue uploading? (y/N) "),
+					"N")
+				if answerIsTrue(input) {
+					log.Note("skipping upload")
+					branch.Uploaded = false
+					branch.Error = fmt.Errorf("User aborted")
+					continue
+				}
+			}
+		}
+		if !v.O.AutoTopic {
+			key := fmt.Sprintf("review.%s.uploadtopic", branch.Project.Remote.GetRemote().Review)
+			v.O.AutoTopic = cfg.GetBool(key, false)
+		}
+
+		destBranch := ""
+		if v.O.DestBranch != "" {
+			destBranch = v.O.DestBranch
+		} else if branch.Project.DestBranch != "" {
+			destBranch = branch.Project.DestBranch
+		}
+		if destBranch != "" {
+			fullDest := destBranch
+			if !strings.HasPrefix(fullDest, config.RefsHeads) {
+				fullDest = config.RefsHeads + fullDest
+			}
+			mergeBranch := branch.Track.Name
+			if v.O.DestBranch == "" && mergeBranch != "" && mergeBranch != fullDest {
+				fmt.Printf("merge branch %s does not match destination branch %s\n",
+					mergeBranch,
+					fullDest)
+				fmt.Println("skipping upload.")
+				fmt.Printf("Please use `--destination %s` if this is intentional\n",
+					destBranch)
+				branch.Uploaded = false
+				continue
+			}
+		}
+
+		/*
+			TODO: call uploadForReview
+			err = branch.UploadForReview(people)
+			err = branch.UploadForReview(people,
+			  auto_topic=opt.auto_topic,
+			  draft=opt.draft,
+			  private=opt.private,
+			  notify=None if opt.notify else 'NONE',
+			  wip=opt.wip,
+			  dest_branch=destination,
+			  validate_certs=opt.validate_certs,
+			  push_options=opt.push_options)
+		*/
+		if err != nil {
+			branch.Uploaded = false
+			branch.Error = err
+			haveErrors = true
+		} else {
+			branch.Uploaded = true
+		}
+
+	}
+
+	fmt.Fprintln(os.Stderr, "")
+	fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	if haveErrors {
+		for _, branch := range branches {
+			if !branch.Uploaded && branch.Error != nil {
+				format := ""
+				if len(branch.Error.Error()) <= 30 {
+					format = " (%s)"
+				} else {
+					format = "\n       (%s)"
+				}
+				fmt.Fprintf(os.Stderr,
+					"[FAILED] %-15s %-15s"+format+"\n",
+					branch.Project.Path+"/",
+					branch.Branch.Name,
+					branch.Error.Error())
+			}
+		}
+		fmt.Fprintln(os.Stderr, "")
+	}
+	/*
+
+	   if have_errors:
+	     for branch in todo:
+	       if not branch.uploaded:
+	         if len(str(branch.error)) <= 30:
+	           fmt = ' (%s)'
+	         else:
+	           fmt = '\n       (%s)'
+	         print(('[FAILED] %-15s %-15s' + fmt) % (
+	                branch.project.relpath + '/', \
+	                branch.name, \
+	                str(branch.error)),
+	                file=sys.stderr)
+	     print()
+
+	   for branch in todo:
+	     if branch.uploaded:
+	       print('[OK    ] %-15s %s' % (
+	              branch.project.relpath + '/',
+	              branch.name),
+	              file=sys.stderr)
+
+	   if have_errors:
+	     sys.exit(1)
+	*/
+	return nil
+}
+
+func (v uploadCommand) runE(args []string) error {
 	ws := v.WorkSpace()
 	err := ws.LoadRemotes()
 	if err != nil {
@@ -173,20 +482,60 @@ func (v uploadCommand) runE(args []string) error {
 		return err
 	}
 
+	branch := v.O.Branch
+
+	tasks := make(map[string][]project.ReviewableBranch)
 	for _, p := range allProjects {
 		if v.O.CurrentBranch {
 			cbr := p.GetHead()
 			uploadBranch := p.GetUploadableBranch(cbr)
-			log.Debugf("uploadBranch is : %s", uploadBranch)
+			if uploadBranch != nil {
+				tasks[p.Path] = []project.ReviewableBranch{*uploadBranch}
+			}
+		} else {
+			uploadBranches := p.GetUploadableBranches(branch)
+			if len(uploadBranches) == 0 {
+				continue
+			}
+			tasks[p.Path] = uploadBranches
 		}
 	}
 
-	_, _, _ = failed, execError, ws
+	if len(tasks) == 0 {
+		log.Note("no branches ready for upload")
+		return nil
+	}
 
-	log.Notef("reviewers: %#v", v.O.Reviewers)
-	log.Notef("cc: %#v", v.O.Cc)
+	people := [][]string{[]string{}, []string{}}
+	if len(v.O.Reviewers) > 0 {
+		for _, reviewer := range strings.Split(
+			strings.Join(v.O.Reviewers, ","),
+			",") {
+			reviewer = strings.TrimSpace(reviewer)
+			if reviewer != "" {
+				people[0] = append(people[0], reviewer)
+			}
+		}
+	}
+	if len(v.O.Cc) > 0 {
+		for _, reviewer := range strings.Split(
+			strings.Join(v.O.Cc, ","),
+			",") {
+			reviewer = strings.TrimSpace(reviewer)
+			if reviewer != "" {
+				people[1] = append(people[1], reviewer)
+			}
+		}
+	}
 
-	return nil
+	if len(tasks) == 1 {
+		for key := range tasks {
+			if len(tasks[key]) == 1 {
+				return v.UploadSingleBranch(&tasks[key][0], people)
+			}
+		}
+	}
+	return v.UploadMultipleBranches(tasks, people)
 }
 
 var uploadCmd = uploadCommand{}

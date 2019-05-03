@@ -30,6 +30,14 @@ type SSHInfo struct {
 	Expire int64  `json:"expire,omitempty"`
 }
 
+// Strings returns "<Host><SP><Port>"
+func (v SSHInfo) String() string {
+	if v.Host == "" || v.Port == 0 {
+		return ""
+	}
+	return fmt.Sprintf("%s %d", v.Host, v.Port)
+}
+
 func newSSHInfo(data string) (*SSHInfo, error) {
 	var (
 		host  string
