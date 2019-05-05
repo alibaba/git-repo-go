@@ -1,6 +1,8 @@
 package project
 
 import (
+	"fmt"
+
 	"code.alibaba-inc.com/force/git-repo/config"
 	"code.alibaba-inc.com/force/git-repo/manifest"
 )
@@ -25,4 +27,9 @@ func (v *UnknownRemote) GetRemote() *manifest.Remote {
 // GetType returns type of remote
 func (v *UnknownRemote) GetType() string {
 	return config.RemoteTypeUnknown
+}
+
+// UploadCommands returns upload commands
+func (v *UnknownRemote) UploadCommands(o *UploadOptions, branch *ReviewableBranch) ([]string, error) {
+	return nil, fmt.Errorf("unknown remote for upload")
 }

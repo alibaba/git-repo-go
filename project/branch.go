@@ -93,6 +93,35 @@ func (v Repository) DeleteBranch(branch string) error {
 	return executeCommandIn(v.Path, cmdArgs)
 }
 
+// UpdateRef creates new reference
+func (v Repository) UpdateRef(refname, base, reason string) error {
+	var (
+		err error
+		ref *plumbing.Reference
+	)
+
+	raw := v.Raw()
+
+	if IsSha(base) {
+		ref = plumbing.NewHashReference(plumbing.ReferenceName(refname),
+			plumbing.NewHash(base))
+	} else {
+		hash, err := raw.ResolveRevision(plumbing.Revision(base))
+		if err != nil {
+			return fmt.Errorf("cannot resolve base rev '%s' when update ref: %s",
+				base,
+				err)
+		}
+		ref = plumbing.NewHashReference(plumbing.ReferenceName(refname), *hash)
+	}
+	err = raw.Storer.SetReference(ref)
+	if err != nil {
+		return fmt.Errorf("fail create '%s' on '%s': %s", refname, base, err)
+	}
+
+	return nil
+}
+
 // GetHead returns head branch.
 func (v Project) GetHead() string {
 	return v.WorkRepository.GetHead()
@@ -170,6 +199,11 @@ func (v Project) ResolveRemoteTracking(rev string) (string, error) {
 // DeleteBranch deletes a branch
 func (v Project) DeleteBranch(branch string) error {
 	return v.WorkRepository.DeleteBranch(branch)
+}
+
+// UpdateRef creates new reference
+func (v Project) UpdateRef(ref, base, reason string) error {
+	return v.WorkRepository.UpdateRef(ref, base, reason)
 }
 
 // StartBranch creates new branch

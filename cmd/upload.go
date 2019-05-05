@@ -145,10 +145,14 @@ func (v *uploadCommand) Command() *cobra.Command {
 		"verify",
 		false,
 		"Run the upload hook without prompting")
+	v.cmd.Flags().Bool("dryrun",
+		false,
+		"dryrun mode")
 
 	v.cmd.Flags().MarkHidden("auto-topic")
 
 	viper.BindPFlag("no-cert-checks", v.cmd.Flags().Lookup("no-cert-checks"))
+	viper.BindPFlag("dryrun", v.cmd.Flags().Lookup("dryrun"))
 
 	return v.cmd
 
@@ -178,7 +182,7 @@ func (v uploadCommand) UploadSingleBranch(branch *project.ReviewableBranch, peop
 	remote := p.Remote.GetRemote()
 	key := fmt.Sprintf("review.%s.autoupload", remote.Review)
 	commitList := branch.Commits()
-	cfg := p.Config()
+	cfg := p.ConfigWithDefault()
 	if cfg.HasKey(key) {
 		answer = cfg.GetBool(key, false)
 		if !answer {
@@ -198,13 +202,13 @@ func (v uploadCommand) UploadSingleBranch(branch *project.ReviewableBranch, peop
 		if v.O.Draft {
 			draftStr = " (draft)"
 		}
-		fmt.Printf("Upload project %s/ to remote branch %s%s:",
+		fmt.Printf("Upload project %s/ to remote branch %s%s:\n",
 			p.Path, destBranch, draftStr)
-		fmt.Printf("  branch %s (%2d commit(s)):",
+		fmt.Printf("  branch %s (%2d commit(s)):\n",
 			branch.Branch.Name,
 			len(commitList))
 		for _, commit := range commitList {
-			fmt.Printf("         %s", commit)
+			fmt.Printf("         %s\n", commit)
 		}
 
 		input := userInput(
@@ -292,10 +296,11 @@ func (v uploadCommand) UploadMultipleBranches(branchesMap map[string][]project.R
 
 	todo := []project.ReviewableBranch{}
 
-	hasProject := false
+	var (
+		p          project.Project
+		hasProject = false
+	)
 	for _, line := range script {
-		var p project.Project
-
 		if m := projectPattern.FindStringSubmatch(line); m != nil {
 			name := m[1]
 			if p, ok = projectsIdx[name]; !ok {
@@ -352,7 +357,7 @@ func (v uploadCommand) UploadAndReport(branches []project.ReviewableBranch, orig
 		if err != nil {
 			log.Error(err)
 		}
-		cfg := branch.Project.Config()
+		cfg := branch.Project.ConfigWithDefault()
 		if !isClean {
 			key := fmt.Sprintf("review.%s.autoupload", branch.Project.Remote.GetRemote().Review)
 			if !cfg.HasKey(key) {
@@ -398,19 +403,19 @@ func (v uploadCommand) UploadAndReport(branches []project.ReviewableBranch, orig
 			}
 		}
 
-		/*
-			TODO: call uploadForReview
-			err = branch.UploadForReview(people)
-			err = branch.UploadForReview(people,
-			  auto_topic=opt.auto_topic,
-			  draft=opt.draft,
-			  private=opt.private,
-			  notify=None if opt.notify else 'NONE',
-			  wip=opt.wip,
-			  dest_branch=destination,
-			  validate_certs=opt.validate_certs,
-			  push_options=opt.push_options)
-		*/
+		o := project.UploadOptions{
+			AutoTopic:    v.O.AutoTopic,
+			DestBranch:   destBranch,
+			Draft:        v.O.Draft,
+			NoCertChecks: config.NoCertChecks(),
+			NoEmails:     v.O.NoEmails,
+			Private:      v.O.Private,
+			PushOptions:  v.O.PushOptions,
+			WIP:          v.O.WIP,
+		}
+
+		err = branch.UploadForReview(&o, people)
+
 		if err != nil {
 			branch.Uploaded = false
 			branch.Error = err
@@ -440,33 +445,8 @@ func (v uploadCommand) UploadAndReport(branches []project.ReviewableBranch, orig
 			}
 		}
 		fmt.Fprintln(os.Stderr, "")
+		os.Exit(1)
 	}
-	/*
-
-	   if have_errors:
-	     for branch in todo:
-	       if not branch.uploaded:
-	         if len(str(branch.error)) <= 30:
-	           fmt = ' (%s)'
-	         else:
-	           fmt = '\n       (%s)'
-	         print(('[FAILED] %-15s %-15s' + fmt) % (
-	                branch.project.relpath + '/', \
-	                branch.name, \
-	                str(branch.error)),
-	                file=sys.stderr)
-	     print()
-
-	   for branch in todo:
-	     if branch.uploaded:
-	       print('[OK    ] %-15s %s' % (
-	              branch.project.relpath + '/',
-	              branch.name),
-	              file=sys.stderr)
-
-	   if have_errors:
-	     sys.exit(1)
-	*/
 	return nil
 }
 

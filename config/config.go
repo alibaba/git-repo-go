@@ -143,6 +143,11 @@ func GetMockSSHInfoResponse() string {
 	return viper.GetString("mock-ssh-info-response")
 }
 
+// IsDryRun gets --dryrun option
+func IsDryRun() bool {
+	return viper.GetBool("dryrun")
+}
+
 func init() {
 	viper.SetDefault("logrotate", DefaultLogRotate)
 	viper.SetDefault("loglevel", DefaultLogLevel)

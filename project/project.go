@@ -31,6 +31,47 @@ type Project struct {
 	Remote           Remote
 }
 
+// ConfigWithDefault checks git config from both project and manifest project
+type ConfigWithDefault struct {
+	Project *Project
+}
+
+// HasKey checks whether key is set in both project and manifest project
+func (v ConfigWithDefault) HasKey(key string) bool {
+	value := v.Project.Config().HasKey(key)
+	if value || v.Project.IsMetaProject() {
+		return value
+	}
+	if v.Project.Settings != nil && v.Project.Settings.Config != nil {
+		return v.Project.Settings.Config.HasKey(key)
+	}
+	return false
+}
+
+// Get returns config of both project and manifest project
+func (v ConfigWithDefault) Get(key string) string {
+	value := v.Project.Config().Get(key)
+	if value != "" || v.Project.IsMetaProject() {
+		return value
+	}
+	if v.Project.Settings != nil && v.Project.Settings.Config != nil {
+		return v.Project.Settings.Config.Get(key)
+	}
+	return ""
+}
+
+// GetBool returns boolean config of both project and manifest project
+func (v ConfigWithDefault) GetBool(key string, defaultVal bool) bool {
+	value := v.Get(key)
+	switch strings.ToLower(value) {
+	case "yes", "true", "on":
+		return true
+	case "no", "false", "off":
+		return false
+	}
+	return defaultVal
+}
+
 // RepoRoot returns root dir of repo workspace.
 func (v Project) RepoRoot() string {
 	return v.Settings.RepoRoot
@@ -323,6 +364,11 @@ func (v *Project) Config() goconfig.GitConfig {
 	return v.WorkRepository.Config()
 }
 
+// ConfigWithDefault returns git config file parser
+func (v *Project) ConfigWithDefault() ConfigWithDefault {
+	return ConfigWithDefault{Project: v}
+}
+
 // ManifestConfig returns git config of manifest project
 func (v *Project) ManifestConfig() goconfig.GitConfig {
 	return v.Settings.Config
@@ -343,6 +389,25 @@ func (v Project) GetSubmoduleProjects() []*Project {
 	// TODO: return submodule projects
 	log.Panic("not implement GitSubmodules")
 	return nil
+}
+
+// UserEmail returns user identity
+func (v Project) UserEmail() string {
+	username := os.Getenv("GIT_COMMITTER_NAME")
+	useremail := os.Getenv("GIT_COMMITTER_EMAIL")
+	if username == "" {
+		username = v.ConfigWithDefault().Get("user.name")
+	}
+	if useremail == "" {
+		useremail = v.ConfigWithDefault().Get("user.email")
+	}
+	if username != "" && useremail != "" {
+		if strings.Contains(username, " ") {
+			return fmt.Sprintf("\"%s\" <%s>", username, useremail)
+		}
+		return fmt.Sprintf("%s <%s>", username, useremail)
+	}
+	return ""
 }
 
 // NewProject returns a project: project worktree with a bared repo and a seperate repository

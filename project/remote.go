@@ -20,6 +20,7 @@ type Remote interface {
 	GetSSHInfo() *SSHInfo
 	GetRemote() *manifest.Remote
 	GetType() string
+	UploadCommands(o *UploadOptions, branch *ReviewableBranch) ([]string, error)
 }
 
 // SSHInfo wraps host and port which ssh_info returned

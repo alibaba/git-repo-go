@@ -2,11 +2,27 @@ package project
 
 import (
 	"fmt"
+	"os"
+	"os/exec"
 	"strings"
 
 	"code.alibaba-inc.com/force/git-repo/config"
 	"github.com/jiangxin/multi-log"
 )
+
+// UploadOptions is options for upload related methods
+type UploadOptions struct {
+	AutoTopic    bool
+	DestBranch   string
+	Draft        bool
+	UserEmail    string
+	NoCertChecks bool
+	NoEmails     bool
+	People       [][]string
+	Private      bool
+	PushOptions  []string
+	WIP          bool
+}
 
 // ReviewableBranch holds branch of proect ready for upload
 type ReviewableBranch struct {
@@ -19,7 +35,7 @@ type ReviewableBranch struct {
 
 // AppendReviewers adds reviewers to people
 func (v ReviewableBranch) AppendReviewers(people [][]string) {
-	cfg := v.Project.Config()
+	cfg := v.Project.ConfigWithDefault()
 	review := v.Project.Remote.GetRemote().Review
 
 	key := fmt.Sprintf("review.%s.autoreviewer", review)
@@ -62,6 +78,66 @@ func (v ReviewableBranch) Commits() []string {
 		return nil
 	}
 	return commits
+}
+
+// UploadForReview sends review for branch
+func (v ReviewableBranch) UploadForReview(o *UploadOptions, people [][]string) error {
+	var err error
+
+	p := v.Project
+	if p == nil {
+		return fmt.Errorf("no project for reviewable branch")
+	}
+	if p.Remote == nil {
+		return fmt.Errorf("no remote for project '%s' for review", p.Name)
+	}
+	manifestRemote := p.Remote.GetRemote()
+	if manifestRemote.Review == "" {
+		return fmt.Errorf("project '%s' has no review url", p.Name)
+	}
+	if o.DestBranch == "" {
+		o.DestBranch = v.Track.Name
+		if o.DestBranch == "" {
+			return fmt.Errorf("no destination for review")
+		}
+	}
+	o.People = people
+
+	cmdArgs, err := p.Remote.UploadCommands(o, &v)
+	if err != nil {
+		return err
+	}
+
+	if config.IsDryRun() {
+		log.Notef("will execute command: %s", strings.Join(cmdArgs, " "))
+	} else {
+		cmd := exec.Command(cmdArgs[0], cmdArgs[1:]...)
+		cmd.Dir = p.WorkDir
+		cmd.Stdin = os.Stdin
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		err = cmd.Run()
+		if err != nil {
+			return fmt.Errorf("upload failed: %s", err)
+		}
+	}
+
+	msg := fmt.Sprintf("posted to %s for %s", manifestRemote.Review, o.DestBranch)
+	branchName := v.Branch.Name
+	if strings.HasPrefix(branchName, config.RefsHeads) {
+		branchName = strings.TrimPrefix(branchName, config.RefsHeads)
+	}
+
+	err = p.UpdateRef(config.RefsPub+branchName,
+		config.RefsHeads+branchName,
+		msg)
+
+	if err != nil {
+		return fmt.Errorf("fail to create reference '%s': %s",
+			config.RefsPub+branchName,
+			err)
+	}
+	return nil
 }
 
 // GetUploadableBranch returns branch which has commits ready for upload
