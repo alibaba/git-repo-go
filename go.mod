@@ -3,7 +3,7 @@ module code.alibaba-inc.com/force/git-repo
 require (
 	github.com/BurntSushi/toml v0.3.1 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
-	github.com/jiangxin/goconfig v1.0.0
+	github.com/jiangxin/goconfig v1.0.1-0.20190505004550-3e27d9efaffe
 	github.com/jiangxin/multi-log v0.2.0
 	github.com/mattn/go-isatty v0.0.7
 	github.com/mitchellh/go-homedir v1.1.0

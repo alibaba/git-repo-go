@@ -35,6 +35,8 @@ github.com/jiangxin/goconfig v0.2.1-0.20190323114905-982e9f423f7f h1:5L7qdhKsKFR
 github.com/jiangxin/goconfig v0.2.1-0.20190323114905-982e9f423f7f/go.mod h1:SfAuMwUcCiqunXvftVyKfIIc7rMmlhqtRzckpETcXNA=
 github.com/jiangxin/goconfig v1.0.0 h1:okIgJPD6s/Z7hnADkxt+fMLPFmBzrd+MI8ccmr3dt74=
 github.com/jiangxin/goconfig v1.0.0/go.mod h1:SfAuMwUcCiqunXvftVyKfIIc7rMmlhqtRzckpETcXNA=
+github.com/jiangxin/goconfig v1.0.1-0.20190505004550-3e27d9efaffe h1:itcoN0hXR/BiNZtLZ+/1xKT9ZDdbuf59dkNCkc2xpJA=
+github.com/jiangxin/goconfig v1.0.1-0.20190505004550-3e27d9efaffe/go.mod h1:SfAuMwUcCiqunXvftVyKfIIc7rMmlhqtRzckpETcXNA=
 github.com/jiangxin/multi-log v0.2.0 h1:baqXz1qccmVVqW4lzgWd71XRc+/umhXdCcBkiad1uHw=
 github.com/jiangxin/multi-log v0.2.0/go.mod h1:jLsX0ka/H6flS8APgh5zaTmi+MyWYU5rGwtjMUXirFU=
 github.com/kevinburke/ssh_config v0.0.0-20180830205328-81db2a75821e h1:RgQk53JHp/Cjunrr1WlsXSZpqXn+uREuHvUVcK82CV8=
