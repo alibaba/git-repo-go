@@ -3,6 +3,7 @@ package project
 import (
 	"code.alibaba-inc.com/force/git-repo/config"
 	"code.alibaba-inc.com/force/git-repo/manifest"
+	"github.com/jiangxin/goconfig"
 )
 
 // RepoSettings holds settings in manifest project
@@ -18,6 +19,7 @@ type RepoSettings struct {
 	Dissociate   bool
 	Mirror       bool
 	Submodules   bool
+	Config       goconfig.GitConfig
 }
 
 // ManifestProject is a special type of project
@@ -39,6 +41,7 @@ func (v *ManifestProject) ReadSettings() *RepoSettings {
 	s.Dissociate = cfg.GetBool(config.CfgRepoDissociate, false)
 	s.Mirror = cfg.GetBool(config.CfgRepoMirror, false)
 	s.Submodules = cfg.GetBool(config.CfgRepoSubmodules, false)
+	s.Config = v.Config()
 
 	return s
 }

@@ -323,6 +323,11 @@ func (v *Project) Config() goconfig.GitConfig {
 	return v.WorkRepository.Config()
 }
 
+// ManifestConfig returns git config of manifest project
+func (v *Project) ManifestConfig() goconfig.GitConfig {
+	return v.Settings.Config
+}
+
 // SaveConfig will save config to git config file
 func (v *Project) SaveConfig(cfg goconfig.GitConfig) error {
 	return v.WorkRepository.SaveConfig(cfg)
