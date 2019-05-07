@@ -1,11 +1,11 @@
 package workspace
 
 import (
-	"gopkg.in/h2non/gock.v1"
 	"testing"
 
 	"code.alibaba-inc.com/force/git-repo/manifest"
 	"github.com/stretchr/testify/assert"
+	"gopkg.in/h2non/gock.v1"
 )
 
 func TestLoadRemoteReviewUrlHasGerritSuffix(t *testing.T) {

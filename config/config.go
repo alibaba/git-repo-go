@@ -133,6 +133,16 @@ func NoCertChecks() bool {
 	return !verify
 }
 
+// GetMockSSHInfoStatus gets --mock-ssh-info-status option
+func GetMockSSHInfoStatus() int {
+	return viper.GetInt("mock-ssh-info-status")
+}
+
+// GetMockSSHInfoResponse gets --mock-ssh-info-status option
+func GetMockSSHInfoResponse() string {
+	return viper.GetString("mock-ssh-info-response")
+}
+
 func init() {
 	viper.SetDefault("logrotate", DefaultLogRotate)
 	viper.SetDefault("loglevel", DefaultLogLevel)

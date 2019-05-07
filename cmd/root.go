@@ -95,10 +95,16 @@ func init() {
 	rootCmd.PersistentFlags().CountP("verbose", "v", "verbose mode")
 	rootCmd.PersistentFlags().BoolP("quiet", "q", false, "quiet mode")
 	rootCmd.PersistentFlags().Bool("single", false, "single mode, no manifest")
+	rootCmd.PersistentFlags().Int("mock-ssh-info-status", 0, "mock remote ssh_info status")
+	rootCmd.PersistentFlags().String("mock-ssh-info-response", "", "mock remote ssh_info response")
+	rootCmd.PersistentFlags().MarkHidden("mock-ssh-info-status")
+	rootCmd.PersistentFlags().MarkHidden("mock-ssh-info-response")
 
 	viper.BindPFlag("verbose", rootCmd.PersistentFlags().Lookup("verbose"))
 	viper.BindPFlag("quiet", rootCmd.PersistentFlags().Lookup("quiet"))
 	viper.BindPFlag("single", rootCmd.PersistentFlags().Lookup("single"))
+	viper.BindPFlag("mock-ssh-info-status", rootCmd.PersistentFlags().Lookup("mock-ssh-info-status"))
+	viper.BindPFlag("mock-ssh-info-response", rootCmd.PersistentFlags().Lookup("mock-ssh-info-response"))
 }
 
 func checkVersion() {

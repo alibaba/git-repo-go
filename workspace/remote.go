@@ -15,6 +15,7 @@ import (
 	"code.alibaba-inc.com/force/git-repo/manifest"
 	"code.alibaba-inc.com/force/git-repo/project"
 	"github.com/jiangxin/multi-log"
+	"gopkg.in/h2non/gock.v1"
 )
 
 const (
@@ -99,6 +100,11 @@ func getHTTPClient() *http.Client {
 
 	httpClient = &http.Client{Transport: tr}
 
+	// Mock ssh_info API
+	if config.GetMockSSHInfoResponse() != "" || config.GetMockSSHInfoStatus() != 0 {
+		gock.InterceptClient(httpClient)
+	}
+
 	return httpClient
 }
 
@@ -170,6 +176,18 @@ func loadRemote(r *manifest.Remote) (project.Remote, error) {
 
 	infoURL := u + "/ssh_info"
 	log.Debugf("start checking ssh_info from %s", infoURL)
+
+	// Mock ssh_info API
+	if config.GetMockSSHInfoResponse() != "" || config.GetMockSSHInfoStatus() != 0 {
+		mockStatus := config.GetMockSSHInfoStatus()
+		if mockStatus == 0 {
+			mockStatus = 200
+		}
+		mockResponse := config.GetMockSSHInfoResponse()
+		gock.New(infoURL).
+			Reply(mockStatus).
+			BodyString(mockResponse)
+	}
 
 	req, err := http.NewRequest("GET", infoURL, nil)
 	if err != nil {
