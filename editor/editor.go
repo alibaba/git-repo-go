@@ -4,9 +4,12 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"regexp"
 
+	"code.alibaba-inc.com/force/git-repo/cap"
 	"github.com/jiangxin/goconfig"
 	"github.com/jiangxin/multi-log"
+	"github.com/mattn/go-shellwords"
 )
 
 // Editor is used to edit file
@@ -65,6 +68,32 @@ func (v Editor) selectEditor() string {
 	return "vi"
 }
 
+func editorCommands(editor string, args ...string) []string {
+	var (
+		cmdArgs = []string{}
+		err     error
+	)
+
+	if cap.IsWindows() {
+		// Split on spaces, respecting quoted strings
+		cmdArgs, err = shellwords.Parse(editor)
+		if err != nil {
+			log.Errorf("fail to parse editor '%s': %s", editor, err)
+		}
+	} else if regexp.MustCompile(`^.*[$ \t'].*$`).MatchString(editor) {
+		// See: https://gerrit-review.googlesource.com/c/git-repo/+/16156
+		cmdArgs = append(cmdArgs,
+			"sh",
+			"-c",
+			editor+` "$@"`,
+			"sh")
+	} else {
+		cmdArgs = append(cmdArgs, editor)
+	}
+	cmdArgs = append(cmdArgs, args...)
+	return cmdArgs
+}
+
 // EditString starts editor and returns data after edition
 func (v Editor) EditString(data string) string {
 	var (
@@ -93,10 +122,7 @@ func (v Editor) EditString(data string) string {
 		log.Fatal(err)
 	}
 
-	cmdArgs := []string{
-		editor,
-		tmpfile.Name(),
-	}
+	cmdArgs := editorCommands(editor, tmpfile.Name())
 
 	cmd := exec.Command(cmdArgs[0], cmdArgs[1:]...)
 	cmd.Stdin = os.Stdin

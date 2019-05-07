@@ -6,6 +6,7 @@ require (
 	github.com/jiangxin/goconfig v1.0.1-0.20190505004550-3e27d9efaffe
 	github.com/jiangxin/multi-log v0.2.0
 	github.com/mattn/go-isatty v0.0.7
+	github.com/mattn/go-shellwords v1.0.5
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/spf13/afero v1.2.1 // indirect
 	github.com/spf13/cobra v0.0.3
