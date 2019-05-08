@@ -140,7 +140,7 @@ test_expect_success "upload --dryrun" '
 		  branch my/topic1 ( 1 commit(s)):
 		         <hash>
 		to https://example.com (y/N)? Yes
-		NOTE: will execute command: git push --receive-pack=agit-receive-pack -o title={base64}cmV2aWV3IGV4YW1wbGU= -o description={base64}cmV2aWV3IGRlc2NyaXB0aW9uXG4uLi5cbg== -o reviewers=user1,user2,user3,user4 -o cc=user5,user6,user7 ssh://committer@ssh.example.com:22/main.git refs/heads/my/topic1:refs/for/maint/my/topic1
+		NOTE: will execute command: git push --receive-pack=agit-receive-pack -o title={base64}cmV2aWV3IGV4YW1wbGU= -o description={base64}cmV2aWV3IGRlc2NyaXB0aW9uXG4uLi5cbg== -o reviewers=user1,user2,user3,user4 -o cc=user5,user6,user7 -o notify=no -o private=yes -o wip=yes ssh://committer@ssh.example.com:22/main.git refs/heads/my/topic1:refs/for/maint/my/topic1
 		NOTE: will update-ref refs/published/my/topic1 on refs/heads/my/topic1, reason: review from my/topic1 to maint on https://example.com
 		
 		----------------------------------------------------------------------
@@ -156,6 +156,9 @@ test_expect_success "upload --dryrun" '
 			--cc user7 \
 			--title "review example" \
 			--description "review description\n...\n" \
+			--private \
+			--wip \
+			--no-emails \
 			2>&1 | sed -e "s/[0-9a-f]\{40\}/<hash>/g" >actual &&
 		test_cmp expect actual
 	)
