@@ -4,6 +4,7 @@ import (
 	"os"
 	"runtime"
 
+	"code.alibaba-inc.com/force/git-repo/config"
 	"github.com/mattn/go-isatty"
 )
 
@@ -17,10 +18,16 @@ type TTYInterface interface {
 	Isatty() bool
 }
 
+// SymlinkInterface is interface to check terminal is a tty
+type SymlinkInterface interface {
+	CanSymlink() bool
+}
+
 // Export interfaces, use can override these interfaces by mocking
 var (
 	CapWindows WindowsInterface
 	CapTTY     TTYInterface
+	CapSymlink SymlinkInterface
 )
 
 // Windows implements WindowsInterface
@@ -38,6 +45,9 @@ type TTY struct {
 
 // Isatty is true if has terminal
 func (v TTY) Isatty() bool {
+	if config.MockNoTTY() {
+		return false
+	}
 	if isatty.IsTerminal(os.Stdin.Fd()) &&
 		isatty.IsTerminal(os.Stdout.Fd()) {
 		return true
@@ -49,14 +59,26 @@ func (v TTY) Isatty() bool {
 	return false
 }
 
+// Symlink implements SymlinkInterface
+type Symlink struct {
+}
+
+// CanSymlink returns true if support symlink
+func (v Symlink) CanSymlink() bool {
+	if config.MockNoSymlink() {
+		return false
+	}
+	return runtime.GOOS != "windows"
+}
+
 // IsWindows checks whether current OS is windows
 func IsWindows() bool {
 	return CapWindows.IsWindows()
 }
 
-// Symlink checks whether symlink is available for current system
-func Symlink() bool {
-	return !IsWindows()
+// CanSymlink checks whether symlink is available for current system
+func CanSymlink() bool {
+	return CapSymlink.CanSymlink()
 }
 
 // Isatty indicates current terminal is a interactive terminal
@@ -67,4 +89,5 @@ func Isatty() bool {
 func init() {
 	CapWindows = &Windows{}
 	CapTTY = &TTY{}
+	CapSymlink = &Symlink{}
 }

@@ -97,14 +97,20 @@ func init() {
 	rootCmd.PersistentFlags().Bool("single", false, "single mode, no manifest")
 	rootCmd.PersistentFlags().Int("mock-ssh-info-status", 0, "mock remote ssh_info status")
 	rootCmd.PersistentFlags().String("mock-ssh-info-response", "", "mock remote ssh_info response")
+	rootCmd.PersistentFlags().Bool("mock-no-symlink", false, "mock no symlink cap")
+	rootCmd.PersistentFlags().Bool("mock-no-tty", false, "mock notty cap")
 	rootCmd.PersistentFlags().MarkHidden("mock-ssh-info-status")
 	rootCmd.PersistentFlags().MarkHidden("mock-ssh-info-response")
+	rootCmd.PersistentFlags().MarkHidden("mock-no-symlink")
+	rootCmd.PersistentFlags().MarkHidden("mock-no-tty")
 
 	viper.BindPFlag("verbose", rootCmd.PersistentFlags().Lookup("verbose"))
 	viper.BindPFlag("quiet", rootCmd.PersistentFlags().Lookup("quiet"))
 	viper.BindPFlag("single", rootCmd.PersistentFlags().Lookup("single"))
 	viper.BindPFlag("mock-ssh-info-status", rootCmd.PersistentFlags().Lookup("mock-ssh-info-status"))
 	viper.BindPFlag("mock-ssh-info-response", rootCmd.PersistentFlags().Lookup("mock-ssh-info-response"))
+	viper.BindPFlag("mock-no-symlink", rootCmd.PersistentFlags().Lookup("mock-no-symlink"))
+	viper.BindPFlag("mock-no-tty", rootCmd.PersistentFlags().Lookup("mock-no-tty"))
 }
 
 func checkVersion() {

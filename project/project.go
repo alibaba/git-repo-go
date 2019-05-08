@@ -435,7 +435,7 @@ func NewProject(project *manifest.Project, s *RepoSettings) *Project {
 		p.WorkDir = filepath.Join(p.RepoRoot(), p.Path)
 	}
 
-	if !p.IsMetaProject() && cap.Symlink() {
+	if !p.IsMetaProject() && cap.CanSymlink() {
 		objectRepoPath = filepath.Join(
 			p.RepoRoot(),
 			config.DotRepo,

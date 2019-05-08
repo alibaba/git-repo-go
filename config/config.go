@@ -143,6 +143,16 @@ func GetMockSSHInfoResponse() string {
 	return viper.GetString("mock-ssh-info-response")
 }
 
+// MockNoSymlink checks --mock-nosymlink option
+func MockNoSymlink() bool {
+	return viper.GetBool("mock-no-symlink")
+}
+
+// MockNoTTY checks --mock-notty option
+func MockNoTTY() bool {
+	return viper.GetBool("mock-no-tty")
+}
+
 // IsDryRun gets --dryrun option
 func IsDryRun() bool {
 	return viper.GetBool("dryrun")

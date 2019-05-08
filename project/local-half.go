@@ -401,7 +401,7 @@ func (v Project) LinkFile(src, dest string) error {
 	if path.Exists(destAbs) {
 		os.Remove(destAbs)
 	}
-	if cap.Symlink() {
+	if cap.CanSymlink() {
 		return os.Symlink(srcRel, destAbs)
 	}
 	return os.Link(srcRel, destAbs)

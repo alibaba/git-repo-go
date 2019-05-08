@@ -66,7 +66,7 @@ func (v *WorkSpace) SaveConfig(cfg goconfig.GitConfig) error {
 // LinkManifest creates link of manifest.xml
 func (v *WorkSpace) LinkManifest() error {
 	if v.Settings().ManifestName != "" {
-		if cap.Symlink() {
+		if cap.CanSymlink() {
 			target := filepath.Join(v.RootDir, config.DotRepo, config.ManifestXML)
 			src, err := os.Readlink(target)
 			if err != nil || filepath.Base(src) != v.Settings().ManifestName {
