@@ -40,19 +40,22 @@ type uploadCommand struct {
 	ws  *workspace.WorkSpace
 
 	O struct {
+		AllowAllHooks bool
 		AutoTopic     bool
-		Reviewers     []string
-		Cc            []string
 		Branch        string
+		BypassHooks   bool
+		Cc            []string
 		CurrentBranch bool
+		Description   string
+		DestBranch    string
 		Draft         bool
+		Issue         string
 		NoEmails      bool
 		Private       bool
-		WIP           bool
 		PushOptions   []string
-		DestBranch    string
-		BypassHooks   bool
-		AllowAllHooks bool
+		Reviewers     []string
+		Title         string
+		WIP           bool
 	}
 }
 
@@ -119,6 +122,18 @@ func (v *uploadCommand) Command() *cobra.Command {
 		"p",
 		false,
 		"If specified, upload as a private change")
+	v.cmd.Flags().StringVar(&v.O.Title,
+		"title",
+		"",
+		"Title for review")
+	v.cmd.Flags().StringVar(&v.O.Description,
+		"description",
+		"",
+		"Description for review")
+	v.cmd.Flags().StringVar(&v.O.Issue,
+		"issue",
+		"",
+		"Related issues for review")
 	v.cmd.Flags().BoolVarP(&v.O.WIP,
 		"wip",
 		"w",
@@ -423,12 +438,15 @@ func (v uploadCommand) UploadAndReport(branches []project.ReviewableBranch, orig
 
 		o := project.UploadOptions{
 			AutoTopic:    v.O.AutoTopic,
+			Description:  v.O.Description,
 			DestBranch:   destBranch,
 			Draft:        v.O.Draft,
+			Issue:        v.O.Issue,
 			NoCertChecks: config.NoCertChecks(),
 			NoEmails:     v.O.NoEmails,
 			Private:      v.O.Private,
 			PushOptions:  v.O.PushOptions,
+			Title:        v.O.Title,
 			WIP:          v.O.WIP,
 		}
 

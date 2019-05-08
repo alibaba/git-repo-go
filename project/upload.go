@@ -13,14 +13,17 @@ import (
 // UploadOptions is options for upload related methods
 type UploadOptions struct {
 	AutoTopic    bool
+	Description  string
 	DestBranch   string
 	Draft        bool
-	UserEmail    string
+	Issue        string
 	NoCertChecks bool
 	NoEmails     bool
 	People       [][]string
 	Private      bool
 	PushOptions  []string
+	Title        string
+	UserEmail    string
 	WIP          bool
 }
 

@@ -1,6 +1,7 @@
 package project
 
 import (
+	"encoding/base64"
 	"fmt"
 	"strings"
 
@@ -79,6 +80,40 @@ func (v *AGitRemote) UploadCommands(o *UploadOptions, branch *ReviewableBranch) 
 	for _, pushOption := range o.PushOptions {
 		cmds = append(cmds, "-o", pushOption)
 	}
+
+	if o.Title != "" {
+		cmds = append(cmds, "-o",
+			fmt.Sprintf("title={base64}%s",
+				base64.StdEncoding.EncodeToString([]byte(o.Title))))
+	}
+	if o.Description != "" {
+		cmds = append(cmds, "-o",
+			fmt.Sprintf("description={base64}%s",
+				base64.StdEncoding.EncodeToString([]byte(o.Description))))
+	}
+	if o.Issue != "" {
+		cmds = append(cmds, "-o", fmt.Sprintf("issue=%s", o.Issue))
+	}
+
+	if len(o.People[0]) > 0 {
+		reviewers := strings.Join(o.People[0], ",")
+		cmds = append(cmds, "-o", "reviewers="+reviewers)
+	}
+	if len(o.People[1]) > 0 {
+		cc := strings.Join(o.People[1], ",")
+		cmds = append(cmds, "-o", "cc="+cc)
+	}
+
+	if o.NoEmails {
+		cmds = append(cmds, "-o", "notify=no")
+	}
+	if o.Private {
+		cmds = append(cmds, "-o", "private=yes")
+	}
+	if o.WIP {
+		cmds = append(cmds, "-o", "wip=yes")
+	}
+
 	cmds = append(cmds, url)
 
 	destBranch := o.DestBranch
@@ -99,26 +134,6 @@ func (v *AGitRemote) UploadCommands(o *UploadOptions, branch *ReviewableBranch) 
 		uploadType,
 		destBranch,
 		branchName)
-
-	opts := []string{}
-	for _, u := range o.People[0] {
-		opts = append(opts, "r="+u)
-	}
-	for _, u := range o.People[1] {
-		opts = append(opts, "cc="+u)
-	}
-	if o.NoEmails {
-		opts = append(opts, "notify=NONE")
-	}
-	if o.Private {
-		opts = append(opts, "private")
-	}
-	if o.WIP {
-		opts = append(opts, "wip")
-	}
-	if len(opts) > 0 {
-		refSpec = refSpec + "%" + strings.Join(opts, ",")
-	}
 
 	cmds = append(cmds, refSpec)
 
