@@ -2,7 +2,6 @@ package project
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
 
 	"code.alibaba-inc.com/force/git-repo/config"
@@ -34,8 +33,7 @@ func (v *GerritRemote) GetType() string {
 // getReviewURL returns review url
 func (v *GerritRemote) getReviewURL(email string) string {
 	var (
-		review       string
-		emailPattern = regexp.MustCompile(`^.* <(([^\s]+)@[^\s]+>$`)
+		review string
 	)
 
 	sshInfo := v.GetSSHInfo()
@@ -46,7 +44,7 @@ func (v *GerritRemote) getReviewURL(email string) string {
 		host := sshInfo.Host
 		port := sshInfo.Port
 		user := ""
-		m := emailPattern.FindStringSubmatch(email)
+		m := emailUserPattern.FindStringSubmatch(email)
 		if len(m) > 1 {
 			user = m[1]
 		}

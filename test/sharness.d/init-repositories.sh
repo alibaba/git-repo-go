@@ -1,6 +1,6 @@
 #!/bin/sh
 
-REPO_TEST_REPOSITORIES_VERSION=5
+REPO_TEST_REPOSITORIES_VERSION=6
 
 # Create test repositories in .repositories
 REPO_TEST_REPOSITORIES="${SHARNESS_TEST_SRCDIR}/test-repositories"
@@ -140,7 +140,7 @@ test_create_manifest_projects () {
 	  <remote  name="aone"
 	           alias="origin"
 		   fetch="."
-		   review="https://code.aone.alibaba-inc.com" />
+		   review="https://example.com" />
 	  <default remote="aone"
 	           revision="refs/tags/v0.1.0"
 		   sync-j="4" />
@@ -161,7 +161,7 @@ test_create_manifest_projects () {
 	  <remote  name="aone"
 	           alias="origin"
 		   fetch="."
-		   review="https://code.aone.alibaba-inc.com" />
+		   review="https://example.com" />
 	  <default remote="aone"
 	           revision="refs/tags/v0.2.0"
 		   sync-j="4" />
@@ -185,10 +185,10 @@ test_create_manifest_projects () {
 	  <remote  name="aone"
 	           alias="origin"
 		   fetch="."
-		   review="https://code.aone.alibaba-inc.com" />
+		   review="https://example.com" />
 	  <remote  name="driver"
 		   fetch=".."
-		   review="https://code.aone.alibaba-inc.com" />
+		   review="https://example.com" />
 	  <default remote="aone"
 	           revision="maint"
 		   sync-j="4" />
@@ -216,11 +216,11 @@ test_create_manifest_projects () {
 	  <remote  name="aone"
 	           alias="origin"
 		   fetch="."
-		   review="https://code.aone.alibaba-inc.com" />
+		   review="https://example.com" />
 	  <remote  name="driver"
 		   fetch=".."
 	           revision="maint"
-		   review="https://code.aone.alibaba-inc.com" />
+		   review="https://example.com" />
 	  <default remote="aone"
 	           revision="master"
 		   sync-j="4" />
@@ -244,11 +244,11 @@ test_create_manifest_projects () {
 	           alias="origin"
 		   fetch="."
 		   revision="master"
-		   review="https://code.aone.alibaba-inc.com" />
+		   review="https://example.com" />
 	  <remote  name="driver"
 		   fetch=".."
 		   revision="master"
-		   review="https://code.aone.alibaba-inc.com" />
+		   review="https://example.com" />
 	  <default remote="aone"
 	           revision="master"
 		   sync-j="4" />

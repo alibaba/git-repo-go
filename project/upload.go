@@ -108,7 +108,7 @@ func (v ReviewableBranch) UploadForReview(o *UploadOptions, people [][]string) e
 		return err
 	}
 
-	if config.IsDryRun() {
+	if config.IsDryRun() || config.MockGitPush() {
 		log.Notef("will execute command: %s", strings.Join(cmdArgs, " "))
 	} else {
 		cmd := exec.Command(cmdArgs[0], cmdArgs[1:]...)

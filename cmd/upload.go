@@ -149,10 +149,28 @@ func (v *uploadCommand) Command() *cobra.Command {
 		false,
 		"dryrun mode")
 
+	v.cmd.Flags().Bool("assume-yes",
+		false,
+		"Automatic yes to prompts")
+
+	v.cmd.Flags().Bool("assume-no",
+		false,
+		"Automatic no to prompts")
+
+	v.cmd.Flags().Bool("mock-git-push",
+		false,
+		"Mock git-push for test")
+
 	v.cmd.Flags().MarkHidden("auto-topic")
+	v.cmd.Flags().MarkHidden("assume-yes")
+	v.cmd.Flags().MarkHidden("assume-no")
+	v.cmd.Flags().MarkHidden("mock-git-push")
 
 	viper.BindPFlag("no-cert-checks", v.cmd.Flags().Lookup("no-cert-checks"))
 	viper.BindPFlag("dryrun", v.cmd.Flags().Lookup("dryrun"))
+	viper.BindPFlag("assume-yes", v.cmd.Flags().Lookup("assume-yes"))
+	viper.BindPFlag("assume-no", v.cmd.Flags().Lookup("assume-no"))
+	viper.BindPFlag("mock-git-push", v.cmd.Flags().Lookup("mock-git-push"))
 
 	return v.cmd
 
@@ -350,8 +368,8 @@ func (v uploadCommand) UploadAndReport(branches []project.ReviewableBranch, orig
 	haveErrors := false
 	for _, branch := range branches {
 		people := [][]string{[]string{}, []string{}}
-		copy(people[0], origPeople[0])
-		copy(people[1], origPeople[1])
+		people[0] = append(people[0], origPeople[0]...)
+		people[1] = append(people[1], origPeople[1]...)
 		branch.AppendReviewers(people)
 		isClean, err := branch.Project.IsClean()
 		if err != nil {

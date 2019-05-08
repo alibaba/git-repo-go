@@ -2,15 +2,10 @@ package project
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
 
 	"code.alibaba-inc.com/force/git-repo/config"
 	"code.alibaba-inc.com/force/git-repo/manifest"
-)
-
-var (
-	emailUserPattern = regexp.MustCompile(`^.* <([^\s]+)@[^\s]+>$`)
 )
 
 // AGitRemote is AGit remote server

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/url"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"code.alibaba-inc.com/force/git-repo/config"
@@ -14,6 +15,10 @@ const (
 	GroupDefault    = "default"
 	GroupAll        = "all"
 	GroupNotDefault = "notdefault"
+)
+
+var (
+	emailUserPattern = regexp.MustCompile(`^.* <([^\s]+)@[^\s]+>$`)
 )
 
 func urlJoin(u string, names ...string) (string, error) {

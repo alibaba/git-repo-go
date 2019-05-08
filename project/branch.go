@@ -100,6 +100,11 @@ func (v Repository) UpdateRef(refname, base, reason string) error {
 		ref *plumbing.Reference
 	)
 
+	if config.IsDryRun() {
+		log.Notef("will update-ref %s on %s, reason: %s", refname, base, reason)
+		return nil
+	}
+
 	raw := v.Raw()
 
 	if IsSha(base) {

@@ -77,6 +77,16 @@ var (
 	CommitIDPattern = regexp.MustCompile(`^[0-9a-f]{40}([0-9a-f]{24})?$`)
 )
 
+// AssumeNo checks --asume-no option
+func AssumeNo() bool {
+	return viper.GetBool("assume-no")
+}
+
+// AssumeYes checks --asume-yes option
+func AssumeYes() bool {
+	return viper.GetBool("assume-yes")
+}
+
 // GetVerbose gets --verbose option
 func GetVerbose() int {
 	return viper.GetInt("verbose")
@@ -143,12 +153,17 @@ func GetMockSSHInfoResponse() string {
 	return viper.GetString("mock-ssh-info-response")
 }
 
-// MockNoSymlink checks --mock-nosymlink option
+// MockGitPush checks --mock-git-push option
+func MockGitPush() bool {
+	return viper.GetBool("mock-git-push")
+}
+
+// MockNoSymlink checks --mock-no-symlink option
 func MockNoSymlink() bool {
 	return viper.GetBool("mock-no-symlink")
 }
 
-// MockNoTTY checks --mock-notty option
+// MockNoTTY checks --mock-no-tty option
 func MockNoTTY() bool {
 	return viper.GetBool("mock-no-tty")
 }

@@ -36,7 +36,8 @@ func (v *WorkSpace) LoadRemotes() error {
 	changed := false
 	for _, r := range v.Manifest.Remotes {
 		t := cfg.Get(fmt.Sprintf(config.CfgManifestRemoteType, r.Name))
-		if t != "" {
+		if t != "" &&
+			config.GetMockSSHInfoResponse() == "" {
 			sshInfo := cfg.Get(fmt.Sprintf(config.CfgManifestRemoteSSHInfo, r.Name))
 			remote, err := project.NewRemote(&r, t, sshInfo)
 			if err != nil {

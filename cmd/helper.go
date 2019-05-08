@@ -8,6 +8,8 @@ import (
 	"os"
 	"regexp"
 	"strings"
+
+	"code.alibaba-inc.com/force/git-repo/config"
 )
 
 // commandError is an error used to signal different error situations in command handling.
@@ -65,6 +67,15 @@ func min(args ...int) int {
 
 func userInput(prompt, defaultValue string) string {
 	fmt.Print(prompt)
+
+	if config.AssumeYes() {
+		fmt.Println("Yes")
+		return "yes"
+	} else if config.AssumeNo() {
+		fmt.Println("No")
+		return "no"
+	}
+
 	reader := bufio.NewReader(os.Stdin)
 	text, _ := reader.ReadString('\n')
 	text = strings.TrimSpace(text)
