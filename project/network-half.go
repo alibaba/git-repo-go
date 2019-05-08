@@ -61,7 +61,7 @@ func (v *Repository) Fetch(remote string, o *FetchOptions) error {
 	}
 
 	if v.Revision == "" {
-		v.Revision = v.RemoteTrackBranch("")
+		v.Revision = v.TrackBranch("")
 		if v.Revision == "" {
 			log.Warnf("cannot get tracking branch for project '%s'", v.Name)
 			v.Revision = "master"

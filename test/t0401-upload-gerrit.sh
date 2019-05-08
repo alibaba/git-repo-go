@@ -54,7 +54,7 @@ test_expect_success "upload --dryrun --drafts" '
 		         <hash>
 		to https://example.com (y/N)? Yes
 		NOTE: will execute command: git push --receive-pack=gerrit receive-pack ssh://committer@ssh.example.com:29418/main.git refs/heads/my/topic1:refs/drafts/maint
-		NOTE: will update-ref refs/published/my/topic1 on refs/heads/my/topic1, reason: review my/topic1 for maint on https://example.com
+		NOTE: will update-ref refs/published/my/topic1 on refs/heads/my/topic1, reason: review from my/topic1 to maint on https://example.com
 		
 		----------------------------------------------------------------------
 		EOF
@@ -77,7 +77,7 @@ test_expect_success "upload --dryrun with reviewers" '
 		         <hash>
 		to https://example.com (y/N)? Yes
 		NOTE: will execute command: git push --receive-pack=gerrit receive-pack ssh://committer@ssh.example.com:29418/main.git refs/heads/my/topic1:refs/for/maint/my/topic1%r=user1,r=user2,r=user3,r=user4,cc=user5,cc=user6,cc=user7,private,wip
-		NOTE: will update-ref refs/published/my/topic1 on refs/heads/my/topic1, reason: review my/topic1 for maint on https://example.com
+		NOTE: will update-ref refs/published/my/topic1 on refs/heads/my/topic1, reason: review from my/topic1 to maint on https://example.com
 		
 		----------------------------------------------------------------------
 		EOF

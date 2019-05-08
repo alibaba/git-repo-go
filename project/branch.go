@@ -45,8 +45,8 @@ func (v Repository) Heads() []Branch {
 	return heads
 }
 
-// RemoteTrackBranch gets remote tracking branch
-func (v Repository) RemoteTrackBranch(branch string) string {
+// TrackBranch gets remote tracking branch
+func (v Repository) TrackBranch(branch string) string {
 	if branch == "" {
 		branch = v.GetHead()
 	}
@@ -56,11 +56,11 @@ func (v Repository) RemoteTrackBranch(branch string) string {
 	branch = strings.TrimPrefix(branch, config.RefsHeads)
 
 	cfg := v.Config()
-	return cfg.Get("branch." + branch + ".merge")
+	return strings.TrimPrefix(cfg.Get("branch."+branch+".merge"), config.RefsHeads)
 }
 
-// LocalTrackRemoteBranch gets local tracking remote branch
-func (v Repository) LocalTrackRemoteBranch(branch string) string {
+// LocalTrackBranch gets local tracking remote branch
+func (v Repository) LocalTrackBranch(branch string) string {
 	if branch == "" {
 		branch = v.GetHead()
 	}
@@ -70,9 +70,11 @@ func (v Repository) LocalTrackRemoteBranch(branch string) string {
 	branch = strings.TrimPrefix(branch, config.RefsHeads)
 
 	cfg := v.Config()
-	track := cfg.Get("branch." + branch + ".merge")
-	track = strings.TrimPrefix(track, config.RefsHeads)
+	track := strings.TrimPrefix(cfg.Get("branch."+branch+".merge"), config.RefsHeads)
 	remote := cfg.Get("branch." + branch + ".remote")
+	if remote == "" || track == "" {
+		return ""
+	}
 	return config.RefsRemotes + remote + "/" + track
 }
 
@@ -267,14 +269,14 @@ func (v Project) StartBranch(branch, track string) error {
 	return nil
 }
 
-// RemoteTrackBranch gets remote tracking branch
-func (v Project) RemoteTrackBranch(branch string) string {
-	return v.WorkRepository.RemoteTrackBranch(branch)
+// TrackBranch gets remote track branch name
+func (v Project) TrackBranch(branch string) string {
+	return v.WorkRepository.TrackBranch(branch)
 }
 
-// LocalTrackRemoteBranch gets local tracking remote branch
-func (v Project) LocalTrackRemoteBranch(branch string) string {
-	return v.WorkRepository.LocalTrackRemoteBranch(branch)
+// LocalTrackBranch gets local tracking remote branch
+func (v Project) LocalTrackBranch(branch string) string {
+	return v.WorkRepository.LocalTrackBranch(branch)
 }
 
 // UpdateBranchTracking updates branch tracking info.

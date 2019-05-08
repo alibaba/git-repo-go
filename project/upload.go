@@ -26,11 +26,12 @@ type UploadOptions struct {
 
 // ReviewableBranch holds branch of proect ready for upload
 type ReviewableBranch struct {
-	Project  *Project
-	Branch   Branch
-	Track    Reference
-	Uploaded bool
-	Error    error
+	Project     *Project
+	Branch      Branch
+	DestBranch  string
+	RemoteTrack Reference
+	Uploaded    bool
+	Error       error
 }
 
 // AppendReviewers adds reviewers to people
@@ -72,7 +73,7 @@ func (v ReviewableBranch) Published() *Reference {
 
 // Commits contains commits avaiable for review
 func (v ReviewableBranch) Commits() []string {
-	commits, err := v.Project.Revlist(v.Branch.Hash, "--not", v.Track.Hash)
+	commits, err := v.Project.Revlist(v.Branch.Hash, "--not", v.RemoteTrack.Hash)
 	if err != nil {
 		log.Errorf("fail to get commits of ReviewableBranch %s: %s", v.Branch, err)
 		return nil
@@ -95,8 +96,9 @@ func (v ReviewableBranch) UploadForReview(o *UploadOptions, people [][]string) e
 	if manifestRemote.Review == "" {
 		return fmt.Errorf("project '%s' has no review url", p.Name)
 	}
+
 	if o.DestBranch == "" {
-		o.DestBranch = v.Track.Name
+		o.DestBranch = v.DestBranch
 		if o.DestBranch == "" {
 			return fmt.Errorf("no destination for review")
 		}
@@ -122,11 +124,14 @@ func (v ReviewableBranch) UploadForReview(o *UploadOptions, people [][]string) e
 		}
 	}
 
-	msg := fmt.Sprintf("posted to %s for %s", manifestRemote.Review, o.DestBranch)
 	branchName := v.Branch.Name
 	if strings.HasPrefix(branchName, config.RefsHeads) {
 		branchName = strings.TrimPrefix(branchName, config.RefsHeads)
 	}
+	msg := fmt.Sprintf("review from %s to %s on %s",
+		branchName,
+		o.DestBranch,
+		manifestRemote.Review)
 
 	err = p.UpdateRef(config.RefsPub+branchName,
 		config.RefsHeads+branchName,
@@ -173,7 +178,7 @@ func (v *Project) GetUploadableBranch(branch string) *ReviewableBranch {
 	if err != nil {
 		return nil
 	}
-	track := v.LocalTrackRemoteBranch(branch)
+	track := v.LocalTrackBranch(branch)
 	if track == "" {
 		return nil
 	}
@@ -187,7 +192,8 @@ func (v *Project) GetUploadableBranch(branch string) *ReviewableBranch {
 		Branch: Branch{
 			Name: branch,
 			Hash: branchID},
-		Track: Reference{
+		DestBranch: v.TrackBranch(branch),
+		RemoteTrack: Reference{
 			Name: track,
 			Hash: trackID},
 	}

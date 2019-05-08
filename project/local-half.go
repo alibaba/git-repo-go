@@ -179,7 +179,7 @@ func (v Project) SyncLocalHalf(o *CheckoutOptions) error {
 
 	// We have a branch, check whether tracking branch is set properly.
 	if branch != "" {
-		track = v.RemoteTrackBranch(branch)
+		track = v.TrackBranch(branch)
 	}
 
 	log.Debugf("Fetch (project, %s, head: %s, branch: %s, track: %s, headid: %s, revid: %s, revision: %s)",

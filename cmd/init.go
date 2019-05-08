@@ -243,7 +243,7 @@ func (v initCommand) runE(args []string) error {
 	} else if isNew {
 		v.ws.ManifestProject.SetRevision("master")
 	} else {
-		track := v.ws.ManifestProject.RemoteTrackBranch("")
+		track := v.ws.ManifestProject.TrackBranch("")
 		if track != "" {
 			v.ws.ManifestProject.SetRevision(track)
 		} else {

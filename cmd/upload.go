@@ -408,7 +408,7 @@ func (v uploadCommand) UploadAndReport(branches []project.ReviewableBranch, orig
 			if !strings.HasPrefix(fullDest, config.RefsHeads) {
 				fullDest = config.RefsHeads + fullDest
 			}
-			mergeBranch := branch.Track.Name
+			mergeBranch := branch.RemoteTrack.Name
 			if v.O.DestBranch == "" && mergeBranch != "" && mergeBranch != fullDest {
 				fmt.Printf("merge branch %s does not match destination branch %s\n",
 					mergeBranch,

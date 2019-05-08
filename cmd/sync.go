@@ -200,7 +200,7 @@ func (v *syncCommand) updateManifestProject() error {
 	ws := v.WorkSpace()
 	mp := ws.ManifestProject
 	s := mp.ReadSettings()
-	track := mp.RemoteTrackBranch("")
+	track := mp.TrackBranch("")
 
 	if track == "" {
 		return nil
