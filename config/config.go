@@ -168,6 +168,11 @@ func MockNoTTY() bool {
 	return viper.GetBool("mock-no-tty")
 }
 
+// MockEditScript checks --mock-edit-script option
+func MockEditScript() string {
+	return viper.GetString("mock-edit-script")
+}
+
 // IsDryRun gets --dryrun option
 func IsDryRun() bool {
 	return viper.GetBool("dryrun")

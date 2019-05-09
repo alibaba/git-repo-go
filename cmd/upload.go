@@ -16,6 +16,7 @@ package cmd
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"regexp"
 	"sort"
@@ -177,16 +178,22 @@ func (v *uploadCommand) Command() *cobra.Command {
 		false,
 		"Mock git-push for test")
 
+	v.cmd.Flags().String("mock-edit-script",
+		"",
+		"Mock edit script result file")
+
 	v.cmd.Flags().MarkHidden("auto-topic")
 	v.cmd.Flags().MarkHidden("assume-yes")
 	v.cmd.Flags().MarkHidden("assume-no")
 	v.cmd.Flags().MarkHidden("mock-git-push")
+	v.cmd.Flags().MarkHidden("mock-edit-script")
 
 	viper.BindPFlag("no-cert-checks", v.cmd.Flags().Lookup("no-cert-checks"))
 	viper.BindPFlag("dryrun", v.cmd.Flags().Lookup("dryrun"))
 	viper.BindPFlag("assume-yes", v.cmd.Flags().Lookup("assume-yes"))
 	viper.BindPFlag("assume-no", v.cmd.Flags().Lookup("assume-no"))
 	viper.BindPFlag("mock-git-push", v.cmd.Flags().Lookup("mock-git-push"))
+	viper.BindPFlag("mock-edit-script", v.cmd.Flags().Lookup("mock-edit-script"))
 
 	return v.cmd
 
@@ -333,7 +340,17 @@ func (v uploadCommand) UploadMultipleBranches(branchesMap map[string][]project.R
 
 	editor := editor.Editor{}
 	script = append(script, "")
-	script = strings.Split(editor.EditString(strings.Join(script, "\n")), "\n")
+	editString := editor.EditString(strings.Join(script, "\n"))
+	if config.MockEditScript() != "" {
+		f, err := os.Open(config.MockEditScript())
+		if err == nil {
+			buf, err := ioutil.ReadAll(f)
+			if err == nil {
+				editString = string(buf)
+			}
+		}
+	}
+	script = strings.Split(editString, "\n")
 
 	todo := []project.ReviewableBranch{}
 
