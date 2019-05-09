@@ -228,7 +228,12 @@ func (v WorkSpace) GetProjects(o *GetProjectsOptions, args ...string) ([]*projec
 		groups      string
 		result      = []*project.Project{}
 		allProjects = []*project.Project{}
+		pDir        string
 	)
+
+	cwd, _ := os.Getwd()
+	cwd, _ = filepath.EvalSymlinks(cwd)
+	pDir, _ = filepath.Rel(v.RootDir, cwd)
 
 	if o == nil {
 		o = &GetProjectsOptions{}
@@ -247,9 +252,10 @@ func (v WorkSpace) GetProjects(o *GetProjectsOptions, args ...string) ([]*projec
 		for _, arg := range args {
 			ps := v.GetProjectsWithName(arg)
 			if len(ps) == 0 {
-				arg, _ = path.Abs(arg)
-				absPath := filepath.ToSlash(arg)
-				p := v.GetProjectWithPath(absPath)
+				if pDir != "" {
+					arg = filepath.Clean(filepath.Join(pDir, arg))
+				}
+				p := v.GetProjectWithPath(arg)
 				if p != nil {
 					ps = append(ps, p)
 				}

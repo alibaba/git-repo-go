@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"regexp"
+	"strings"
 
 	"code.alibaba-inc.com/force/git-repo/cap"
 	"github.com/jiangxin/goconfig"
@@ -103,6 +104,7 @@ func (v Editor) EditString(data string) string {
 
 	editor = v.Editor()
 	if editor == ":" {
+		log.Infof("editor is ':', return directly:\n%s", data)
 		return data
 	}
 
@@ -123,14 +125,20 @@ func (v Editor) EditString(data string) string {
 	}
 
 	cmdArgs := editorCommands(editor, tmpfile.Name())
-
-	cmd := exec.Command(cmdArgs[0], cmdArgs[1:]...)
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	err = cmd.Run()
-	if err != nil {
-		log.Fatal(err)
+	if cap.Isatty() {
+		cmd := exec.Command(cmdArgs[0], cmdArgs[1:]...)
+		cmd.Stdin = os.Stdin
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		err = cmd.Run()
+		if err != nil {
+			log.Errorf("fail to run %s to edit todo: %s",
+				strings.Join(cmdArgs, " "),
+				err)
+		}
+	} else {
+		log.Notef("will execute: %s", strings.Join(cmdArgs, " "))
+		log.Debugf("data ready for editor:\n%s", data)
 	}
 
 	f, err := os.Open(tmpfile.Name())

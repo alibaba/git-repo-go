@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"sort"
 	"strings"
 
 	"code.alibaba-inc.com/force/git-repo/config"
@@ -280,8 +281,15 @@ func (v uploadCommand) UploadMultipleBranches(branchesMap map[string][]project.R
 	projectsIdx := make(map[string]project.Project)
 	branchesIdx := make(map[string]map[string]project.ReviewableBranch)
 
+	keys := []string{}
+	for key := range branchesMap {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+
 	script := []string{"# Uncomment the branches to upload:"}
-	for _, branches := range branchesMap {
+	for _, key := range keys {
+		branches := branchesMap[key]
 		p := branches[0].Project
 		script = append(script, "#")
 		script = append(script, fmt.Sprintf("# project %s/:", p.Path))
