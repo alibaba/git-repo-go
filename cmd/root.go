@@ -112,6 +112,7 @@ this command with special options.`,
 
 // GetVersion is called by 'git repo --version'
 func (v rootCommand) getVersion() string {
+	config.InstallExtraGitConfig()
 	return version.GetVersion()
 }
 
@@ -120,6 +121,10 @@ func (v rootCommand) checkGitVersion() {
 		log.Fatalf("Please install or upgrade git to version %s or above",
 			version.MinGitVersion)
 	}
+}
+
+func (v rootCommand) installGitConfig() {
+	config.InstallExtraGitConfig()
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -181,4 +186,5 @@ func init() {
 	cobra.OnInitialize(rootCmd.initConfig)
 	cobra.OnInitialize(rootCmd.initLog)
 	cobra.OnInitialize(rootCmd.checkGitVersion)
+	cobra.OnInitialize(rootCmd.installGitConfig)
 }
