@@ -17,15 +17,21 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"code.alibaba-inc.com/force/git-repo/config"
 	"code.alibaba-inc.com/force/git-repo/manifest"
+	"code.alibaba-inc.com/force/git-repo/path"
 	"code.alibaba-inc.com/force/git-repo/version"
 
 	"github.com/jiangxin/multi-log"
-	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+)
+
+// Define macros for git-repo
+const (
+	DefaultConfigFile = "~/.git-repo/config"
 )
 
 var (
@@ -33,32 +39,8 @@ var (
 	theRepoDir  string
 	theWorkDir  string
 	theManifest *manifest.Manifest
+	rootCmd     = rootCommand{}
 )
-
-// Define macros for git-repo
-const (
-	DefaultConfigFile = ".git-repo"
-)
-
-// rootCmd represents the base command when called without any subcommands
-var rootCmd = &cobra.Command{
-	Use:   "git-repo",
-	Short: "A command line tool for centralized git workflow",
-	Long: `A command line tool for centralized git workflow.
-
-Just like repo for the Android world, git-repo is a command line tool for
-centralized git workflow of git core.
-
-It can handle multiple repositories by using a manifest repository with
-a default.xml file. And it can also handle a single repository by using
-a '--single' opiton.
-
-This tool is renamed as git-repo, so that wen can create git alias to run
-this command with special options.`,
-	Version: version.GetVersion(),
-	// Do not want to show usage on every error
-	SilenceUsage: true,
-}
 
 // The Response value from Execute.
 type Response struct {
@@ -75,45 +57,65 @@ func (r Response) IsUserError() bool {
 	return r.Err != nil && isUserError(r.Err)
 }
 
-// Execute adds all child commands to the root command and sets flags appropriately.
-// This is called by main.main(). It only needs to happen once to the rootCmd.
-func Execute() Response {
-	var resp Response
-
-	c, err := rootCmd.ExecuteC()
-	resp.Err = err
-	resp.Cmd = c
-	return resp
+type rootCommand struct {
+	cmd *cobra.Command
 }
 
-func init() {
-	cobra.OnInitialize(initConfig)
-	cobra.OnInitialize(checkVersion)
-	cobra.OnInitialize(initLog)
+// Command represents the base command when called without any subcommands
+func (v *rootCommand) Command() *cobra.Command {
+	if v.cmd != nil {
+		return v.cmd
+	}
 
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.git-repo.yaml)")
-	rootCmd.PersistentFlags().CountP("verbose", "v", "verbose mode")
-	rootCmd.PersistentFlags().BoolP("quiet", "q", false, "quiet mode")
-	rootCmd.PersistentFlags().Bool("single", false, "single mode, no manifest")
-	rootCmd.PersistentFlags().Int("mock-ssh-info-status", 0, "mock remote ssh_info status")
-	rootCmd.PersistentFlags().String("mock-ssh-info-response", "", "mock remote ssh_info response")
-	rootCmd.PersistentFlags().Bool("mock-no-symlink", false, "mock no symlink cap")
-	rootCmd.PersistentFlags().Bool("mock-no-tty", false, "mock notty cap")
-	rootCmd.PersistentFlags().MarkHidden("mock-ssh-info-status")
-	rootCmd.PersistentFlags().MarkHidden("mock-ssh-info-response")
-	rootCmd.PersistentFlags().MarkHidden("mock-no-symlink")
-	rootCmd.PersistentFlags().MarkHidden("mock-no-tty")
+	v.cmd = &cobra.Command{
+		Use:   "git-repo",
+		Short: "A command line tool for centralized git workflow",
+		Long: `A command line tool for centralized git workflow.
 
-	viper.BindPFlag("verbose", rootCmd.PersistentFlags().Lookup("verbose"))
-	viper.BindPFlag("quiet", rootCmd.PersistentFlags().Lookup("quiet"))
-	viper.BindPFlag("single", rootCmd.PersistentFlags().Lookup("single"))
-	viper.BindPFlag("mock-ssh-info-status", rootCmd.PersistentFlags().Lookup("mock-ssh-info-status"))
-	viper.BindPFlag("mock-ssh-info-response", rootCmd.PersistentFlags().Lookup("mock-ssh-info-response"))
-	viper.BindPFlag("mock-no-symlink", rootCmd.PersistentFlags().Lookup("mock-no-symlink"))
-	viper.BindPFlag("mock-no-tty", rootCmd.PersistentFlags().Lookup("mock-no-tty"))
+Just like repo for the Android world, git-repo is a command line tool for
+centralized git workflow of git core.
+
+It can handle multiple repositories by using a manifest repository with
+a default.xml file. And it can also handle a single repository by using
+a '--single' opiton.
+
+This tool is renamed as git-repo, so that wen can create git alias to run
+this command with special options.`,
+		Version: v.getVersion(),
+		// Do not want to show usage on every error
+		SilenceUsage: true,
+	}
+
+	v.cmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.git-repo.yaml)")
+	v.cmd.PersistentFlags().CountP("verbose", "v", "verbose mode")
+	v.cmd.PersistentFlags().BoolP("quiet", "q", false, "quiet mode")
+	v.cmd.PersistentFlags().Bool("single", false, "single mode, no manifest")
+	v.cmd.PersistentFlags().Int("mock-ssh-info-status", 0, "mock remote ssh_info status")
+	v.cmd.PersistentFlags().String("mock-ssh-info-response", "", "mock remote ssh_info response")
+	v.cmd.PersistentFlags().Bool("mock-no-symlink", false, "mock no symlink cap")
+	v.cmd.PersistentFlags().Bool("mock-no-tty", false, "mock notty cap")
+	v.cmd.PersistentFlags().MarkHidden("mock-ssh-info-status")
+	v.cmd.PersistentFlags().MarkHidden("mock-ssh-info-response")
+	v.cmd.PersistentFlags().MarkHidden("mock-no-symlink")
+	v.cmd.PersistentFlags().MarkHidden("mock-no-tty")
+
+	viper.BindPFlag("verbose", v.cmd.PersistentFlags().Lookup("verbose"))
+	viper.BindPFlag("quiet", v.cmd.PersistentFlags().Lookup("quiet"))
+	viper.BindPFlag("single", v.cmd.PersistentFlags().Lookup("single"))
+	viper.BindPFlag("mock-ssh-info-status", v.cmd.PersistentFlags().Lookup("mock-ssh-info-status"))
+	viper.BindPFlag("mock-ssh-info-response", v.cmd.PersistentFlags().Lookup("mock-ssh-info-response"))
+	viper.BindPFlag("mock-no-symlink", v.cmd.PersistentFlags().Lookup("mock-no-symlink"))
+	viper.BindPFlag("mock-no-tty", v.cmd.PersistentFlags().Lookup("mock-no-tty"))
+
+	return v.cmd
 }
 
-func checkVersion() {
+// GetVersion is called by 'git repo --version'
+func (v rootCommand) getVersion() string {
+	return version.GetVersion()
+}
+
+func (v rootCommand) checkGitVersion() {
 	if !version.ValidateGitVersion() {
 		log.Fatalf("Please install or upgrade git to version %s or above",
 			version.MinGitVersion)
@@ -121,21 +123,20 @@ func checkVersion() {
 }
 
 // initConfig reads in config file and ENV variables if set.
-func initConfig() {
+func (v rootCommand) initConfig() {
 	if cfgFile != "" {
 		// Use config file from the flag.
 		viper.SetConfigFile(cfgFile)
 	} else {
-		// Find home directory.
-		home, err := homedir.Dir()
+		filename, err := path.Abs(DefaultConfigFile)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		}
 
 		// Search config in home directory with name ".git-repo" (without extension).
-		viper.AddConfigPath(home)
-		viper.SetConfigName(DefaultConfigFile)
+		viper.AddConfigPath(filepath.Dir(filename))
+		viper.SetConfigName(filepath.Base(filename))
 	}
 
 	viper.SetConfigType("yaml")
@@ -149,7 +150,7 @@ func initConfig() {
 	}
 }
 
-func initLog() {
+func (v rootCommand) initLog() {
 	log.Init(log.Options{
 		Verbose:       config.GetVerbose(),
 		Quiet:         config.GetQuiet(),
@@ -157,4 +158,27 @@ func initLog() {
 		LogLevel:      config.GetLogLevel(),
 		LogRotateSize: config.GetLogRotateSize(),
 	})
+}
+
+func (v *rootCommand) AddCommand(cmds ...*cobra.Command) {
+	v.Command().AddCommand(cmds...)
+}
+
+// Execute adds all child commands to the root command and sets flags appropriately.
+// This is called by main.main(). It only needs to happen once to the rootCmd.
+func Execute() Response {
+	var (
+		resp Response
+	)
+
+	c, err := rootCmd.Command().ExecuteC()
+	resp.Err = err
+	resp.Cmd = c
+	return resp
+}
+
+func init() {
+	cobra.OnInitialize(rootCmd.initConfig)
+	cobra.OnInitialize(rootCmd.initLog)
+	cobra.OnInitialize(rootCmd.checkGitVersion)
 }

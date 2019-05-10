@@ -8,8 +8,12 @@ import (
 	"runtime"
 	"strings"
 
-	"code.alibaba-inc.com/force/git-repo/config"
 	"code.alibaba-inc.com/force/git-repo/errors"
+)
+
+// Macros for path
+const (
+	DotRepo = ".repo"
 )
 
 // HomeDir returns home directory
@@ -151,7 +155,7 @@ func FindRepoRoot(dir string) (string, error) {
 	}
 
 	for {
-		repodir := filepath.Join(p, config.DotRepo)
+		repodir := filepath.Join(p, DotRepo)
 		if fi, err := os.Stat(repodir); err == nil {
 			if fi.IsDir() {
 				return p, nil

@@ -17,12 +17,18 @@ package config
 import (
 	"fmt"
 	"os"
-	"path"
+	"path/filepath"
 	"regexp"
 
+	"code.alibaba-inc.com/force/git-repo/path"
 	"github.com/jiangxin/goconfig"
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/viper"
+)
+
+// Define DotRepo in path
+var (
+	DotRepo = path.DotRepo
 )
 
 // Exported macros
@@ -44,7 +50,6 @@ const (
 	CfgManifestRemoteType    = "manifest.remote.%s.type"
 	CfgManifestRemoteSSHInfo = "manifest.remote.%s.sshinfo"
 
-	DotRepo          = ".repo"
 	ManifestsDotGit  = "manifests.git"
 	Manifests        = "manifests"
 	DefaultXML       = "default.xml"
@@ -105,14 +110,14 @@ func IsSingleMode() bool {
 // GetLogFile gets --logfile option
 func GetLogFile() string {
 	logfile := viper.GetString("logfile")
-	if logfile != "" && !path.IsAbs(logfile) {
+	if logfile != "" && !filepath.IsAbs(logfile) {
 		// Find home directory.
 		home, err := homedir.Dir()
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		}
-		logfile = path.Join(home, DefaultConfigPath, logfile)
+		logfile = filepath.Join(home, DefaultConfigPath, logfile)
 	}
 	return logfile
 }
