@@ -18,8 +18,8 @@ import (
 	"github.com/jiangxin/multi-log"
 )
 
-// WorkSpace is the toplevel structure for manipulating git-repo worktree
-type WorkSpace struct {
+// RepoWorkSpace is the toplevel structure for manipulating git-repo worktree
+type RepoWorkSpace struct {
 	RootDir         string
 	Manifest        *manifest.Manifest
 	ManifestProject *project.ManifestProject
@@ -44,27 +44,27 @@ func Exists(dir string) bool {
 }
 
 // ManifestURL returns URL of manifest project
-func (v *WorkSpace) ManifestURL() string {
+func (v *RepoWorkSpace) ManifestURL() string {
 	return v.Settings().ManifestURL
 }
 
 // Settings returns manifest project's Settings
-func (v *WorkSpace) Settings() *project.RepoSettings {
+func (v *RepoWorkSpace) Settings() *project.RepoSettings {
 	return v.ManifestProject.Settings
 }
 
 // Config returns git config file parser
-func (v *WorkSpace) Config() goconfig.GitConfig {
+func (v *RepoWorkSpace) Config() goconfig.GitConfig {
 	return v.ManifestProject.Config()
 }
 
 // SaveConfig will save config to git config file
-func (v *WorkSpace) SaveConfig(cfg goconfig.GitConfig) error {
+func (v *RepoWorkSpace) SaveConfig(cfg goconfig.GitConfig) error {
 	return v.ManifestProject.SaveConfig(cfg)
 }
 
 // LinkManifest creates link of manifest.xml
-func (v *WorkSpace) LinkManifest() error {
+func (v *RepoWorkSpace) LinkManifest() error {
 	if v.Settings().ManifestName != "" {
 		if cap.CanSymlink() {
 			target := filepath.Join(v.RootDir, config.DotRepo, config.ManifestXML)
@@ -85,7 +85,7 @@ func (v *WorkSpace) LinkManifest() error {
 
 // Load will read manifest XML file and reset ManifestURL if it changed,
 // and reset URL of all projects in workspace.
-func (v *WorkSpace) Load(manifestURL string) error {
+func (v *RepoWorkSpace) Load(manifestURL string) error {
 	m, err := manifest.Load(filepath.Join(v.RootDir, config.DotRepo))
 	if err != nil {
 		return err
@@ -97,7 +97,7 @@ func (v *WorkSpace) Load(manifestURL string) error {
 }
 
 // Override will read alternate manifest XML file to initialize workspace
-func (v *WorkSpace) Override(name string) error {
+func (v *RepoWorkSpace) Override(name string) error {
 	manifestFile := filepath.Join(v.RootDir, config.DotRepo, config.Manifests, name)
 	if _, err := os.Stat(manifestFile); err != nil {
 		return fmt.Errorf("cannot find manifest: %s", name)
@@ -112,7 +112,7 @@ func (v *WorkSpace) Override(name string) error {
 	return v.loadProjects("")
 }
 
-func (v *WorkSpace) manifestsProjectName() string {
+func (v *RepoWorkSpace) manifestsProjectName() string {
 	if v.Manifest == nil {
 		return "manifests"
 	}
@@ -161,7 +161,7 @@ func manifestsProjectName(url, fetch string) string {
 	return filepath.Join(dirs[len(dirs)-level:]...)
 }
 
-func (v *WorkSpace) loadProjects(manifestURL string) error {
+func (v *RepoWorkSpace) loadProjects(manifestURL string) error {
 	var p *project.Project
 	// Set manifest project even v.Manifest is nil
 	v.ManifestProject = project.NewManifestProject(v.RootDir, manifestURL)
@@ -206,12 +206,12 @@ func (v *WorkSpace) loadProjects(manifestURL string) error {
 }
 
 // GetProjectsWithName returns projects which has matching name
-func (v WorkSpace) GetProjectsWithName(name string) []*project.Project {
+func (v RepoWorkSpace) GetProjectsWithName(name string) []*project.Project {
 	return v.projectByName[name]
 }
 
 // GetProjectWithPath returns project which has matching path
-func (v WorkSpace) GetProjectWithPath(p string) *project.Project {
+func (v RepoWorkSpace) GetProjectWithPath(p string) *project.Project {
 	return v.projectByPath[p]
 }
 
@@ -223,7 +223,7 @@ type GetProjectsOptions struct {
 }
 
 // GetProjects returns all matching projects
-func (v WorkSpace) GetProjects(o *GetProjectsOptions, args ...string) ([]*project.Project, error) {
+func (v RepoWorkSpace) GetProjects(o *GetProjectsOptions, args ...string) ([]*project.Project, error) {
 	var (
 		groups      string
 		result      = []*project.Project{}
@@ -297,12 +297,12 @@ func (v WorkSpace) GetProjects(o *GetProjectsOptions, args ...string) ([]*projec
 	return result, nil
 }
 
-// NewWorkSpace finds and loads repo workspace. Will return an error if not found.
+// NewRepoWorkSpace finds and loads repo workspace. Will return an error if not found.
 //
 // 1. Searching a hidden `.repo` directory in `<dir>` or any parent directory.
-// 2. Returns a WorkSpace objects based on the toplevel directory of workspace.
+// 2. Returns a RepoWorkSpace objects based on the toplevel directory of workspace.
 // 3. If cannot find valid repo workspace, return ErrRepoDirNotFound error.
-func NewWorkSpace(dir string) (*WorkSpace, error) {
+func NewRepoWorkSpace(dir string) (*RepoWorkSpace, error) {
 	var (
 		err error
 	)
@@ -312,12 +312,12 @@ func NewWorkSpace(dir string) (*WorkSpace, error) {
 		return nil, err
 	}
 
-	return newWorkSpace(repoRoot, "")
+	return newRepoWorkSpace(repoRoot, "")
 }
 
-// NewWorkSpaceInit finds repo root and load specific manifest file.
+// NewRepoWorkSpaceInit finds repo root and load specific manifest file.
 // If workspace is not found, will use <dir> as root of a new workspace.
-func NewWorkSpaceInit(dir, manifestURL string) (*WorkSpace, error) {
+func NewRepoWorkSpaceInit(dir, manifestURL string) (*RepoWorkSpace, error) {
 	var (
 		err error
 	)
@@ -331,10 +331,10 @@ func NewWorkSpaceInit(dir, manifestURL string) (*WorkSpace, error) {
 		}
 	}
 
-	return newWorkSpace(repoRoot, manifestURL)
+	return newRepoWorkSpace(repoRoot, manifestURL)
 }
 
-func newWorkSpace(dir, manifestURL string) (*WorkSpace, error) {
+func newRepoWorkSpace(dir, manifestURL string) (*RepoWorkSpace, error) {
 	var (
 		err error
 	)
@@ -346,7 +346,7 @@ func newWorkSpace(dir, manifestURL string) (*WorkSpace, error) {
 		}
 	}
 
-	ws := WorkSpace{RootDir: dir}
+	ws := RepoWorkSpace{RootDir: dir}
 	err = ws.Load(manifestURL)
 	if err != nil {
 		return nil, err

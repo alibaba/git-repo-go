@@ -84,7 +84,7 @@ func testCreateManifests(repoRoot, manifestURL string) error {
 	return nil
 }
 
-func TestNewLoadEmptyWorkSpace(t *testing.T) {
+func TestNewLoadEmptyRepoWorkSpace(t *testing.T) {
 	var (
 		tmpdir string
 		err    error
@@ -103,12 +103,12 @@ func TestNewLoadEmptyWorkSpace(t *testing.T) {
 	err = os.MkdirAll(workdir, 0755)
 	assert.Nil(err)
 
-	ws, err := NewWorkSpace(workdir)
+	ws, err := NewRepoWorkSpace(workdir)
 	assert.Equal(errors.ErrRepoDirNotFound, err)
 	assert.Nil(ws)
 }
 
-func TestNewLoadEmptyWorkSpaceInit(t *testing.T) {
+func TestNewLoadEmptyRepoWorkSpaceInit(t *testing.T) {
 	var (
 		tmpdir string
 		err    error
@@ -127,7 +127,7 @@ func TestNewLoadEmptyWorkSpaceInit(t *testing.T) {
 	err = os.MkdirAll(workdir, 0755)
 	assert.Nil(err)
 
-	ws, err := NewWorkSpaceInit(workdir, "git@server:path/of/manifest.git")
+	ws, err := NewRepoWorkSpaceInit(workdir, "git@server:path/of/manifest.git")
 	assert.Nil(err)
 	assert.Equal(workdir, ws.RootDir)
 	assert.Nil(ws.Manifest)
@@ -135,7 +135,7 @@ func TestNewLoadEmptyWorkSpaceInit(t *testing.T) {
 	assert.Equal(0, len(ws.Projects))
 }
 
-func TestLoadWorkSpace(t *testing.T) {
+func TestLoadRepoWorkSpace(t *testing.T) {
 	var (
 		tmpdir string
 		err    error
@@ -161,7 +161,7 @@ func TestLoadWorkSpace(t *testing.T) {
 	assert.Nil(err)
 
 	// Missing manfest.xml link
-	ws, err := NewWorkSpace(workdir)
+	ws, err := NewRepoWorkSpace(workdir)
 	assert.Nil(err)
 	assert.Equal(realWorkdir, ws.RootDir)
 	assert.Nil(ws.Manifest)

@@ -34,7 +34,7 @@ import (
 
 type syncCommand struct {
 	cmd          *cobra.Command
-	ws           *workspace.WorkSpace
+	ws           *workspace.RepoWorkSpace
 	FetchOptions project.FetchOptions
 
 	O struct {
@@ -154,16 +154,16 @@ func (v *syncCommand) Command() *cobra.Command {
 	return v.cmd
 }
 
-func (v *syncCommand) WorkSpace() *workspace.WorkSpace {
+func (v *syncCommand) RepoWorkSpace() *workspace.RepoWorkSpace {
 	if v.ws == nil {
-		v.reloadWorkSpace()
+		v.reloadRepoWorkSpace()
 	}
 	return v.ws
 }
 
-func (v *syncCommand) reloadWorkSpace() {
+func (v *syncCommand) reloadRepoWorkSpace() {
 	var err error
-	v.ws, err = workspace.NewWorkSpace("")
+	v.ws, err = workspace.NewRepoWorkSpace("")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -175,9 +175,9 @@ func (v *syncCommand) defaultJobs() int {
 	defaultJobs := min(int(rlimit.Cur-5)/3, config.MaxJobs)
 
 	// When running test cases in cmd/, function `defaultJobs` will be evaluated.
-	// Do not call `v.WorkSpace()` function, which will fail if not in a workspace.
+	// Do not call `v.RepoWorkSpace()` function, which will fail if not in a workspace.
 	if v.ws == nil {
-		v.ws, _ = workspace.NewWorkSpace("")
+		v.ws, _ = workspace.NewRepoWorkSpace("")
 	}
 	if v.ws != nil &&
 		v.ws.Manifest != nil &&
@@ -197,7 +197,7 @@ func (v syncCommand) CallManifestServerRPC() {
 func (v *syncCommand) updateManifestProject() error {
 	var err error
 
-	ws := v.WorkSpace()
+	ws := v.RepoWorkSpace()
 	mp := ws.ManifestProject
 	s := mp.ReadSettings()
 	track := mp.TrackBranch("")
@@ -246,7 +246,7 @@ func (v *syncCommand) updateManifestProject() error {
 	}
 
 	// : Reload Manifest
-	v.reloadWorkSpace()
+	v.reloadRepoWorkSpace()
 
 	return nil
 }
@@ -501,7 +501,7 @@ func (v syncCommand) removeObsoletePaths(oldPaths, newPaths []string) error {
 	sort.Strings(newPaths)
 	obsoletePaths := v.findObsoletePaths(oldPaths, newPaths)
 
-	ws := v.WorkSpace()
+	ws := v.RepoWorkSpace()
 
 	for _, p := range obsoletePaths {
 		workdir := filepath.Clean(filepath.Join(ws.RootDir, p))
@@ -565,7 +565,7 @@ func (v syncCommand) UpdateProjectList() error {
 	var (
 		newPaths = []string{}
 		oldPaths = []string{}
-		ws       = v.WorkSpace()
+		ws       = v.RepoWorkSpace()
 	)
 
 	allProjects, err := ws.GetProjects(&workspace.GetProjectsOptions{
@@ -634,7 +634,7 @@ func (v syncCommand) runE(args []string) error {
 		err error
 	)
 
-	ws := v.WorkSpace()
+	ws := v.RepoWorkSpace()
 
 	if v.O.Jobs > 0 {
 		v.O.Jobs = min(v.O.Jobs, v.defaultJobs())
@@ -694,7 +694,7 @@ func (v syncCommand) runE(args []string) error {
 	if err != nil {
 		return err
 	}
-	ws = v.WorkSpace()
+	ws = v.RepoWorkSpace()
 
 	allProjects, err := ws.GetProjects(&workspace.GetProjectsOptions{
 		Groups:       ws.Settings().Groups,

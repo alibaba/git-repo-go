@@ -23,7 +23,7 @@ import (
 
 type startCommand struct {
 	cmd *cobra.Command
-	ws  *workspace.WorkSpace
+	ws  *workspace.RepoWorkSpace
 
 	O struct {
 		All bool
@@ -51,16 +51,16 @@ func (v *startCommand) Command() *cobra.Command {
 	return v.cmd
 }
 
-func (v *startCommand) WorkSpace() *workspace.WorkSpace {
+func (v *startCommand) RepoWorkSpace() *workspace.RepoWorkSpace {
 	if v.ws == nil {
-		v.reloadWorkSpace()
+		v.reloadRepoWorkSpace()
 	}
 	return v.ws
 }
 
-func (v *startCommand) reloadWorkSpace() {
+func (v *startCommand) reloadRepoWorkSpace() {
 	var err error
-	v.ws, err = workspace.NewWorkSpace("")
+	v.ws, err = workspace.NewRepoWorkSpace("")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -72,7 +72,7 @@ func (v startCommand) runE(args []string) error {
 		execError error
 	)
 
-	ws := v.WorkSpace()
+	ws := v.RepoWorkSpace()
 
 	if len(args) == 0 {
 		return newUserError("no args")

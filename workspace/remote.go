@@ -27,7 +27,7 @@ var (
 )
 
 // LoadRemotes calls remote API to get server type and other info
-func (v *WorkSpace) LoadRemotes() error {
+func (v *RepoWorkSpace) LoadRemotes() error {
 	if v.Manifest == nil || v.Manifest.Remotes == nil {
 		return nil
 	}
@@ -109,7 +109,7 @@ func getHTTPClient() *http.Client {
 	return httpClient
 }
 
-func (v WorkSpace) loadRemote(r *manifest.Remote) (project.Remote, error) {
+func (v RepoWorkSpace) loadRemote(r *manifest.Remote) (project.Remote, error) {
 	if _, ok := v.RemoteMap[r.Name]; ok {
 		return v.RemoteMap[r.Name], nil
 	}

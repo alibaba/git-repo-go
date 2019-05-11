@@ -35,7 +35,7 @@ import (
 
 type initCommand struct {
 	cmd *cobra.Command
-	ws  *workspace.WorkSpace
+	ws  *workspace.RepoWorkSpace
 
 	O struct {
 		ManifestURL       string
@@ -185,7 +185,7 @@ func (v initCommand) runE(args []string) error {
 	var (
 		err   error
 		isNew bool
-		ws    *workspace.WorkSpace
+		ws    *workspace.RepoWorkSpace
 	)
 
 	if v.O.Archive && v.O.Mirror {
@@ -218,7 +218,7 @@ func (v initCommand) runE(args []string) error {
 		if v.O.ManifestURL == "" {
 			log.Fatal("option --manifest-url (-u) is required")
 		}
-		ws, err = workspace.NewWorkSpaceInit(repoRoot, v.O.ManifestURL)
+		ws, err = workspace.NewRepoWorkSpaceInit(repoRoot, v.O.ManifestURL)
 		v.ws = ws
 		if err != nil {
 			return err
@@ -227,7 +227,7 @@ func (v initCommand) runE(args []string) error {
 		// Reload settings
 		ws.ManifestProject.ReadSettings()
 	} else {
-		ws, err = workspace.NewWorkSpace(repoRoot)
+		ws, err = workspace.NewRepoWorkSpace(repoRoot)
 		v.ws = ws
 		if err != nil {
 			return err
