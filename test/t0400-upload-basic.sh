@@ -27,7 +27,7 @@ test_expect_success "detached: no branch ready for upload" '
 		cat >expect<<-EOF &&
 		NOTE: no branches ready for upload
 		EOF
-		git-repo upload --mock-ssh-info-response 200 \
+		git-repo upload --mock-ssh-info-status 200 \
 			--mock-ssh-info-response \
 			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
 			>actual 2>&1 &&
@@ -42,7 +42,7 @@ test_expect_success "new branch: no branch ready for upload" '
 		cat >expect<<-EOF &&
 		NOTE: no branches ready for upload
 		EOF
-		git-repo upload --mock-ssh-info-response 200 \
+		git-repo upload --mock-ssh-info-status 200 \
 			--mock-ssh-info-response \
 			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
 			>actual 2>&1 &&
@@ -65,7 +65,7 @@ test_expect_success "new commit: ready for upload" '
 		to https://example.com (y/N)? No
 		Error: upload aborted by user
 		EOF
-		test_must_fail git-repo upload --assume-no --mock-ssh-info-response 200 \
+		test_must_fail git-repo upload --assume-no --mock-ssh-info-status 200 \
 			--mock-ssh-info-response \
 			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
 			2>&1 | sed -e "s/[0-9a-f]\{40\}/<hash>/g" >actual &&
@@ -80,7 +80,7 @@ test_expect_success "new branch, and do nothing for for upload --cbr" '
 		cat >expect<<-EOF &&
 		NOTE: no branches ready for upload
 		EOF
-		git-repo upload --cbr --assume-no --mock-ssh-info-response 200 \
+		git-repo upload --cbr --assume-no --mock-ssh-info-status 200 \
 			--mock-ssh-info-response \
 			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
 			2>&1 | sed -e "s/[0-9a-f]\{40\}/<hash>/g" >actual &&
@@ -99,7 +99,7 @@ test_expect_success "upload branch without --cbr" '
 		to https://example.com (y/N)? No
 		Error: upload aborted by user
 		EOF
-		test_must_fail git-repo upload --assume-no --mock-ssh-info-response 200 \
+		test_must_fail git-repo upload --assume-no --mock-ssh-info-status 200 \
 			--mock-ssh-info-response \
 			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
 			2>&1 | sed -e "s/[0-9a-f]\{40\}/<hash>/g" >actual &&
@@ -123,7 +123,7 @@ test_expect_success "upload --dryrun --drafts" '
 		EOF
 		git-repo upload --assume-yes --draft --dryrun \
 			--mock-git-push \
-			--mock-ssh-info-response 200 \
+			--mock-ssh-info-status 200 \
 			--mock-ssh-info-response \
 			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
 			2>&1 | sed -e "s/[0-9a-f]\{40\}/<hash>/g" >actual &&
@@ -147,7 +147,7 @@ test_expect_success "upload --dryrun" '
 		EOF
 		git-repo upload --assume-yes --dryrun \
 			--mock-git-push \
-			--mock-ssh-info-response 200 \
+			--mock-ssh-info-status 200 \
 			--mock-ssh-info-response \
 			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
 			--reviewers user1,user2 \
@@ -179,7 +179,7 @@ test_expect_success "mock-git-push, but do update-ref for upload" '
 		EOF
 		git-repo upload --assume-yes \
 			--mock-git-push \
-			--mock-ssh-info-response 200 \
+			--mock-ssh-info-status 200 \
 			--mock-ssh-info-response \
 			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
 			2>&1 | sed -e "s/[0-9a-f]\{40\}/<hash>/g" >actual &&
@@ -202,7 +202,7 @@ test_expect_success "upload again, no branch ready for upload" '
 		cat >expect<<-EOF &&
 		NOTE: no branches ready for upload
 		EOF
-		git-repo upload --mock-ssh-info-response 200 \
+		git-repo upload --mock-ssh-info-status 200 \
 			--mock-ssh-info-response \
 			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
 			>actual 2>&1 &&

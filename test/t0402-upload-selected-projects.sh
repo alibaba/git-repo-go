@@ -63,7 +63,7 @@ test_expect_success "edit script for multiple uploadable branches" '
 			-v \
 			--assume-no \
 			--mock-no-tty \
-			--mock-ssh-info-response 200 \
+			--mock-ssh-info-status 200 \
 			--mock-ssh-info-response \
 			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
 			2>&1 \
@@ -87,7 +87,7 @@ test_expect_success "upload with args: project1" '
 			-v \
 			--assume-no \
 			--mock-no-tty \
-			--mock-ssh-info-response 200 \
+			--mock-ssh-info-status 200 \
 			--mock-ssh-info-response \
 			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
 			project1 \
@@ -112,7 +112,7 @@ test_expect_success "upload with args: projects/app1" '
 			-v \
 			--assume-no \
 			--mock-no-tty \
-			--mock-ssh-info-response 200 \
+			--mock-ssh-info-status 200 \
 			--mock-ssh-info-response \
 			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
 			projects/app1 \
@@ -139,7 +139,7 @@ test_expect_success "upload with args: app1" '
 				-v \
 				--assume-no \
 				--mock-no-tty \
-				--mock-ssh-info-response 200 \
+				--mock-ssh-info-status 200 \
 				--mock-ssh-info-response \
 				"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
 				app1 \
@@ -167,7 +167,7 @@ test_expect_success "upload with args: ." '
 				-v \
 				--assume-no \
 				--mock-no-tty \
-				--mock-ssh-info-response 200 \
+				--mock-ssh-info-status 200 \
 				--mock-ssh-info-response \
 				"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
 				. \
@@ -199,7 +199,7 @@ test_expect_success "upload with args: main, projects/app1" '
 			-v \
 			--assume-no \
 			--mock-no-tty \
-			--mock-ssh-info-response 200 \
+			--mock-ssh-info-status 200 \
 			--mock-ssh-info-response \
 			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
 			main projects/app1 projects/app2 \
@@ -248,7 +248,7 @@ test_expect_success "upload with args: main, projects/app1" '
 			--mock-no-tty \
 			--mock-git-push \
 			--mock-edit-script=mock-edit-script \
-			--mock-ssh-info-response 200 \
+			--mock-ssh-info-status 200 \
 			--mock-ssh-info-response \
 			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
 			main projects/app1 projects/app2 \
@@ -300,7 +300,7 @@ test_expect_success "if has many commits, must confirm before upload" '
 				--assume-yes \
 				--mock-no-tty \
 				--mock-git-push \
-				--mock-ssh-info-response 200 \
+				--mock-ssh-info-status 200 \
 				--mock-ssh-info-response \
 				"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
 				projects/app1 \
