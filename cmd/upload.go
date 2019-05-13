@@ -243,8 +243,13 @@ func (v uploadCommand) UploadSingleBranch(branch *project.ReviewableBranch, peop
 		if v.O.Draft {
 			draftStr = " (draft)"
 		}
-		fmt.Printf("Upload project %s/ to remote branch %s%s:\n",
-			p.Path, destBranch, draftStr)
+		if p.Path == "." {
+			fmt.Printf("Upload project (%s) to remote branch %s%s:\n",
+				p.Name, destBranch, draftStr)
+		} else {
+			fmt.Printf("Upload project %s/ to remote branch %s%s:\n",
+				p.Path, destBranch, draftStr)
+		}
 		fmt.Printf("  branch %s (%2d commit(s)):\n",
 			branch.Branch.Name,
 			len(commitList))

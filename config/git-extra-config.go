@@ -12,7 +12,7 @@ import (
 
 // Macros for git-extra-config
 const (
-	GitExtraConfigVersion = "1"
+	GitExtraConfigVersion = "2"
 	GitExtraConfigFile    = "~/.git-repo/gitconfig"
 	CfgRepoConfigVersion  = "repo.config.version"
 )
@@ -40,6 +40,9 @@ func extraGitConfig() goconfig.GitConfig {
 	cfg.Set("alias.logf", "log --pretty=fuller")
 	cfg.Set("pretty.refs", "format:%h (%s, %ad)")
 	cfg.Set("alias.logs", "log --pretty=refs  --date=short")
+
+	// Alias commands for git-repo
+	cfg.Set("alias.review", "repo upload --single")
 
 	// Version
 	cfg.Set(CfgRepoConfigVersion, GitExtraConfigVersion)

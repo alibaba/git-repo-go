@@ -14,6 +14,7 @@ import (
 	"github.com/jiangxin/multi-log"
 )
 
+// GitWorkSpace defines structure for single git workspace
 type GitWorkSpace struct {
 	RootDir         string
 	GitDir          string
@@ -26,6 +27,7 @@ type GitWorkSpace struct {
 	httpClient      *http.Client
 }
 
+// LoadRemotes implements LoadRemotes interface, do nothing
 func (v *GitWorkSpace) LoadRemotes() error {
 	return nil
 }
@@ -59,8 +61,8 @@ func (v GitWorkSpace) newProject(worktree, gitdir string) (*project.Project, err
 				"    git branch -u origin/master")
 		}
 		remoteURL = repo.GitConfigRemoteURL(remoteName)
-		if remoteURL != "" {
-			return nil, fmt.Errorf("upload failed: unknown URL for remote %s", repo.RemoteName)
+		if remoteURL == "" {
+			return nil, fmt.Errorf("upload failed: unknown URL for remote: %s", remoteName)
 		}
 		repo.RemoteName = remoteName
 		repo.Revision = remoteRevision
@@ -85,9 +87,9 @@ func (v GitWorkSpace) newProject(worktree, gitdir string) (*project.Project, err
 		Settings:         &s,
 	}
 
-	reviewURL := getReviewURL(remoteURL)
-	if reviewURL == "" {
-		return nil, fmt.Errorf("fail to parse review URL: %s", remoteURL)
+	reviewURL, err := getReviewURL(remoteURL)
+	if err != nil {
+		return nil, err
 	}
 
 	mr := manifest.Remote{
@@ -106,32 +108,38 @@ func (v GitWorkSpace) newProject(worktree, gitdir string) (*project.Project, err
 	return &p, nil
 }
 
+// GetProjects returns all projects
 func (v GitWorkSpace) GetProjects(*GetProjectsOptions, ...string) ([]*project.Project, error) {
 	return v.Projects, nil
 }
 
-func getReviewURL(address string) string {
+func getReviewURL(address string) (string, error) {
 	var (
-		reHTTPForReview  = regexp.MustCompile(`^(http://|https://)(.*@)?([^/]+)`)
-		reSSHForReview   = regexp.MustCompile(`^ssh://(.*@)?([^/:]+)`)
-		reRsyncForReview = regexp.MustCompile(`^(.*@)?([^/:]+):`)
+		reHTTPForReview       = regexp.MustCompile(`^(http://|https://)(.*@)?([^/]+)`)
+		reSSHForReview        = regexp.MustCompile(`^ssh://(.*@)?([^/:]+)`)
+		unknownProtoForReview = regexp.MustCompile(`^(.+)://.+`)
+		reRsyncForReview      = regexp.MustCompile(`^(.*@)?([^/:]+):`)
 
 		match []string
 	)
 
 	match = reHTTPForReview.FindStringSubmatch(address)
 	if len(match) > 0 {
-		return match[1] + match[3]
+		return match[1] + match[3], nil
 	}
 	match = reSSHForReview.FindStringSubmatch(address)
 	if len(match) > 0 {
-		return match[2]
+		return match[2], nil
+	}
+	match = unknownProtoForReview.FindStringSubmatch(address)
+	if len(match) > 0 {
+		return "", fmt.Errorf("cannot find review URL for protocol: '%s'", match[1])
 	}
 	match = reRsyncForReview.FindStringSubmatch(address)
 	if len(match) > 0 {
-		return match[2]
+		return match[2], nil
 	}
-	return ""
+	return "", fmt.Errorf("cannot find review URL from '%s'", address)
 }
 
 // Load sets fields of git work space
