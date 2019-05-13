@@ -21,6 +21,17 @@ test_expect_success "git-repo sync (-n)" '
 	)
 '
 
+test_expect_success "manifests version: 2.0" '
+	(
+		cd work &&
+		cat >expect<<-EOF &&
+		manifests: Version 2.0
+		EOF
+		git -C .repo/manifests log -1 --pretty="manifests: %s" >actual &&
+		test_cmp expect actual
+	)
+'
+
 test_expect_success "git-repo sync (-n), no checkout" '
 	(
 		cd work &&
@@ -32,8 +43,7 @@ test_expect_success "git-repo sync (-n), no checkout" '
 	)
 '
 
-
-test_expect_success "git-repo sync (project-objects)" '
+test_expect_success "check object repositories in .repo/project-objects" '
 	(
 		cd work/.repo/project-objects &&
 		test -d drivers/driver1.git &&
@@ -45,7 +55,7 @@ test_expect_success "git-repo sync (project-objects)" '
 	)
 '
 
-test_expect_success "git-repo sync (projects)" '
+test_expect_success "check repositories in .repo/projects" '
 	(
 		cd work/.repo/projects &&
 		test -d drivers/driver-1.git &&
@@ -57,25 +67,25 @@ test_expect_success "git-repo sync (projects)" '
 	)
 '
 
-test_expect_success "git-repo sync (size of project-objects)" '
+test_expect_success "check size of .repo/project-objects" '
 	(
 		cd work/.repo/project-objects &&
-		test_size drivers/driver1.git -gt 100 &&
-		test_size project1.git -gt 100 &&
-		test_size project2.git -gt 100 &&
-		test_size project1/module1.git -gt 100 &&
-		test_size main.git -gt 100
+		test_size drivers/driver1.git -gt 50 &&
+		test_size project1.git -gt 50 &&
+		test_size project2.git -gt 50 &&
+		test_size project1/module1.git -gt 50 &&
+		test_size main.git -gt 50
 	)
 '
 
-test_expect_success "git-repo sync (size of projects)" '
+test_expect_success "check size of .repo/projects" '
 	(
 		cd work/.repo/projects &&
-		test_size drivers/driver-1.git -gt 100 &&
-		test_size projects/app1.git -gt 100 &&
-		test_size projects/app2.git -gt 100 &&
-		test_size projects/app1/module1.git -gt 100 &&
-		test_size main.git -gt 100
+		test_size drivers/driver-1.git -gt 50 &&
+		test_size projects/app1.git -gt 50 &&
+		test_size projects/app2.git -gt 50 &&
+		test_size projects/app1/module1.git -gt 50 &&
+		test_size main.git -gt 50
 	)
 '
 
@@ -89,15 +99,15 @@ test_expect_success "git-repo sync (-l)" '
 test_expect_success "git-repo sync (-l), checkouted" '
 	(
 		cd work &&
-		test_size main -gt 15 &&
-		test_size projects/app1 -gt 15 &&
-		test_size projects/app2 -gt 15 &&
-		test_size projects/app1/module1 -gt 15 &&
-		test_size drivers/driver-1 -gt 15
+		test -f main/VERSION &&
+		test -f projects/app1/VERSION &&
+		test -f projects/app2/VERSION &&
+		test -f projects/app1/module1/VERSION &&
+		test -f drivers/driver-1/VERSION
 	)
 '
 
-test_expect_success "create project.list" '
+test_expect_success "check .repo/project.list" '
 	(
 		cd work &&
 		test -f .repo/project.list &&

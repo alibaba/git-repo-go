@@ -21,6 +21,17 @@ test_expect_success "git-repo sync -b <tag-0.1>" '
 	)
 '
 
+test_expect_success "manifests version: 0.1" '
+	(
+		cd work &&
+		cat >expect<<-EOF &&
+		manifests: Version 0.1
+		EOF
+		git -C .repo/manifests log -1 --pretty="manifests: %s" >actual &&
+		test_cmp expect actual
+	)
+'
+
 test_expect_success "VERSION: 0.1.0" '
 	(
 		cd work &&
