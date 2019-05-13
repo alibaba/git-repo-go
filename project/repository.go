@@ -25,7 +25,7 @@ type Repository struct {
 	Path       string // Repository real path
 	IsBare     bool
 	RemoteURL  string
-	Reference  string
+	Reference  string // Alternate repository
 	RemoteName string // Project RemoteName field from manifest xml
 	Revision   string // Projeect Revision from manifest xml
 	Settings   *RepoSettings

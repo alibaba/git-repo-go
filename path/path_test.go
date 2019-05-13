@@ -248,14 +248,15 @@ func TestAbsJoin(t *testing.T) {
 	assert.Equal(inputdir, name)
 }
 
-func TestFindGitDir(t *testing.T) {
+func TestFindGitWorkSpace(t *testing.T) {
 	var (
-		err     error
-		dir     string
-		gitdir  string
-		workdir string
-		home    string
-		assert  = assert.New(t)
+		err      error
+		dir      string
+		gitdir   string
+		workdir  string
+		worktree string
+		home     string
+		assert   = assert.New(t)
 	)
 
 	tmpdir, err := ioutil.TempDir("", "goconfig")
@@ -272,14 +273,16 @@ func TestFindGitDir(t *testing.T) {
 	gitdir = filepath.Join(tmpdir, "bare.git")
 	cmd := exec.Command("git", "init", "--bare", gitdir, "--")
 	assert.Nil(cmd.Run())
-	dir, err = FindGitDir(gitdir)
+	worktree, dir, err = FindGitWorkSpace(gitdir)
 	assert.Nil(err)
 	assert.Equal(gitdir, dir)
+	assert.Equal(worktree, "")
 
 	// find in: bare.git/objects/pack
-	dir, err = FindGitDir(filepath.Join(gitdir, "objects", "pack"))
+	worktree, dir, err = FindGitWorkSpace(filepath.Join(gitdir, "objects", "pack"))
 	assert.Nil(err)
 	assert.Equal(gitdir, dir)
+	assert.Equal("", worktree)
 
 	// create repo2 with gitdir file repo2/.git
 	repo2 := filepath.Join(tmpdir, "repo2")
@@ -291,9 +294,10 @@ func TestFindGitDir(t *testing.T) {
 	assert.Nil(err)
 
 	// find in: repo2/a/b/c
-	dir, err = FindGitDir(filepath.Join(repo2, "a", "b", "c"))
+	worktree, dir, err = FindGitWorkSpace(filepath.Join(repo2, "a", "b", "c"))
 	assert.Nil(err)
 	assert.Equal(gitdir, dir)
+	assert.Equal(repo2, worktree)
 
 	// create bad gitdir file: repo2.git
 	err = ioutil.WriteFile(filepath.Join(repo2, ".git"),
@@ -302,9 +306,10 @@ func TestFindGitDir(t *testing.T) {
 	assert.Nil(err)
 
 	// fail to find in repo2/a/b/c (bad gitdir file)
-	dir, err = FindGitDir(filepath.Join(repo2, "a", "b", "c"))
+	worktree, dir, err = FindGitWorkSpace(filepath.Join(repo2, "a", "b", "c"))
 	assert.NotNil(err)
 	assert.Equal("", dir)
+	assert.Equal("", worktree)
 
 	// create worktree
 	workdir = filepath.Join(tmpdir, "workdir")
@@ -316,23 +321,27 @@ func TestFindGitDir(t *testing.T) {
 	assert.Nil(err)
 
 	// find in workdir
-	dir, err = FindGitDir(workdir)
+	worktree, dir, err = FindGitWorkSpace(workdir)
 	assert.Nil(err)
 	assert.Equal(gitdir, dir)
+	assert.Equal(workdir, worktree)
 
 	// find in workdir/.git
-	dir, err = FindGitDir(gitdir)
+	worktree, dir, err = FindGitWorkSpace(gitdir)
 	assert.Nil(err)
 	assert.Equal(gitdir, dir)
+	assert.Equal(workdir, worktree)
 
 	// find in workdir/.git
-	dir, err = FindGitDir(filepath.Join(workdir, "a", "b", "c"))
+	worktree, dir, err = FindGitWorkSpace(filepath.Join(workdir, "a", "b", "c"))
 	assert.Nil(err)
 	assert.Equal(gitdir, dir)
+	assert.Equal(workdir, worktree)
 
 	// fail to find in tmpdir
-	dir, err = FindGitDir(tmpdir)
+	worktree, dir, err = FindGitWorkSpace(tmpdir)
 	assert.Equal("", dir)
+	assert.Equal("", worktree)
 	assert.Nil(err)
 
 	os.Setenv("HOME", home)

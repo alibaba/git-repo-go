@@ -119,6 +119,8 @@ func (v RepoWorkSpace) loadRemote(r *manifest.Remote) (project.Remote, error) {
 
 func loadRemote(r *manifest.Remote) (project.Remote, error) {
 	var (
+		err        error
+		resp       *http.Response
 		remoteType = r.Type
 	)
 
@@ -136,10 +138,7 @@ func loadRemote(r *manifest.Remote) (project.Remote, error) {
 	if strings.HasPrefix(u, "persistent-") {
 		u = u[len("persistent-"):]
 	}
-	proto := strings.SplitN(u, ":", 2)[0]
-	if proto != "http" && proto != "https" && proto != "sso" && proto != "ssh" {
-		u = "http://" + u
-	}
+
 	if strings.HasSuffix(strings.ToLower(u), "/gerrit") {
 		u = u[0 : len(u)-len("/Gerrit")]
 		remoteType = config.RemoteTypeGerrit
@@ -176,7 +175,7 @@ func loadRemote(r *manifest.Remote) (project.Remote, error) {
 	}
 
 	infoURL := u + "/ssh_info"
-	log.Debugf("start checking ssh_info from %s", infoURL)
+	proto := strings.SplitN(infoURL, "://", 2)[0]
 
 	// Mock ssh_info API
 	if config.GetMockSSHInfoResponse() != "" || config.GetMockSSHInfoStatus() != 0 {
@@ -185,19 +184,32 @@ func loadRemote(r *manifest.Remote) (project.Remote, error) {
 			mockStatus = 200
 		}
 		mockResponse := config.GetMockSSHInfoResponse()
-		gock.New(infoURL).
-			Reply(mockStatus).
-			BodyString(mockResponse)
+		if proto == "http" || proto == "https" {
+			gock.New(infoURL).
+				Reply(mockStatus).
+				BodyString(mockResponse)
+		} else {
+			gock.New("http://" + infoURL).
+				Reply(mockStatus).
+				BodyString(mockResponse)
+			gock.New("https://" + infoURL).
+				Reply(mockStatus).
+				BodyString(mockResponse)
+		}
 	}
 
-	req, err := http.NewRequest("GET", infoURL, nil)
-	if err != nil {
-		return nil, err
+	if proto == "http" || proto == "https" {
+		log.Debugf("start checking ssh_info from %s", infoURL)
+		resp, err = callSSHInfoAPI(infoURL)
+	} else {
+		log.Debugf("start checking ssh_info from https://%s", infoURL)
+		resp, err = callSSHInfoAPI("https://" + infoURL)
+		if err != nil {
+			log.Debugf("start checking ssh_info from http://%s", infoURL)
+			resp, err = callSSHInfoAPI("http://" + infoURL)
+		}
 	}
-	req.Header.Set("Accept", "application/json")
 
-	client := getHTTPClient()
-	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -247,4 +259,15 @@ func loadRemote(r *manifest.Remote) (project.Remote, error) {
 	}
 
 	return project.NewRemote(r, remoteType, buf)
+}
+
+func callSSHInfoAPI(infoURL string) (*http.Response, error) {
+	req, err := http.NewRequest("GET", infoURL, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Accept", "application/json")
+
+	client := getHTTPClient()
+	return client.Do(req)
 }

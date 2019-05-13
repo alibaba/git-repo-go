@@ -173,7 +173,7 @@ func TestLoadRepoWorkSpace(t *testing.T) {
 	target := filepath.Join(workdir, ".repo", "manifest.xml")
 	err = os.Symlink(src, target)
 	assert.Nil(err)
-	ws.Load("")
+	ws.load("")
 	assert.NotNil(ws.Manifest)
 	assert.Equal(3, len(ws.Projects))
 
@@ -182,7 +182,7 @@ func TestLoadRepoWorkSpace(t *testing.T) {
 	src = filepath.Join(workdir, ".repo", "manifests", "m2.xml")
 	err = os.Symlink(src, target)
 	assert.Nil(err)
-	ws.Load("")
+	ws.load("")
 	assert.Equal(2, len(ws.Projects))
 
 	// Create manifest settings
@@ -190,7 +190,7 @@ func TestLoadRepoWorkSpace(t *testing.T) {
 	cfg := ws.ManifestProject.Config()
 	cfg.Set(config.CfgManifestName, "m1.xml")
 	assert.Nil(ws.ManifestProject.SaveConfig(cfg))
-	ws.Load("")
+	ws.load("")
 	assert.Equal(3, len(ws.Projects))
 }
 

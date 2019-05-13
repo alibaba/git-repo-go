@@ -39,7 +39,7 @@ const (
 
 type uploadCommand struct {
 	cmd *cobra.Command
-	ws  *workspace.RepoWorkSpace
+	ws  workspace.WorkSpace
 
 	O struct {
 		AllowAllHooks bool
@@ -199,16 +199,16 @@ func (v *uploadCommand) Command() *cobra.Command {
 
 }
 
-func (v *uploadCommand) RepoWorkSpace() *workspace.RepoWorkSpace {
+func (v *uploadCommand) WorkSpace() workspace.WorkSpace {
 	if v.ws == nil {
-		v.reloadRepoWorkSpace()
+		v.reloadWorkSpace()
 	}
 	return v.ws
 }
 
-func (v *uploadCommand) reloadRepoWorkSpace() {
+func (v *uploadCommand) reloadWorkSpace() {
 	var err error
-	v.ws, err = workspace.NewRepoWorkSpace("")
+	v.ws, err = workspace.NewWorkSpace("")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -512,10 +512,14 @@ func (v uploadCommand) UploadAndReport(branches []project.ReviewableBranch, orig
 }
 
 func (v uploadCommand) runE(args []string) error {
-	ws := v.RepoWorkSpace()
+	ws := v.WorkSpace()
 	err := ws.LoadRemotes()
 	if err != nil {
 		return err
+	}
+
+	if config.IsSingleMode() {
+		v.O.CurrentBranch = true
 	}
 
 	allProjects, err := ws.GetProjects(nil, args...)

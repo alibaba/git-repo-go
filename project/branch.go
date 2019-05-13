@@ -59,6 +59,20 @@ func (v Repository) TrackBranch(branch string) string {
 	return strings.TrimPrefix(cfg.Get("branch."+branch+".merge"), config.RefsHeads)
 }
 
+// TrackRemote gets the remote name what current branch is tracking
+func (v Repository) TrackRemote(branch string) string {
+	if branch == "" {
+		branch = v.GetHead()
+	}
+	if branch == "" {
+		return ""
+	}
+	branch = strings.TrimPrefix(branch, config.RefsHeads)
+
+	cfg := v.Config()
+	return cfg.Get("branch." + branch + ".remote")
+}
+
 // LocalTrackBranch gets local tracking remote branch
 func (v Repository) LocalTrackBranch(branch string) string {
 	if branch == "" {

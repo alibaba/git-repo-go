@@ -174,19 +174,27 @@ func FindRepoRoot(dir string) (string, error) {
 	return "", errors.ErrRepoDirNotFound
 }
 
-// FindGitDir walks to upper directories to find gitdir
-func FindGitDir(dir string) (string, error) {
-	var err error
+// FindGitWorkSpace walks to upper directories to find gitdir and worktree
+func FindGitWorkSpace(dir string) (string, string, error) {
+	var (
+		err        error
+		worktree   string
+		repository string
+	)
 
 	dir, err = Abs(dir)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	for {
-		// Check if is in a bare repo
+		// Check if is in an repository
 		if IsGitDir(dir) {
-			return dir, nil
+			repository = dir
+			if filepath.Base(repository) == ".git" {
+				worktree = filepath.Dir(repository)
+			}
+			break
 		}
 
 		// Check .git
@@ -202,13 +210,15 @@ func FindGitDir(dir string) (string, error) {
 			continue
 		} else if fi.IsDir() {
 			if IsGitDir(gitdir) {
-				return gitdir, nil
+				worktree = dir
+				repository = gitdir
+				break
 			}
-			return "", fmt.Errorf("corrupt git dir: %s", gitdir)
+			return "", "", fmt.Errorf("corrupt git dir: %s", gitdir)
 		} else {
 			f, err := os.Open(gitdir)
 			if err != nil {
-				return "", fmt.Errorf("cannot open gitdir file '%s'", gitdir)
+				return "", "", fmt.Errorf("cannot open gitdir file '%s'", gitdir)
 			}
 			defer f.Close()
 			reader := bufio.NewReader(f)
@@ -218,18 +228,20 @@ func FindGitDir(dir string) (string, error) {
 				if !filepath.IsAbs(realgit) {
 					realgit, err = AbsJoin(filepath.Dir(gitdir), realgit)
 					if err != nil {
-						return "", err
+						return "", "", err
 					}
 				}
 				if IsGitDir(realgit) {
-					return realgit, nil
+					worktree = dir
+					repository = realgit
+					break
 				}
-				return "", fmt.Errorf("gitdir '%s' points to corrupt git repo: %s", gitdir, realgit)
+				return "", "", fmt.Errorf("gitdir '%s' points to corrupt git repo: %s", gitdir, realgit)
 			}
-			return "", fmt.Errorf("bad gitdir file '%s'", gitdir)
+			return "", "", fmt.Errorf("bad gitdir file '%s'", gitdir)
 		}
 	}
-	return "", nil
+	return worktree, repository, nil
 }
 
 // UnsetHome unsets HOME related environments

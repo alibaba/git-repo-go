@@ -85,7 +85,7 @@ func (v *RepoWorkSpace) LinkManifest() error {
 
 // Load will read manifest XML file and reset ManifestURL if it changed,
 // and reset URL of all projects in workspace.
-func (v *RepoWorkSpace) Load(manifestURL string) error {
+func (v *RepoWorkSpace) load(manifestURL string) error {
 	m, err := manifest.Load(filepath.Join(v.RootDir, config.DotRepo))
 	if err != nil {
 		return err
@@ -347,7 +347,7 @@ func newRepoWorkSpace(dir, manifestURL string) (*RepoWorkSpace, error) {
 	}
 
 	ws := RepoWorkSpace{RootDir: dir}
-	err = ws.Load(manifestURL)
+	err = ws.load(manifestURL)
 	if err != nil {
 		return nil, err
 	}
