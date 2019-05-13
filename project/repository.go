@@ -19,20 +19,10 @@ const (
 	GIT = "git"
 )
 
-// Default settings
-var (
-	DefaultRefSpecs = []string{
-		"+refs/heads/*:refs/heads/*",
-		"+refs/tags/*:refs/tags/*",
-	}
-)
-
 // Repository has repository related operations
 type Repository struct {
 	Name       string // Project name
-	RelPath    string // Project relative path
 	Path       string // Repository real path
-	RefSpecs   []string
 	IsBare     bool
 	RemoteURL  string
 	Reference  string
@@ -43,7 +33,7 @@ type Repository struct {
 }
 
 // Exists checks repository layout
-func (v *Repository) Exists() bool {
+func (v Repository) Exists() bool {
 	return path.IsGitDir(v.Path)
 }
 
@@ -71,7 +61,7 @@ func (v *Repository) setRemote(remoteName, remoteURL string) error {
 	return err
 }
 
-func (v *Repository) setAlternates(reference string) {
+func (v Repository) setAlternates(reference string) {
 	var err error
 
 	if reference != "" {
@@ -95,11 +85,11 @@ func (v *Repository) setAlternates(reference string) {
 }
 
 // GitConfigRemoteURL returns remote url in git config
-func (v *Repository) GitConfigRemoteURL(name string) string {
+func (v Repository) GitConfigRemoteURL(name string) string {
 	return v.Config().Get("remote." + name + ".url")
 }
 
-func (v *Repository) isUnborn() bool {
+func (v Repository) isUnborn() bool {
 	repo := v.Raw()
 	if repo == nil {
 		return false
@@ -108,16 +98,8 @@ func (v *Repository) isUnborn() bool {
 	return err != nil
 }
 
-func (v *Repository) fetchRefSpecs() []string {
-	if len(v.RefSpecs) > 0 {
-		return v.RefSpecs
-	}
-
-	return DefaultRefSpecs
-}
-
 // HasAlternates checks if repository has defined alternates
-func (v *Repository) HasAlternates() bool {
+func (v Repository) HasAlternates() bool {
 	altFile := filepath.Join(v.Path, "objects", "info", "alternates")
 	finfo, err := os.Stat(altFile)
 	if err != nil {
@@ -129,7 +111,7 @@ func (v *Repository) HasAlternates() bool {
 	return true
 }
 
-func (v *Repository) applyCloneBundle() {
+func (v Repository) applyCloneBundle() {
 	// TODO: download and clone from bundle file
 }
 
@@ -213,7 +195,7 @@ func (v Repository) Revlist(args ...string) ([]string, error) {
 }
 
 // Raw returns go-git repository object
-func (v *Repository) Raw() *git.Repository {
+func (v Repository) Raw() *git.Repository {
 	var err error
 
 	if v.raw != nil {
@@ -228,12 +210,12 @@ func (v *Repository) Raw() *git.Repository {
 	return v.raw
 }
 
-func (v *Repository) configFile() string {
+func (v Repository) configFile() string {
 	return filepath.Join(v.Path, "config")
 }
 
 // Config returns git config file parser
-func (v *Repository) Config() goconfig.GitConfig {
+func (v Repository) Config() goconfig.GitConfig {
 	cfg, err := goconfig.Load(v.configFile())
 	if err != nil && err != goconfig.ErrNotExist {
 		log.Fatalf("fail to load config: %s: %s", v.configFile(), err)

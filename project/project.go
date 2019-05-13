@@ -444,7 +444,6 @@ func NewProject(project *manifest.Project, s *RepoSettings) *Project {
 		)
 		p.ObjectRepository = &Repository{
 			Name:     p.Name,
-			RelPath:  p.Path,
 			Path:     objectRepoPath,
 			IsBare:   true,
 			Settings: s,
@@ -468,7 +467,6 @@ func NewProject(project *manifest.Project, s *RepoSettings) *Project {
 
 	p.WorkRepository = &Repository{
 		Name:       p.Name,
-		RelPath:    p.Path,
 		Path:       workRepoPath,
 		RemoteName: p.RemoteName,
 		Revision:   p.Revision,
@@ -513,7 +511,6 @@ func NewMirrorProject(project *manifest.Project, s *RepoSettings) *Project {
 
 	p.WorkRepository = &Repository{
 		Name:       p.Name,
-		RelPath:    p.Path,
 		Path:       repoPath,
 		RemoteName: p.RemoteName,
 		Revision:   p.Revision,
