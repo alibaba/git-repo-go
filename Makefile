@@ -26,7 +26,7 @@ REPO-VERSION-FILE: FORCE
 
 git-repo: $(shell find . -name '*.go')
 	$(call message,Building $@)
-	$(GOBUILD)  -ldflags "-X $(PKG)/version.Version=$(REPO_VERSION)"
+	$(GOBUILD)  -ldflags "-X $(PKG)/versions.Version=$(REPO_VERSION)"
 
 golint:
 	$(call message,Testing git-repo using golint for coding style)
@@ -41,32 +41,32 @@ test: golint $(TARGETS)
 linux-64: $(shell find . -name '*.go')
 	$(call message,Building $@)
 	@mkdir -p target/linux-amd64
-	$(GOBUILD_LINUX_64) -o target/linux-amd64/git-repo -ldflags "-X $(PKG)/version.Version=$(REPO_VERSION)"
+	$(GOBUILD_LINUX_64) -o target/linux-amd64/git-repo -ldflags "-X $(PKG)/versions.Version=$(REPO_VERSION)"
 
 linux-32: $(shell find . -name '*.go')
 	$(call message,Building $@)
 	@mkdir -p target/linux-i386
-	$(GOBUILD_LINUX_32) -o target/linux-i386/git-repo -ldflags "-X $(PKG)/version.Version=$(REPO_VERSION)"
+	$(GOBUILD_LINUX_32) -o target/linux-i386/git-repo -ldflags "-X $(PKG)/versions.Version=$(REPO_VERSION)"
 
 windows-64: $(shell find . -name '*.go')
 	$(call message,Building $@)
 	@mkdir -p target/windows-x86_64
-	$(GOBUILD_WINDOWS_64) -o target/windows-x86_64/git-repo.exe -ldflags "-X $(PKG)/version.Version=$(REPO_VERSION)"
+	$(GOBUILD_WINDOWS_64) -o target/windows-x86_64/git-repo.exe -ldflags "-X $(PKG)/versions.Version=$(REPO_VERSION)"
 
 windows-32: $(shell find . -name '*.go')
 	$(call message,Building $@)
 	@mkdir -p target/windows-i386
-	$(GOBUILD_WINDOWS_32) -o target/windows-i386/git-repo.exe -ldflags "-X $(PKG)/version.Version=$(REPO_VERSION)"
+	$(GOBUILD_WINDOWS_32) -o target/windows-i386/git-repo.exe -ldflags "-X $(PKG)/versions.Version=$(REPO_VERSION)"
 
 mac-64: $(shell find . -name '*.go')
 	$(call message,Building $@)
 	@mkdir -p target/Mac-x86_64
-	$(GOBUILD_MAC_64) -o target/Mac-x86_64/git-repo -ldflags "-X $(PKG)/version.Version=$(REPO_VERSION)"
+	$(GOBUILD_MAC_64) -o target/Mac-x86_64/git-repo -ldflags "-X $(PKG)/versions.Version=$(REPO_VERSION)"
 
 mac-32: $(shell find . -name '*.go')
 	$(call message,Building $@)
 	@mkdir -p target/Mac-i386
-	$(GOBUILD_MAC_32) -o target/Mac-i386/git-repo -ldflags "-X $(PKG)/version.Version=$(REPO_VERSION)"
+	$(GOBUILD_MAC_32) -o target/Mac-i386/git-repo -ldflags "-X $(PKG)/versions.Version=$(REPO_VERSION)"
 
 clean:
 	$(call message,Cleaning $(TARGETS))

@@ -17,7 +17,7 @@ package cmd
 import (
 	"fmt"
 
-	"code.alibaba-inc.com/force/git-repo/version"
+	"code.alibaba-inc.com/force/git-repo/versions"
 	"github.com/spf13/cobra"
 )
 
@@ -31,8 +31,8 @@ var versionCmd = &cobra.Command{
 }
 
 func versionRun() {
-	fmt.Printf("git-repo version %s\n", version.GetVersion())
-	fmt.Printf("git version %s\n", version.GetGitVersion())
+	fmt.Printf("git-repo version %s\n", versions.GetVersion())
+	fmt.Printf("git version %s\n", versions.GetGitVersion())
 }
 
 func init() {

@@ -22,7 +22,7 @@ import (
 	"code.alibaba-inc.com/force/git-repo/config"
 	"code.alibaba-inc.com/force/git-repo/manifest"
 	"code.alibaba-inc.com/force/git-repo/path"
-	"code.alibaba-inc.com/force/git-repo/version"
+	"code.alibaba-inc.com/force/git-repo/versions"
 
 	"github.com/jiangxin/multi-log"
 	"github.com/spf13/cobra"
@@ -113,13 +113,13 @@ this command with special options.`,
 // GetVersion is called by 'git repo --version'
 func (v rootCommand) getVersion() string {
 	config.InstallExtraGitConfig()
-	return version.GetVersion()
+	return versions.GetVersion()
 }
 
 func (v rootCommand) checkGitVersion() {
-	if !version.ValidateGitVersion() {
+	if !versions.ValidateGitVersion() {
 		log.Fatalf("Please install or upgrade git to version %s or above",
-			version.MinGitVersion)
+			versions.MinGitVersion)
 	}
 }
 
