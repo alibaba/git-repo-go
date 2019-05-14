@@ -209,6 +209,12 @@ func (v Project) SyncLocalHalf(o *CheckoutOptions) error {
 				return err
 			}
 		}
+
+		// Install hooks
+		if v.Remote != nil && v.Remote.GetType() == config.RemoteTypeGerrit {
+			v.InstallGerritHooks()
+		}
+
 		return v.CopyAndLinkFiles()
 	}
 
@@ -329,6 +335,12 @@ func (v Project) SyncLocalHalf(o *CheckoutOptions) error {
 	}
 
 	return PostUpdate(true)
+}
+
+// InstallGerritHooks install gerrit hooks if remote of current project is gerrit
+func (v Project) InstallGerritHooks() error {
+	// TODO: install git hooks
+	return nil
 }
 
 // CopyFile copy files from src to dest

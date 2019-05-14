@@ -715,6 +715,12 @@ func (v syncCommand) runE(args []string) error {
 		return nil
 	}
 
+	// Call ssh_info API to detect remote server type
+	err = ws.LoadRemotes()
+	if err != nil {
+		return err
+	}
+
 	// Remove obsolete projects
 	if err = v.UpdateProjectList(); err != nil {
 		log.Fatal(err)
