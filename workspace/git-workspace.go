@@ -37,6 +37,7 @@ func (v GitWorkSpace) newProject(worktree, gitdir string) (*project.Project, err
 		remoteName     = ""
 		remoteRevision = ""
 		remoteURL      = ""
+		err            error
 	)
 
 	name := filepath.Base(worktree)
@@ -87,10 +88,14 @@ func (v GitWorkSpace) newProject(worktree, gitdir string) (*project.Project, err
 		Settings:         &s,
 	}
 
-	reviewURL, err := getReviewURL(remoteURL)
-	if err != nil {
-		return nil, err
+	reviewURL := p.Config().Get("remote." + remoteName + ".review")
+	if reviewURL == "" {
+		reviewURL, err = getReviewURL(remoteURL)
+		if err != nil {
+			return nil, err
+		}
 	}
+	log.Debugf("Review URL: %s", reviewURL)
 
 	mr := manifest.Remote{
 		Name:     remoteName,
