@@ -120,29 +120,26 @@ func (v GitWorkSpace) GetProjects(*GetProjectsOptions, ...string) ([]*project.Pr
 
 func getReviewURL(address string) (string, error) {
 	var (
-		reHTTPForReview       = regexp.MustCompile(`^(http://|https://)(.*@)?([^/]+)`)
-		reSSHForReview        = regexp.MustCompile(`^ssh://(.*@)?([^/:]+)`)
 		unknownProtoForReview = regexp.MustCompile(`^(.+)://.+`)
-		reRsyncForReview      = regexp.MustCompile(`^(.*@)?([^/:]+):`)
 
 		match []string
 	)
 
-	match = reHTTPForReview.FindStringSubmatch(address)
+	match = config.GitHTTPProtocolPattern.FindStringSubmatch(address)
 	if len(match) > 0 {
 		return match[1] + match[3], nil
 	}
-	match = reSSHForReview.FindStringSubmatch(address)
+	match = config.GitSSHProtocolPattern.FindStringSubmatch(address)
+	if len(match) > 0 {
+		return match[2], nil
+	}
+	match = config.GitRsyncProtocolPattern.FindStringSubmatch(address)
 	if len(match) > 0 {
 		return match[2], nil
 	}
 	match = unknownProtoForReview.FindStringSubmatch(address)
 	if len(match) > 0 {
 		return "", fmt.Errorf("cannot find review URL for protocol: '%s'", match[1])
-	}
-	match = reRsyncForReview.FindStringSubmatch(address)
-	if len(match) > 0 {
-		return match[2], nil
 	}
 	return "", fmt.Errorf("cannot find review URL from '%s'", address)
 }
