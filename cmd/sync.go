@@ -715,7 +715,7 @@ func (v syncCommand) runE(args []string) error {
 		return nil
 	}
 
-	// Call ssh_info API to detect remote server type
+	// Call ssh_info API to detect types of remote servers
 	err = ws.LoadRemotes()
 	if err != nil {
 		return err

@@ -124,7 +124,16 @@ func (v rootCommand) checkGitVersion() {
 }
 
 func (v rootCommand) installGitConfig() {
-	config.InstallExtraGitConfig()
+	var err error
+
+	err = config.InstallExtraGitConfig()
+	if err != nil {
+		log.Error(err)
+	}
+	err = config.InstallRepoHooks()
+	if err != nil {
+		log.Error(err)
+	}
 }
 
 // initConfig reads in config file and ENV variables if set.

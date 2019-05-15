@@ -14,7 +14,7 @@ import (
 const (
 	GitExtraConfigVersion = "2"
 	GitExtraConfigFile    = "~/.git-repo/gitconfig"
-	CfgRepoConfigVersion  = "repo.config.version"
+	CfgRepoConfigVersion  = "repo.configversion"
 )
 
 func extraGitConfig() goconfig.GitConfig {
