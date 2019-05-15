@@ -160,9 +160,10 @@ func loadRemote(r *manifest.Remote) (project.Remote, error) {
 	}
 
 	if strings.HasPrefix(u, "sso:") ||
-		strings.HasPrefix(u, "ssh:") {
+		strings.HasPrefix(u, "ssh:") ||
+		config.GitRsyncProtocolPattern.Match(u) {
 		if remoteType == "" {
-			remoteType = config.RemoteTypeGerrit
+			remoteType = config.RemoteTypeAGit
 		}
 		return project.NewRemote(r, remoteType, "")
 	}
