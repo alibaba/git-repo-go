@@ -92,7 +92,11 @@ test_expect_success "check size of .repo/projects" '
 test_expect_success "git-repo sync (-l)" '
 	(
 		cd work &&
-		git-repo sync
+		git-repo sync -l \
+			--mock-ssh-info-status 200 \
+			--mock-ssh-info-response \
+			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}"
+
 	)
 '
 

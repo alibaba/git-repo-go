@@ -17,7 +17,10 @@ test_expect_success "git-repo sync with history version of manifests" '
 	(
 		cd work &&
 		git-repo init -u $manifest_url -b refs/tags/v0.1 &&
-		git-repo sync &&
+		git-repo sync \
+			--mock-ssh-info-status 200 \
+			--mock-ssh-info-response \
+			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" &&
 		git -C .repo/manifests config branch.default.merge refs/heads/master &&
 		git -C .repo/manifests config branch.default.remote origin
 	)
@@ -72,7 +75,10 @@ test_expect_success "verify checkout commits of v0.1" '
 test_expect_success "git-repo sync again, upgrade manifest first" '
 	(
 		cd work &&
-		git-repo sync
+		git-repo sync \
+			--mock-ssh-info-status 200 \
+			--mock-ssh-info-response \
+			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}"
 	)
 '
 

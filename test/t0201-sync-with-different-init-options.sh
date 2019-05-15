@@ -17,7 +17,10 @@ test_expect_success "git-repo sync -b <tag-0.1>" '
 	(
 		cd work &&
 		git-repo init -u $manifest_url -b refs/tags/v0.1 &&
-		git-repo sync
+		git-repo sync \
+			--mock-ssh-info-status 200 \
+			--mock-ssh-info-response \
+			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}"
 	)
 '
 
@@ -70,7 +73,10 @@ test_expect_success "git-repo sync -d -b <tag-0.2>" '
 	(
 		cd work &&
 		git-repo init -u $manifest_url --detach -b refs/tags/v0.2 &&
-		git-repo sync
+		git-repo sync \
+			--mock-ssh-info-status 200 \
+			--mock-ssh-info-response \
+			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}"
 	)
 '
 
@@ -118,7 +124,10 @@ test_expect_success "git-repo switched back to <tag-0.1>" '
 	(
 		cd work &&
 		git-repo init -u $manifest_url --detach -b refs/tags/v0.1 &&
-		git-repo sync
+		git-repo sync \
+			--mock-ssh-info-status 200 \
+			--mock-ssh-info-response \
+			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}"
 	)
 '
 
@@ -133,7 +142,10 @@ test_expect_success "git-repo sync -b master -g all" '
 	(
 		cd work &&
 		git-repo init -u $manifest_url -b master -g all &&
-		git-repo sync
+		git-repo sync \
+			--mock-ssh-info-status 200 \
+			--mock-ssh-info-response \
+			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}"
 	)
 '
 
@@ -190,7 +202,10 @@ test_expect_success "git-repo init -g default" '
 	(
 		cd work &&
 		git-repo init -u $manifest_url -g default &&
-		git-repo sync
+		git-repo sync \
+			--mock-ssh-info-status 200 \
+			--mock-ssh-info-response \
+			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}"
 	)
 '
 

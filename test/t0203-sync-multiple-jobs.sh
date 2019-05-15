@@ -51,28 +51,40 @@ test_expect_success "git-repo sync (-n), 0 job" '
 test_expect_success "git-repo sync (-l), default jobs" '
 	(
 		cd work &&
-		git-repo sync -l
+		git-repo sync -l \
+			--mock-ssh-info-status 200 \
+			--mock-ssh-info-response \
+			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}"
 	)
 '
 
 test_expect_success "git-repo sync (-l), 0 job" '
 	(
 		cd work &&
-		git-repo sync -l -j 0
+		git-repo sync -l -j 0 \
+			--mock-ssh-info-status 200 \
+			--mock-ssh-info-response \
+			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}"
 	)
 '
 
 test_expect_success "git-repo sync (-l), 1 job" '
 	(
 		cd work &&
-		git-repo sync -l -j 1
+		git-repo sync -l -j 1 \
+			--mock-ssh-info-status 200 \
+			--mock-ssh-info-response \
+			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}"
 	)
 '
 
 test_expect_success "git-repo sync (-l), 100 jobs" '
 	(
 		cd work &&
-		git-repo sync -l -j 100
+		git-repo sync -l -j 100 \
+			--mock-ssh-info-status 200 \
+			--mock-ssh-info-response \
+			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}"
 	)
 '
 

@@ -17,7 +17,10 @@ test_expect_success "git-repo init & sync" '
 	(
 		cd work &&
 		git-repo init -u $manifest_url -g all -b maint &&
-		git-repo sync
+		git-repo sync \
+			--mock-ssh-info-status 200 \
+			--mock-ssh-info-response \
+			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}"
 	)
 '
 

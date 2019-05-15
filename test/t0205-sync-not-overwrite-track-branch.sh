@@ -17,7 +17,10 @@ test_expect_success "git-repo sync to maint branch" '
 	(
 		cd work &&
 		git-repo init -u $manifest_url -b maint &&
-		git-repo sync
+		git-repo sync \
+			--mock-ssh-info-status 200 \
+			--mock-ssh-info-response \
+			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}"
 	)
 '
 
@@ -50,7 +53,10 @@ test_expect_success "fail to sync, workspace is dirty" '
 	(
 		cd work &&
 		git-repo init -u $manifest_url -b master &&
-		test_must_fail git-repo sync	
+		test_must_fail git-repo sync \
+			--mock-ssh-info-status 200 \
+			--mock-ssh-info-response \
+			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}"
 	)
 '
 
@@ -73,8 +79,12 @@ test_expect_success "fail to sync drivers/driver-1, workspace is dirty (not stag
 		EOF
 		git -C drivers/driver-1 status -uno --porcelain >actual &&
 		test_cmp expect actual &&
-		test_must_fail git-repo sync -l -- drivers/driver-1 2>&1 | \
-			grep "^Error:" >actual &&
+		test_must_fail git-repo sync -l \
+			--mock-ssh-info-status 200 \
+			--mock-ssh-info-response \
+			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
+			-- drivers/driver-1 \
+			2>&1 | grep "^Error:" >actual &&
 		cat >expect <<-EOF &&
 		Error: worktree of drivers/driver1 is dirty, checkout failed
 		EOF
@@ -91,8 +101,12 @@ test_expect_success "fail to sync projects/app1, workspace is dirty (not staged)
 		EOF
 		git -C projects/app1 status -uno --porcelain >actual &&
 		test_cmp expect actual &&
-		test_must_fail git-repo sync -l -- projects/app1 2>&1 | \
-			grep "^Error:" >actual &&
+		test_must_fail git-repo sync -l \
+			--mock-ssh-info-status 200 \
+			--mock-ssh-info-response \
+			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
+			-- projects/app1 \
+			2>&1 | grep "^Error:" >actual &&
 		cat >expect <<-EOF &&
 		Error: worktree of project1 is dirty, checkout failed
 		EOF
@@ -109,8 +123,12 @@ test_expect_success "fail to sync projects/app2, workspace is dirty (staged)" '
 		EOF
 		git -C projects/app2 status -uno --porcelain >actual &&
 		test_cmp expect actual &&
-		test_must_fail git-repo sync -l -- projects/app2 2>&1 | \
-			grep "^Error:" >actual &&
+		test_must_fail git-repo sync -l \
+			--mock-ssh-info-status 200 \
+			--mock-ssh-info-response \
+			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}"  \
+			-- projects/app2 \
+			2>&1 | grep "^Error:" >actual &&
 		cat >expect <<-EOF &&
 		Error: worktree of project2 is dirty, checkout failed
 		EOF

@@ -17,7 +17,10 @@ test_expect_success "git-repo sync to maint branch" '
 	(
 		cd work &&
 		git-repo init -u $manifest_url -b master &&
-		git-repo sync
+		git-repo sync \
+			--mock-ssh-info-status 200 \
+			--mock-ssh-info-response \
+			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}"
 	)
 '
 
@@ -39,7 +42,10 @@ test_expect_success "git-repo resync again" '
 	(
 		cd work &&
 		git-repo init -u $manifest_url &&
-		git-repo sync
+		git-repo sync \
+			--mock-ssh-info-status 200 \
+			--mock-ssh-info-response \
+			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}"
 	)
 '
 
