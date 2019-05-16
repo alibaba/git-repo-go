@@ -49,6 +49,11 @@ func (v GitURL) GetReviewURL() string {
 	return u
 }
 
+// IsSSH indicates protocol is SSH
+func (v GitURL) IsSSH() bool {
+	return v.Proto == "ssh"
+}
+
 func getMatchedGitURL(re *regexp.Regexp, data string) *GitURL {
 	matches := re.FindStringSubmatch(data)
 	if len(matches) == 0 {

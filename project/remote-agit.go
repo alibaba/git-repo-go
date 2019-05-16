@@ -65,8 +65,13 @@ func (v *AGitRemote) UploadCommands(o *UploadOptions, branch *ReviewableBranch) 
 	}
 	url += p.Name + ".git"
 
+	gitURL := config.ParseGitURL(url)
+	if gitURL == nil {
+		return nil, fmt.Errorf("bad review url: %s", url)
+	}
+
 	cmds = append(cmds, "git", "push")
-	if strings.HasPrefix(url, "ssh://") {
+	if gitURL.IsSSH() {
 		cmds = append(cmds, "--receive-pack=agit-receive-pack")
 	}
 	for _, pushOption := range o.PushOptions {
