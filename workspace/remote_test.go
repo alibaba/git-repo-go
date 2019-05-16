@@ -228,7 +228,7 @@ func TestLoadRemoteSSHProtocolReview(t *testing.T) {
 	assert.Nil(err)
 	assert.NotNil(remote)
 	assert.Nil(remote.GetSSHInfo())
-	assert.Equal("gerrit", remote.GetType())
+	assert.Equal("agit", remote.GetType())
 	assert.Equal("ssh://git@example.com", remote.GetRemote().Review)
 }
 

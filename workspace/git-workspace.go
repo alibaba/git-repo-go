@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 	"path/filepath"
-	"regexp"
 	"strings"
 
 	"code.alibaba-inc.com/force/git-repo/config"
@@ -74,6 +73,21 @@ func (v GitWorkSpace) newProject(worktree, gitdir string) (*project.Project, err
 			"Please run command \"git checkout -b <branch>\" to create a new branch.")
 	}
 
+	gitURL := config.ParseGitURL(remoteURL)
+	if gitURL != nil {
+		name = gitURL.Repo
+		repo.Name = name
+	}
+
+	reviewURL := repo.Config().Get("remote." + remoteName + ".review")
+	if reviewURL == "" {
+		if gitURL == nil {
+			return nil, fmt.Errorf("cannot find review URL from '%s'", remoteURL)
+		}
+		reviewURL = gitURL.GetReviewURL()
+	}
+	log.Debugf("Review URL: %s", reviewURL)
+
 	p := project.Project{
 		Project: manifest.Project{
 			Name:       name,
@@ -87,15 +101,6 @@ func (v GitWorkSpace) newProject(worktree, gitdir string) (*project.Project, err
 		WorkRepository:   &repo,
 		Settings:         &s,
 	}
-
-	reviewURL := p.Config().Get("remote." + remoteName + ".review")
-	if reviewURL == "" {
-		reviewURL, err = getReviewURL(remoteURL)
-		if err != nil {
-			return nil, err
-		}
-	}
-	log.Debugf("Review URL: %s", reviewURL)
 
 	mr := manifest.Remote{
 		Name:     remoteName,
@@ -116,32 +121,6 @@ func (v GitWorkSpace) newProject(worktree, gitdir string) (*project.Project, err
 // GetProjects returns all projects
 func (v GitWorkSpace) GetProjects(*GetProjectsOptions, ...string) ([]*project.Project, error) {
 	return v.Projects, nil
-}
-
-func getReviewURL(address string) (string, error) {
-	var (
-		unknownProtoForReview = regexp.MustCompile(`^(.+)://.+`)
-
-		match []string
-	)
-
-	match = config.GitHTTPProtocolPattern.FindStringSubmatch(address)
-	if len(match) > 0 {
-		return match[1] + match[3], nil
-	}
-	match = config.GitSSHProtocolPattern.FindStringSubmatch(address)
-	if len(match) > 0 {
-		return match[2], nil
-	}
-	match = config.GitRsyncProtocolPattern.FindStringSubmatch(address)
-	if len(match) > 0 {
-		return match[2], nil
-	}
-	match = unknownProtoForReview.FindStringSubmatch(address)
-	if len(match) > 0 {
-		return "", fmt.Errorf("cannot find review URL for protocol: '%s'", match[1])
-	}
-	return "", fmt.Errorf("cannot find review URL from '%s'", address)
 }
 
 // Load sets fields of git work space

@@ -159,9 +159,10 @@ func loadRemote(r *manifest.Remote) (project.Remote, error) {
 		return project.NewRemote(r, remoteType, sshInfo)
 	}
 
+	gitURL := config.ParseGitURL(u)
+
 	if strings.HasPrefix(u, "sso:") ||
-		strings.HasPrefix(u, "ssh:") ||
-		config.GitRsyncProtocolPattern.Match(u) {
+		(gitURL != nil && gitURL.Proto == "ssh") {
 		if remoteType == "" {
 			remoteType = config.RemoteTypeAGit
 		}

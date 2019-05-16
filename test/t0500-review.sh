@@ -86,7 +86,7 @@ test_expect_success "upload error: unknown URL protocol" '
 	(
 		cd work &&
 		cat >expect<<-EOF &&
-		FATAL: cannot find review URL for protocol: '"'"'file'"'"'
+		FATAL: cannot find review URL from '"'"'file:///home/jiangxin/work/git-repo/git-repo/test/test-repositories/hello/main.git'"'"'
 		EOF
 		test_must_fail git -C main review >actual 2>&1 &&
 		test_cmp expect actual
@@ -96,7 +96,7 @@ test_expect_success "upload error: unknown URL protocol" '
 test_expect_success "update remote URL using http protocol" '
 	(
 		cd work &&
-		git -C main config remote.aone.url https://example.com/project2.git
+		git -C main config remote.aone.url https://example.com/jiangxin/main.git
 	)
 '
 
@@ -130,11 +130,11 @@ test_expect_success "will upload one commit for review (dryrun, draft)" '
 	(
 		cd work &&
 		cat >expect<<-EOF &&
-		Upload project (main) to remote branch master (draft):
+		Upload project (jiangxin/main) to remote branch master (draft):
 		  branch my/topic-test ( 1 commit(s)):
 		         <hash>
 		to https://example.com (y/N)? Yes
-		NOTE: will execute command: git push --receive-pack=agit-receive-pack ssh://git@ssh.example.com:22/main.git refs/heads/my/topic-test:refs/drafts/master/my/topic-test
+		NOTE: will execute command: git push --receive-pack=agit-receive-pack ssh://git@ssh.example.com:22/jiangxin/main.git refs/heads/my/topic-test:refs/drafts/master/my/topic-test
 		NOTE: will update-ref refs/published/my/topic-test on refs/heads/my/topic-test, reason: review from my/topic-test to master on https://example.com
 		
 		----------------------------------------------------------------------
@@ -155,11 +155,11 @@ test_expect_success "will upload one commit for review (dryrun)" '
 	(
 		cd work &&
 		cat >expect<<-EOF &&
-		Upload project (main) to remote branch master:
+		Upload project (jiangxin/main) to remote branch master:
 		  branch my/topic-test ( 1 commit(s)):
 		         <hash>
 		to https://example.com (y/N)? Yes
-		NOTE: will execute command: git push --receive-pack=agit-receive-pack -o title={base64}cmV2aWV3IGV4YW1wbGU= -o description={base64}cmV2aWV3IGRlc2NyaXB0aW9uXG4uLi5cbg== -o reviewers=user1,user2,user3,user4 -o cc=user5,user6,user7 -o notify=no -o private=yes -o wip=yes ssh://git@ssh.example.com:22/main.git refs/heads/my/topic-test:refs/for/master/my/topic-test
+		NOTE: will execute command: git push --receive-pack=agit-receive-pack -o title={base64}cmV2aWV3IGV4YW1wbGU= -o description={base64}cmV2aWV3IGRlc2NyaXB0aW9uXG4uLi5cbg== -o reviewers=user1,user2,user3,user4 -o cc=user5,user6,user7 -o notify=no -o private=yes -o wip=yes ssh://git@ssh.example.com:22/jiangxin/main.git refs/heads/my/topic-test:refs/for/master/my/topic-test
 		NOTE: will update-ref refs/published/my/topic-test on refs/heads/my/topic-test, reason: review from my/topic-test to master on https://example.com
 		
 		----------------------------------------------------------------------
@@ -188,11 +188,11 @@ test_expect_success "will upload one commit for review (mock-git-push, not dryru
 	(
 		cd work &&
 		cat >expect<<-EOF &&
-		Upload project (main) to remote branch master:
+		Upload project (jiangxin/main) to remote branch master:
 		  branch my/topic-test ( 1 commit(s)):
 		         <hash>
 		to https://example.com (y/N)? Yes
-		NOTE: will execute command: git push --receive-pack=agit-receive-pack ssh://git@ssh.example.com:22/main.git refs/heads/my/topic-test:refs/for/master/my/topic-test
+		NOTE: will execute command: git push --receive-pack=agit-receive-pack ssh://git@ssh.example.com:22/jiangxin/main.git refs/heads/my/topic-test:refs/for/master/my/topic-test
 		
 		----------------------------------------------------------------------
 		EOF
@@ -248,7 +248,7 @@ test_expect_success "ATTENTION confirm if there are too many commits for review"
 	(
 		cd work &&
 		cat >expect<<-EOF &&
-		Upload project (main) to remote branch master:
+		Upload project (jiangxin/main) to remote branch master:
 		  branch my/topic-test (11 commit(s)):
 		         <hash>
 		         <hash>
@@ -265,7 +265,7 @@ test_expect_success "ATTENTION confirm if there are too many commits for review"
 		ATTENTION: You are uploading an unusually high number of commits.
 		YOU PROBABLY DO NOT MEAN TO DO THIS. (Did you rebase across branches?)
 		If you are sure you intend to do this, type '"'"'yes'"'"': Yes
-		NOTE: will execute command: git push --receive-pack=agit-receive-pack ssh://git@ssh.example.com:22/main.git refs/heads/my/topic-test:refs/for/master/my/topic-test
+		NOTE: will execute command: git push --receive-pack=agit-receive-pack ssh://git@ssh.example.com:22/jiangxin/main.git refs/heads/my/topic-test:refs/for/master/my/topic-test
 
 		----------------------------------------------------------------------
 		EOF

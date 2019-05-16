@@ -32,13 +32,6 @@ var (
 
 	// CommitIDPattern indicates raw commit ID
 	CommitIDPattern = regexp.MustCompile(`^[0-9a-f]{40}([0-9a-f]{24})?$`)
-
-	// GitHTTPProtocolPattern indicates git over HTTP protocol
-	GitHTTPProtocolPattern = regexp.MustCompile(`^(http://|https://)(.*@)?([^/]+)`)
-	// GitSSHProtocolPattern indicates git over SSH protocol
-	GitSSHProtocolPattern = regexp.MustCompile(`^ssh://(.*@)?([^/:]+)`)
-	// GitRsyncProtocolPattern indicates rsync style git over SSH protocol
-	GitRsyncProtocolPattern = regexp.MustCompile(`^([^:/]*@)([^/:]+):`)
 )
 
 // Exported macros
