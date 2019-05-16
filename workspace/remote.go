@@ -117,6 +117,12 @@ func (v RepoWorkSpace) loadRemote(r *manifest.Remote) (project.Remote, error) {
 	return loadRemote(r)
 }
 
+// Checks Review URL in Remote of manifest.  Review URL can be:
+//   1. Empty: code review by pushing is not available.
+//   2. HTTP web url: will call /ssh_info API, and get server type
+//      (Gerrit or AGit), ssh host and port.
+//   3. SSH protocol (host and port only), like:
+//      `ssh://user@hostname:port` or `git@hostname:`
 func loadRemote(r *manifest.Remote) (project.Remote, error) {
 	var (
 		err        error
@@ -129,6 +135,7 @@ func loadRemote(r *manifest.Remote) (project.Remote, error) {
 		u = strings.TrimSuffix(u, "/")
 	}
 
+	// No review URL, returns UnknownRemote (code review is not supported)
 	if u == "" {
 		return &project.UnknownRemote{
 			Remote: *r,
@@ -138,7 +145,6 @@ func loadRemote(r *manifest.Remote) (project.Remote, error) {
 	if strings.HasPrefix(u, "persistent-") {
 		u = u[len("persistent-"):]
 	}
-
 	if strings.HasSuffix(strings.ToLower(u), "/gerrit") {
 		u = u[0 : len(u)-len("/Gerrit")]
 		remoteType = config.RemoteTypeGerrit
@@ -159,10 +165,17 @@ func loadRemote(r *manifest.Remote) (project.Remote, error) {
 		return project.NewRemote(r, remoteType, sshInfo)
 	}
 
-	gitURL := config.ParseGitURL(u)
+	if strings.HasPrefix(u, "sso:") {
+		if remoteType == "" {
+			remoteType = config.RemoteTypeAGit
+		}
+		return project.NewRemote(r, remoteType, "")
+	}
 
-	if strings.HasPrefix(u, "sso:") ||
-		(gitURL != nil && gitURL.Proto == "ssh") {
+	gitURL := config.ParseGitURL(u)
+	if gitURL != nil && gitURL.Proto == "ssh" {
+		// TODO: create ssh connection and execute review-info command
+		// TODO: parse review-info cmd output, and set proper remoteType
 		if remoteType == "" {
 			remoteType = config.RemoteTypeAGit
 		}
@@ -177,7 +190,6 @@ func loadRemote(r *manifest.Remote) (project.Remote, error) {
 	}
 
 	infoURL := u + "/ssh_info"
-	proto := strings.SplitN(infoURL, "://", 2)[0]
 
 	// Mock ssh_info API
 	if config.GetMockSSHInfoResponse() != "" || config.GetMockSSHInfoStatus() != 0 {
@@ -186,7 +198,7 @@ func loadRemote(r *manifest.Remote) (project.Remote, error) {
 			mockStatus = 200
 		}
 		mockResponse := config.GetMockSSHInfoResponse()
-		if proto == "http" || proto == "https" {
+		if gitURL != nil && (gitURL.Proto == "http" || gitURL.Proto == "https") {
 			gock.New(infoURL).
 				Reply(mockStatus).
 				BodyString(mockResponse)
@@ -200,7 +212,8 @@ func loadRemote(r *manifest.Remote) (project.Remote, error) {
 		}
 	}
 
-	if proto == "http" || proto == "https" {
+	// Call /ssh_info API
+	if gitURL != nil && (gitURL.Proto == "http" || gitURL.Proto == "https") {
 		log.Debugf("start checking ssh_info from %s", infoURL)
 		resp, err = callSSHInfoAPI(infoURL)
 	} else {
