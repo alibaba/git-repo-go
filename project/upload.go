@@ -116,6 +116,7 @@ func (v ReviewableBranch) UploadForReview(o *UploadOptions, people [][]string) e
 	if config.IsDryRun() || config.MockGitPush() {
 		log.Notef("will execute command: %s", strings.Join(cmdArgs, " "))
 	} else {
+		log.Debugf("review by command: %s", strings.Join(cmdArgs, " "))
 		cmd := exec.Command(cmdArgs[0], cmdArgs[1:]...)
 		cmd.Dir = p.WorkDir
 		cmd.Stdin = os.Stdin
@@ -136,6 +137,7 @@ func (v ReviewableBranch) UploadForReview(o *UploadOptions, people [][]string) e
 		o.DestBranch,
 		manifestRemote.Review)
 
+	log.Debugf("Update reference '%s': %s", config.RefsPub+branchName, msg)
 	err = p.UpdateRef(config.RefsPub+branchName,
 		config.RefsHeads+branchName,
 		msg)
