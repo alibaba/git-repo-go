@@ -42,9 +42,11 @@ func (v *AGitRemote) getReviewURL(email string) string {
 	if sshInfo == nil || sshInfo.Host == "" || sshInfo.Port == 0 {
 		review = v.Review
 	} else {
-		host := sshInfo.Host
-		port := sshInfo.Port
-		review = fmt.Sprintf("ssh://git@%s:%d", host, port)
+		if sshInfo.Port > 0 && sshInfo.Port != 22 {
+			review = fmt.Sprintf("ssh://git@%s:%d", sshInfo.Host, sshInfo.Port)
+		} else {
+			review = fmt.Sprintf("ssh://git@%s", sshInfo.Host)
+		}
 	}
 	return review
 }
