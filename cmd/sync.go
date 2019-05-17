@@ -733,7 +733,7 @@ func (v syncCommand) runE(args []string) error {
 
 	// If there's a notice that's supposed to print at the end of the sync,
 	// print it now...
-	if ws.Manifest.Notice != "" {
+	if ws.Manifest != nil && ws.Manifest.Notice != "" {
 		log.Note(ws.Manifest.Notice)
 	}
 
