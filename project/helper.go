@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"unicode"
 
 	"code.alibaba-inc.com/force/git-repo/config"
 )
@@ -181,4 +182,14 @@ func IsImmutable(revision string) bool {
 	}
 	// is a head
 	return false
+}
+
+// IsASCII checks if string contains only ASCII
+func IsASCII(s string) bool {
+	for i := 0; i < len(s); i++ {
+		if s[i] > unicode.MaxASCII {
+			return false
+		}
+	}
+	return true
 }

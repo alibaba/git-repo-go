@@ -81,26 +81,21 @@ func (v *AGitRemote) UploadCommands(o *UploadOptions, branch *ReviewableBranch) 
 	}
 
 	if o.Title != "" {
-		cmds = append(cmds, "-o",
-			fmt.Sprintf("title={base64}%s",
-				base64.StdEncoding.EncodeToString([]byte(o.Title))))
+		cmds = append(cmds, "-o", "title="+encodeString(o.Title))
 	}
 	if o.Description != "" {
-		cmds = append(cmds, "-o",
-			fmt.Sprintf("description={base64}%s",
-				base64.StdEncoding.EncodeToString([]byte(o.Description))))
+		cmds = append(cmds, "-o", "description="+encodeString(o.Description))
 	}
 	if o.Issue != "" {
-		cmds = append(cmds, "-o", fmt.Sprintf("issue=%s", o.Issue))
+		cmds = append(cmds, "-o", "issue="+encodeString(o.Issue))
 	}
-
 	if len(o.People[0]) > 0 {
 		reviewers := strings.Join(o.People[0], ",")
-		cmds = append(cmds, "-o", "reviewers="+reviewers)
+		cmds = append(cmds, "-o", "reviewers="+encodeString(reviewers))
 	}
 	if len(o.People[1]) > 0 {
 		cc := strings.Join(o.People[1], ",")
-		cmds = append(cmds, "-o", "cc="+cc)
+		cmds = append(cmds, "-o", "cc="+encodeString(cc))
 	}
 
 	if o.NoEmails {
@@ -137,4 +132,11 @@ func (v *AGitRemote) UploadCommands(o *UploadOptions, branch *ReviewableBranch) 
 	cmds = append(cmds, refSpec)
 
 	return cmds, nil
+}
+
+func encodeString(s string) string {
+	if strings.Contains(s, "\n") || !IsASCII(s) {
+		return "{base64}" + base64.StdEncoding.EncodeToString([]byte(s))
+	}
+	return s
 }

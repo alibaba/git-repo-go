@@ -157,7 +157,7 @@ test_expect_success "will upload one commit for review (http/dryrun)" '
 		  branch my/topic-test ( 1 commit(s)):
 		         <hash>
 		to https://example.com (y/N)? Yes
-		NOTE: will execute command: git push --receive-pack=agit-receive-pack -o title={base64}cmV2aWV3IGV4YW1wbGU= -o description={base64}cmV2aWV3IGRlc2NyaXB0aW9uXG4uLi5cbg== -o reviewers=user1,user2,user3,user4 -o cc=user5,user6,user7 -o notify=no -o private=yes -o wip=yes ssh://git@ssh.example.com/jiangxin/main.git refs/heads/my/topic-test:refs/for/master/my/topic-test
+		NOTE: will execute command: git push --receive-pack=agit-receive-pack -o title=review example -o description={base64}6K+m57uG6K+05piOXG4uLi5cbg== -o reviewers=user1,user2,user3,user4 -o cc=user5,user6,user7 -o notify=no -o private=yes -o wip=yes ssh://git@ssh.example.com/jiangxin/main.git refs/heads/my/topic-test:refs/for/master/my/topic-test
 		NOTE: will update-ref refs/published/my/topic-test on refs/heads/my/topic-test, reason: review from my/topic-test to master on https://example.com
 		
 		----------------------------------------------------------------------
@@ -173,7 +173,7 @@ test_expect_success "will upload one commit for review (http/dryrun)" '
 			--cc user5,user6 \
 			--cc user7 \
 			--title "review example" \
-			--description "review description\n...\n" \
+			--description "详细说明\n...\n" \
 			--private \
 			--wip \
 			--no-emails \
