@@ -4,20 +4,15 @@ test_description="upload test"
 
 . ./lib/sharness.sh
 
-# Create manifest repositories
-manifest_url="file://${REPO_TEST_REPOSITORIES}/hello/manifests"
+main_repo_url="file://${REPO_TEST_REPOSITORIES}/hello/main.git"
 
 test_expect_success "setup" '
-	# create .repo file as a barrier, not find .repo deeper
+	# checkout main.git and make it detached
 	touch .repo &&
 	mkdir work &&
 	(
 		cd work &&
-		git-repo init -u $manifest_url -g all -b maint &&
-		git-repo sync \
-			--mock-ssh-info-status 200 \
-			--mock-ssh-info-response \
-			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}"
+		git clone $main_repo_url main
 	)
 '
 
@@ -46,6 +41,9 @@ test_expect_success "upload error: not in a branch" '
 		
 		Please run command "git checkout -b <branch>" to create a new branch.
 		EOF
+		cd main &&
+		git checkout HEAD^0 &&
+		cd .. &&
 		test_must_fail git -C main review >actual 2>&1 &&
 		test_cmp expect actual
 	)
@@ -70,15 +68,15 @@ test_expect_success "upload error: cannot find track branch" '
 test_expect_success "upload error: no remote URL" '
 	(
 		cd work &&
-		git -C main branch -u aone/master &&
-		oldurl=$(git -C main config remote.aone.url) &&
-		git -C main config --unset remote.aone.url &&
+		git -C main branch -u origin/master &&
+		oldurl=$(git -C main config remote.origin.url) &&
+		git -C main config --unset remote.origin.url &&
 		cat >expect<<-EOF &&
-		FATAL: upload failed: unknown URL for remote: aone
+		FATAL: upload failed: unknown URL for remote: origin
 		EOF
 		test_must_fail git -C main review >actual 2>&1 &&
 		test_cmp expect actual &&
-		git -C main config remote.aone.url $oldurl
+		git -C main config remote.origin.url $oldurl
 	)
 '
 
@@ -86,9 +84,9 @@ test_expect_success "upload error: unknown URL protocol" '
 	(
 		cd work &&
 		cat >expect<<-EOF &&
-		FATAL: cannot find review URL from '"'"'file:///home/jiangxin/work/git-repo/git-repo/test/test-repositories/hello/main.git'"'"'
+		FATAL: cannot find review URL from '"'"'file:///path/of/main.git'"'"'
 		EOF
-		test_must_fail git -C main review >actual 2>&1 &&
+		test_must_fail git -C main review 2>&1 | sed -e "s#///.*/main.git#///path/of/main.git#" >actual 2>&1 &&
 		test_cmp expect actual
 	)
 '
@@ -96,7 +94,7 @@ test_expect_success "upload error: unknown URL protocol" '
 test_expect_success "update remote URL using http protocol" '
 	(
 		cd work &&
-		git -C main config remote.aone.url https://example.com/jiangxin/main.git
+		git -C main config remote.origin.url https://example.com/jiangxin/main.git
 	)
 '
 
@@ -126,7 +124,7 @@ test_expect_success "New commit in main project" '
 	)
 '
 
-test_expect_success "will upload one commit for review (dryrun, draft)" '
+test_expect_success "will upload one commit for review (http/dryrun/draft)" '
 	(
 		cd work &&
 		cat >expect<<-EOF &&
@@ -134,7 +132,7 @@ test_expect_success "will upload one commit for review (dryrun, draft)" '
 		  branch my/topic-test ( 1 commit(s)):
 		         <hash>
 		to https://example.com (y/N)? Yes
-		NOTE: will execute command: git push --receive-pack=agit-receive-pack ssh://git@ssh.example.com:22/jiangxin/main.git refs/heads/my/topic-test:refs/drafts/master/my/topic-test
+		NOTE: will execute command: git push --receive-pack=agit-receive-pack ssh://git@ssh.example.com/jiangxin/main.git refs/heads/my/topic-test:refs/drafts/master/my/topic-test
 		NOTE: will update-ref refs/published/my/topic-test on refs/heads/my/topic-test, reason: review from my/topic-test to master on https://example.com
 		
 		----------------------------------------------------------------------
@@ -151,7 +149,7 @@ test_expect_success "will upload one commit for review (dryrun, draft)" '
 	)
 '
 
-test_expect_success "will upload one commit for review (dryrun)" '
+test_expect_success "will upload one commit for review (http/dryrun)" '
 	(
 		cd work &&
 		cat >expect<<-EOF &&
@@ -159,7 +157,7 @@ test_expect_success "will upload one commit for review (dryrun)" '
 		  branch my/topic-test ( 1 commit(s)):
 		         <hash>
 		to https://example.com (y/N)? Yes
-		NOTE: will execute command: git push --receive-pack=agit-receive-pack -o title={base64}cmV2aWV3IGV4YW1wbGU= -o description={base64}cmV2aWV3IGRlc2NyaXB0aW9uXG4uLi5cbg== -o reviewers=user1,user2,user3,user4 -o cc=user5,user6,user7 -o notify=no -o private=yes -o wip=yes ssh://git@ssh.example.com:22/jiangxin/main.git refs/heads/my/topic-test:refs/for/master/my/topic-test
+		NOTE: will execute command: git push --receive-pack=agit-receive-pack -o title={base64}cmV2aWV3IGV4YW1wbGU= -o description={base64}cmV2aWV3IGRlc2NyaXB0aW9uXG4uLi5cbg== -o reviewers=user1,user2,user3,user4 -o cc=user5,user6,user7 -o notify=no -o private=yes -o wip=yes ssh://git@ssh.example.com/jiangxin/main.git refs/heads/my/topic-test:refs/for/master/my/topic-test
 		NOTE: will update-ref refs/published/my/topic-test on refs/heads/my/topic-test, reason: review from my/topic-test to master on https://example.com
 		
 		----------------------------------------------------------------------
@@ -184,7 +182,7 @@ test_expect_success "will upload one commit for review (dryrun)" '
 	)
 '
 
-test_expect_success "will upload one commit for review (mock-git-push, not dryrun)" '
+test_expect_success "will upload one commit for review (http/mock-git-push/not-dryrun)" '
 	(
 		cd work &&
 		cat >expect<<-EOF &&
@@ -192,7 +190,7 @@ test_expect_success "will upload one commit for review (mock-git-push, not dryru
 		  branch my/topic-test ( 1 commit(s)):
 		         <hash>
 		to https://example.com (y/N)? Yes
-		NOTE: will execute command: git push --receive-pack=agit-receive-pack ssh://git@ssh.example.com:22/jiangxin/main.git refs/heads/my/topic-test:refs/for/master/my/topic-test
+		NOTE: will execute command: git push --receive-pack=agit-receive-pack ssh://git@ssh.example.com:10022/jiangxin/main.git refs/heads/my/topic-test:refs/for/master/my/topic-test
 		
 		----------------------------------------------------------------------
 		EOF
@@ -201,7 +199,7 @@ test_expect_success "will upload one commit for review (mock-git-push, not dryru
 			--mock-git-push \
 			--mock-ssh-info-status 200 \
 			--mock-ssh-info-response \
-			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
+			"{\"host\":\"ssh.example.com\", \"port\":10022, \"type\":\"agit\"}" \
 			2>&1 | sed -e "s/[0-9a-f]\{40\}/<hash>/g" >actual &&
 		test_cmp expect actual
 	)
@@ -233,6 +231,97 @@ test_expect_success "upload again, no branch ready for upload" '
 	)
 '
 
+test_expect_success "amend current commit" '
+	(
+		cd work/main &&
+		git commit --amend -m "amend current commit"
+	)
+'
+
+test_expect_success "update remote URL using ssh port 10022" '
+	(
+		cd work/main &&
+		git config remote.origin.url ssh://git@example.com:10022/jiangxin/main.git
+	)
+'
+
+test_expect_success "upload to a ssh review url" '
+	(
+		cd work &&
+		cat >expect<<-EOF &&
+		Upload project (jiangxin/main) to remote branch master:
+		  branch my/topic-test ( 1 commit(s)):
+		         <hash>
+		to ssh://git@example.com:10022 (y/N)? Yes
+		NOTE: will execute command: git push --receive-pack=agit-receive-pack ssh://git@example.com:10022/jiangxin/main.git refs/heads/my/topic-test:refs/for/master/my/topic-test
+		NOTE: will update-ref refs/published/my/topic-test on refs/heads/my/topic-test, reason: review from my/topic-test to master on ssh://git@example.com:10022
+		
+		----------------------------------------------------------------------
+		EOF
+		git -C main review \
+			--assume-yes \
+			--dryrun \
+			2>&1 | sed -e "s/[0-9a-f]\{40\}/<hash>/g" >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success "update remote URL using ssh port 29418" '
+	(
+		cd work/main &&
+		git config remote.origin.url ssh://git@example.com:29418/jiangxin/main.git
+	)
+'
+
+test_expect_success "upload to gerrit ssh review url" '
+	(
+		cd work &&
+		cat >expect<<-EOF &&
+		Upload project (jiangxin/main) to remote branch master:
+		  branch my/topic-test ( 1 commit(s)):
+		         <hash>
+		to ssh://git@example.com:29418 (y/N)? Yes
+		NOTE: will execute command: git push --receive-pack=gerrit receive-pack ssh://git@example.com:29418/jiangxin/main.git refs/heads/my/topic-test:refs/for/master
+		NOTE: will update-ref refs/published/my/topic-test on refs/heads/my/topic-test, reason: review from my/topic-test to master on ssh://git@example.com:29418
+		
+		----------------------------------------------------------------------
+		EOF
+		git -C main review \
+			--assume-yes \
+			--dryrun \
+			2>&1 | sed -e "s/[0-9a-f]\{40\}/<hash>/g" >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success "update remote URL with a rcp style URL" '
+	(
+		cd work/main &&
+		git config remote.origin.url git@example.com:jiangxin/main.git
+	)
+'
+
+test_expect_success "upload to a ssh review using rcp style URL" '
+	(
+		cd work &&
+		cat >expect<<-EOF &&
+		Upload project (jiangxin/main) to remote branch master:
+		  branch my/topic-test ( 1 commit(s)):
+		         <hash>
+		to ssh://git@example.com (y/N)? Yes
+		NOTE: will execute command: git push --receive-pack=agit-receive-pack ssh://git@example.com/jiangxin/main.git refs/heads/my/topic-test:refs/for/master/my/topic-test
+		NOTE: will update-ref refs/published/my/topic-test on refs/heads/my/topic-test, reason: review from my/topic-test to master on ssh://git@example.com
+		
+		----------------------------------------------------------------------
+		EOF
+		git -C main review \
+			--assume-yes \
+			--dryrun \
+			2>&1 | sed -e "s/[0-9a-f]\{40\}/<hash>/g" >actual &&
+		test_cmp expect actual
+	)
+'
+
 test_expect_success "create more commits" '
 	(
 		cd work/main &&
@@ -241,6 +330,13 @@ test_expect_success "create more commits" '
 			test_tick &&
 			git commit --allow-empty -m "commit #$i"
 		done
+	)
+'
+
+test_expect_success "update remote URL back using http protocol" '
+	(
+		cd work &&
+		git -C main config remote.origin.url https://example.com/jiangxin/main.git
 	)
 '
 
@@ -265,7 +361,7 @@ test_expect_success "ATTENTION confirm if there are too many commits for review"
 		ATTENTION: You are uploading an unusually high number of commits.
 		YOU PROBABLY DO NOT MEAN TO DO THIS. (Did you rebase across branches?)
 		If you are sure you intend to do this, type '"'"'yes'"'"': Yes
-		NOTE: will execute command: git push --receive-pack=agit-receive-pack ssh://git@ssh.example.com:22/jiangxin/main.git refs/heads/my/topic-test:refs/for/master/my/topic-test
+		NOTE: will execute command: git push --receive-pack=agit-receive-pack ssh://git@ssh.example.com/jiangxin/main.git refs/heads/my/topic-test:refs/for/master/my/topic-test
 
 		----------------------------------------------------------------------
 		EOF
