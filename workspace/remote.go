@@ -177,7 +177,11 @@ func loadRemote(r *manifest.Remote) (project.Remote, error) {
 		// TODO: create ssh connection and execute review-info command
 		// TODO: parse review-info cmd output, and set proper remoteType
 		if remoteType == "" {
-			remoteType = config.RemoteTypeAGit
+			if gitURL.Port == 29418 {
+				remoteType = config.RemoteTypeGerrit
+			} else {
+				remoteType = config.RemoteTypeAGit
+			}
 		}
 		return project.NewRemote(r, remoteType, "")
 	}
