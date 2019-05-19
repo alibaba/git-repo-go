@@ -474,6 +474,9 @@ func Load(repoDir string) (*Manifest, error) {
 			defaultXML = config.DefaultXML
 		}
 		file = filepath.Join(manifestsDir, defaultXML)
+		if _, err = os.Stat(file); err != nil {
+			return nil, err
+		}
 	}
 	return LoadFile(repoDir, file)
 }

@@ -104,9 +104,9 @@ func TestLoad(t *testing.T) {
 		log.Fatal(err)
 	}
 
-	// load with missing manifest won't fail
+	// load with missing manifest will fail
 	m, err := Load(repoDir)
-	assert.Nil(err)
+	assert.NotNil(err)
 	assert.Nil(m)
 
 	// create manifest.xml

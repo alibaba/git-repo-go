@@ -315,23 +315,28 @@ func NewRepoWorkSpace(dir string) (*RepoWorkSpace, error) {
 	return newRepoWorkSpace(repoRoot, "")
 }
 
-// NewRepoWorkSpaceInit finds repo root and load specific manifest file.
-// If workspace is not found, will use <dir> as root of a new workspace.
-func NewRepoWorkSpaceInit(dir, manifestURL string) (*RepoWorkSpace, error) {
+// NewEmptyRepoWorkSpace returns empty workspace for new created workspace.
+func NewEmptyRepoWorkSpace(dir, manifestURL string) (*RepoWorkSpace, error) {
 	var (
 		err error
 	)
 
-	repoRoot, err := path.FindRepoRoot(dir)
-	if err != nil {
-		if err == errors.ErrRepoDirNotFound {
-			repoRoot = dir
-		} else {
+	if dir == "" {
+		dir, err = path.Abs(dir)
+		if err != nil {
 			return nil, err
 		}
 	}
 
-	return newRepoWorkSpace(repoRoot, manifestURL)
+	ws := RepoWorkSpace{RootDir: dir}
+	ws.Manifest = nil
+	err = ws.loadProjects(manifestURL)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &ws, nil
 }
 
 func newRepoWorkSpace(dir, manifestURL string) (*RepoWorkSpace, error) {

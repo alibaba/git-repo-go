@@ -218,7 +218,7 @@ func (v initCommand) runE(args []string) error {
 		if v.O.ManifestURL == "" {
 			log.Fatal("option --manifest-url (-u) is required")
 		}
-		ws, err = workspace.NewRepoWorkSpaceInit(repoRoot, v.O.ManifestURL)
+		ws, err = workspace.NewEmptyRepoWorkSpace(repoRoot, v.O.ManifestURL)
 		v.ws = ws
 		if err != nil {
 			return err

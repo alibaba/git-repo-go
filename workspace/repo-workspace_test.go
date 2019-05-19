@@ -127,7 +127,7 @@ func TestNewLoadEmptyRepoWorkSpaceInit(t *testing.T) {
 	err = os.MkdirAll(workdir, 0755)
 	assert.Nil(err)
 
-	ws, err := NewRepoWorkSpaceInit(workdir, "git@server:path/of/manifest.git")
+	ws, err := NewEmptyRepoWorkSpace(workdir, "git@server:path/of/manifest.git")
 	assert.Nil(err)
 	assert.Equal(workdir, ws.RootDir)
 	assert.Nil(ws.Manifest)
@@ -157,23 +157,18 @@ func TestLoadRepoWorkSpace(t *testing.T) {
 	err = testCreateManifests(workdir, mURL)
 	assert.Nil(err)
 
-	realWorkdir, err := filepath.EvalSymlinks(workdir)
-	assert.Nil(err)
-
-	// Missing manfest.xml link
+	// No symlink: manifest.xml and no manifests/default.xml
 	ws, err := NewRepoWorkSpace(workdir)
-	assert.Nil(err)
-	assert.Equal(realWorkdir, ws.RootDir)
-	assert.Nil(ws.Manifest)
-	assert.NotNil(ws.ManifestProject)
-	assert.Equal(0, len(ws.Projects))
+	assert.NotNil(err)
+	assert.Nil(ws)
 
 	// Create symlink
 	src := filepath.Join(workdir, ".repo", "manifests", "m1.xml")
 	target := filepath.Join(workdir, ".repo", "manifest.xml")
 	err = os.Symlink(src, target)
 	assert.Nil(err)
-	ws.load("")
+	ws, err = NewRepoWorkSpace(workdir)
+	assert.Nil(err)
 	assert.NotNil(ws.Manifest)
 	assert.Equal(3, len(ws.Projects))
 
