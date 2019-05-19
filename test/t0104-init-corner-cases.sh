@@ -5,7 +5,7 @@ test_description="git-repo init"
 . ./lib/sharness.sh
 
 manifest_url="file://${REPO_TEST_REPOSITORIES}/hello/manifests"
-main_repo_url="file://${REPO_TEST_REPOSITORIES}/hello/manifests"
+main_repo_url="file://${REPO_TEST_REPOSITORIES}/hello/main.git"
 wrong_url="file://${REPO_TEST_REPOSITORIES}/hello/bad"
 
 test_expect_success "setup" '
@@ -25,7 +25,12 @@ test_expect_success "init from wrong url" '
 test_expect_success "init from main url without a valid xml" '
 	(
 		cd work &&
-		test_must_fail git-repo init -u $main_repo_url
+		test_must_fail git-repo init -u $main_repo_url 2>&1 | \
+			grep "^Error" >actual 2>&1 &&
+		cat >expect<<-EOF &&
+		Error: link manifest failed, cannot find file '"'"'manifests/default.xml'"'"'
+		EOF
+		test_cmp expect actual
 	)
 '
 

@@ -65,15 +65,20 @@ func (v *RepoWorkSpace) SaveConfig(cfg goconfig.GitConfig) error {
 
 // LinkManifest creates link of manifest.xml
 func (v *RepoWorkSpace) LinkManifest() error {
+	srcAbs := filepath.Join(v.RootDir, config.DotRepo, config.Manifests, v.Settings().ManifestName)
+	srcRel := filepath.Join(config.Manifests, v.Settings().ManifestName)
+
+	if !path.Exists(srcAbs) {
+		return fmt.Errorf("link manifest failed, cannot find file '%s'", srcRel)
+	}
 	if v.Settings().ManifestName != "" {
 		if cap.CanSymlink() {
 			target := filepath.Join(v.RootDir, config.DotRepo, config.ManifestXML)
-			src, err := os.Readlink(target)
-			if err != nil || filepath.Base(src) != v.Settings().ManifestName {
+			linkedSrc, err := os.Readlink(target)
+			if err != nil || filepath.Base(linkedSrc) != v.Settings().ManifestName {
 				os.Remove(target)
-				src = filepath.Join(config.Manifests, v.Settings().ManifestName)
-				log.Debugf("will symlink '%s' to '%s'", src, target)
-				err = os.Symlink(src, target)
+				log.Debugf("will symlink '%s' to '%s'", srcRel, target)
+				err = os.Symlink(srcRel, target)
 				if err != nil {
 					return err
 				}
