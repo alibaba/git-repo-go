@@ -146,7 +146,7 @@ func (v *Repository) Fetch(remote string, o *FetchOptions) error {
 
 	err = executeCommandIn(v.Path, cmdArgs)
 	if err != nil {
-		return err
+		return fmt.Errorf("fail to fetch project '%s': %s", v.Name, err)
 	}
 
 	if hasAlternates && v.Settings.Dissociate {
@@ -158,7 +158,7 @@ func (v *Repository) Fetch(remote string, o *FetchOptions) error {
 		}
 		err = executeCommandIn(v.Path, cmdArgs)
 		if err != nil {
-			return err
+			return fmt.Errorf("fail to repack '%s': %s", v.Name, err)
 		}
 	}
 	return nil
@@ -238,5 +238,6 @@ func (v *Project) SyncNetworkHalf(o *FetchOptions) error {
 			return err
 		}
 	}
+	log.Debugf("WorkRepository of project '%s' is nil, sync-network-half failed", v.Name)
 	return nil
 }
