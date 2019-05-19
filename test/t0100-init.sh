@@ -20,6 +20,15 @@ test_expect_success "git-repo init -u" '
 	)
 '
 
+test_expect_success "check installed hooks" '
+	cat >expect<<-EOF &&
+	#!/bin/sh
+	EOF
+	head -1 .git-repo/hooks/commit-msg >actual &&
+	test_cmp expect actual &&
+	test -x .git-repo/hooks/commit-msg
+'
+
 test_expect_success "manifest points to default.xml" '
 	(
 		cd work &&

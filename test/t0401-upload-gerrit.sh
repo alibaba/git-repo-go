@@ -20,8 +20,39 @@ test_expect_success "git-repo init & sync" '
 		git-repo sync  \
 			--mock-ssh-info-status 200 \
 			--mock-ssh-info-response \
-			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" &&
+			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"gerrit\"}" &&
 		git repo start --all my/topic1
+	)
+'
+
+test_expect_success "check installed hooks" '
+	(
+		cd work &&
+		cat >expect<<-EOF &&
+		main
+		#!/bin/sh
+		project1
+		#!/bin/sh
+		project1/module1
+		#!/bin/sh
+		project2
+		#!/bin/sh
+		EOF
+		cat >actual<<-EOF &&
+		main
+		$(head -1 .repo/projects/main.git/hooks/commit-msg)
+		project1
+		$(head -1 .repo/projects/projects/app1.git/hooks/commit-msg)
+		project1/module1
+		$(head -1 .repo/projects/projects/app1/module1.git/hooks/commit-msg)
+		project2
+		$(head -1 .repo/projects/projects/app2.git/hooks/commit-msg)
+		EOF
+		test_cmp expect actual &&
+		test -L .repo/projects/main.git/hooks/commit-msg &&
+		test -L .repo/projects/projects/app1.git/hooks/commit-msg &&
+		test -L .repo/projects/projects/app2.git/hooks/commit-msg &&
+		test -L .repo/projects/projects/app1/module1.git/hooks/commit-msg
 	)
 '
 
