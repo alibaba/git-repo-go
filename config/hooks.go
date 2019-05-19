@@ -83,7 +83,8 @@ fi
 )
 
 var (
-	GitHooks = map[string]string{
+	// GerritHooks defines map of Gerrit hooks
+	GerritHooks = map[string]string{
 		"commit-msg": GerritCommitMsgHook,
 	}
 )
@@ -133,7 +134,7 @@ func InstallRepoHooks() error {
 			return fmt.Errorf("fail to install hooks: %s", err)
 		}
 	}
-	for name, data := range GitHooks {
+	for name, data := range GerritHooks {
 		file := filepath.Join(hooksDir, name)
 		finfo, err := os.Stat(file)
 		if err != nil || int(finfo.Size()) != len(data) {

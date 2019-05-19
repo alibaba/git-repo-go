@@ -339,7 +339,40 @@ func (v Project) SyncLocalHalf(o *CheckoutOptions) error {
 
 // InstallGerritHooks install gerrit hooks if remote of current project is gerrit
 func (v Project) InstallGerritHooks() error {
-	// TODO: install git hooks
+	hooksDir, err := config.GetRepoHooksDir()
+	if err != nil {
+		return err
+	}
+	if !path.Exists(hooksDir) {
+		return nil
+	}
+
+	// Hooks dir of work repository maybe a symlink to object repository
+	localHooksDir := filepath.Join(v.WorkRepository.Path, "hooks")
+	if p, err := filepath.EvalSymlinks(localHooksDir); err == nil {
+		localHooksDir = p
+	}
+	for name := range config.GerritHooks {
+		src := filepath.Join(hooksDir, name)
+		target := filepath.Join(localHooksDir, name)
+		srcRel, err := filepath.Rel(localHooksDir, src)
+		if err != nil {
+			srcRel = src
+		}
+		if path.Exist(target) {
+			linkedSrc, err := os.Readlink(target)
+			if err != nil || filepath.Base(linkedSrc) != name {
+				log.Debugf("will remove %s before recreate link", target)
+				os.Remove(target)
+			} else {
+				continue
+			}
+		}
+		err = os.Symlink(srcRel, target)
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
