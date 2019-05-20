@@ -57,6 +57,7 @@ type uploadOptions struct {
 	DestBranch    string
 	Draft         bool
 	Issue         string
+	NoEdit        bool
 	NoEmails      bool
 	Private       bool
 	PushOptions   []string
@@ -175,6 +176,11 @@ func (v *uploadCommand) Command() *cobra.Command {
 	v.cmd.Flags().Bool("dryrun",
 		false,
 		"dryrun mode")
+
+	v.cmd.Flags().BoolVar(&v.O.NoEdit,
+		"no-edit",
+		false,
+		"If specified, do not open editor to confirm")
 
 	v.cmd.Flags().Bool("assume-yes",
 		false,
