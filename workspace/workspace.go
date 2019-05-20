@@ -7,6 +7,7 @@ import (
 
 // WorkSpace is interface for repo workspace or single git workspace
 type WorkSpace interface {
+	AdminDir() string
 	LoadRemotes() error
 	GetProjects(*GetProjectsOptions, ...string) ([]*project.Project, error)
 }

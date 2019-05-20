@@ -171,6 +171,11 @@ func MockNoTTY() bool {
 	return viper.GetBool("mock-no-tty")
 }
 
+// MockUploadOptionsEditScript checks --mock-upload-options-edit-script option
+func MockUploadOptionsEditScript() string {
+	return viper.GetString("mock-upload-options-edit-script")
+}
+
 // MockEditScript checks --mock-edit-script option
 func MockEditScript() string {
 	return viper.GetString("mock-edit-script")

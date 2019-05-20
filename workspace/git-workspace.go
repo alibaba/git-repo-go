@@ -26,6 +26,11 @@ type GitWorkSpace struct {
 	httpClient      *http.Client
 }
 
+// AdminDir returns .git dir
+func (v GitWorkSpace) AdminDir() string {
+	return v.GitDir
+}
+
 // LoadRemotes implements LoadRemotes interface, do nothing
 func (v *GitWorkSpace) LoadRemotes() error {
 	return nil

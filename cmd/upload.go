@@ -18,10 +18,12 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"regexp"
 	"sort"
 	"strings"
 
+	"code.alibaba-inc.com/force/git-repo/cap"
 	"code.alibaba-inc.com/force/git-repo/config"
 	"code.alibaba-inc.com/force/git-repo/editor"
 	"code.alibaba-inc.com/force/git-repo/project"
@@ -35,30 +37,38 @@ import (
 const (
 	// UnusualCommitThreshold defines threshold of number of commits to confirm
 	UnusualCommitThreshold = 5
+
+	// UploadOptionsFile stores upload options to file
+	UploadOptionsFile = "UPLOAD_OPTIONS"
 )
+
+var (
+	reEditSection = regexp.MustCompile(`^#?\s*\[(\S+)\]`)
+)
+
+type uploadOptions struct {
+	AllowAllHooks bool
+	AutoTopic     bool
+	Branch        string
+	BypassHooks   bool
+	Cc            []string
+	CurrentBranch bool
+	Description   string
+	DestBranch    string
+	Draft         bool
+	Issue         string
+	NoEmails      bool
+	Private       bool
+	PushOptions   []string
+	Reviewers     []string
+	Title         string
+	WIP           bool
+}
 
 type uploadCommand struct {
 	cmd *cobra.Command
 	ws  workspace.WorkSpace
-
-	O struct {
-		AllowAllHooks bool
-		AutoTopic     bool
-		Branch        string
-		BypassHooks   bool
-		Cc            []string
-		CurrentBranch bool
-		Description   string
-		DestBranch    string
-		Draft         bool
-		Issue         string
-		NoEmails      bool
-		Private       bool
-		PushOptions   []string
-		Reviewers     []string
-		Title         string
-		WIP           bool
-	}
+	O   uploadOptions
 }
 
 func (v *uploadCommand) Command() *cobra.Command {
@@ -408,7 +418,210 @@ func (v uploadCommand) UploadMultipleBranches(branchesMap map[string][]project.R
 	return v.UploadAndReport(todo)
 }
 
+func (v uploadCommand) saveUploadOptions(content string) error {
+	file := filepath.Join(v.ws.AdminDir(), UploadOptionsFile)
+	lockFile := file + ".lock"
+	err := ioutil.WriteFile(lockFile, []byte(content), 0644)
+	if err != nil {
+		return err
+	}
+	return os.Rename(lockFile, file)
+}
+
+func (v uploadCommand) loadUploadOptions(o *uploadOptions, data string) {
+	var (
+		section string
+		text    string
+	)
+
+	setUploadOption := func(section, text string) {
+		text = strings.TrimSpace(text)
+		if text == "" {
+			return
+		}
+		switch section {
+		case "title":
+			text = strings.Split(text, "\n")[0]
+			o.Title = text
+		case "description":
+			o.Description = text
+		case "issue":
+			o.Issue = strings.Join(strings.Split(text, "\n"), ",")
+		case "reviewer":
+			o.Reviewers = strings.Split(text, "\n")
+		case "cc":
+			o.Cc = strings.Split(text, "\n")
+		case "draft", "private":
+			switch text {
+			case "y", "yes", "on", "t", "true", "1":
+				if section == "draft" {
+					o.Draft = true
+				} else if section == "private" {
+					o.Private = true
+				}
+			case "n", "no", "off", "f", "false", "0":
+				if section == "draft" {
+					o.Draft = false
+				} else if section == "private" {
+					o.Private = false
+				}
+			default:
+				log.Warnf("cannot turn '%s' to boolean", text)
+			}
+		}
+	}
+
+	for _, line := range strings.Split(data, "\n") {
+		line = strings.TrimRight(line, " \t")
+		if m := reEditSection.FindStringSubmatch(line); m != nil {
+			name := strings.ToLower(m[1])
+			switch name {
+			case
+				"title",
+				"description",
+				"issue",
+				"reviewer",
+				"cc",
+				"draft",
+				"private":
+
+				if section != "" {
+					setUploadOption(section, text)
+				}
+				section = name
+				text = ""
+				continue
+			default:
+				log.Warnf("unknown section '%s' in script", name)
+			}
+		}
+
+		if strings.HasPrefix(line, "#") {
+			continue
+		}
+
+		if section != "" {
+			text += line + "\n"
+		}
+	}
+
+	if section != "" {
+		setUploadOption(section, text)
+	}
+}
+
+func (v *uploadCommand) editUploadOptions() error {
+	var (
+		o = uploadOptions{}
+
+		script = []string{
+			"# Edit options for git-repo upload command",
+			"",
+		}
+	)
+
+	if !cap.Isatty() {
+		log.Debug("bypass upload options editor for no tty is found")
+		return nil
+	}
+
+	// Load upload options file created by last upload
+	buf, err := ioutil.ReadFile(filepath.Join(v.ws.AdminDir(), UploadOptionsFile))
+	if err == nil {
+		v.loadUploadOptions(&o, string(buf))
+
+		if v.O.Title == "" {
+			v.O.Title = o.Title
+		}
+		if v.O.Description == "" {
+			v.O.Description = o.Description
+		}
+		if v.O.Issue == "" {
+			v.O.Issue = o.Issue
+		}
+		if len(v.O.Reviewers) == 0 {
+			v.O.Reviewers = o.Reviewers
+		}
+		if len(v.O.Cc) == 0 {
+			v.O.Cc = o.Cc
+		}
+		if !v.O.Draft {
+			v.O.Draft = o.Draft
+		}
+		if !v.O.WIP {
+			v.O.WIP = o.WIP
+		}
+		if !v.O.Private {
+			v.O.Private = o.Private
+		}
+	}
+
+	script = append(script, "# [Title]", "# .. one line message below for the title of this code review")
+	if v.O.Title != "" {
+		script = append(script, v.O.Title)
+	}
+	script = append(script, "")
+
+	script = append(script, "# [Description]", "# .. multiple lines of text for description of this code review")
+	if v.O.Description != "" {
+		script = append(script, strings.Split(v.O.Description, "\n")...)
+	}
+	script = append(script, "")
+
+	script = append(script, "# [Issue]", "# .. multiple lines of issue IDs for cross references")
+	if v.O.Issue != "" {
+		script = append(script, v.O.Issue)
+	}
+	script = append(script, "")
+
+	script = append(script, "# [Reviewer]", "# .. multiple lines of user IDs/Names as the reviewers for this code review")
+	if len(v.O.Reviewers) > 0 {
+		script = append(script, v.O.Reviewers...)
+	}
+	script = append(script, "")
+
+	script = append(script, "# [Cc]", "# .. multiple lines of user IDs/Names as the watchers for this code review")
+	if len(v.O.Cc) > 0 {
+		script = append(script, v.O.Cc...)
+	}
+	script = append(script, "")
+
+	script = append(script, "# [Draft]", "# .. a boolean (yes/no, or true/false) to turn on/off draft mode")
+	if v.O.Draft {
+		script = append(script, "yes")
+	}
+	script = append(script, "")
+
+	script = append(script, "# [Private]", "# .. a boolean (yes/no, or true/false) to turn on/off private mode")
+	if v.O.Private {
+		script = append(script, "yes")
+	}
+	script = append(script, "")
+
+	editor := editor.Editor{}
+	editString := editor.EditString(strings.Join(script, "\n"))
+
+	if config.MockUploadOptionsEditScript() != "" {
+		f, err := os.Open(config.MockUploadOptionsEditScript())
+		if err == nil {
+			buf, err := ioutil.ReadAll(f)
+			if err == nil {
+				editString = string(buf)
+			}
+		}
+	}
+
+	// Load upload options
+	v.loadUploadOptions(&(v.O), editString)
+
+	// Save editString to UPLOAD_OPTIONS file
+	return v.saveUploadOptions(editString)
+}
+
 func (v *uploadCommand) UploadAndReport(branches []project.ReviewableBranch) error {
+	// Open editor to custom upload options
+	v.editUploadOptions()
+
 	origPeople := [][]string{[]string{}, []string{}}
 	if len(v.O.Reviewers) > 0 {
 		for _, reviewer := range strings.Split(

@@ -43,6 +43,11 @@ func Exists(dir string) bool {
 	return cfg.Get("remote.origin.url") != ""
 }
 
+// AdminDir returns .repo dir
+func (v RepoWorkSpace) AdminDir() string {
+	return filepath.Join(v.RootDir, config.DotRepo)
+}
+
 // ManifestURL returns URL of manifest project
 func (v *RepoWorkSpace) ManifestURL() string {
 	return v.Settings().ManifestURL
