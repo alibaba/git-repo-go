@@ -214,7 +214,7 @@ func (v *uploadCommand) reloadWorkSpace() {
 	}
 }
 
-func (v uploadCommand) UploadSingleBranch(branch *project.ReviewableBranch, people [][]string) error {
+func (v uploadCommand) UploadSingleBranch(branch *project.ReviewableBranch) error {
 	var (
 		answer bool
 	)
@@ -280,10 +280,10 @@ func (v uploadCommand) UploadSingleBranch(branch *project.ReviewableBranch, peop
 		}
 	}
 
-	return v.UploadAndReport([]project.ReviewableBranch{*branch}, people)
+	return v.UploadAndReport([]project.ReviewableBranch{*branch})
 }
 
-func (v uploadCommand) UploadMultipleBranches(branchesMap map[string][]project.ReviewableBranch, people [][]string) error {
+func (v uploadCommand) UploadMultipleBranches(branchesMap map[string][]project.ReviewableBranch) error {
 	var (
 		projectPattern = regexp.MustCompile(`^#?\s*project\s*([^\s]+)/:$`)
 		branchPattern  = regexp.MustCompile(`^\s*branch\s*([^\s(]+)\s*\(.*`)
@@ -405,10 +405,31 @@ func (v uploadCommand) UploadMultipleBranches(branchesMap map[string][]project.R
 		}
 	}
 
-	return v.UploadAndReport(todo, people)
+	return v.UploadAndReport(todo)
 }
 
-func (v uploadCommand) UploadAndReport(branches []project.ReviewableBranch, origPeople [][]string) error {
+func (v *uploadCommand) UploadAndReport(branches []project.ReviewableBranch) error {
+	origPeople := [][]string{[]string{}, []string{}}
+	if len(v.O.Reviewers) > 0 {
+		for _, reviewer := range strings.Split(
+			strings.Join(v.O.Reviewers, ","),
+			",") {
+			reviewer = strings.TrimSpace(reviewer)
+			if reviewer != "" {
+				origPeople[0] = append(origPeople[0], reviewer)
+			}
+		}
+	}
+	if len(v.O.Cc) > 0 {
+		for _, reviewer := range strings.Split(
+			strings.Join(v.O.Cc, ","),
+			",") {
+			reviewer = strings.TrimSpace(reviewer)
+			if reviewer != "" {
+				origPeople[1] = append(origPeople[1], reviewer)
+			}
+		}
+	}
 
 	haveErrors := false
 	for _, branch := range branches {
@@ -556,36 +577,14 @@ func (v uploadCommand) runE(args []string) error {
 		return nil
 	}
 
-	people := [][]string{[]string{}, []string{}}
-	if len(v.O.Reviewers) > 0 {
-		for _, reviewer := range strings.Split(
-			strings.Join(v.O.Reviewers, ","),
-			",") {
-			reviewer = strings.TrimSpace(reviewer)
-			if reviewer != "" {
-				people[0] = append(people[0], reviewer)
-			}
-		}
-	}
-	if len(v.O.Cc) > 0 {
-		for _, reviewer := range strings.Split(
-			strings.Join(v.O.Cc, ","),
-			",") {
-			reviewer = strings.TrimSpace(reviewer)
-			if reviewer != "" {
-				people[1] = append(people[1], reviewer)
-			}
-		}
-	}
-
 	if len(tasks) == 1 {
 		for key := range tasks {
 			if len(tasks[key]) == 1 {
-				return v.UploadSingleBranch(&tasks[key][0], people)
+				return v.UploadSingleBranch(&tasks[key][0])
 			}
 		}
 	}
-	return v.UploadMultipleBranches(tasks, people)
+	return v.UploadMultipleBranches(tasks)
 }
 
 var uploadCmd = uploadCommand{}
