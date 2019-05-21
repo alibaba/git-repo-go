@@ -51,7 +51,12 @@ test_expect_success "edit script for multiple uploadable branches" '
 		cd work &&
 		cat >expect<<-EOF &&
 		INFO: editor is '"'"':'"'"', return directly:
-		# Uncomment the branches to upload:
+		##############################################################################
+		# Step 2: Select project and branches for upload
+		#
+		# Note: Uncomment the branches to upload, and not touch the project lines
+		##############################################################################
+		
 		#
 		# project main/:
 		#  branch my/topic1 ( 1 commit(s)) to remote branch maint:
@@ -187,7 +192,12 @@ test_expect_success "upload with args: main, projects/app1" '
 		cd work &&
 		cat >expect<<-EOF &&
 		INFO: editor is '"'"':'"'"', return directly:
-		# Uncomment the branches to upload:
+		##############################################################################
+		# Step 2: Select project and branches for upload
+		#
+		# Note: Uncomment the branches to upload, and not touch the project lines
+		##############################################################################
+		
 		#
 		# project main/:
 		#  branch my/topic1 ( 1 commit(s)) to remote branch maint:
@@ -218,7 +228,12 @@ test_expect_success "upload with args: main, projects/app1" '
 		cd work &&
 		cat >expect<<-EOF &&
 		INFO: editor is '"'"':'"'"', return directly:
-		# Uncomment the branches to upload:
+		##############################################################################
+		# Step 2: Select project and branches for upload
+		#
+		# Note: Uncomment the branches to upload, and not touch the project lines
+		##############################################################################
+		
 		#
 		# project main/:
 		#  branch my/topic1 ( 1 commit(s)) to remote branch maint:
@@ -227,6 +242,7 @@ test_expect_success "upload with args: main, projects/app1" '
 		# project projects/app1/:
 		#  branch my/topic1 ( 1 commit(s)) to remote branch maint:
 		#         <hash>
+		INFO: editor is '"'"':'"'"', return directly:
 		NOTE: will execute command: git push --receive-pack=agit-receive-pack ssh://git@ssh.example.com/main.git refs/heads/my/topic1:refs/for/maint/my/topic1
 		NOTE: will execute command: git push --receive-pack=agit-receive-pack ssh://git@ssh.example.com/project1.git refs/heads/my/topic1:refs/for/maint/my/topic1
 		
@@ -293,6 +309,7 @@ test_expect_success "if has many commits, must confirm before upload" '
 		ATTENTION: You are uploading an unusually high number of commits.
 		YOU PROBABLY DO NOT MEAN TO DO THIS. (Did you rebase across branches?)
 		If you are sure you intend to do this, type '"'"'yes'"'"': Yes
+		INFO: editor is '"'"':'"'"', return directly:
 		NOTE: will execute command: git push --receive-pack=agit-receive-pack ssh://git@ssh.example.com/project1.git refs/heads/my/topic1:refs/for/maint/my/topic1
 		
 		----------------------------------------------------------------------

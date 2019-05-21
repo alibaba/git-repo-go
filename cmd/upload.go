@@ -43,7 +43,7 @@ const (
 )
 
 var (
-	reEditSection = regexp.MustCompile(`^#?\s*\[(\S+)\]`)
+	reEditSection = regexp.MustCompile(`^#\s+\[(\S+)\](\s+:.*)?$`)
 )
 
 type uploadOptions struct {
@@ -315,7 +315,14 @@ func (v uploadCommand) UploadMultipleBranches(branchesMap map[string][]project.R
 	}
 	sort.Strings(keys)
 
-	script := []string{"# Uncomment the branches to upload:"}
+	script := []string{
+		"##############################################################################",
+		"# Step 2: Select project and branches for upload",
+		"#",
+		"# Note: Uncomment the branches to upload, and not touch the project lines",
+		"##############################################################################",
+		"",
+	}
 	for _, key := range keys {
 		branches := branchesMap[key]
 		p := branches[0].Project
@@ -474,6 +481,8 @@ func (v uploadCommand) loadUploadOptions(o *uploadOptions, data string) {
 			default:
 				log.Warnf("cannot turn '%s' to boolean", text)
 			}
+		default:
+			log.Warnf("unknown section name: %s", section)
 		}
 	}
 
@@ -516,12 +525,16 @@ func (v uploadCommand) loadUploadOptions(o *uploadOptions, data string) {
 	}
 }
 
-func (v *uploadCommand) editUploadOptions() error {
+func (v uploadCommand) fmtUploadOptionsScript() []string {
 	var (
 		o = uploadOptions{}
 
 		script = []string{
-			"# Edit options for git-repo upload command",
+			"##############################################################################",
+			"# Step 1: Input your options for code review",
+			"# ",
+			"# Note: Input your options below the comments and keep the comments unchanged",
+			"##############################################################################",
 			"",
 		}
 	)
@@ -562,48 +575,78 @@ func (v *uploadCommand) editUploadOptions() error {
 		}
 	}
 
-	script = append(script, "# [Title]", "# .. one line message below for the title of this code review")
+	w := 13
+	script = append(script, fmt.Sprintf("# %*s : %s", w,
+		"[Title]",
+		"one line message below as the title of code review"),
+	)
 	if v.O.Title != "" {
-		script = append(script, v.O.Title)
+		script = append(script, "", v.O.Title)
 	}
 	script = append(script, "")
 
-	script = append(script, "# [Description]", "# .. multiple lines of text for description of this code review")
+	script = append(script, fmt.Sprintf("# %*s : %s", w,
+		"[Description]",
+		"multiple lines of text as the description of code review"),
+	)
 	if v.O.Description != "" {
+		script = append(script, "")
 		script = append(script, strings.Split(v.O.Description, "\n")...)
 	}
 	script = append(script, "")
 
-	script = append(script, "# [Issue]", "# .. multiple lines of issue IDs for cross references")
+	script = append(script, fmt.Sprintf("# %*s : %s", w,
+		"[Issue]",
+		"multiple lines of issue IDs for cross references"),
+	)
 	if v.O.Issue != "" {
-		script = append(script, v.O.Issue)
+		script = append(script, "", v.O.Issue)
 	}
 	script = append(script, "")
 
-	script = append(script, "# [Reviewer]", "# .. multiple lines of user IDs/Names as the reviewers for this code review")
+	script = append(script, fmt.Sprintf("# %*s : %s", w,
+		"[Reviewer]",
+		"multiple lines of user names as the reviewers for code review"),
+	)
 	if len(v.O.Reviewers) > 0 {
+		script = append(script, "")
 		script = append(script, v.O.Reviewers...)
 	}
 	script = append(script, "")
 
-	script = append(script, "# [Cc]", "# .. multiple lines of user IDs/Names as the watchers for this code review")
+	script = append(script, fmt.Sprintf("# %*s : %s", w,
+		"[Cc]",
+		"multiple lines of user names as the watchers for code review"),
+	)
 	if len(v.O.Cc) > 0 {
+		script = append(script, "")
 		script = append(script, v.O.Cc...)
 	}
 	script = append(script, "")
 
-	script = append(script, "# [Draft]", "# .. a boolean (yes/no, or true/false) to turn on/off draft mode")
+	script = append(script, fmt.Sprintf("# %*s : %s", w,
+		"[Draft]",
+		"a boolean (yes/no, or true/false) to turn on/off draft mode"),
+	)
 	if v.O.Draft {
-		script = append(script, "yes")
+		script = append(script, "", "yes")
 	}
 	script = append(script, "")
 
-	script = append(script, "# [Private]", "# .. a boolean (yes/no, or true/false) to turn on/off private mode")
+	script = append(script, fmt.Sprintf("# %*s : %s", w,
+		"[Private]",
+		"a boolean (yes/no, or true/false) to turn on/off private mode"),
+	)
 	if v.O.Private {
-		script = append(script, "yes")
+		script = append(script, "", "yes")
 	}
 	script = append(script, "")
 
+	return script
+}
+
+func (v *uploadCommand) editUploadOptions() error {
+	script := v.fmtUploadOptionsScript()
 	editor := editor.Editor{}
 	editString := editor.EditString(strings.Join(script, "\n"))
 
