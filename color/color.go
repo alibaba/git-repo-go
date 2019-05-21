@@ -1,5 +1,9 @@
 package color
 
+import (
+	"code.alibaba-inc.com/force/git-repo/cap"
+)
+
 type mapping map[string]int
 
 func (v mapping) get(s string) int {
@@ -42,11 +46,29 @@ var attrMap = mapping{
 	"reverse": 7,
 }
 
+func colorEnabled() bool {
+	if !cap.Isatty() {
+		return false
+	}
+	return true
+}
+
+func ColorReset() string {
+	if colorEnabled() {
+		return Reset
+	}
+	return ""
+}
+
 // Color returns color code for terminal display
 func Color(fgColor, bgColor, attrVal string) string {
 	var (
 		code string
 	)
+
+	if !colorEnabled() {
+		return ""
+	}
 
 	fg := colorMap.get(fgColor)
 	bg := colorMap.get(bgColor)
