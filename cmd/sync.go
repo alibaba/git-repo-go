@@ -718,7 +718,8 @@ func (v syncCommand) runE(args []string) error {
 	// Call ssh_info API to detect types of remote servers
 	err = ws.LoadRemotes()
 	if err != nil {
-		return err
+		log.Notef("fail to check remote server, you may need to install gerrit hooks by hands")
+		log.Error(err)
 	}
 
 	// Remove obsolete projects
