@@ -284,6 +284,7 @@ test_expect_success "upload again, no branch ready for upload" '
 	(
 		cd work &&
 		cat >expect<<-EOF &&
+		NOTE: no change in project main (branch my/topic1) since last upload
 		NOTE: no branches ready for upload
 		EOF
 		git-repo upload \

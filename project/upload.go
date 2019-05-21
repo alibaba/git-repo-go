@@ -162,7 +162,7 @@ func (v *Project) GetUploadableBranch(branch string) *ReviewableBranch {
 	remote := v.Config().Get("branch." + branch + ".remote")
 
 	if v.Remote == nil || v.Remote.GetType() == config.RemoteTypeUnknown {
-		log.Debugf("unknown type of remote '%s' for project '%s'",
+		log.Warnf("cannot upload, unknown type of remote '%s' for project '%s'",
 			remote,
 			v.Path)
 		return nil
@@ -171,7 +171,7 @@ func (v *Project) GetUploadableBranch(branch string) *ReviewableBranch {
 	manifestRemote := v.Remote.GetRemote().Name
 
 	if remote != manifestRemote {
-		log.Warnf("unmatch remote: remote of branch '%s' is '%s', not '%s'",
+		log.Warnf("cannot upload, unmatch remote for '%s': %s != %s",
 			branch,
 			remote,
 			manifestRemote,
@@ -209,6 +209,9 @@ func (v *Project) GetUploadableBranch(branch string) *ReviewableBranch {
 
 	pub := rb.Published()
 	if pub != nil && pub.Hash == branchID {
+		log.Notef("no change in project %s (branch %s) since last upload",
+			v.Path,
+			branch)
 		return nil
 	}
 

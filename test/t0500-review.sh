@@ -282,6 +282,7 @@ test_expect_success "upload again, no branch ready for upload" '
 	(
 		cd work &&
 		cat >expect<<-EOF &&
+		NOTE: no change in project . (branch my/topic-test) since last upload
 		NOTE: no branches ready for upload
 		EOF
 		git -C main review \
