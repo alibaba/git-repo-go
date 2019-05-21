@@ -71,7 +71,10 @@ test_expect_success "new commit: ready for upload" '
 		to https://example.com (y/N)? No
 		Error: upload aborted by user
 		EOF
-		test_must_fail git-repo upload --assume-no --mock-ssh-info-status 200 \
+		test_must_fail git-repo upload \
+			--assume-no \
+			--no-edit \
+			--mock-ssh-info-status 200 \
 			--mock-ssh-info-response "ssh.example.com 29418" \
 			2>&1 | sed -e "s/[0-9a-f]\{40\}/<hash>/g" >actual &&
 		test_cmp expect actual
@@ -92,7 +95,11 @@ test_expect_success "upload --dryrun --drafts" '
 		
 		----------------------------------------------------------------------
 		EOF
-		git-repo upload --assume-yes --draft --dryrun \
+		git-repo upload \
+			--assume-yes \
+			--no-edit \
+			--draft \
+			--dryrun \
 			--mock-git-push \
 			--mock-ssh-info-status 200 \
 			--mock-ssh-info-response "ssh.example.com 29418" \
@@ -115,7 +122,10 @@ test_expect_success "upload --dryrun with reviewers" '
 		
 		----------------------------------------------------------------------
 		EOF
-		git-repo upload --assume-yes --dryrun \
+		git-repo upload \
+			--assume-yes \
+			--no-edit \
+			--dryrun \
 			--mock-git-push \
 			--mock-ssh-info-status 200 \
 			--mock-ssh-info-response "ssh.example.com 29418" \

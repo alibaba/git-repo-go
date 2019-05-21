@@ -53,14 +53,19 @@ test_expect_success "new branch: no branch ready for upload" '
 	)
 '
 
-test_expect_success "new commit: ready for upload" '
+test_expect_success "new commit" '
 	(
 		cd work/main &&
 		echo hack >topic1.txt &&
 		git add topic1.txt &&
 		test_tick &&
-		git commit -m "topic1: new file" &&
-		cd .. &&
+		git commit -m "topic1: new file"
+	)
+'
+
+test_expect_success "with new commit, ready for upload (--no-edit)" '
+	(
+		cd work &&
 		cat >expect<<-EOF &&
 		Upload project main/ to remote branch :
 		  branch my/topic1 ( 1 commit(s)):
@@ -68,10 +73,67 @@ test_expect_success "new commit: ready for upload" '
 		to https://example.com (y/N)? No
 		Error: upload aborted by user
 		EOF
-		test_must_fail git-repo upload --assume-no --mock-ssh-info-status 200 \
+		test_must_fail git-repo upload \
+			--assume-no \
+			--no-edit \
+			--mock-ssh-info-status 200 \
 			--mock-ssh-info-response \
 			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
-			2>&1 | sed -e "s/[0-9a-f]\{40\}/<hash>/g" >actual &&
+			>out 2>&1 &&
+		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success "with new commit, ready for upload (edit push options)" '
+	(
+		cd work &&
+		cat >expect<<-EOF &&
+		NOTE: no editor, input data unchanged
+		##############################################################################
+		# Step 1: Input your options for code review
+		#
+		# Note: Input your options below the comments and keep the comments unchanged
+		##############################################################################
+		
+		# [Title]       : one line message below as the title of code review
+		
+		# [Description] : multiple lines of text as the description of code review
+		
+		# [Issue]       : multiple lines of issue IDs for cross references
+		
+		# [Reviewer]    : multiple lines of user names as the reviewers for code review
+		
+		# [Cc]          : multiple lines of user names as the watchers for code review
+		
+		# [Draft]       : a boolean (yes/no, or true/false) to turn on/off draft mode
+		
+		# [Private]     : a boolean (yes/no, or true/false) to turn on/off private mode
+		
+		
+		##############################################################################
+		# Step 2: Select project and branches for upload
+		#
+		# Note: Uncomment the branches to upload, and not touch the project lines
+		##############################################################################
+		
+		#
+		# project main/:
+		   branch my/topic1 ( 1 commit(s)) to remote branch maint:
+		#         <hash>
+		
+		NOTE: will execute command: git push --receive-pack=agit-receive-pack ssh://git@ssh.example.com/main.git refs/heads/my/topic1:refs/for/maint/my/topic1
+		NOTE: will update-ref refs/published/my/topic1 on refs/heads/my/topic1, reason: review from my/topic1 to maint on https://example.com
+		
+		----------------------------------------------------------------------
+		EOF
+		git-repo upload \
+			--dryrun \
+			--mock-ssh-info-status 200 \
+			--mock-ssh-info-response \
+			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
+			>out 2>&1 &&
+		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
 		test_cmp expect actual
 	)
 '
@@ -83,10 +145,13 @@ test_expect_success "new branch, and do nothing for for upload --cbr" '
 		cat >expect<<-EOF &&
 		NOTE: no branches ready for upload
 		EOF
-		git-repo upload --cbr --assume-no --mock-ssh-info-status 200 \
+		git-repo upload --cbr \
+			--assume-no \
+			--mock-ssh-info-status 200 \
 			--mock-ssh-info-response \
 			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
-			2>&1 | sed -e "s/[0-9a-f]\{40\}/<hash>/g" >actual &&
+			>out 2>&1 &&
+		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
 		test_cmp expect actual
 	)
 '
@@ -102,10 +167,14 @@ test_expect_success "upload branch without --cbr" '
 		to https://example.com (y/N)? No
 		Error: upload aborted by user
 		EOF
-		test_must_fail git-repo upload --assume-no --mock-ssh-info-status 200 \
+		test_must_fail git-repo upload \
+			--assume-no \
+			--no-edit \
+			--mock-ssh-info-status 200 \
 			--mock-ssh-info-response \
 			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
-			2>&1 | sed -e "s/[0-9a-f]\{40\}/<hash>/g" >actual &&
+			>out 2>&1 &&
+		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
 		test_cmp expect actual
 	)
 '
@@ -124,12 +193,17 @@ test_expect_success "upload --dryrun --drafts" '
 		
 		----------------------------------------------------------------------
 		EOF
-		git-repo upload --assume-yes --draft --dryrun \
+		git-repo upload \
+			--assume-yes \
+			--no-edit \
+			--draft \
+			--dryrun \
 			--mock-git-push \
 			--mock-ssh-info-status 200 \
 			--mock-ssh-info-response \
 			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
-			2>&1 | sed -e "s/[0-9a-f]\{40\}/<hash>/g" >actual &&
+			>out 2>&1 &&
+		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
 		test_cmp expect actual
 	)
 '
@@ -148,7 +222,10 @@ test_expect_success "upload --dryrun" '
 		
 		----------------------------------------------------------------------
 		EOF
-		git-repo upload --assume-yes --dryrun \
+		git-repo upload \
+			--assume-yes \
+			--no-edit \
+			--dryrun \
 			--mock-git-push \
 			--mock-ssh-info-status 200 \
 			--mock-ssh-info-response \
@@ -162,7 +239,8 @@ test_expect_success "upload --dryrun" '
 			--private \
 			--wip \
 			--no-emails \
-			2>&1 | sed -e "s/[0-9a-f]\{40\}/<hash>/g" >actual &&
+			>out 2>&1 &&
+		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
 		test_cmp expect actual
 	)
 '
@@ -180,12 +258,15 @@ test_expect_success "mock-git-push, but do update-ref for upload" '
 		
 		----------------------------------------------------------------------
 		EOF
-		git-repo upload --assume-yes \
+		git-repo upload \
+			--assume-yes \
+			--no-edit \
 			--mock-git-push \
 			--mock-ssh-info-status 200 \
 			--mock-ssh-info-response \
 			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
-			2>&1 | sed -e "s/[0-9a-f]\{40\}/<hash>/g" >actual &&
+			>out 2>&1 &&
+		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
 		test_cmp expect actual
 	)
 '
@@ -205,7 +286,8 @@ test_expect_success "upload again, no branch ready for upload" '
 		cat >expect<<-EOF &&
 		NOTE: no branches ready for upload
 		EOF
-		git-repo upload --mock-ssh-info-status 200 \
+		git-repo upload \
+			--mock-ssh-info-status 200 \
 			--mock-ssh-info-response \
 			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
 			>actual 2>&1 &&

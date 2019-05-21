@@ -23,7 +23,6 @@ import (
 	"sort"
 	"strings"
 
-	"code.alibaba-inc.com/force/git-repo/cap"
 	"code.alibaba-inc.com/force/git-repo/config"
 	"code.alibaba-inc.com/force/git-repo/editor"
 	"code.alibaba-inc.com/force/git-repo/project"
@@ -230,7 +229,7 @@ func (v *uploadCommand) reloadWorkSpace() {
 	}
 }
 
-func (v uploadCommand) UploadSingleBranch(branch *project.ReviewableBranch) error {
+func (v uploadCommand) UploadForReviewWithConfirm(branch *project.ReviewableBranch) error {
 	var (
 		answer bool
 	)
@@ -299,11 +298,13 @@ func (v uploadCommand) UploadSingleBranch(branch *project.ReviewableBranch) erro
 	return v.UploadAndReport([]project.ReviewableBranch{*branch})
 }
 
-func (v uploadCommand) UploadMultipleBranches(branchesMap map[string][]project.ReviewableBranch) error {
+func (v uploadCommand) UploadForReviewWithEditor(branchesMap map[string][]project.ReviewableBranch) error {
 	var (
 		projectPattern = regexp.MustCompile(`^#?\s*project\s*([^\s]+)/:$`)
 		branchPattern  = regexp.MustCompile(`^\s*branch\s*([^\s(]+)\s*\(.*`)
 		ok             bool
+		err            error
+		branchComment  string
 	)
 
 	projectsIdx := make(map[string]project.Project)
@@ -315,14 +316,30 @@ func (v uploadCommand) UploadMultipleBranches(branchesMap map[string][]project.R
 	}
 	sort.Strings(keys)
 
-	script := []string{
+	if config.AssumeYes() {
+		branchComment = " "
+	} else if config.AssumeNo() {
+		branchComment = "#"
+	} else if len(keys) == 1 && len(branchesMap[keys[0]]) == 1 {
+		branchComment = " "
+	} else {
+		branchComment = "#"
+	}
+
+	// Script for upload options customization
+	script := v.fmtUploadOptionsScript()
+
+	// Script for branches selection
+	markbranchSelection := "# Step 2: Select project and branches for upload"
+	script = append(script,
+		"",
 		"##############################################################################",
-		"# Step 2: Select project and branches for upload",
+		markbranchSelection,
 		"#",
 		"# Note: Uncomment the branches to upload, and not touch the project lines",
 		"##############################################################################",
 		"",
-	}
+	)
 	for _, key := range keys {
 		branches := branchesMap[key]
 		p := branches[0].Project
@@ -347,7 +364,8 @@ func (v uploadCommand) UploadMultipleBranches(branchesMap map[string][]project.R
 				destBranch = branch.Project.Revision
 			}
 			script = append(script,
-				fmt.Sprintf("#  branch %s (%2d commit(s)) to remote branch %s:",
+				fmt.Sprintf("%s  branch %s (%2d commit(s)) to remote branch %s:",
+					branchComment,
 					name,
 					len(commitList),
 					destBranch))
@@ -369,6 +387,7 @@ func (v uploadCommand) UploadMultipleBranches(branchesMap map[string][]project.R
 	editor := editor.Editor{}
 	script = append(script, "")
 	editString := editor.EditString(strings.Join(script, "\n"))
+
 	if config.MockEditScript() != "" {
 		f, err := os.Open(config.MockEditScript())
 		if err == nil {
@@ -378,15 +397,34 @@ func (v uploadCommand) UploadMultipleBranches(branchesMap map[string][]project.R
 			}
 		}
 	}
-	script = strings.Split(editString, "\n")
 
+	// Load upload options
+	optsInEditString := strings.Split(editString, markbranchSelection)[0]
+	v.loadUploadOptions(&(v.O), optsInEditString)
+
+	// Save editString to UPLOAD_OPTIONS file
+	err = v.saveUploadOptions(optsInEditString)
+	if err != nil {
+		log.Error(err)
+	}
+
+	// Parse script for branches selection
+	script = strings.Split(editString, "\n")
 	todo := []project.ReviewableBranch{}
 
 	var (
-		p          project.Project
-		hasProject = false
+		p                 project.Project
+		hasProject        = false
+		inBranchSelection = false
 	)
 	for _, line := range script {
+		if !inBranchSelection {
+			if line == markbranchSelection {
+				inBranchSelection = true
+			}
+			continue
+		}
+
 		if m := projectPattern.FindStringSubmatch(line); m != nil {
 			name := m[1]
 			if p, ok = projectsIdx[name]; !ok {
@@ -410,22 +448,6 @@ func (v uploadCommand) UploadMultipleBranches(branchesMap map[string][]project.R
 	}
 	if len(todo) == 0 {
 		log.Fatal("nothing uncommented for upload")
-	}
-
-	hasManyCommits := false
-	for _, branch := range todo {
-		if len(branch.Commits()) > UnusualCommitThreshold {
-			hasManyCommits = true
-			break
-		}
-	}
-	if hasManyCommits {
-		fmt.Println("ATTENTION: One or more branches has an unusually high number of commits.")
-		fmt.Println("YOU PROBABLY DO NOT MEAN TO DO THIS. (Did you rebase across branches?)")
-		input := userInput("If you are sure you intend to do this, type 'yes': ", "N")
-		if !answerIsTrue(input) {
-			return fmt.Errorf("upload aborted by user")
-		}
 	}
 
 	return v.UploadAndReport(todo)
@@ -532,17 +554,12 @@ func (v uploadCommand) fmtUploadOptionsScript() []string {
 		script = []string{
 			"##############################################################################",
 			"# Step 1: Input your options for code review",
-			"# ",
+			"#",
 			"# Note: Input your options below the comments and keep the comments unchanged",
 			"##############################################################################",
 			"",
 		}
 	)
-
-	if !cap.Isatty() {
-		log.Debug("bypass upload options editor for no tty is found")
-		return nil
-	}
 
 	// Load upload options file created by last upload
 	buf, err := ioutil.ReadFile(filepath.Join(v.ws.AdminDir(), UploadOptionsFile))
@@ -576,7 +593,7 @@ func (v uploadCommand) fmtUploadOptionsScript() []string {
 	}
 
 	w := 13
-	script = append(script, fmt.Sprintf("# %*s : %s", w,
+	script = append(script, fmt.Sprintf("# %-*s : %s", w,
 		"[Title]",
 		"one line message below as the title of code review"),
 	)
@@ -585,7 +602,7 @@ func (v uploadCommand) fmtUploadOptionsScript() []string {
 	}
 	script = append(script, "")
 
-	script = append(script, fmt.Sprintf("# %*s : %s", w,
+	script = append(script, fmt.Sprintf("# %-*s : %s", w,
 		"[Description]",
 		"multiple lines of text as the description of code review"),
 	)
@@ -595,7 +612,7 @@ func (v uploadCommand) fmtUploadOptionsScript() []string {
 	}
 	script = append(script, "")
 
-	script = append(script, fmt.Sprintf("# %*s : %s", w,
+	script = append(script, fmt.Sprintf("# %-*s : %s", w,
 		"[Issue]",
 		"multiple lines of issue IDs for cross references"),
 	)
@@ -604,7 +621,7 @@ func (v uploadCommand) fmtUploadOptionsScript() []string {
 	}
 	script = append(script, "")
 
-	script = append(script, fmt.Sprintf("# %*s : %s", w,
+	script = append(script, fmt.Sprintf("# %-*s : %s", w,
 		"[Reviewer]",
 		"multiple lines of user names as the reviewers for code review"),
 	)
@@ -614,7 +631,7 @@ func (v uploadCommand) fmtUploadOptionsScript() []string {
 	}
 	script = append(script, "")
 
-	script = append(script, fmt.Sprintf("# %*s : %s", w,
+	script = append(script, fmt.Sprintf("# %-*s : %s", w,
 		"[Cc]",
 		"multiple lines of user names as the watchers for code review"),
 	)
@@ -624,7 +641,7 @@ func (v uploadCommand) fmtUploadOptionsScript() []string {
 	}
 	script = append(script, "")
 
-	script = append(script, fmt.Sprintf("# %*s : %s", w,
+	script = append(script, fmt.Sprintf("# %-*s : %s", w,
 		"[Draft]",
 		"a boolean (yes/no, or true/false) to turn on/off draft mode"),
 	)
@@ -633,7 +650,7 @@ func (v uploadCommand) fmtUploadOptionsScript() []string {
 	}
 	script = append(script, "")
 
-	script = append(script, fmt.Sprintf("# %*s : %s", w,
+	script = append(script, fmt.Sprintf("# %-*s : %s", w,
 		"[Private]",
 		"a boolean (yes/no, or true/false) to turn on/off private mode"),
 	)
@@ -645,32 +662,7 @@ func (v uploadCommand) fmtUploadOptionsScript() []string {
 	return script
 }
 
-func (v *uploadCommand) editUploadOptions() error {
-	script := v.fmtUploadOptionsScript()
-	editor := editor.Editor{}
-	editString := editor.EditString(strings.Join(script, "\n"))
-
-	if config.MockUploadOptionsEditScript() != "" {
-		f, err := os.Open(config.MockUploadOptionsEditScript())
-		if err == nil {
-			buf, err := ioutil.ReadAll(f)
-			if err == nil {
-				editString = string(buf)
-			}
-		}
-	}
-
-	// Load upload options
-	v.loadUploadOptions(&(v.O), editString)
-
-	// Save editString to UPLOAD_OPTIONS file
-	return v.saveUploadOptions(editString)
-}
-
 func (v *uploadCommand) UploadAndReport(branches []project.ReviewableBranch) error {
-	// Open editor to custom upload options
-	v.editUploadOptions()
-
 	origPeople := [][]string{[]string{}, []string{}}
 	if len(v.O.Reviewers) > 0 {
 		for _, reviewer := range strings.Split(
@@ -839,14 +831,14 @@ func (v uploadCommand) runE(args []string) error {
 		return nil
 	}
 
-	if len(tasks) == 1 {
+	if len(tasks) == 1 && v.O.NoEdit {
 		for key := range tasks {
 			if len(tasks[key]) == 1 {
-				return v.UploadSingleBranch(&tasks[key][0])
+				return v.UploadForReviewWithConfirm(&tasks[key][0])
 			}
 		}
 	}
-	return v.UploadMultipleBranches(tasks)
+	return v.UploadForReviewWithEditor(tasks)
 }
 
 var uploadCmd = uploadCommand{}

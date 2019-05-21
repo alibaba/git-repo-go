@@ -86,7 +86,8 @@ test_expect_success "upload error: unknown URL protocol" '
 		cat >expect<<-EOF &&
 		FATAL: cannot find review URL from '"'"'file:///path/of/main.git'"'"'
 		EOF
-		test_must_fail git -C main review 2>&1 | sed -e "s#///.*/main.git#///path/of/main.git#" >actual 2>&1 &&
+		test_must_fail git -C main review >out 2>&1 &&
+		sed -e "s#///.*/main.git#///path/of/main.git#" <out >actual 2>&1 &&
 		test_cmp expect actual
 	)
 '
@@ -124,7 +125,7 @@ test_expect_success "New commit in main project" '
 	)
 '
 
-test_expect_success "will upload one commit for review (http/dryrun/draft)" '
+test_expect_success "will upload one commit for review (http/dryrun/draft/no-edit)" '
 	(
 		cd work &&
 		cat >expect<<-EOF &&
@@ -139,12 +140,71 @@ test_expect_success "will upload one commit for review (http/dryrun/draft)" '
 		EOF
 		git -C main review \
 			--assume-yes \
+			--no-edit \
 			--dryrun \
 			--draft \
 			--mock-ssh-info-status 200 \
 			--mock-ssh-info-response \
 			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
-			2>&1 | sed -e "s/[0-9a-f]\{40\}/<hash>/g" >actual &&
+			>out 2>&1 &&
+		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success "will upload one commit for review (http/dryrun/draft/with edit options)" '
+	(
+		cd work &&
+		cat >expect<<-EOF &&
+		NOTE: no editor, input data unchanged
+		##############################################################################
+		# Step 1: Input your options for code review
+		#
+		# Note: Input your options below the comments and keep the comments unchanged
+		##############################################################################
+		
+		# [Title]       : one line message below as the title of code review
+		
+		# [Description] : multiple lines of text as the description of code review
+		
+		# [Issue]       : multiple lines of issue IDs for cross references
+		
+		# [Reviewer]    : multiple lines of user names as the reviewers for code review
+		
+		# [Cc]          : multiple lines of user names as the watchers for code review
+		
+		# [Draft]       : a boolean (yes/no, or true/false) to turn on/off draft mode
+		
+		yes
+		
+		# [Private]     : a boolean (yes/no, or true/false) to turn on/off private mode
+		
+		
+		##############################################################################
+		# Step 2: Select project and branches for upload
+		#
+		# Note: Uncomment the branches to upload, and not touch the project lines
+		##############################################################################
+		
+		#
+		# project ./:
+		   branch my/topic-test ( 1 commit(s)) to remote branch master:
+		#         <hash>
+		
+		NOTE: will execute command: git push --receive-pack=agit-receive-pack ssh://git@ssh.example.com/jiangxin/main.git refs/heads/my/topic-test:refs/drafts/master/my/topic-test
+		NOTE: will update-ref refs/published/my/topic-test on refs/heads/my/topic-test, reason: review from my/topic-test to master on https://example.com
+		
+		----------------------------------------------------------------------
+		EOF
+		git -C main review \
+			--assume-yes \
+			--dryrun \
+			--draft \
+			--mock-ssh-info-status 200 \
+			--mock-ssh-info-response \
+			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
+			>out 2>&1 &&
+		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
 		test_cmp expect actual
 	)
 '
@@ -164,6 +224,7 @@ test_expect_success "will upload one commit for review (http/dryrun)" '
 		EOF
 		git -C main review \
 			--assume-yes \
+			--no-edit \
 			--dryrun \
 			--mock-ssh-info-status 200 \
 			--mock-ssh-info-response \
@@ -177,7 +238,8 @@ test_expect_success "will upload one commit for review (http/dryrun)" '
 			--private \
 			--wip \
 			--no-emails \
-			2>&1 | sed -e "s/[0-9a-f]\{40\}/<hash>/g" >actual &&
+			>out 2>&1 &&
+		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
 		test_cmp expect actual
 	)
 '
@@ -196,11 +258,13 @@ test_expect_success "will upload one commit for review (http/mock-git-push/not-d
 		EOF
 		git -C main review \
 			--assume-yes \
+			--no-edit \
 			--mock-git-push \
 			--mock-ssh-info-status 200 \
 			--mock-ssh-info-response \
 			"{\"host\":\"ssh.example.com\", \"port\":10022, \"type\":\"agit\"}" \
-			2>&1 | sed -e "s/[0-9a-f]\{40\}/<hash>/g" >actual &&
+			>out 2>&1 &&
+		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
 		test_cmp expect actual
 	)
 '
@@ -226,7 +290,8 @@ test_expect_success "upload again, no branch ready for upload" '
 			--mock-ssh-info-status 200 \
 			--mock-ssh-info-response \
 			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
-			2>&1 | sed -e "s/[0-9a-f]\{40\}/<hash>/g" >actual &&
+			>out 2>&1 &&
+		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
 		test_cmp expect actual
 	)
 '
@@ -260,8 +325,10 @@ test_expect_success "upload to a ssh review url" '
 		EOF
 		git -C main review \
 			--assume-yes \
+			--no-edit \
 			--dryrun \
-			2>&1 | sed -e "s/[0-9a-f]\{40\}/<hash>/g" >actual &&
+			>out 2>&1 &&
+		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
 		test_cmp expect actual
 	)
 '
@@ -288,8 +355,10 @@ test_expect_success "upload to gerrit ssh review url" '
 		EOF
 		git -C main review \
 			--assume-yes \
+			--no-edit \
 			--dryrun \
-			2>&1 | sed -e "s/[0-9a-f]\{40\}/<hash>/g" >actual &&
+			>out 2>&1 &&
+		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
 		test_cmp expect actual
 	)
 '
@@ -316,8 +385,10 @@ test_expect_success "upload to a ssh review using rcp style URL" '
 		EOF
 		git -C main review \
 			--assume-yes \
+			--no-edit \
 			--dryrun \
-			2>&1 | sed -e "s/[0-9a-f]\{40\}/<hash>/g" >actual &&
+			>out 2>&1 &&
+		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
 		test_cmp expect actual
 	)
 '
@@ -367,11 +438,13 @@ test_expect_success "ATTENTION confirm if there are too many commits for review"
 		EOF
 		git -C main review \
 			--assume-yes \
+			--no-edit \
 			--mock-git-push \
 			--mock-ssh-info-status 200 \
 			--mock-ssh-info-response \
 			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
-			2>&1 | sed -e "s/[0-9a-f]\{40\}/<hash>/g" >actual &&
+			>out 2>&1 &&
+		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
 		test_cmp expect actual
 	)
 '

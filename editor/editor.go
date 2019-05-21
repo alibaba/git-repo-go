@@ -1,6 +1,7 @@
 package editor
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -103,8 +104,12 @@ func (v Editor) EditString(data string) string {
 	)
 
 	editor = v.Editor()
-	if editor == ":" {
-		log.Infof("editor is ':', return directly:\n%s", data)
+	if editor == ":" || !cap.Isatty() {
+		if editor == ":" {
+			log.Info("editor is ':', return directly")
+		}
+		log.Notef("no editor, input data unchanged")
+		fmt.Println(data)
 		return data
 	}
 
@@ -125,20 +130,15 @@ func (v Editor) EditString(data string) string {
 	}
 
 	cmdArgs := editorCommands(editor, tmpfile.Name())
-	if cap.Isatty() {
-		cmd := exec.Command(cmdArgs[0], cmdArgs[1:]...)
-		cmd.Stdin = os.Stdin
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		err = cmd.Run()
-		if err != nil {
-			log.Errorf("fail to run '%s' to edit script: %s",
-				strings.Join(cmdArgs, " "),
-				err)
-		}
-	} else {
-		log.Notef("will execute: %s", strings.Join(cmdArgs, " "))
-		log.Debugf("data ready for editor:\n%s", data)
+	cmd := exec.Command(cmdArgs[0], cmdArgs[1:]...)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err = cmd.Run()
+	if err != nil {
+		log.Errorf("fail to run '%s' to edit script: %s",
+			strings.Join(cmdArgs, " "),
+			err)
 	}
 
 	f, err := os.Open(tmpfile.Name())

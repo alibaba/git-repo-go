@@ -50,7 +50,29 @@ test_expect_success "edit script for multiple uploadable branches" '
 	(
 		cd work &&
 		cat >expect<<-EOF &&
-		INFO: editor is '"'"':'"'"', return directly:
+		INFO: editor is '"'"':'"'"', return directly
+		NOTE: no editor, input data unchanged
+		##############################################################################
+		# Step 1: Input your options for code review
+		#
+		# Note: Input your options below the comments and keep the comments unchanged
+		##############################################################################
+		
+		# [Title]       : one line message below as the title of code review
+		
+		# [Description] : multiple lines of text as the description of code review
+		
+		# [Issue]       : multiple lines of issue IDs for cross references
+		
+		# [Reviewer]    : multiple lines of user names as the reviewers for code review
+		
+		# [Cc]          : multiple lines of user names as the watchers for code review
+		
+		# [Draft]       : a boolean (yes/no, or true/false) to turn on/off draft mode
+		
+		# [Private]     : a boolean (yes/no, or true/false) to turn on/off private mode
+		
+		
 		##############################################################################
 		# Step 2: Select project and branches for upload
 		#
@@ -65,18 +87,19 @@ test_expect_success "edit script for multiple uploadable branches" '
 		# project projects/app1/:
 		#  branch my/topic1 ( 1 commit(s)) to remote branch maint:
 		#         <hash>
+
 		FATAL: nothing uncommented for upload
 		EOF
 		test_must_fail git-repo upload \
 			-v \
 			--assume-no \
+			--no-edit \
 			--mock-no-tty \
 			--mock-ssh-info-status 200 \
 			--mock-ssh-info-response \
 			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
-			2>&1 \
-		| sed -e "s/[0-9a-f]\{40\}/<hash>/g" \
-		>actual &&
+			>out 2>&1 &&
+		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
 		test_cmp expect actual
 	)
 '
@@ -94,14 +117,14 @@ test_expect_success "upload with args: project1" '
 		test_must_fail git-repo upload \
 			-v \
 			--assume-no \
+			--no-edit \
 			--mock-no-tty \
 			--mock-ssh-info-status 200 \
 			--mock-ssh-info-response \
 			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
 			project1 \
-			2>&1 \
-		| sed -e "s/[0-9a-f]\{40\}/<hash>/g" \
-		>actual &&
+			>out 2>&1 &&
+		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
 		test_cmp expect actual
 	)
 '
@@ -119,14 +142,14 @@ test_expect_success "upload with args: projects/app1" '
 		test_must_fail git-repo upload \
 			-v \
 			--assume-no \
+			--no-edit \
 			--mock-no-tty \
 			--mock-ssh-info-status 200 \
 			--mock-ssh-info-response \
 			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
 			projects/app1 \
-			2>&1 \
-		| sed -e "s/[0-9a-f]\{40\}/<hash>/g" \
-		>actual &&
+			>out 2>&1 &&
+		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
 		test_cmp expect actual
 	)
 '
@@ -146,15 +169,15 @@ test_expect_success "upload with args: app1" '
 			test_must_fail git-repo upload \
 				-v \
 				--assume-no \
+				--no-edit \
 				--mock-no-tty \
 				--mock-ssh-info-status 200 \
 				--mock-ssh-info-response \
 				"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
 				app1 \
 				2>&1
-		) \
-		| sed -e "s/[0-9a-f]\{40\}/<hash>/g" \
-		>actual &&
+		) >out &&
+		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
 		test_cmp expect actual
 	)
 '
@@ -174,15 +197,15 @@ test_expect_success "upload with args: ." '
 			test_must_fail git-repo upload \
 				-v \
 				--assume-no \
+				--no-edit \
 				--mock-no-tty \
 				--mock-ssh-info-status 200 \
 				--mock-ssh-info-response \
 				"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
 				. \
 				2>&1
-		) \
-		| sed -e "s/[0-9a-f]\{40\}/<hash>/g" \
-		>actual &&
+		) >out &&
+		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
 		test_cmp expect actual
 	)
 '
@@ -191,7 +214,29 @@ test_expect_success "upload with args: main, projects/app1" '
 	(
 		cd work &&
 		cat >expect<<-EOF &&
-		INFO: editor is '"'"':'"'"', return directly:
+		INFO: editor is '"'"':'"'"', return directly
+		NOTE: no editor, input data unchanged
+		##############################################################################
+		# Step 1: Input your options for code review
+		#
+		# Note: Input your options below the comments and keep the comments unchanged
+		##############################################################################
+		
+		# [Title]       : one line message below as the title of code review
+		
+		# [Description] : multiple lines of text as the description of code review
+		
+		# [Issue]       : multiple lines of issue IDs for cross references
+		
+		# [Reviewer]    : multiple lines of user names as the reviewers for code review
+		
+		# [Cc]          : multiple lines of user names as the watchers for code review
+		
+		# [Draft]       : a boolean (yes/no, or true/false) to turn on/off draft mode
+		
+		# [Private]     : a boolean (yes/no, or true/false) to turn on/off private mode
+		
+		
 		##############################################################################
 		# Step 2: Select project and branches for upload
 		#
@@ -206,6 +251,7 @@ test_expect_success "upload with args: main, projects/app1" '
 		# project projects/app1/:
 		#  branch my/topic1 ( 1 commit(s)) to remote branch maint:
 		#         <hash>
+
 		FATAL: nothing uncommented for upload
 		EOF
 		test_must_fail git-repo upload \
@@ -216,9 +262,8 @@ test_expect_success "upload with args: main, projects/app1" '
 			--mock-ssh-info-response \
 			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
 			main projects/app1 projects/app2 \
-			2>&1 \
-		| sed -e "s/[0-9a-f]\{40\}/<hash>/g" \
-		>actual &&
+			>out 2>&1 &&
+		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
 		test_cmp expect actual
 	)
 '
@@ -227,7 +272,29 @@ test_expect_success "upload with args: main, projects/app1" '
 	(
 		cd work &&
 		cat >expect<<-EOF &&
-		INFO: editor is '"'"':'"'"', return directly:
+		INFO: editor is '"'"':'"'"', return directly
+		NOTE: no editor, input data unchanged
+		##############################################################################
+		# Step 1: Input your options for code review
+		#
+		# Note: Input your options below the comments and keep the comments unchanged
+		##############################################################################
+		
+		# [Title]       : one line message below as the title of code review
+		
+		# [Description] : multiple lines of text as the description of code review
+		
+		# [Issue]       : multiple lines of issue IDs for cross references
+		
+		# [Reviewer]    : multiple lines of user names as the reviewers for code review
+		
+		# [Cc]          : multiple lines of user names as the watchers for code review
+		
+		# [Draft]       : a boolean (yes/no, or true/false) to turn on/off draft mode
+		
+		# [Private]     : a boolean (yes/no, or true/false) to turn on/off private mode
+		
+		
 		##############################################################################
 		# Step 2: Select project and branches for upload
 		#
@@ -242,11 +309,8 @@ test_expect_success "upload with args: main, projects/app1" '
 		# project projects/app1/:
 		#  branch my/topic1 ( 1 commit(s)) to remote branch maint:
 		#         <hash>
-		INFO: editor is '"'"':'"'"', return directly:
-		NOTE: will execute command: git push --receive-pack=agit-receive-pack ssh://git@ssh.example.com/main.git refs/heads/my/topic1:refs/for/maint/my/topic1
-		NOTE: will execute command: git push --receive-pack=agit-receive-pack ssh://git@ssh.example.com/project1.git refs/heads/my/topic1:refs/for/maint/my/topic1
 		
-		----------------------------------------------------------------------
+		FATAL: nothing uncommented for upload
 		EOF
 		cat >mock-edit-script<<-EOF &&
 		INFO: editor is '"'"':'"'"', return directly:
@@ -309,7 +373,6 @@ test_expect_success "if has many commits, must confirm before upload" '
 		ATTENTION: You are uploading an unusually high number of commits.
 		YOU PROBABLY DO NOT MEAN TO DO THIS. (Did you rebase across branches?)
 		If you are sure you intend to do this, type '"'"'yes'"'"': Yes
-		INFO: editor is '"'"':'"'"', return directly:
 		NOTE: will execute command: git push --receive-pack=agit-receive-pack ssh://git@ssh.example.com/project1.git refs/heads/my/topic1:refs/for/maint/my/topic1
 		
 		----------------------------------------------------------------------
@@ -318,6 +381,7 @@ test_expect_success "if has many commits, must confirm before upload" '
 			git-repo upload \
 				-v \
 				--assume-yes \
+				--no-edit \
 				--mock-no-tty \
 				--mock-git-push \
 				--mock-ssh-info-status 200 \
@@ -325,9 +389,8 @@ test_expect_success "if has many commits, must confirm before upload" '
 				"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
 				projects/app1 \
 				2>&1
-		) \
-		| sed -e "s/[0-9a-f]\{40\}/<hash>/g" \
-		>actual &&
+		) >out &&
+		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
 		test_cmp expect actual
 	)
 '
