@@ -14,6 +14,8 @@ var (
 	GitSSHProtocolPattern = regexp.MustCompile(`^(?P<proto>ssh)://((?P<user>.*?)@)?(?P<host>[^/]+?)(:(?P<port>[0-9]+))?(/(?P<repo>.+?)(\.git)?)?/?$`)
 	// GitRsyncProtocolPattern indicates rsync style git over SSH protocol
 	GitRsyncProtocolPattern = regexp.MustCompile(`^((?P<user>.*?)@)?(?P<host>[^/:]+?):(?P<repo>.*?)(\.git)?/?$`)
+
+	knownReviewHosts map[string]string
 )
 
 // GitURL holds Git URL
@@ -28,6 +30,11 @@ type GitURL struct {
 // GetReviewURL returns review URL
 func (v GitURL) GetReviewURL() string {
 	var u string
+
+	if u, ok := knownReviewHosts[v.Host]; ok {
+		return u
+	}
+
 	if v.Proto == "http" || v.Proto == "https" {
 		u = v.Proto + "://"
 		u += v.Host
@@ -112,4 +119,11 @@ func ParseGitURL(address string) *GitURL {
 		return gitURL
 	}
 	return nil
+}
+
+func init() {
+	// TODO: remove review URL mapping after implement /ssh_api in git server
+	knownReviewHosts = map[string]string{
+		"gitlab.alibaba-inc.com": "https://code.aone.alibaba-inc.com",
+	}
 }
