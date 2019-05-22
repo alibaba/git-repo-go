@@ -19,11 +19,11 @@ func (v mapping) has(s string) bool {
 	return ok
 }
 
+// Consts for color
 const (
 	// Prefix is control sequences to start color output
-	Prefix = "\033["
-	// Reset color
-	Reset = "\033[m"
+	Prefix     = "\033["
+	ResetColor = "\033[m"
 )
 
 var colorMap = mapping{
@@ -53,9 +53,10 @@ func colorEnabled() bool {
 	return true
 }
 
-func ColorReset() string {
+// Reset shows reset if color is enabled
+func Reset() string {
 	if colorEnabled() {
-		return Reset
+		return ResetColor
 	}
 	return ""
 }

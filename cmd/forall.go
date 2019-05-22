@@ -261,7 +261,7 @@ func (v forallCommand) showResult(result *project.CmdExecResult, i, count int) {
 		fmt.Printf("%sproject %s/%s\n",
 			color.Color("normal", "", "bold"),
 			projectHeader,
-			color.ColorReset())
+			color.Reset())
 	}
 
 	if stdout != "" {
