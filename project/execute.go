@@ -8,6 +8,52 @@ import (
 	"github.com/jiangxin/multi-log"
 )
 
+// CmdExecResult
+type CmdExecResult struct {
+	Project *Project
+	Out     []byte
+	Error   error
+}
+
+func (v *CmdExecResult) Stdout() string {
+	return string(v.Out)
+}
+
+func (v *CmdExecResult) Stderr() string {
+	if v.Error == nil {
+		return ""
+	}
+
+	if exitError, ok := v.Error.(*exec.ExitError); ok {
+		return string(exitError.Stderr)
+	}
+
+	return v.Error.Error()
+}
+
+func (v CmdExecResult) Success() bool {
+	if v.Error == nil {
+		return true
+	}
+
+	if exitError, ok := v.Error.(*exec.ExitError); ok {
+		return exitError.Success()
+	}
+
+	return false
+}
+
+func (v Project) ExecuteCommand(args ...string) *CmdExecResult {
+	result := CmdExecResult{
+		Project: &v,
+	}
+	cmd := exec.Command(args[0], args[1:]...)
+	cmd.Dir = v.WorkDir
+	cmd.Stdin = nil
+	result.Out, result.Error = cmd.Output()
+	return &result
+}
+
 func executeCommand(args ...string) error {
 	return executeCommandIn("", args)
 }

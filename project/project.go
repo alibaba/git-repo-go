@@ -151,6 +151,10 @@ func (v Project) Exists() bool {
 		return false
 	}
 
+	if v.Settings.Mirror {
+		return true
+	}
+
 	if _, err := os.Stat(filepath.Join(v.WorkDir, ".git")); err != nil {
 		return false
 	}
@@ -502,12 +506,12 @@ func NewMirrorProject(project *manifest.Project, s *RepoSettings) *Project {
 		log.Panicf("unknown remote url for %s", p.Name)
 	}
 
-	p.WorkDir = ""
-
 	repoPath = filepath.Join(
 		p.RepoRoot(),
 		p.Name+".git",
 	)
+
+	p.WorkDir = repoPath
 
 	p.WorkRepository = &Repository{
 		Name:       p.Name,

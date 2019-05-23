@@ -17,10 +17,8 @@ package cmd
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"regexp"
 	"strconv"
-	"strings"
 
 	"code.alibaba-inc.com/force/git-repo/color"
 	"code.alibaba-inc.com/force/git-repo/path"
@@ -200,16 +198,25 @@ func (v forallCommand) RunCommand(projects []*project.Project, cmds []string) er
 	var (
 		jobs       = v.O.Jobs
 		jobTasks   = make(chan int, jobs)
-		jobResults = make(chan *forallResult, jobs)
+		jobResults = make(chan *project.CmdExecResult, jobs)
 	)
 
 	os.Setenv("REPO_COUNT", strconv.Itoa(len(projects)))
 
-	execShell := !regexp.MustCompile(`^[a-z0-9A-Z_/\.-]+$`).MatchString(cmds[0])
+	if !regexp.MustCompile(`^[a-z0-9A-Z_/\.-]+$`).MatchString(cmds[0]) {
+		shellCmd := []string{
+			"sh",
+			"-c",
+			cmds[0],
+		}
+		shellCmd = append(shellCmd, cmds...)
+		cmds = shellCmd
+	}
+
 	worker := func(i int) {
 		log.Debugf("start command worker #%d", i)
 		for idx := range jobTasks {
-			jobResults <- v.executeCommand(projects[idx], execShell, cmds)
+			jobResults <- v.executeCommand(projects[idx], cmds)
 		}
 	}
 
@@ -224,42 +231,62 @@ func (v forallCommand) RunCommand(projects []*project.Project, cmds []string) er
 		close(jobTasks)
 	}()
 
-	for i := 0; i < len(projects); i++ {
+	count := len(projects)
+	for i := 0; i < count; i++ {
 		result := <-jobResults
 		if result == nil {
 			continue
 		}
-		fmt.Print(result.Output)
-		if v.O.ProjectHeader && i < len(projects)-1 {
-			fmt.Print("\n")
-		}
+		v.showResult(result, i, count)
 	}
 	return nil
 }
 
-type forallResult struct {
-	Project *project.Project
-	Output  string
-	Error   error
-}
-
-func (v forallCommand) executeCommand(p *project.Project, execShell bool, cmds []string) *forallResult {
-	var (
-		dir           string
-		projectHeader string
-		result        = forallResult{}
-		isMirror      = v.ws.ManifestProject != nil && v.ws.ManifestProject.MirrorEnabled()
-		cmd           *exec.Cmd
-	)
-
-	result.Project = p
-	if isMirror {
-		dir = p.WorkRepository.Path
-	} else {
-		dir = p.WorkDir
+func (v forallCommand) showResult(result *project.CmdExecResult, i, count int) {
+	stdout := result.Stdout()
+	stderr := result.Stderr()
+	if stdout == "" && stderr == "" {
+		return
 	}
 
-	if !path.Exists(dir) {
+	if v.O.ProjectHeader {
+		projectHeader := ""
+		if result.Project != nil {
+			if result.Project.Settings.Mirror {
+				projectHeader = result.Project.Name
+			} else {
+				projectHeader = result.Project.Path
+			}
+		}
+		fmt.Printf("%sproject %s/%s\n",
+			color.Color("normal", "", "bold"),
+			projectHeader,
+			color.ColorReset())
+	}
+
+	if stdout != "" {
+		if stdout[len(stdout)-1] != '\n' {
+			fmt.Println(stdout)
+		} else {
+			fmt.Print(stdout)
+		}
+	}
+
+	if stderr != "" {
+		if stderr[len(stderr)-1] != '\n' {
+			fmt.Println(stderr)
+		} else {
+			fmt.Print(stderr)
+		}
+	}
+
+	if v.O.ProjectHeader && i < count-1 {
+		fmt.Print("\n")
+	}
+}
+
+func (v forallCommand) executeCommand(p *project.Project, cmds []string) *project.CmdExecResult {
+	if !path.Exists(p.WorkDir) {
 		log.Infof("skipping %s/", p.Path)
 		return nil
 	}
@@ -268,52 +295,7 @@ func (v forallCommand) executeCommand(p *project.Project, execShell bool, cmds [
 	os.Setenv("REPO_PATH", p.Path)
 	os.Setenv("REPO_REMOTE", p.RemoteName)
 
-	if execShell {
-		shellCmd := []string{
-			"sh",
-			"-c",
-			cmds[0],
-		}
-		shellCmd = append(shellCmd, cmds...)
-		cmd = exec.Command(shellCmd[0], shellCmd[1:]...)
-		log.Debugf("execute: %s", strings.Join(shellCmd, " "))
-	} else {
-		cmd = exec.Command(cmds[0], cmds[1:]...)
-		log.Debugf("execute: %s", strings.Join(cmds, " "))
-	}
-	cmd.Dir = dir
-	cmd.Stdin = os.Stdin
-	out, err := cmd.Output()
-
-	if (len(out) > 0 || err != nil) && v.O.ProjectHeader {
-		if isMirror {
-			projectHeader = p.Name
-		} else {
-			projectHeader = p.Path
-		}
-		result.Output += fmt.Sprintf("%sproject %s/%s\n",
-			color.Color("normal", "", "bold"),
-			projectHeader,
-			color.ColorReset())
-	}
-
-	if len(out) > 0 {
-		result.Output += string(out)
-		if result.Output[len(result.Output)-1] != '\n' {
-			result.Output += "\n"
-		}
-	}
-	if err != nil {
-		result.Error = err
-		if exitErr, ok := err.(*exec.ExitError); ok {
-			result.Output += string(exitErr.Stderr)
-			if result.Output[len(result.Output)-1] != '\n' {
-				result.Output += "\n"
-			}
-		}
-	}
-
-	return &result
+	return p.ExecuteCommand(cmds...)
 }
 
 var forallCmd = forallCommand{}

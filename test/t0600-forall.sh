@@ -76,23 +76,23 @@ test_expect_success "execute cmd (-r module1)" '
 test_expect_success "execute cmd (-i module1)" '
 	(
 		cd work &&
-		git-repo forall -i module1 -i driver-2 -p -j 1 -c echo ...
-	) >actual &&
+		git-repo forall -i module1 -i driver-2 -p -j 1 -c pwd
+	) >out &&
+	sed -e "s#$HOME#...#g" <out >actual &&
 	cat >expect<<-EOF &&
 	project main/
-	...
+	.../work/main
 	
 	project projects/app1/
-	...
+	.../work/projects/app1
 	
 	project projects/app2/
-	...
+	.../work/projects/app2
 
 	project drivers/driver-1/
-	...
+	.../work/drivers/driver-1
 	EOF
 	test_cmp expect actual
 '
-
 
 test_done
