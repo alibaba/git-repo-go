@@ -145,7 +145,7 @@ func (v Repository) UpdateRef(refname, base, reason string) error {
 
 // GetHead returns head branch.
 func (v Project) GetHead() string {
-	return v.WorkRepository.GetHead()
+	return v.Head()
 }
 
 // Heads returns branches of repository

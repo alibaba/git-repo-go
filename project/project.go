@@ -295,7 +295,12 @@ func (v *Project) Head() string {
 	if head == nil {
 		return ""
 	}
-	return head.Name().String()
+
+	headName := head.Name().String()
+	if headName == "HEAD" {
+		return ""
+	}
+	return headName
 }
 
 // SetManifestURL sets manifestURL and change remote url if is MetaProject

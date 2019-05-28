@@ -117,20 +117,22 @@ func (v Repository) applyCloneBundle() {
 
 // GetHead returns current branch name
 func (v Repository) GetHead() string {
-	f, err := os.Open(filepath.Join(v.Path, "HEAD"))
-	if err != nil {
+	r := v.Raw()
+	if r == nil {
 		return ""
 	}
-	defer f.Close()
-	head, err := bufio.NewReader(f).ReadString('\n')
-	if err != nil {
+
+	// Not checkout yet
+	head, err := r.Head()
+	if head == nil || err != nil {
 		return ""
 	}
-	if strings.HasPrefix(head, "ref:") {
-		head = strings.TrimSpace(strings.TrimPrefix(head, "ref:"))
-		return head
+
+	headName := head.Name().String()
+	if headName == "HEAD" {
+		return ""
 	}
-	return ""
+	return headName
 }
 
 // IsRebaseInProgress checks whether is in middle of a rebase.
