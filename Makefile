@@ -38,35 +38,46 @@ test: golint $(TARGETS)
 	$(call message,Testing git-repo for integration tests)
 	@make -C test
 
-linux-64: $(shell find . -name '*.go')
-	$(call message,Building $@)
-	@mkdir -p target/linux-amd64
-	$(GOBUILD_LINUX_64) -o target/linux-amd64/git-repo -ldflags "-X $(PKG)/versions.Version=$(REPO_VERSION)"
+version-yml: REPO-VERSION-FILE
+	@mkdir -p _build
+	@echo "production: $(REPO_VERSION)" > _build/version.yml
+	@echo "test: $(REPO_VERSION)" >> _build/version.yml
 
-linux-32: $(shell find . -name '*.go')
+linux-amd64: $(shell find . -name '*.go')
 	$(call message,Building $@)
-	@mkdir -p target/linux-i386
-	$(GOBUILD_LINUX_32) -o target/linux-i386/git-repo -ldflags "-X $(PKG)/versions.Version=$(REPO_VERSION)"
+	@mkdir -p _build/linux/amd64
+	$(GOBUILD_LINUX_64) -o _build/linux/amd64/git-repo -ldflags "-X $(PKG)/versions.Version=$(REPO_VERSION)"
+	@make version-yml
 
-windows-64: $(shell find . -name '*.go')
+linux-386: $(shell find . -name '*.go')
 	$(call message,Building $@)
-	@mkdir -p target/windows-x86_64
-	$(GOBUILD_WINDOWS_64) -o target/windows-x86_64/git-repo.exe -ldflags "-X $(PKG)/versions.Version=$(REPO_VERSION)"
+	@mkdir -p _build/linux/386
+	$(GOBUILD_LINUX_32) -o _build/linux/386/git-repo -ldflags "-X $(PKG)/versions.Version=$(REPO_VERSION)"
+	@make version-yml
 
-windows-32: $(shell find . -name '*.go')
+windows-amd64: $(shell find . -name '*.go')
 	$(call message,Building $@)
-	@mkdir -p target/windows-i386
-	$(GOBUILD_WINDOWS_32) -o target/windows-i386/git-repo.exe -ldflags "-X $(PKG)/versions.Version=$(REPO_VERSION)"
+	@mkdir -p _build/windows/amd64
+	$(GOBUILD_WINDOWS_64) -o _build/windows/amd64/git-repo.exe -ldflags "-X $(PKG)/versions.Version=$(REPO_VERSION)"
+	@make version-yml
 
-mac-64: $(shell find . -name '*.go')
+windows-386: $(shell find . -name '*.go')
 	$(call message,Building $@)
-	@mkdir -p target/Mac-x86_64
-	$(GOBUILD_MAC_64) -o target/Mac-x86_64/git-repo -ldflags "-X $(PKG)/versions.Version=$(REPO_VERSION)"
+	@mkdir -p _build/windows/386
+	$(GOBUILD_WINDOWS_32) -o _build/windows/386/git-repo.exe -ldflags "-X $(PKG)/versions.Version=$(REPO_VERSION)"
+	@make version-yml
 
-mac-32: $(shell find . -name '*.go')
+darwin-amd64: $(shell find . -name '*.go')
 	$(call message,Building $@)
-	@mkdir -p target/Mac-i386
-	$(GOBUILD_MAC_32) -o target/Mac-i386/git-repo -ldflags "-X $(PKG)/versions.Version=$(REPO_VERSION)"
+	@mkdir -p _build/darwin/amd64
+	$(GOBUILD_MAC_64) -o _build/darwin/amd64/git-repo -ldflags "-X $(PKG)/versions.Version=$(REPO_VERSION)"
+	@make version-yml
+
+darwin-386: $(shell find . -name '*.go')
+	$(call message,Building $@)
+	@mkdir -p _build/darwin/386
+	$(GOBUILD_MAC_32) -o _build/darwin/386/git-repo -ldflags "-X $(PKG)/versions.Version=$(REPO_VERSION)"
+	@make version-yml
 
 clean:
 	$(call message,Cleaning $(TARGETS))
@@ -75,3 +86,4 @@ clean:
 
 .PHONY: test clean
 .PHONY: FORCE
+.PHONY: version-yml
