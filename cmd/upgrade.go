@@ -173,11 +173,25 @@ func (v upgradeCommand) Download(URL string, f *os.File) error {
 
 func (v upgradeCommand) Verify(bin, sig string) error {
 	var (
-		err error
+		err     error
+		keyring openpgp.EntityList
 	)
 
 	log.Debugf("validating signature '%s' on '%s'", sig, bin)
-	keyringReader := strings.NewReader(config.PGPKeyRing)
+	for _, buf := range config.PGPKeyRing {
+		r := strings.NewReader(buf)
+		keys, err := openpgp.ReadArmoredKeyRing(r)
+		if err != nil {
+			return fmt.Errorf("verify failed, cannot load pubkeys")
+		}
+		for _, key := range keys {
+			for _, id := range key.Identities {
+				log.Debugf("loaded pubkey for %s", id.Name)
+			}
+		}
+		keyring = append(keyring, keys...)
+	}
+
 	sigFile, err := os.Open(sig)
 	if err != nil {
 		return err
@@ -190,7 +204,6 @@ func (v upgradeCommand) Verify(bin, sig string) error {
 	}
 	defer binFile.Close()
 
-	keyring, err := openpgp.ReadArmoredKeyRing(keyringReader)
 	if err != nil {
 		return fmt.Errorf("verify failed, cannot read keyring: %s", err)
 	}
@@ -200,6 +213,7 @@ func (v upgradeCommand) Verify(bin, sig string) error {
 		return fmt.Errorf("fail to check pgp signature: %s", err)
 	}
 
+	log.Debugf("validating ok, good signature")
 	return nil
 }
 
