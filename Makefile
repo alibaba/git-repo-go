@@ -10,6 +10,7 @@ GOBUILD_WINDOWS_32 := env GOOS=windows GOARCH=386 $(GOBUILD)
 GOBUILD_MAC_64 := env GOOS=darwin GOARCH=amd64 $(GOBUILD)
 GOBUILD_MAC_32 := env GOOS=darwin GOARCH=386 $(GOBUILD)
 
+GPGSIGN=gpg -sba -u Alibaba
 # Returns a list of all non-vendored (local packages)
 LOCAL_PACKAGES = $(shell go list ./... | grep -v -e '^$(PKG)/vendor/')
 LOCAL_GO_FILES = $(shell find -L $BUILD_DIR  -name "*.go" -not -path "$(PKG_BUILD_DIR)/vendor/*" -not -path "$(PKG_BUILD_DIR)/_build/*")
@@ -21,10 +22,11 @@ endef
 all: $(TARGETS)
 
 REPO-VERSION-FILE: FORCE
+	$(call message,Generate version file)
 	@/bin/sh ./REPO-VERSION-GEN
 -include REPO-VERSION-FILE
 
-git-repo: $(shell find . -name '*.go')
+git-repo: $(shell find . -name '*.go') | REPO-VERSION-FILE
 	$(call message,Building $@)
 	$(GOBUILD)  -ldflags "-X $(PKG)/versions.Version=$(REPO_VERSION)"
 
@@ -43,40 +45,46 @@ version-yml: REPO-VERSION-FILE
 	@echo "production: $(REPO_VERSION)" > _build/version.yml
 	@echo "test: $(REPO_VERSION)" >> _build/version.yml
 
-linux-amd64: $(shell find . -name '*.go')
+linux-amd64: $(shell find . -name '*.go') | REPO-VERSION-FILE
 	$(call message,Building $@)
-	@mkdir -p _build/linux/amd64
-	$(GOBUILD_LINUX_64) -o _build/linux/amd64/git-repo -ldflags "-X $(PKG)/versions.Version=$(REPO_VERSION)"
+	@mkdir -p _build/$(REPO_VERSION)/linux/amd64
+	$(GOBUILD_LINUX_64) -o _build/$(REPO_VERSION)/linux/amd64/git-repo -ldflags "-X $(PKG)/versions.Version=$(REPO_VERSION)"
+	-$(GPGSIGN) _build/$(REPO_VERSION)/linux/amd64/git-repo
 	@make version-yml
 
-linux-386: $(shell find . -name '*.go')
+linux-386: $(shell find . -name '*.go') | REPO-VERSION-FILE
 	$(call message,Building $@)
-	@mkdir -p _build/linux/386
-	$(GOBUILD_LINUX_32) -o _build/linux/386/git-repo -ldflags "-X $(PKG)/versions.Version=$(REPO_VERSION)"
+	@mkdir -p _build/$(REPO_VERSION)/linux/386
+	$(GOBUILD_LINUX_32) -o _build/$(REPO_VERSION)/linux/386/git-repo -ldflags "-X $(PKG)/versions.Version=$(REPO_VERSION)"
+	-$(GPGSIGN) _build/$(REPO_VERSION)/linux/386/git-repo
 	@make version-yml
 
-windows-amd64: $(shell find . -name '*.go')
+windows-amd64: $(shell find . -name '*.go') | REPO-VERSION-FILE
 	$(call message,Building $@)
-	@mkdir -p _build/windows/amd64
-	$(GOBUILD_WINDOWS_64) -o _build/windows/amd64/git-repo.exe -ldflags "-X $(PKG)/versions.Version=$(REPO_VERSION)"
+	@mkdir -p _build/$(REPO_VERSION)/windows/amd64
+	$(GOBUILD_WINDOWS_64) -o _build/$(REPO_VERSION)/windows/amd64/git-repo.exe -ldflags "-X $(PKG)/versions.Version=$(REPO_VERSION)"
+	-$(GPGSIGN) _build/$(REPO_VERSION)/windows/amd64/git-repo.exe
 	@make version-yml
 
-windows-386: $(shell find . -name '*.go')
+windows-386: $(shell find . -name '*.go') | REPO-VERSION-FILE
 	$(call message,Building $@)
-	@mkdir -p _build/windows/386
-	$(GOBUILD_WINDOWS_32) -o _build/windows/386/git-repo.exe -ldflags "-X $(PKG)/versions.Version=$(REPO_VERSION)"
+	@mkdir -p _build/$(REPO_VERSION)/windows/386
+	$(GOBUILD_WINDOWS_32) -o _build/$(REPO_VERSION)/windows/386/git-repo.exe -ldflags "-X $(PKG)/versions.Version=$(REPO_VERSION)"
+	-$(GPGSIGN) _build/$(REPO_VERSION)/windows/386/git-repo.exe
 	@make version-yml
 
-darwin-amd64: $(shell find . -name '*.go')
+darwin-amd64: $(shell find . -name '*.go') | REPO-VERSION-FILE
 	$(call message,Building $@)
-	@mkdir -p _build/darwin/amd64
-	$(GOBUILD_MAC_64) -o _build/darwin/amd64/git-repo -ldflags "-X $(PKG)/versions.Version=$(REPO_VERSION)"
+	@mkdir -p _build/$(REPO_VERSION)/darwin/amd64
+	$(GOBUILD_MAC_64) -o _build/$(REPO_VERSION)/darwin/amd64/git-repo -ldflags "-X $(PKG)/versions.Version=$(REPO_VERSION)"
+	-$(GPGSIGN) _build/$(REPO_VERSION)/darwin/amd64/git-repo
 	@make version-yml
 
-darwin-386: $(shell find . -name '*.go')
+darwin-386: $(shell find . -name '*.go') | REPO-VERSION-FILE
 	$(call message,Building $@)
-	@mkdir -p _build/darwin/386
-	$(GOBUILD_MAC_32) -o _build/darwin/386/git-repo -ldflags "-X $(PKG)/versions.Version=$(REPO_VERSION)"
+	@mkdir -p _build/$(REPO_VERSION)/darwin/386
+	$(GOBUILD_MAC_32) -o _build/$(REPO_VERSION)/darwin/386/git-repo -ldflags "-X $(PKG)/versions.Version=$(REPO_VERSION)"
+	-$(GPGSIGN) _build/$(REPO_VERSION)/darwin/386/git-repo
 	@make version-yml
 
 clean:
