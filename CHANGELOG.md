@@ -2,6 +2,31 @@
 
 Changes of git-repo.
 
+## 0.0.3 (2019-5-29)
+
+New feature:
+
++ New command: git repo upgrade
++ New command: git repo status
++ New command: git-repo forall
+
+Enhancement and bugfix:
+
++ Get project's HEAD from .gitdir inside worktree
++ go.mod: update modules goconfig and multi-log
++ refactor: move executeResult from forall to project
++ sync: not quit if fail to check remote server type
++ sync: return error if work repo is nil when syncing
++ goconfig: fix index out of range bug
++ upload: use knownReviewHosts to help to find review URL
++ upload: show log info if cannot upload a branch
++ upload: one dialog for options and branches edition
++ upload: use more readable upload options message
++ upload: New option --no-edit
++ Update edit script error message
++ Open an editor for user to custom upload options
++ refactor: parse reviewers later in UploadAndReport method
+
 ## 0.0.2 (2019-5-20)
 
 + test: add test case for install hooks
