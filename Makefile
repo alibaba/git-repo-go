@@ -87,6 +87,11 @@ darwin-386: $(shell find . -name '*.go') | REPO-VERSION-FILE
 	-$(GPGSIGN) _build/$(REPO_VERSION)/darwin/386/git-repo
 	@make version-yml
 
+index:
+	$(call message,Building $@)
+	@mkdir -p _build/$(REPO_VERSION)/
+	pandoc -s -f markdown -t html --metadata title="CHANGELOG of git-repo" -o _build/$(REPO_VERSION)/index.html CHANGELOG.md
+
 clean:
 	$(call message,Cleaning $(TARGETS))
 	@rm -f $(TARGETS)
@@ -94,4 +99,4 @@ clean:
 
 .PHONY: test clean
 .PHONY: FORCE
-.PHONY: version-yml
+.PHONY: version-yml index
