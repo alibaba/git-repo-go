@@ -704,7 +704,7 @@ func (v *uploadCommand) UploadAndReport(branches []project.ReviewableBranch) err
 				input := userInput(
 					fmt.Sprintf("Continue uploading? (y/N) "),
 					"N")
-				if answerIsTrue(input) {
+				if !answerIsTrue(input) {
 					log.Note("skipping upload")
 					branch.Uploaded = false
 					branch.Error = fmt.Errorf("User aborted")
