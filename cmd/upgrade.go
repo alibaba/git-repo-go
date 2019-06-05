@@ -25,8 +25,11 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"code.alibaba-inc.com/force/git-repo/cap"
@@ -164,7 +167,12 @@ func (v upgradeCommand) GetUpgradeVersion() (string, error) {
 	return version.Production, nil
 }
 
-func (v upgradeCommand) Download(URL string, f *os.File) error {
+func (v upgradeCommand) Download(URL string, f *os.File, showProgress bool) error {
+	var (
+		done = make(chan int)
+		wg   sync.WaitGroup
+	)
+
 	log.Debugf("will download %s to %s", URL, f.Name())
 
 	client := v.HTTPClient()
@@ -184,7 +192,72 @@ func (v upgradeCommand) Download(URL string, f *os.File) error {
 		return fmt.Errorf("cannot access %s (status: %d)", URL, resp.StatusCode)
 	}
 
+	if showProgress {
+		contentLength, err := strconv.Atoi(resp.Header.Get("Content-Length"))
+		if err != nil {
+			log.Debugf("fail to get content-length: %s", err)
+			contentLength = 0
+		}
+
+		wg.Add(1)
+		go func(fullpath string, total int) {
+			var (
+				maxWidth = 60
+				percent  float64
+				stop     bool
+				name     = filepath.Base(URL)
+			)
+
+			defer wg.Done()
+
+			if total == 0 {
+				return
+			}
+
+			for {
+				select {
+				case <-done:
+					stop = true
+				default:
+				}
+
+				if !stop {
+					fi, err := os.Stat(fullpath)
+					if err != nil {
+						stop = true
+						break
+					}
+					size := fi.Size()
+					if size == 0 {
+						size = 1
+					}
+					percent = float64(size) / float64(total) * 100
+				} else {
+					percent = 100
+				}
+
+				fmt.Printf("Download %s: %s %3.0f%%\r",
+					name,
+					strings.Repeat("#", int(percent/100*float64(maxWidth))),
+					percent)
+
+				if stop {
+					break
+				}
+
+				time.Sleep(time.Second)
+			}
+			fmt.Printf("\n")
+		}(f.Name(), contentLength)
+	}
+
 	_, err = io.Copy(f, resp.Body)
+
+	if showProgress {
+		done <- 1
+		wg.Wait()
+
+	}
 	return err
 }
 
@@ -283,7 +356,7 @@ func (v upgradeCommand) Verify(binURL, binFile string) error {
 	}
 	defer os.Remove(checksumFile.Name())
 
-	err = v.Download(checksumURL, checksumFile)
+	err = v.Download(checksumURL, checksumFile, false)
 	if err != nil {
 		return fmt.Errorf("cannot find sha256 checksum: %s", checksumURL)
 	}
@@ -301,7 +374,7 @@ func (v upgradeCommand) Verify(binURL, binFile string) error {
 	}
 	defer os.Remove(signatureFile.Name())
 
-	if err = v.Download(signatureURL, signatureFile); err != nil {
+	if err = v.Download(signatureURL, signatureFile, false); err != nil {
 		input := userInput(
 			fmt.Sprintf("cannot find pgp signature, still want to install? (y/N)? "),
 			"N")
@@ -343,7 +416,7 @@ func (v upgradeCommand) UpgradeVersion(target, version string) error {
 	}
 	defer os.Remove(binFile.Name())
 
-	err = v.Download(binURL, binFile)
+	err = v.Download(binURL, binFile, true)
 	if err != nil {
 		return fmt.Errorf("fail to download %s: %s", binURL, err)
 	}
