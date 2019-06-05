@@ -19,9 +19,12 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strconv"
+	"strings"
 
 	"code.alibaba-inc.com/force/git-repo/path"
 	"github.com/jiangxin/goconfig"
+	"github.com/jiangxin/multi-log"
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/viper"
 )
@@ -127,7 +130,35 @@ func GetLogLevel() string {
 
 // GetLogRotateSize gets logrotate size from config
 func GetLogRotateSize() int64 {
-	return viper.GetInt64("logrotate")
+	logrotate := strings.ToLower(viper.GetString("logrotate"))
+	if logrotate == "" {
+		return 0
+	}
+	if logrotate[len(logrotate)-1] == 'b' {
+		logrotate = logrotate[0 : len(logrotate)-1]
+		if logrotate == "" {
+			return 0
+		}
+	}
+	scale := logrotate[len(logrotate)-1]
+	if scale == 'k' || scale == 'm' || scale == 'g' {
+		logrotate = logrotate[0 : len(logrotate)-1]
+	}
+
+	size, err := strconv.ParseInt(logrotate, 10, 64)
+	if err != nil {
+		log.Warnf("bad logrotate value: %s", viper.GetString("logrotate"))
+		return 0
+	}
+	switch scale {
+	case 'k':
+		size <<= 10
+	case 'm':
+		size <<= 20
+	case 'g':
+		size <<= 30
+	}
+	return size
 }
 
 // NoCertChecks indicates whether ignore ssl cert checks

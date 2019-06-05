@@ -29,11 +29,6 @@ import (
 	"github.com/spf13/viper"
 )
 
-// Define macros for git-repo
-const (
-	DefaultConfigFile = "~/.git-repo/config"
-)
-
 var (
 	cfgFile     string
 	theRepoDir  string
@@ -176,7 +171,7 @@ func (v rootCommand) checkGitVersion() {
 	}
 }
 
-func (v rootCommand) installGitConfig() {
+func (v rootCommand) installConfigFiles() {
 	var err error
 
 	err = config.InstallExtraGitConfig()
@@ -184,6 +179,10 @@ func (v rootCommand) installGitConfig() {
 		log.Error(err)
 	}
 	err = config.InstallRepoHooks()
+	if err != nil {
+		log.Error(err)
+	}
+	err = config.InstallRepoConfig()
 	if err != nil {
 		log.Error(err)
 	}
@@ -195,7 +194,7 @@ func (v rootCommand) initConfig() {
 		// Use config file from the flag.
 		viper.SetConfigFile(cfgFile)
 	} else {
-		filename, err := path.Abs(DefaultConfigFile)
+		filename, err := path.Abs(config.DefaultGitRepoConfigFile)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
@@ -248,5 +247,5 @@ func init() {
 	cobra.OnInitialize(rootCmd.initConfig)
 	cobra.OnInitialize(rootCmd.initLog)
 	cobra.OnInitialize(rootCmd.checkGitVersion)
-	cobra.OnInitialize(rootCmd.installGitConfig)
+	cobra.OnInitialize(rootCmd.installConfigFiles)
 }
