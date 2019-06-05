@@ -2,6 +2,14 @@
 
 Changes of git-repo.
 
+## 0.1.0 (2019-6-5)
+
++ upgrade: show download progress
++ upgrade: add --no-cert-checks option
++ upgrade: validate package by sha256 sum and gpg signature
++ refactor: viper only bind necessary flags in rootcmd
++ bugfix: continue push if consume yes on dirty worktree
+
 ## 0.0.3 (2019-5-29)
 
 New feature:
