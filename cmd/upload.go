@@ -30,7 +30,6 @@ import (
 	"github.com/jiangxin/multi-log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
-	"github.com/spf13/viper"
 )
 
 const (
@@ -46,23 +45,26 @@ var (
 )
 
 type uploadOptions struct {
-	AllowAllHooks bool
-	AutoTopic     bool
-	Branch        string
-	BypassHooks   bool
-	Cc            []string
-	CurrentBranch bool
-	Description   string
-	DestBranch    string
-	Draft         bool
-	Issue         string
-	NoEdit        bool
-	NoEmails      bool
-	Private       bool
-	PushOptions   []string
-	Reviewers     []string
-	Title         string
-	WIP           bool
+	AllowAllHooks  bool
+	AutoTopic      bool
+	Branch         string
+	BypassHooks    bool
+	Cc             []string
+	CurrentBranch  bool
+	Description    string
+	DestBranch     string
+	Draft          bool
+	Issue          string
+	MockGitPush    bool
+	MockEditScript string
+	NoCertChecks   bool
+	NoEdit         bool
+	NoEmails       bool
+	Private        bool
+	PushOptions    []string
+	Reviewers      []string
+	Title          string
+	WIP            bool
 }
 
 type uploadCommand struct {
@@ -161,7 +163,8 @@ func (v *uploadCommand) Command() *cobra.Command {
 		"D",
 		"",
 		"Submit for review on this target branch")
-	v.cmd.Flags().Bool("no-cert-checks",
+	v.cmd.Flags().BoolVar(&v.O.NoCertChecks,
+		"no-cert-checks",
 		false,
 		"Disable verifying ssl certs (unsafe)")
 	v.cmd.Flags().BoolVar(&v.O.BypassHooks,
@@ -172,46 +175,25 @@ func (v *uploadCommand) Command() *cobra.Command {
 		"verify",
 		false,
 		"Run the upload hook without prompting")
-	v.cmd.Flags().Bool("dryrun",
-		false,
-		"dryrun mode")
 
 	v.cmd.Flags().BoolVar(&v.O.NoEdit,
 		"no-edit",
 		false,
 		"If specified, do not open editor to confirm")
-
-	v.cmd.Flags().Bool("assume-yes",
-		false,
-		"Automatic yes to prompts")
-
-	v.cmd.Flags().Bool("assume-no",
-		false,
-		"Automatic no to prompts")
-
-	v.cmd.Flags().Bool("mock-git-push",
+	v.cmd.Flags().BoolVar(&v.O.MockGitPush,
+		"mock-git-push",
 		false,
 		"Mock git-push for test")
-
-	v.cmd.Flags().String("mock-edit-script",
+	v.cmd.Flags().StringVar(&v.O.MockEditScript,
+		"mock-edit-script",
 		"",
 		"Mock edit script result file")
 
 	v.cmd.Flags().MarkHidden("auto-topic")
-	v.cmd.Flags().MarkHidden("assume-yes")
-	v.cmd.Flags().MarkHidden("assume-no")
 	v.cmd.Flags().MarkHidden("mock-git-push")
 	v.cmd.Flags().MarkHidden("mock-edit-script")
 
-	viper.BindPFlag("no-cert-checks", v.cmd.Flags().Lookup("no-cert-checks"))
-	viper.BindPFlag("dryrun", v.cmd.Flags().Lookup("dryrun"))
-	viper.BindPFlag("assume-yes", v.cmd.Flags().Lookup("assume-yes"))
-	viper.BindPFlag("assume-no", v.cmd.Flags().Lookup("assume-no"))
-	viper.BindPFlag("mock-git-push", v.cmd.Flags().Lookup("mock-git-push"))
-	viper.BindPFlag("mock-edit-script", v.cmd.Flags().Lookup("mock-edit-script"))
-
 	return v.cmd
-
 }
 
 func (v *uploadCommand) WorkSpace() workspace.WorkSpace {
@@ -388,8 +370,8 @@ func (v uploadCommand) UploadForReviewWithEditor(branchesMap map[string][]projec
 	script = append(script, "")
 	editString := editor.EditString(strings.Join(script, "\n"))
 
-	if config.MockEditScript() != "" {
-		f, err := os.Open(config.MockEditScript())
+	if v.O.MockEditScript != "" {
+		f, err := os.Open(v.O.MockEditScript)
 		if err == nil {
 			buf, err := ioutil.ReadAll(f)
 			if err == nil {
@@ -747,7 +729,8 @@ func (v *uploadCommand) UploadAndReport(branches []project.ReviewableBranch) err
 			DestBranch:   destBranch,
 			Draft:        v.O.Draft,
 			Issue:        v.O.Issue,
-			NoCertChecks: config.NoCertChecks(),
+			MockGitPush:  v.O.MockGitPush,
+			NoCertChecks: v.O.NoCertChecks || config.NoCertChecks(),
 			NoEmails:     v.O.NoEmails,
 			Private:      v.O.Private,
 			PushOptions:  v.O.PushOptions,

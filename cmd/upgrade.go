@@ -48,7 +48,6 @@ type upgradeCommand struct {
 
 	O struct {
 		URL     string
-		Dryrun  bool
 		Test    bool
 		Version string
 	}
@@ -71,6 +70,7 @@ func (v *upgradeCommand) Command() *cobra.Command {
 			return v.runE(args)
 		},
 	}
+
 	v.cmd.Flags().StringVarP(&v.O.URL,
 		"url",
 		"u",
@@ -80,11 +80,6 @@ func (v *upgradeCommand) Command() *cobra.Command {
 		"version",
 		"",
 		"install specific version")
-	v.cmd.Flags().BoolVarP(&v.O.Dryrun,
-		"dryrun",
-		"n",
-		false,
-		"dryrun mode")
 	v.cmd.Flags().BoolVarP(&v.O.Test,
 		"test",
 		"t",
@@ -264,7 +259,7 @@ func (v upgradeCommand) UpgradeVersion(target, version string) error {
 		return err
 	}
 
-	if v.O.Dryrun {
+	if config.IsDryRun() {
 		log.Notef("will upgrade git-repo from version %s to %s, from file %s",
 			versions.Version,
 			version,

@@ -86,26 +86,79 @@ this command with special options.`,
 		SilenceUsage: true,
 	}
 
-	v.cmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.git-repo.yaml)")
-	v.cmd.PersistentFlags().CountP("verbose", "v", "verbose mode")
-	v.cmd.PersistentFlags().BoolP("quiet", "q", false, "quiet mode")
-	v.cmd.PersistentFlags().Bool("single", false, "single mode, no manifest")
-	v.cmd.PersistentFlags().Int("mock-ssh-info-status", 0, "mock remote ssh_info status")
-	v.cmd.PersistentFlags().String("mock-ssh-info-response", "", "mock remote ssh_info response")
-	v.cmd.PersistentFlags().Bool("mock-no-symlink", false, "mock no symlink cap")
-	v.cmd.PersistentFlags().Bool("mock-no-tty", false, "mock notty cap")
+	v.cmd.PersistentFlags().StringVar(&cfgFile,
+		"config",
+		"",
+		"config file (default is $HOME/.git-repo.yaml)")
+	v.cmd.PersistentFlags().Bool("assume-no",
+		false,
+		"Automatic no to prompts")
+	v.cmd.PersistentFlags().Bool("assume-yes",
+		false,
+		"Automatic yes to prompts")
+	v.cmd.PersistentFlags().Bool("dryrun",
+		false,
+		"dryrun mode")
+	v.cmd.PersistentFlags().BoolP("quiet",
+		"q",
+		false,
+		"quiet mode")
+	v.cmd.PersistentFlags().Bool("single",
+		false,
+		"single mode, no manifest")
+	v.cmd.PersistentFlags().CountP("verbose",
+		"v",
+		"verbose mode")
+	v.cmd.PersistentFlags().Bool("mock-no-symlink",
+		false,
+		"mock no symlink cap")
+	v.cmd.PersistentFlags().Bool("mock-no-tty",
+		false,
+		"mock notty cap")
+	v.cmd.PersistentFlags().String("mock-ssh-info-response",
+		"",
+		"mock remote ssh_info response")
+	v.cmd.PersistentFlags().Int("mock-ssh-info-status",
+		0,
+		"mock remote ssh_info status")
+
+	v.cmd.PersistentFlags().MarkHidden("assume-yes")
+	v.cmd.PersistentFlags().MarkHidden("assume-no")
 	v.cmd.PersistentFlags().MarkHidden("mock-ssh-info-status")
 	v.cmd.PersistentFlags().MarkHidden("mock-ssh-info-response")
 	v.cmd.PersistentFlags().MarkHidden("mock-no-symlink")
 	v.cmd.PersistentFlags().MarkHidden("mock-no-tty")
 
-	viper.BindPFlag("verbose", v.cmd.PersistentFlags().Lookup("verbose"))
-	viper.BindPFlag("quiet", v.cmd.PersistentFlags().Lookup("quiet"))
-	viper.BindPFlag("single", v.cmd.PersistentFlags().Lookup("single"))
-	viper.BindPFlag("mock-ssh-info-status", v.cmd.PersistentFlags().Lookup("mock-ssh-info-status"))
-	viper.BindPFlag("mock-ssh-info-response", v.cmd.PersistentFlags().Lookup("mock-ssh-info-response"))
-	viper.BindPFlag("mock-no-symlink", v.cmd.PersistentFlags().Lookup("mock-no-symlink"))
-	viper.BindPFlag("mock-no-tty", v.cmd.PersistentFlags().Lookup("mock-no-tty"))
+	viper.BindPFlag(
+		"assume-no",
+		v.cmd.PersistentFlags().Lookup("assume-no"))
+	viper.BindPFlag(
+		"assume-yes",
+		v.cmd.PersistentFlags().Lookup("assume-yes"))
+	viper.BindPFlag(
+		"dryrun",
+		v.cmd.PersistentFlags().Lookup("dryrun"))
+	viper.BindPFlag(
+		"quiet",
+		v.cmd.PersistentFlags().Lookup("quiet"))
+	viper.BindPFlag(
+		"single",
+		v.cmd.PersistentFlags().Lookup("single"))
+	viper.BindPFlag(
+		"verbose",
+		v.cmd.PersistentFlags().Lookup("verbose"))
+	viper.BindPFlag(
+		"mock-no-symlink",
+		v.cmd.PersistentFlags().Lookup("mock-no-symlink"))
+	viper.BindPFlag(
+		"mock-no-tty",
+		v.cmd.PersistentFlags().Lookup("mock-no-tty"))
+	viper.BindPFlag(
+		"mock-ssh-info-response",
+		v.cmd.PersistentFlags().Lookup("mock-ssh-info-response"))
+	viper.BindPFlag(
+		"mock-ssh-info-status",
+		v.cmd.PersistentFlags().Lookup("mock-ssh-info-status"))
 
 	return v.cmd
 }

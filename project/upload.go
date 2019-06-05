@@ -17,6 +17,7 @@ type UploadOptions struct {
 	DestBranch   string
 	Draft        bool
 	Issue        string
+	MockGitPush  bool
 	NoCertChecks bool
 	NoEmails     bool
 	People       [][]string
@@ -113,7 +114,7 @@ func (v ReviewableBranch) UploadForReview(o *UploadOptions, people [][]string) e
 		return err
 	}
 
-	if config.IsDryRun() || config.MockGitPush() {
+	if config.IsDryRun() || o.MockGitPush {
 		log.Notef("will execute command: %s", strings.Join(cmdArgs, " "))
 	} else {
 		log.Debugf("review by command: %s", strings.Join(cmdArgs, " "))

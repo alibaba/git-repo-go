@@ -132,18 +132,11 @@ func GetLogRotateSize() int64 {
 
 // NoCertChecks indicates whether ignore ssl cert checks
 func NoCertChecks() bool {
-	var verify bool
-
-	if viper.GetBool("no-cert-checks") {
-		return true
-	}
-
 	cfg, err := goconfig.LoadAll("")
 	if err != nil {
 		return false
 	}
-	verify = cfg.GetBool("http.sslverify", true)
-	return !verify
+	return !cfg.GetBool("http.sslverify", true)
 }
 
 // GetMockSSHInfoStatus gets --mock-ssh-info-status option
@@ -154,11 +147,6 @@ func GetMockSSHInfoStatus() int {
 // GetMockSSHInfoResponse gets --mock-ssh-info-status option
 func GetMockSSHInfoResponse() string {
 	return viper.GetString("mock-ssh-info-response")
-}
-
-// MockGitPush checks --mock-git-push option
-func MockGitPush() bool {
-	return viper.GetBool("mock-git-push")
 }
 
 // MockNoSymlink checks --mock-no-symlink option
@@ -174,11 +162,6 @@ func MockNoTTY() bool {
 // MockUploadOptionsEditScript checks --mock-upload-options-edit-script option
 func MockUploadOptionsEditScript() string {
 	return viper.GetString("mock-upload-options-edit-script")
-}
-
-// MockEditScript checks --mock-edit-script option
-func MockEditScript() string {
-	return viper.GetString("mock-edit-script")
 }
 
 // IsDryRun gets --dryrun option
