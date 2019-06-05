@@ -15,6 +15,7 @@
 package cmd
 
 import (
+	"crypto/sha256"
 	"errors"
 	"fmt"
 	"io"
@@ -39,7 +40,7 @@ import (
 
 const (
 	// DefaultUpgradeURL indicates where to download git-repo new package
-	DefaultUpgradeURL = "https://git-repo.oss-cn-zhangjiakou.aliyuncs.com"
+	DefaultUpgradeURL = "http://repo.code.alibaba-inc.com/download"
 )
 
 type upgradeCommand struct {
@@ -166,13 +167,48 @@ func (v upgradeCommand) Download(URL string, f *os.File) error {
 	return err
 }
 
-func (v upgradeCommand) Verify(bin, sig string) error {
+func (v upgradeCommand) verifyChecksum(source, checksum string) error {
+	var (
+		err error
+	)
+
+	checksumFile, err := os.Open(checksum)
+	if err != nil {
+		return err
+	}
+	defer checksumFile.Close()
+
+	expectChecksum := make([]byte, 64)
+	if _, err := io.ReadFull(checksumFile, expectChecksum); err != nil {
+		return fmt.Errorf("fail to read checksum file: %s", err)
+	}
+	log.Debugf("expect checksum: %s", expectChecksum)
+
+	f, err := os.Open(source)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	h := sha256.New()
+	if _, err := io.Copy(h, f); err != nil {
+		return err
+	}
+	actualChecksum := fmt.Sprintf("%x", h.Sum(nil))
+	log.Debugf("actual checksum: %s", actualChecksum)
+
+	if string(expectChecksum) != actualChecksum {
+		return fmt.Errorf("bad checksum. %s != %s", expectChecksum, actualChecksum)
+	}
+	return nil
+}
+
+func (v upgradeCommand) verifySignature(source, sig string) error {
 	var (
 		err     error
 		keyring openpgp.EntityList
 	)
 
-	log.Debugf("validating signature '%s' on '%s'", sig, bin)
+	log.Debug("validating signature")
 	for _, buf := range config.PGPKeyRing {
 		r := strings.NewReader(buf)
 		keys, err := openpgp.ReadArmoredKeyRing(r)
@@ -193,17 +229,17 @@ func (v upgradeCommand) Verify(bin, sig string) error {
 	}
 	defer sigFile.Close()
 
-	binFile, err := os.Open(bin)
+	sourceFile, err := os.Open(source)
 	if err != nil {
 		return err
 	}
-	defer binFile.Close()
+	defer sourceFile.Close()
 
 	if err != nil {
 		return fmt.Errorf("verify failed, cannot read keyring: %s", err)
 	}
 
-	_, err = openpgp.CheckArmoredDetachedSignature(keyring, binFile, sigFile)
+	_, err = openpgp.CheckArmoredDetachedSignature(keyring, sourceFile, sigFile)
 	if err != nil {
 		return fmt.Errorf("fail to check pgp signature: %s", err)
 	}
@@ -212,10 +248,59 @@ func (v upgradeCommand) Verify(bin, sig string) error {
 	return nil
 }
 
+func (v upgradeCommand) Verify(binURL, binFile string) error {
+	var (
+		checksumURL  string
+		signatureURL string
+	)
+
+	// Check if have a sha256 signature
+	checksumURL = binURL + ".sha256"
+	checksumFile, err := ioutil.TempFile("", "git-repo.sha256-")
+	if err != nil {
+		return err
+	}
+	defer os.Remove(checksumFile.Name())
+
+	err = v.Download(checksumURL, checksumFile)
+	if err != nil {
+		return fmt.Errorf("cannot find sha256 checksum: %s", checksumURL)
+	}
+
+	err = v.verifyChecksum(binFile, checksumFile.Name())
+	if err != nil {
+		return err
+	}
+
+	// Check pgp signature
+	signatureURL = binURL + ".sha256.gpg"
+	signatureFile, err := ioutil.TempFile("", "git-repo.sha256.gpg-")
+	if err != nil {
+		return err
+	}
+	defer os.Remove(signatureFile.Name())
+
+	if err = v.Download(signatureURL, signatureFile); err != nil {
+		input := userInput(
+			fmt.Sprintf("cannot find pgp signature, still want to install? (y/N)? "),
+			"N")
+		if !answerIsTrue(input) {
+			return fmt.Errorf("cannot valiate package, abort")
+		}
+	} else if err = v.verifySignature(checksumFile.Name(), signatureFile.Name()); err != nil {
+		input := userInput(
+			fmt.Sprintf("invalid pgp signature, still want to install? (y/N)? "),
+			"N")
+		if !answerIsTrue(input) {
+			return fmt.Errorf("invalid package, abort")
+		}
+	}
+	return nil
+}
+
 func (v upgradeCommand) UpgradeVersion(target, version string) error {
 	var (
 		binURL string
-		sigURL string
 		err    error
 	)
 
@@ -226,10 +311,10 @@ func (v upgradeCommand) UpgradeVersion(target, version string) error {
 		runtime.GOARCH,
 		"git-repo",
 	)
+
 	if cap.IsWindows() {
 		binURL += ".exe"
 	}
-	sigURL = binURL + ".asc"
 
 	binFile, err := ioutil.TempFile("", "git-repo-")
 	if err != nil {
@@ -237,24 +322,12 @@ func (v upgradeCommand) UpgradeVersion(target, version string) error {
 	}
 	defer os.Remove(binFile.Name())
 
-	sigFile, err := ioutil.TempFile("", "git-repo.asc-")
-	if err != nil {
-		return err
-	}
-	defer os.Remove(sigFile.Name())
-
-	// Downlaod binURL and sigURL
 	err = v.Download(binURL, binFile)
 	if err != nil {
-		return fmt.Errorf("cannot download package: %s", err)
+		return fmt.Errorf("fail to download %s: %s", binURL, err)
 	}
 
-	err = v.Download(sigURL, sigFile)
-	if err != nil {
-		return fmt.Errorf("cannot download pgp signature: %s", err)
-	}
-
-	err = v.Verify(binFile.Name(), sigFile.Name())
+	err = v.Verify(binURL, binFile.Name())
 	if err != nil {
 		return err
 	}

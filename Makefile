@@ -10,6 +10,7 @@ GOBUILD_WINDOWS_32 := env GOOS=windows GOARCH=386 $(GOBUILD)
 GOBUILD_MAC_64 := env GOOS=darwin GOARCH=amd64 $(GOBUILD)
 GOBUILD_MAC_32 := env GOOS=darwin GOARCH=386 $(GOBUILD)
 
+SHA256SUM=shasum -a 256
 GPGSIGN=gpg -sba -u Alibaba
 # Returns a list of all non-vendored (local packages)
 LOCAL_PACKAGES = $(shell go list ./... | grep -v -e '^$(PKG)/vendor/')
@@ -49,43 +50,37 @@ linux-amd64: $(shell find . -name '*.go') | REPO-VERSION-FILE
 	$(call message,Building $@)
 	@mkdir -p _build/$(REPO_VERSION)/linux/amd64
 	$(GOBUILD_LINUX_64) -o _build/$(REPO_VERSION)/linux/amd64/git-repo -ldflags "-X $(PKG)/versions.Version=$(REPO_VERSION)"
-	-$(GPGSIGN) _build/$(REPO_VERSION)/linux/amd64/git-repo
-	@make version-yml
+	@(cd _build/$(REPO_VERSION)/linux/amd64 && $(SHA256SUM) git-repo >git-repo.sha256 && $(GPGSIGN) -o git-repo.sha256.gpg git-repo.sha256)
 
 linux-386: $(shell find . -name '*.go') | REPO-VERSION-FILE
 	$(call message,Building $@)
 	@mkdir -p _build/$(REPO_VERSION)/linux/386
 	$(GOBUILD_LINUX_32) -o _build/$(REPO_VERSION)/linux/386/git-repo -ldflags "-X $(PKG)/versions.Version=$(REPO_VERSION)"
-	-$(GPGSIGN) _build/$(REPO_VERSION)/linux/386/git-repo
-	@make version-yml
+	@(cd _build/$(REPO_VERSION)/linux/386 && $(SHA256SUM) git-repo >git-repo.sha256 && $(GPGSIGN) -o git-repo.sha256.gpg git-repo.sha256)
 
 windows-amd64: $(shell find . -name '*.go') | REPO-VERSION-FILE
 	$(call message,Building $@)
 	@mkdir -p _build/$(REPO_VERSION)/windows/amd64
 	$(GOBUILD_WINDOWS_64) -o _build/$(REPO_VERSION)/windows/amd64/git-repo.exe -ldflags "-X $(PKG)/versions.Version=$(REPO_VERSION)"
-	-$(GPGSIGN) _build/$(REPO_VERSION)/windows/amd64/git-repo.exe
-	@make version-yml
+	@(cd _build/$(REPO_VERSION)/windows/amd64 && $(SHA256SUM) git-repo.exe >git-repo.exe.sha256 && $(GPGSIGN) -o git-repo.exe.sha256.gpg git-repo.exe.sha256)
 
 windows-386: $(shell find . -name '*.go') | REPO-VERSION-FILE
 	$(call message,Building $@)
 	@mkdir -p _build/$(REPO_VERSION)/windows/386
 	$(GOBUILD_WINDOWS_32) -o _build/$(REPO_VERSION)/windows/386/git-repo.exe -ldflags "-X $(PKG)/versions.Version=$(REPO_VERSION)"
-	-$(GPGSIGN) _build/$(REPO_VERSION)/windows/386/git-repo.exe
-	@make version-yml
+	@(cd _build/$(REPO_VERSION)/windows/386 && $(SHA256SUM) git-repo.exe >git-repo.exe.sha256 && $(GPGSIGN) -o git-repo.exe.sha256.gpg git-repo.exe.sha256)
 
 darwin-amd64: $(shell find . -name '*.go') | REPO-VERSION-FILE
 	$(call message,Building $@)
 	@mkdir -p _build/$(REPO_VERSION)/darwin/amd64
 	$(GOBUILD_MAC_64) -o _build/$(REPO_VERSION)/darwin/amd64/git-repo -ldflags "-X $(PKG)/versions.Version=$(REPO_VERSION)"
-	-$(GPGSIGN) _build/$(REPO_VERSION)/darwin/amd64/git-repo
-	@make version-yml
+	@(cd _build/$(REPO_VERSION)/darwin/amd64 && $(SHA256SUM) git-repo >git-repo.sha256 && $(GPGSIGN) -o git-repo.sha256.gpg git-repo.sha256)
 
 darwin-386: $(shell find . -name '*.go') | REPO-VERSION-FILE
 	$(call message,Building $@)
 	@mkdir -p _build/$(REPO_VERSION)/darwin/386
 	$(GOBUILD_MAC_32) -o _build/$(REPO_VERSION)/darwin/386/git-repo -ldflags "-X $(PKG)/versions.Version=$(REPO_VERSION)"
-	-$(GPGSIGN) _build/$(REPO_VERSION)/darwin/386/git-repo
-	@make version-yml
+	@(cd _build/$(REPO_VERSION)/darwin/386 && $(SHA256SUM) git-repo >git-repo.sha256 && $(GPGSIGN) -o git-repo.sha256.gpg git-repo.sha256)
 
 index:
 	$(call message,Building $@)
