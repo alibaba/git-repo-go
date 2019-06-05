@@ -16,10 +16,12 @@ package cmd
 
 import (
 	"crypto/sha256"
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -48,9 +50,10 @@ type upgradeCommand struct {
 	httpClient *http.Client
 
 	O struct {
-		URL     string
-		Test    bool
-		Version string
+		URL          string
+		Test         bool
+		Version      string
+		NoCertChecks bool
 	}
 }
 
@@ -86,19 +89,37 @@ func (v *upgradeCommand) Command() *cobra.Command {
 		"t",
 		false,
 		"upgrade to test version")
+	v.cmd.Flags().BoolVar(&v.O.NoCertChecks,
+		"no-cert-checks",
+		false,
+		"Disable verifying ssl certs (unsafe)")
 
 	return v.cmd
 }
 
 func (v *upgradeCommand) HTTPClient() *http.Client {
+	var (
+		timeout = time.Duration(10)
+	)
+
 	if v.httpClient != nil {
 		return v.httpClient
 	}
 
 	tr := &http.Transport{
-		MaxIdleConns:       10,
-		IdleConnTimeout:    30 * time.Second,
-		DisableCompression: true,
+		DialContext: (&net.Dialer{
+			Timeout:   timeout * time.Second,
+			KeepAlive: timeout * time.Second,
+		}).DialContext,
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: v.O.NoCertChecks || config.NoCertChecks(),
+		},
+		TLSHandshakeTimeout:   timeout * time.Second,
+		ResponseHeaderTimeout: timeout * time.Second,
+		ExpectContinueTimeout: timeout * time.Second,
+		MaxIdleConns:          10,
+		IdleConnTimeout:       timeout * time.Second,
+		DisableCompression:    true,
 	}
 
 	v.httpClient = &http.Client{Transport: tr}
