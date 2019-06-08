@@ -35,6 +35,8 @@ var versionCmd = &cobra.Command{
 func versionRun() {
 	var aliasCommands = []string{
 		"git-review",
+		"git-pr",
+		"git-peer-review",
 	}
 
 	for _, cmd := range aliasCommands {

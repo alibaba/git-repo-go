@@ -12,7 +12,7 @@ import (
 
 // Macros for git-extra-config
 const (
-	GitExtraConfigVersion = "2"
+	GitExtraConfigVersion = "3"
 	GitExtraConfigFile    = "~/.git-repo/gitconfig"
 	CfgRepoConfigVersion  = "repo.configversion"
 )
@@ -30,6 +30,8 @@ var (
 	cp = cherry-pick
 	logf = log --pretty=fuller
 	logs = log --pretty=refs  --date=short
+	pr = repo upload --single
+	peer-review = repo upload --single
 	review = repo upload --single
 	st = status
 [color]
