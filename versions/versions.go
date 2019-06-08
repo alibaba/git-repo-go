@@ -48,8 +48,10 @@ func CompareVersion(_left, _right string) int {
 	}
 
 	for i := 0; i < pos; i++ {
-		l, err := strconv.Atoi(left[i])
-		if err != nil {
+		l, lErr := strconv.Atoi(left[i])
+		r, rErr := strconv.Atoi(right[i])
+
+		if lErr != nil && rErr != nil {
 			if left[i] > right[i] {
 				return 1
 			} else if left[i] < right[i] {
@@ -57,12 +59,12 @@ func CompareVersion(_left, _right string) int {
 			} else {
 				continue
 			}
+		} else if lErr != nil {
+			return -1
+		} else if rErr != nil {
+			return 1
 		}
 
-		r, err := strconv.Atoi(right[i])
-		if err != nil {
-			return -1
-		}
 		if l > r {
 			return 1
 		} else if l < r {
@@ -70,22 +72,19 @@ func CompareVersion(_left, _right string) int {
 		}
 	}
 
-	if len(left) == len(right) {
-		return 0
-	}
-
 	if len(left) > len(right) {
 		if _, err := strconv.Atoi(left[pos]); err == nil {
 			return 1
 		}
 		return -1
+	} else if len(left) < len(right) {
+		if _, err := strconv.Atoi(right[pos]); err == nil {
+			return -1
+		}
+		return 1
 	}
 
-	if _, err := strconv.Atoi(right[pos]); err == nil {
-		return -1
-	}
-
-	return 1
+	return 0
 }
 
 // ValidateGitVersion is used to check installed git version
