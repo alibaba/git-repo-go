@@ -16,8 +16,10 @@ package cmd
 
 import (
 	"fmt"
+	"os/exec"
 
 	"code.alibaba-inc.com/force/git-repo/versions"
+	"github.com/jiangxin/multi-log"
 	"github.com/spf13/cobra"
 )
 
@@ -31,6 +33,17 @@ var versionCmd = &cobra.Command{
 }
 
 func versionRun() {
+	var aliasCommands = []string{
+		"git-review",
+	}
+
+	for _, cmd := range aliasCommands {
+		p, err := exec.LookPath(cmd)
+		if err == nil {
+			log.Warnf("you cannot use the git-repo alias command '%s', it is overrided by '%s' installed", cmd, p)
+		}
+	}
+
 	fmt.Printf("git-repo version %s\n", versions.GetVersion())
 	fmt.Printf("git version %s\n", versions.GetGitVersion())
 }
