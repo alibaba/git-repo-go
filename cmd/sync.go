@@ -23,8 +23,8 @@ import (
 	"sort"
 	"strings"
 	"sync"
-	"syscall"
 
+	"code.alibaba-inc.com/force/git-repo/cap"
 	"code.alibaba-inc.com/force/git-repo/config"
 	"code.alibaba-inc.com/force/git-repo/project"
 	"code.alibaba-inc.com/force/git-repo/workspace"
@@ -170,11 +170,16 @@ func (v *syncCommand) reloadRepoWorkSpace() {
 }
 
 func (v *syncCommand) defaultJobs() int {
-	rlimit := syscall.Rlimit{}
-	syscall.Getrlimit(syscall.RLIMIT_NOFILE, &rlimit)
-	defaultJobs := min(int(rlimit.Cur-5)/3, config.MaxJobs)
+	var (
+		nJobs int = config.MaxJobs
+	)
 
-	// When running test cases in cmd/, function `defaultJobs` will be evaluated.
+	noFile, err := cap.GetRlimitNoFile()
+	if err == nil {
+		nJobs = min(int((noFile-5)/3), config.MaxJobs)
+	}
+
+	// When running test cases in cmd/, function `nJobs` will be evaluated.
 	// Do not call `v.RepoWorkSpace()` function, which will fail if not in a workspace.
 	if v.ws == nil {
 		v.ws, _ = workspace.NewRepoWorkSpace("")
@@ -183,10 +188,10 @@ func (v *syncCommand) defaultJobs() int {
 		v.ws.Manifest != nil &&
 		v.ws.Manifest.Default != nil &&
 		v.ws.Manifest.Default.SyncJ > 0 {
-		defaultJobs = min(defaultJobs, v.ws.Manifest.Default.SyncJ)
+		nJobs = min(nJobs, v.ws.Manifest.Default.SyncJ)
 	}
 
-	return defaultJobs
+	return nJobs
 }
 
 func (v syncCommand) CallManifestServerRPC() {
