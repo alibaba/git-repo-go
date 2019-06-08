@@ -16,10 +16,12 @@ test_expect_success "setup" '
 	)
 '
 
-test_expect_success "install git review alias command" '
+test_expect_success "install git pr alias command" '
 	git-repo --version &&
-	git config alias.review >actual &&
+	git config alias.pr >actual &&
+	git config alias.peer-review >>actual &&
 	cat >expect <<-EOF &&
+	repo upload --single
 	repo upload --single
 	EOF
 	test_cmp expect actual
@@ -59,7 +61,7 @@ test_expect_success "confirm if has local edit" '
 		
 		----------------------------------------------------------------------
 		EOF
-		git -C main review \
+		git -C main pr \
 			--assume-yes \
 			--no-edit \
 			--mock-git-push \

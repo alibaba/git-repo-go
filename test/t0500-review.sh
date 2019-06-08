@@ -16,20 +16,24 @@ test_expect_success "setup" '
 	)
 '
 
-test_expect_success "install git review alias command" '
+test_expect_success "install git review aliases command" '
 	git-repo --version &&
-	git config alias.review >actual &&
+	git config alias.peer-review >actual &&
+	git config alias.pr >>actual &&
+	git config alias.review >>actual &&
 	cat >expect <<-EOF &&
+	repo upload --single
+	repo upload --single
 	repo upload --single
 	EOF
 	test_cmp expect actual
 '
 
-test_expect_success "git review -h" '
+test_expect_success "git peer-review -h" '
 	cat >expect<<-EOF &&
-	'"'"'review'"'"' is aliased to '"'"'repo upload --single'"'"'
+	'"'"'peer-review'"'"' is aliased to '"'"'repo upload --single'"'"'
 	EOF
-	git review -h >/dev/null 2>actual &&
+	git peer-review -h >/dev/null 2>actual &&
 	test_cmp expect actual
 '
 
@@ -44,7 +48,7 @@ test_expect_success "upload error: not in a branch" '
 		cd main &&
 		git checkout HEAD^0 &&
 		cd .. &&
-		test_must_fail git -C main review >actual 2>&1 &&
+		test_must_fail git -C main peer-review >actual 2>&1 &&
 		test_cmp expect actual
 	)
 '
@@ -60,7 +64,7 @@ test_expect_success "upload error: cannot find track branch" '
 		
 		    git branch -u origin/master
 		EOF
-		test_must_fail git -C main review >actual 2>&1 &&
+		test_must_fail git -C main peer-review >actual 2>&1 &&
 		test_cmp expect actual
 	)
 '
@@ -74,7 +78,7 @@ test_expect_success "upload error: no remote URL" '
 		cat >expect<<-EOF &&
 		FATAL: upload failed: unknown URL for remote: origin
 		EOF
-		test_must_fail git -C main review >actual 2>&1 &&
+		test_must_fail git -C main peer-review >actual 2>&1 &&
 		test_cmp expect actual &&
 		git -C main config remote.origin.url $oldurl
 	)
@@ -86,7 +90,7 @@ test_expect_success "upload error: unknown URL protocol" '
 		cat >expect<<-EOF &&
 		FATAL: cannot find review URL from '"'"'file:///path/of/main.git'"'"'
 		EOF
-		test_must_fail git -C main review >out 2>&1 &&
+		test_must_fail git -C main peer-review >out 2>&1 &&
 		sed -e "s#///.*/main.git#///path/of/main.git#" <out >actual 2>&1 &&
 		test_cmp expect actual
 	)
@@ -105,7 +109,7 @@ test_expect_success "No commit ready for upload" '
 		cat >expect<<-EOF &&
 		NOTE: no branches ready for upload
 		EOF
-		git -C main review \
+		git -C main peer-review \
 			--mock-git-push \
 			--mock-ssh-info-status 200 \
 			--mock-ssh-info-response \
@@ -138,7 +142,7 @@ test_expect_success "will upload one commit for review (http/dryrun/draft/no-edi
 		
 		----------------------------------------------------------------------
 		EOF
-		git -C main review \
+		git -C main peer-review \
 			--assume-yes \
 			--no-edit \
 			--dryrun \
@@ -196,7 +200,7 @@ test_expect_success "will upload one commit for review (http/dryrun/draft/with e
 		
 		----------------------------------------------------------------------
 		EOF
-		git -C main review \
+		git -C main peer-review \
 			--assume-yes \
 			--dryrun \
 			--draft \
@@ -222,7 +226,7 @@ test_expect_success "will upload one commit for review (http/dryrun)" '
 		
 		----------------------------------------------------------------------
 		EOF
-		git -C main review \
+		git -C main peer-review \
 			--assume-yes \
 			--no-edit \
 			--dryrun \
@@ -256,7 +260,7 @@ test_expect_success "will upload one commit for review (http/mock-git-push/not-d
 		
 		----------------------------------------------------------------------
 		EOF
-		git -C main review \
+		git -C main peer-review \
 			--assume-yes \
 			--no-edit \
 			--mock-git-push \
@@ -285,7 +289,7 @@ test_expect_success "upload again, no branch ready for upload" '
 		NOTE: no change in project . (branch my/topic-test) since last upload
 		NOTE: no branches ready for upload
 		EOF
-		git -C main review \
+		git -C main peer-review \
 			--assume-yes \
 			--mock-git-push \
 			--mock-ssh-info-status 200 \
@@ -324,7 +328,7 @@ test_expect_success "upload to a ssh review url" '
 		
 		----------------------------------------------------------------------
 		EOF
-		git -C main review \
+		git -C main peer-review \
 			--assume-yes \
 			--no-edit \
 			--dryrun \
@@ -354,7 +358,7 @@ test_expect_success "upload to gerrit ssh review url" '
 		
 		----------------------------------------------------------------------
 		EOF
-		git -C main review \
+		git -C main peer-review \
 			--assume-yes \
 			--no-edit \
 			--dryrun \
@@ -384,7 +388,7 @@ test_expect_success "upload to a ssh review using rcp style URL" '
 		
 		----------------------------------------------------------------------
 		EOF
-		git -C main review \
+		git -C main peer-review \
 			--assume-yes \
 			--no-edit \
 			--dryrun \
@@ -437,7 +441,7 @@ test_expect_success "ATTENTION confirm if there are too many commits for review"
 
 		----------------------------------------------------------------------
 		EOF
-		git -C main review \
+		git -C main peer-review \
 			--assume-yes \
 			--no-edit \
 			--mock-git-push \
