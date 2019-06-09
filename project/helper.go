@@ -2,7 +2,6 @@ package project
 
 import (
 	"fmt"
-	"net/url"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -22,77 +21,73 @@ var (
 	emailUserPattern = regexp.MustCompile(`^.* <([^\s]+)@[^\s]+>$`)
 )
 
-func urlJoin(u string, names ...string) (string, error) {
-	if len(names) == 0 {
-		return u, nil
+// urlJoin appends fetch path (in remote element) and project name to manifest url
+func urlJoin(u string, paths ...string) (string, error) {
+	var err error
+
+	// remove last part of url
+	if len(u) > 0 && u[len(u)-1] == '/' {
+		u = u[0 : len(u)-1]
+	}
+	i := strings.LastIndex(u, "/")
+	if i > 0 {
+		u = u[0:i]
 	}
 
-	// If names[0] is an URL, ignore u and start with name[0]
-	if strings.Contains(names[0], ":") {
-		return _urlJoin(names...)
+	for _, p := range paths {
+		u, err = joinTwoURL(u, p)
+		if err != nil {
+			return "", err
+		}
 	}
-
-	// Remove last part of manifest url
-	paths := []string{u, ".."}
-	paths = append(paths, names...)
-	return _urlJoin(paths...)
+	return u, nil
 }
 
-func _urlJoin(names ...string) (string, error) {
+func joinTwoURL(u, p string) (string, error) {
 	var (
-		u            *url.URL
-		err          error
-		manglePrefix = false
-		mangleColumn = false
+		prefix    string
+		remain    string
+		keepSlash bool
 	)
 
-	if len(names) == 0 {
-		return "", nil
-	} else if len(names) == 1 {
-		return names[0], nil
+	if filepath.IsAbs(p) || strings.Contains(p, ":") {
+		return p, nil
 	}
 
-	for strings.HasSuffix(names[0], "/") {
-		names[0] = strings.TrimRight(names[0], "/")
-	}
-	if names[0] == "" {
-		names[0] = "/"
-	}
-
-	// names[1] is an URL
-	if strings.Contains(names[1], ":") {
-		return _urlJoin(names[1:]...)
-	}
-
-	if !strings.Contains(names[0], "://") {
-		slices := strings.SplitN(names[0], ":", 2)
-		if len(slices) == 2 {
-			names[0] = strings.Join(slices, "/")
-			mangleColumn = true
+	if strings.Contains(u, "://") {
+		slices := strings.SplitN(u, "://", 2)
+		prefix = slices[0] + "://"
+		remains := strings.SplitN(slices[1], "/", 2)
+		prefix += remains[0] + "/"
+		if len(remains) == 1 {
+			remain = ""
+		} else {
+			remain = remains[1]
 		}
-		names[0] = "gopher://" + names[0]
-		manglePrefix = true
-	}
-	u, err = url.Parse(names[0])
-	if err != nil {
-		return "", fmt.Errorf("bad manifest url - %s: %s", names[0], err)
+	} else if strings.Contains(u, ":") {
+		slices := strings.SplitN(u, ":", 2)
+		prefix = slices[0] + ":"
+		remain = slices[1]
+	} else if filepath.IsAbs(u) {
+		prefix = "/"
+		remain = u[1:]
+	} else {
+		return "", fmt.Errorf("invalid git url: %s", u)
 	}
 
-	ps := []string{u.Path}
-	ps = append(ps, names[1:]...)
-	u.Path = filepath.Clean(filepath.Join(ps...))
-	joinURL := u.String()
-
-	if manglePrefix {
-		joinURL = strings.TrimPrefix(joinURL, "gopher://")
-		if mangleColumn {
-			slices := strings.SplitN(joinURL, "/", 2)
-			if len(slices) == 2 {
-				joinURL = strings.Join(slices, ":")
-			}
-		}
+	if len(remain) == 0 {
+		remain = "/"
+	} else if remain[0] == '/' {
+		keepSlash = true
+	} else {
+		remain = "/" + remain
 	}
-	return joinURL, nil
+
+	remain = filepath.Join(remain, p)
+	if !keepSlash && len(remain) > 0 && remain[0] == '/' {
+		remain = remain[1:]
+	}
+	return prefix + remain, nil
 }
 
 // MatchGroups checks if project has matched groups
