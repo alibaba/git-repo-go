@@ -14,7 +14,7 @@ import (
 	"code.alibaba-inc.com/force/git-repo/config"
 	"code.alibaba-inc.com/force/git-repo/manifest"
 	"code.alibaba-inc.com/force/git-repo/project"
-	"github.com/jiangxin/multi-log"
+	log "github.com/jiangxin/multi-log"
 	"gopkg.in/h2non/gock.v1"
 )
 

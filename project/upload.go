@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"code.alibaba-inc.com/force/git-repo/config"
-	"github.com/jiangxin/multi-log"
+	log "github.com/jiangxin/multi-log"
 )
 
 // UploadOptions is options for upload related methods

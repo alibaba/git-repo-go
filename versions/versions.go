@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/jiangxin/multi-log"
+	log "github.com/jiangxin/multi-log"
 )
 
 // Macros for version package

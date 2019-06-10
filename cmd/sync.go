@@ -28,7 +28,7 @@ import (
 	"code.alibaba-inc.com/force/git-repo/config"
 	"code.alibaba-inc.com/force/git-repo/project"
 	"code.alibaba-inc.com/force/git-repo/workspace"
-	"github.com/jiangxin/multi-log"
+	log "github.com/jiangxin/multi-log"
 	"github.com/spf13/cobra"
 )
 

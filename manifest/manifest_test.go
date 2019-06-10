@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/jiangxin/multi-log"
+	log "github.com/jiangxin/multi-log"
 	"github.com/stretchr/testify/assert"
 )
 

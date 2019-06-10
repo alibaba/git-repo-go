@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"code.alibaba-inc.com/force/git-repo/color"
-	"github.com/jiangxin/multi-log"
+	log "github.com/jiangxin/multi-log"
 )
 
 type gitStatus struct {

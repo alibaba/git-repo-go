@@ -5,7 +5,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/jiangxin/multi-log"
+	log "github.com/jiangxin/multi-log"
 )
 
 // CmdExecResult defines struct to hold command output

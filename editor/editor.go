@@ -10,7 +10,7 @@ import (
 
 	"code.alibaba-inc.com/force/git-repo/cap"
 	"github.com/jiangxin/goconfig"
-	"github.com/jiangxin/multi-log"
+	log "github.com/jiangxin/multi-log"
 	"github.com/mattn/go-shellwords"
 )
 

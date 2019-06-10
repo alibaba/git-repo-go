@@ -15,7 +15,7 @@ import (
 	"code.alibaba-inc.com/force/git-repo/path"
 	"code.alibaba-inc.com/force/git-repo/project"
 	"github.com/jiangxin/goconfig"
-	"github.com/jiangxin/multi-log"
+	log "github.com/jiangxin/multi-log"
 )
 
 // RepoWorkSpace is the toplevel structure for manipulating git-repo worktree

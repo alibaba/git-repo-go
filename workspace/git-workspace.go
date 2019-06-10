@@ -10,7 +10,7 @@ import (
 	"code.alibaba-inc.com/force/git-repo/manifest"
 	"code.alibaba-inc.com/force/git-repo/path"
 	"code.alibaba-inc.com/force/git-repo/project"
-	"github.com/jiangxin/multi-log"
+	log "github.com/jiangxin/multi-log"
 )
 
 // GitWorkSpace defines structure for single git workspace

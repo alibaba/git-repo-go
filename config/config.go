@@ -24,7 +24,7 @@ import (
 
 	"code.alibaba-inc.com/force/git-repo/path"
 	"github.com/jiangxin/goconfig"
-	"github.com/jiangxin/multi-log"
+	log "github.com/jiangxin/multi-log"
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/viper"
 )

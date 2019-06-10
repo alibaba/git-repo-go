@@ -24,7 +24,7 @@ import (
 	"code.alibaba-inc.com/force/git-repo/path"
 	"code.alibaba-inc.com/force/git-repo/versions"
 
-	"github.com/jiangxin/multi-log"
+	log "github.com/jiangxin/multi-log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )

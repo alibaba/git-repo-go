@@ -15,7 +15,7 @@ import (
 	"code.alibaba-inc.com/force/git-repo/manifest"
 	"code.alibaba-inc.com/force/git-repo/path"
 	"github.com/jiangxin/goconfig"
-	"github.com/jiangxin/multi-log"
+	log "github.com/jiangxin/multi-log"
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
 )

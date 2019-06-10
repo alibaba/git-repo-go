@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"code.alibaba-inc.com/force/git-repo/config"
-	"github.com/jiangxin/multi-log"
+	log "github.com/jiangxin/multi-log"
 	"gopkg.in/src-d/go-git.v4/plumbing"
 )
 
