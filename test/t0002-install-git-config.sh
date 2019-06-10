@@ -15,7 +15,20 @@ test_expect_success "before install extra git config" '
 	EOF
 '
 
+test_expect_success "install git config by running git-repo" '
+	test_must_fail git-repo &&
+	test -f .gitconfig &&
+	test -f .git-repo/gitconfig &&
+	cat >expect <<-EOF &&
+	status
+	EOF
+	git config -f .git-repo/gitconfig alias.st >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success "install git config by running git-repo --version" '
+	rm .gitconfig &&
+	rm .git-repo/gitconfig &&
 	git-repo --version &&
 	test -f .gitconfig &&
 	test -f .git-repo/gitconfig &&
@@ -51,7 +64,6 @@ test_expect_success "install git config by running git-repo version" '
 	git config -f .git-repo/gitconfig alias.st >actual &&
 	test_cmp expect actual
 '
-
 
 test_expect_success "reinstall .git-repo/gitconfig by git-repo --version" '
 	rm .git-repo/gitconfig &&

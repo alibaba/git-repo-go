@@ -54,6 +54,10 @@ func (r Response) IsUserError() bool {
 
 type rootCommand struct {
 	cmd *cobra.Command
+
+	O struct {
+		Version bool
+	}
 }
 
 // Command represents the base command when called without any subcommands
@@ -76,10 +80,18 @@ a '--single' opiton.
 
 This tool is renamed as git-repo, so that wen can create git alias to run
 this command with special options.`,
-		Version: v.getVersion(),
 		// Do not want to show usage on every error
 		SilenceUsage: true,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return v.runE(args)
+		},
 	}
+
+	v.cmd.Flags().BoolVarP(&v.O.Version,
+		"version",
+		"V",
+		false,
+		"Show version")
 
 	v.cmd.PersistentFlags().StringVar(&cfgFile,
 		"config",
@@ -158,10 +170,14 @@ this command with special options.`,
 	return v.cmd
 }
 
-// GetVersion is called by 'git repo --version'
-func (v rootCommand) getVersion() string {
-	config.InstallExtraGitConfig()
-	return versions.GetVersion()
+func (v rootCommand) runE(args []string) error {
+	config.CheckGitAlias()
+	if v.O.Version {
+		showVersion()
+	} else {
+		return newUserError("run 'git repo -h' for help")
+	}
+	return nil
 }
 
 func (v rootCommand) checkGitVersion() {

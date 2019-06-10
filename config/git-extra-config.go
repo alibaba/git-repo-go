@@ -53,6 +53,22 @@ var (
 `
 )
 
+// CheckGitAlias checks if any alias command has been overridden.
+func CheckGitAlias() {
+	var aliasCommands = []string{
+		"git-review",
+		"git-pr",
+		"git-peer-review",
+	}
+
+	for _, cmd := range aliasCommands {
+		p, err := exec.LookPath(cmd)
+		if err == nil {
+			log.Warnf("you cannot use the git-repo alias command '%s', it is overrided by '%s' installed", cmd, p)
+		}
+	}
+}
+
 func saveExtraGitConfig() error {
 	var (
 		err error

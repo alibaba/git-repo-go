@@ -36,5 +36,5 @@ func main() {
 func init() {
 	cobra.MousetrapHelpText = `git-repo: git extension for centrialized git workflow
 
-Please copy this program to where you git.exe located or execute PATH.`
+Please copy this program to where you git located or execute PATH.`
 }
