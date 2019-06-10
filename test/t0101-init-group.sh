@@ -70,8 +70,10 @@ test_expect_success "platform = <default>, groups = app" '
 	(
 		cd work &&
 		git-repo init -g app &&
-		echo "app,platform-linux" >expect &&
-		git -C .repo/manifests config manifest.groups >actual &&
+		echo "app,platform-*" >expect &&
+		git -C .repo/manifests config manifest.groups | \
+			sed -e "s/platform-[^,]*/platform-*/" \
+			>actual &&
 		test_cmp expect actual
 	)
 '
@@ -80,8 +82,10 @@ test_expect_success "platform = <default>, groups = <default> # nothing changed"
 	(
 		cd work &&
 		git-repo init -u $manifest_url
-		echo "app,platform-linux" >expect &&
-		git -C .repo/manifests config manifest.groups >actual &&
+		echo "app,platform-*" >expect &&
+		git -C .repo/manifests config manifest.groups | \
+			sed -e "s/platform-[^,]*/platform-*/" \
+			>actual &&
 		test_cmp expect actual
 	)
 '
