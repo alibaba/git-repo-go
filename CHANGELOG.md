@@ -2,6 +2,19 @@
 
 Changes of git-repo.
 
+## 0.2.0 (2019-6-9)
+
++ "git repo --version" follows the same rule as version command
++ test: add test cases for submodule projects
++ refactor: urlJoin should keep spaces unchanged
++ Add build tag for windows build support
++ test: use git peer-review instead of git review
++ When comparing, undefined version is lower then others
++ New alias: git pr, stands for git peer-review
++ version: check if git-repo aliases can be use safely
++ Install ~/.git-repo/config.yml.example file
++ refactor: store extra git config and comments in string
+
 ## 0.1.0 (2019-6-5)
 
 + upgrade: show download progress
