@@ -130,7 +130,7 @@ type Include struct {
 	Name string `xml:"name,attr,omitempty"`
 }
 
-// AllProjects returns proejcts of a project recursively
+// AllProjects returns projects of a project recursively
 func (v *Project) AllProjects(parent *Project) []Project {
 	var project Project
 

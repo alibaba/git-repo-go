@@ -48,7 +48,7 @@ var (
 	# Run git rebase with --autosquash option
 	autosquash = true
 [repo]
-	# Version of this git config extention
+	# Version of this git config extension
 	configversion = ` + GitExtraConfigVersion + `
 `
 )
