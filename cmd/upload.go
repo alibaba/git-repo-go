@@ -746,8 +746,14 @@ func (v *uploadCommand) UploadAndReport(branches []project.ReviewableBranch) err
 			haveErrors = true
 		} else {
 			branch.Uploaded = true
+			// Disable default push for single repo workspace,
+			// because for multple repository, push.default has
+			// already been disabled in `git repo sync` process.
+			if v.ws.IsSingle() && branch.Project != nil {
+				// push command must have specific refspec
+				branch.Project.DisableDefaultPush()
+			}
 		}
-
 	}
 
 	fmt.Fprintln(os.Stderr, "")

@@ -9,6 +9,7 @@ import (
 type WorkSpace interface {
 	AdminDir() string
 	LoadRemotes() error
+	IsSingle() bool
 	GetProjects(*GetProjectsOptions, ...string) ([]*project.Project, error)
 }
 

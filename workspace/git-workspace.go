@@ -31,6 +31,11 @@ func (v GitWorkSpace) AdminDir() string {
 	return v.GitDir
 }
 
+// IsSingle is true for git workspace
+func (v GitWorkSpace) IsSingle() bool {
+	return true
+}
+
 // LoadRemotes implements LoadRemotes interface, do nothing
 func (v *GitWorkSpace) LoadRemotes() error {
 	return nil

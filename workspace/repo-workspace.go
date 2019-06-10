@@ -48,6 +48,11 @@ func (v RepoWorkSpace) AdminDir() string {
 	return filepath.Join(v.RootDir, config.DotRepo)
 }
 
+// IsSingle is false for workspace initialized by manifests project
+func (v RepoWorkSpace) IsSingle() bool {
+	return false
+}
+
 // ManifestURL returns URL of manifest project
 func (v *RepoWorkSpace) ManifestURL() string {
 	return v.Settings().ManifestURL

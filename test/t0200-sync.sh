@@ -100,6 +100,37 @@ test_expect_success "git-repo sync (-l)" '
 	)
 '
 
+test_expect_success "push.default is nothing after sync local-half" '
+	(
+		cd work &&
+		git -C main config push.default &&
+		git -C projects/app1 config push.default
+		git -C projects/app1/module1 config push.default
+		git -C projects/app2 config push.default
+		git -C drivers/driver-1 config push.default
+	) >actual &&
+	cat >expect <<-EOF &&
+	nothing
+	nothing
+	nothing
+	nothing
+	nothing
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success "no gerrit hooks for agit projects" '
+	(
+		cd work &&
+		test -d .repo/project-objects/main.git/hooks &&
+		test ! -f .repo/project-objects/main.git/hooks/commit-msg &&
+		test -d .repo/project-objects/project1.git/hooks &&
+		test ! -f .repo/project-objects/project1.git/hooks/commit-msg &&
+		test -d .repo/project-objects/project2.git/hooks &&
+		test ! -f .repo/project-objects/project2.git/hooks/commit-msg
+	)
+'
+
 test_expect_success "git-repo sync (-l), checkouted" '
 	(
 		cd work &&

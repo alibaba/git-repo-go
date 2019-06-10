@@ -129,6 +129,16 @@ test_expect_success "New commit in main project" '
 	)
 '
 
+test_expect_success "push.default is unset" '
+	(
+		cd work &&
+		test_must_fail git -C main config push.default
+	) >actual &&
+	cat >expect<<-EOF &&
+	EOF
+	test_cmp expect actual
+'
+
 test_expect_success "will upload one commit for review (http/dryrun/draft/no-edit)" '
 	(
 		cd work &&
@@ -154,6 +164,17 @@ test_expect_success "will upload one commit for review (http/dryrun/draft/no-edi
 		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
 		test_cmp expect actual
 	)
+'
+
+test_expect_success "push.default has been set to nothing" '
+	(
+		cd work &&
+		git -C main config push.default
+	) >actual &&
+	cat >expect<<-EOF &&
+	nothing
+	EOF
+	test_cmp expect actual
 '
 
 test_expect_success "will upload one commit for review (http/dryrun/draft/with edit options)" '
