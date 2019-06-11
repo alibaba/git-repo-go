@@ -338,8 +338,11 @@ func (v *Project) SetGitRemoteURL(remoteURL string) error {
 // DisableDefaultPush sets git config push.default to nothing
 func (v *Project) DisableDefaultPush() error {
 	cfg := v.Config()
-	cfg.Set("push.default", "nothing")
-	return v.SaveConfig(cfg)
+	if cfg.Get("push.default") != "nothing" {
+		cfg.Set("push.default", "nothing")
+		return v.SaveConfig(cfg)
+	}
+	return nil
 }
 
 // GitConfigRemoteURL returns remote.<remote>.url setting in git config
