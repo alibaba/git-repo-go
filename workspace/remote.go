@@ -40,16 +40,10 @@ func (v *RepoWorkSpace) LoadRemotes() error {
 			config.GetMockSSHInfoResponse() == "" {
 			sshInfo := cfg.Get(fmt.Sprintf(config.CfgManifestRemoteSSHInfo, r.Name))
 			remote, err := project.NewRemote(&r, t, sshInfo)
-			if err != nil {
-				return err
-			}
-			v.RemoteMap[r.Name] = remote
+			v.RemoteMap[r.Name] = project.RemoteWithError{Remote: remote, Error: err}
 		} else {
 			remote, err := v.loadRemote(&r)
-			if err != nil {
-				return err
-			}
-			v.RemoteMap[r.Name] = remote
+			v.RemoteMap[r.Name] = project.RemoteWithError{Remote: remote, Error: err}
 
 			// Write back to git config
 			if remote.GetType() != "" && remote.GetSSHInfo() != nil {
@@ -72,7 +66,12 @@ func (v *RepoWorkSpace) LoadRemotes() error {
 				v.Projects[i].Name)
 			continue
 		}
-		v.Projects[i].Remote = v.RemoteMap[name]
+		if _, ok := v.RemoteMap[name]; ok {
+			if v.RemoteMap[name].Error != nil {
+				return v.RemoteMap[name].Error
+			}
+			v.Projects[i].Remote = v.RemoteMap[name].Remote
+		}
 	}
 
 	return nil
@@ -111,7 +110,7 @@ func getHTTPClient() *http.Client {
 
 func (v RepoWorkSpace) loadRemote(r *manifest.Remote) (project.Remote, error) {
 	if _, ok := v.RemoteMap[r.Name]; ok {
-		return v.RemoteMap[r.Name], nil
+		return v.RemoteMap[r.Name].Remote, v.RemoteMap[r.Name].Error
 	}
 
 	return loadRemote(r)

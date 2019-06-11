@@ -22,7 +22,7 @@ type GitWorkSpace struct {
 	Projects        []*project.Project
 	projectByName   map[string][]*project.Project
 	projectByPath   map[string]*project.Project
-	RemoteMap       map[string]project.Remote
+	RemoteMap       map[string]project.RemoteWithError
 	httpClient      *http.Client
 }
 
@@ -32,7 +32,7 @@ func (v GitWorkSpace) AdminDir() string {
 }
 
 // GetRemoteMap returns RemoteMap
-func (v *GitWorkSpace) GetRemoteMap() map[string]project.Remote {
+func (v *GitWorkSpace) GetRemoteMap() map[string]project.RemoteWithError {
 	return v.RemoteMap
 }
 
@@ -51,19 +51,15 @@ func (v *GitWorkSpace) LoadRemotes() error {
 		if strings.HasPrefix(name, "remote.") {
 			name = strings.TrimPrefix(name, "remote.")
 			remote, err := v.loadRemote(name)
-			if err != nil {
-				return err
-			}
-			v.RemoteMap[name] = remote
+			v.RemoteMap[name] = project.RemoteWithError{Remote: remote, Error: err}
 		}
 	}
 	return nil
 }
 
-// TODO: save errors in Error field or project.Remote object for later use
 func (v *GitWorkSpace) loadRemote(name string) (project.Remote, error) {
 	if _, ok := v.RemoteMap[name]; ok {
-		return v.RemoteMap[name], nil
+		return v.RemoteMap[name].Remote, v.RemoteMap[name].Error
 	}
 
 	p := v.Projects[0]
@@ -144,15 +140,9 @@ func (v *GitWorkSpace) load() error {
 
 	v.projectByName = make(map[string][]*project.Project)
 	v.projectByPath = make(map[string]*project.Project)
-	v.RemoteMap = make(map[string]project.Remote)
+	v.RemoteMap = make(map[string]project.RemoteWithError)
 	v.projectByName[p.Name] = []*project.Project{p}
 	v.projectByPath[p.Path] = p
-	if p.Remote != nil {
-		r := p.Remote.GetRemote()
-		if r != nil {
-			v.RemoteMap[r.Name] = p.Remote
-		}
-	}
 	v.Manifest = nil
 	v.ManifestProject = nil
 

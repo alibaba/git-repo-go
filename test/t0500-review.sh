@@ -41,7 +41,7 @@ test_expect_success "upload error: not in a branch" '
 	(
 		cd work &&
 		cat >expect<<-EOF &&
-		FATAL: upload failed: not in a branch
+		Error: upload failed: not in a branch
 		
 		Please run command "git checkout -b <branch>" to create a new branch.
 		EOF
@@ -58,7 +58,7 @@ test_expect_success "upload error: cannot find track branch" '
 		cd work &&
 		git -C main checkout -b my/topic-test &&
 		cat >expect<<-EOF &&
-		FATAL: upload failed: cannot find tracking branch
+		Error: upload failed: cannot find tracking branch
 		
 		Please run command "git branch -u <upstream>" to track a remote branch. E.g.:
 		
@@ -76,7 +76,7 @@ test_expect_success "upload error: no remote URL" '
 		oldurl=$(git -C main config remote.origin.url) &&
 		git -C main config --unset remote.origin.url &&
 		cat >expect<<-EOF &&
-		FATAL: upload failed: unknown URL for remote: origin
+		Error: upload failed: unknown URL for remote: origin
 		EOF
 		test_must_fail git -C main peer-review >actual 2>&1 &&
 		test_cmp expect actual &&
@@ -88,7 +88,7 @@ test_expect_success "upload error: unknown URL protocol" '
 	(
 		cd work &&
 		cat >expect<<-EOF &&
-		FATAL: cannot find review URL from '"'"'file:///path/of/main.git'"'"'
+		Error: unsupport git url: file:///path/of/main.git
 		EOF
 		test_must_fail git -C main peer-review >out 2>&1 &&
 		sed -e "s#///.*/main.git#///path/of/main.git#" <out >actual 2>&1 &&
@@ -165,7 +165,7 @@ test_expect_success "will upload one commit for review (http/dryrun/draft/no-edi
 		test_cmp expect actual
 	)
 '
-
+test_done
 test_expect_success "push.default has been set to nothing" '
 	(
 		cd work &&

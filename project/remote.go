@@ -23,6 +23,12 @@ type Remote interface {
 	UploadCommands(o *UploadOptions, branch *ReviewableBranch) ([]string, error)
 }
 
+// RemoteWithError wraps Remote and Error when parsing remote
+type RemoteWithError struct {
+	Remote Remote
+	Error  error
+}
+
 // SSHInfo wraps host and port which ssh_info returned
 type SSHInfo struct {
 	Host   string `json:"host,omitempty"`

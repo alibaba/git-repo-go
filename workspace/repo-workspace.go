@@ -26,7 +26,7 @@ type RepoWorkSpace struct {
 	Projects        []*project.Project
 	projectByName   map[string][]*project.Project
 	projectByPath   map[string]*project.Project
-	RemoteMap       map[string]project.Remote
+	RemoteMap       map[string]project.RemoteWithError
 	httpClient      *http.Client
 }
 
@@ -49,7 +49,7 @@ func (v RepoWorkSpace) AdminDir() string {
 }
 
 // GetRemoteMap returns RemoteMap
-func (v *RepoWorkSpace) GetRemoteMap() map[string]project.Remote {
+func (v *RepoWorkSpace) GetRemoteMap() map[string]project.RemoteWithError {
 	return v.RemoteMap
 }
 
@@ -188,7 +188,7 @@ func (v *RepoWorkSpace) loadProjects(manifestURL string) error {
 	s := v.ManifestProject.Settings
 
 	// Set RemoteMap
-	v.RemoteMap = make(map[string]project.Remote)
+	v.RemoteMap = make(map[string]project.RemoteWithError)
 
 	// Set projects
 	v.Projects = []*project.Project{}

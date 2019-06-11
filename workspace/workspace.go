@@ -8,7 +8,7 @@ import (
 // WorkSpace is interface for repo workspace or single git workspace
 type WorkSpace interface {
 	AdminDir() string
-	GetRemoteMap() map[string]project.Remote
+	GetRemoteMap() map[string]project.RemoteWithError
 	LoadRemotes() error
 	IsSingle() bool
 	GetProjects(*GetProjectsOptions, ...string) ([]*project.Project, error)

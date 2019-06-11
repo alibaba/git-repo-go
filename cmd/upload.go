@@ -823,7 +823,10 @@ func (v uploadCommand) runE(args []string) error {
 					"    git branch -u origin/master")
 			}
 			if remote, ok := remoteMap[remoteName]; ok {
-				p.Remote = remote
+				if remote.Error != nil {
+					return remote.Error
+				}
+				p.Remote = remote.Remote
 			} else {
 				return fmt.Errorf("fail to parse remote: %s", remoteName)
 			}
