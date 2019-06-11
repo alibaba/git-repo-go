@@ -165,7 +165,7 @@ test_expect_success "will upload one commit for review (http/dryrun/draft/no-edi
 		test_cmp expect actual
 	)
 '
-test_done
+
 test_expect_success "push.default has been set to nothing" '
 	(
 		cd work &&
@@ -366,6 +366,34 @@ test_expect_success "update remote URL using ssh port 29418" '
 	)
 '
 
+test_expect_success "no gerrit hooks before review on gerrit" '
+	test ! -e work/main/.git/hooks/commit-msg
+'
+
+test_expect_success "upload to gerrit ssh review url (assume-no, dryrun)" '
+	(
+		cd work &&
+		cat >expect<<-EOF &&
+		Upload project (jiangxin/main) to remote branch master:
+		  branch my/topic-test ( 1 commit(s)):
+		         <hash>
+		to ssh://git@example.com:29418 (y/N)? No
+		Error: upload aborted by user
+		EOF
+		test_must_fail git -C main peer-review \
+			--assume-no \
+			--no-edit \
+			--dryrun \
+			>out 2>&1 &&
+		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success "gerrit hooks installed" '
+	test -e work/main/.git/hooks/commit-msg
+'
+
 test_expect_success "upload to gerrit ssh review url" '
 	(
 		cd work &&
@@ -388,6 +416,7 @@ test_expect_success "upload to gerrit ssh review url" '
 		test_cmp expect actual
 	)
 '
+
 
 test_expect_success "update remote URL with a rcp style URL" '
 	(

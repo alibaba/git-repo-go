@@ -830,6 +830,7 @@ func (v uploadCommand) runE(args []string) error {
 			} else {
 				return fmt.Errorf("fail to parse remote: %s", remoteName)
 			}
+
 			// Set Revision of manifest.Remote to tracking branch.
 			manifestRemote := p.Remote.GetRemote()
 			manifestRemote.Revision = remoteRevision
@@ -852,6 +853,13 @@ func (v uploadCommand) runE(args []string) error {
 			log.Debugf("detached at %s", head)
 			return fmt.Errorf("upload failed: not in a branch\n\n" +
 				"Please run command \"git checkout -b <branch>\" to create a new branch.")
+		}
+	}
+
+	// Install hooks if remote is Gerrit server
+	if config.IsSingleMode() && len(allProjects) > 0 {
+		if allProjects[0].Remote.GetType() == config.RemoteTypeGerrit {
+			allProjects[0].InstallGerritHooks()
 		}
 	}
 
