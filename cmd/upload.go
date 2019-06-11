@@ -787,16 +787,70 @@ func (v uploadCommand) runE(args []string) error {
 		return err
 	}
 
-	if config.IsSingleMode() {
-		v.O.CurrentBranch = true
-	}
-
 	allProjects, err := ws.GetProjects(nil, args...)
 	if err != nil {
 		return err
 	}
 
-	branch := v.O.Branch
+	// if --single, set project.Remote according to branch name
+	if config.IsSingleMode() && len(allProjects) > 0 {
+		var (
+			head           string
+			remoteName     string
+			remoteRevision string
+			remoteURL      string
+		)
+
+		p := allProjects[0]
+		repo := p.WorkRepository
+		remoteMap := ws.GetRemoteMap()
+		if v.O.Branch == "" {
+			v.O.CurrentBranch = true
+			head = repo.GetHead()
+		} else {
+			head = v.O.Branch
+			if !strings.HasPrefix(head, config.RefsHeads) {
+				head = config.RefsHeads + head
+			}
+		}
+		if project.IsHead(head) {
+			head = strings.TrimPrefix(head, config.RefsHeads)
+			remoteName = repo.TrackRemote(head)
+			remoteRevision = repo.TrackBranch(head)
+			if remoteName == "" || remoteRevision == "" {
+				return fmt.Errorf("upload failed: cannot find tracking branch\n\n" +
+					"Please run command \"git branch -u <upstream>\" to track a remote branch. E.g.:\n\n" +
+					"    git branch -u origin/master")
+			}
+			if remote, ok := remoteMap[remoteName]; ok {
+				p.Remote = remote
+			} else {
+				return fmt.Errorf("fail to parse remote: %s", remoteName)
+			}
+			// Set Revision of manifest.Remote to tracking branch.
+			manifestRemote := p.Remote.GetRemote()
+			manifestRemote.Revision = remoteRevision
+
+			// Set project and repository name
+			remoteURL = repo.GitConfigRemoteURL(remoteName)
+			gitURL := config.ParseGitURL(remoteURL)
+			if gitURL != nil && gitURL.Repo != "" {
+				repo.Name = gitURL.Repo
+				p.Project.Name = gitURL.Repo
+			}
+
+			// Set other missing fields
+			repo.RemoteURL = remoteURL
+			repo.RemoteName = remoteName
+			repo.Revision = remoteRevision
+			p.Project.RemoteName = remoteName
+			p.Project.Revision = remoteRevision
+		} else {
+			log.Debugf("detached at %s", head)
+			return fmt.Errorf("upload failed: not in a branch\n\n" +
+				"Please run command \"git checkout -b <branch>\" to create a new branch.")
+		}
+	}
 
 	tasks := make(map[string][]project.ReviewableBranch)
 	for _, p := range allProjects {
@@ -807,7 +861,7 @@ func (v uploadCommand) runE(args []string) error {
 				tasks[p.Path] = []project.ReviewableBranch{*uploadBranch}
 			}
 		} else {
-			uploadBranches := p.GetUploadableBranches(branch)
+			uploadBranches := p.GetUploadableBranches(v.O.Branch)
 			if len(uploadBranches) == 0 {
 				continue
 			}

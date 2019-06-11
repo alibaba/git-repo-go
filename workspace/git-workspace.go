@@ -1,6 +1,7 @@
 package workspace
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"path/filepath"
@@ -10,7 +11,6 @@ import (
 	"code.alibaba-inc.com/force/git-repo/manifest"
 	"code.alibaba-inc.com/force/git-repo/path"
 	"code.alibaba-inc.com/force/git-repo/project"
-	log "github.com/jiangxin/multi-log"
 )
 
 // GitWorkSpace defines structure for single git workspace
@@ -31,24 +31,72 @@ func (v GitWorkSpace) AdminDir() string {
 	return v.GitDir
 }
 
+// GetRemoteMap returns RemoteMap
+func (v *GitWorkSpace) GetRemoteMap() map[string]project.Remote {
+	return v.RemoteMap
+}
+
 // IsSingle is true for git workspace
 func (v GitWorkSpace) IsSingle() bool {
 	return true
 }
 
-// LoadRemotes implements LoadRemotes interface, do nothing
+// LoadRemotes implements LoadRemotes interface
 func (v *GitWorkSpace) LoadRemotes() error {
+	if len(v.Projects) != 1 {
+		return errors.New("git workspace should contain only one project")
+	}
+	p := v.Projects[0]
+	for _, name := range p.Config().Sections() {
+		if strings.HasPrefix(name, "remote.") {
+			name = strings.TrimPrefix(name, "remote.")
+			remote, err := v.loadRemote(name)
+			if err != nil {
+				return err
+			}
+			v.RemoteMap[name] = remote
+		}
+	}
 	return nil
 }
 
-func (v GitWorkSpace) newProject(worktree, gitdir string) (*project.Project, error) {
-	var (
-		remoteName     = ""
-		remoteRevision = ""
-		remoteURL      = ""
-		err            error
-	)
+// TODO: save errors in Error field or project.Remote object for later use
+func (v *GitWorkSpace) loadRemote(name string) (project.Remote, error) {
+	if _, ok := v.RemoteMap[name]; ok {
+		return v.RemoteMap[name], nil
+	}
 
+	p := v.Projects[0]
+	repo := p.WorkRepository
+	if repo == nil {
+		return nil, fmt.Errorf("cannot find repository for project: %s", p.Name)
+	}
+
+	remoteURL := repo.GitConfigRemoteURL(name)
+	mr := manifest.Remote{
+		Name:  name,
+		Fetch: remoteURL,
+	}
+
+	reviewURL := repo.Config().Get("remote." + name + ".review")
+	if reviewURL != "" {
+		mr.Review = reviewURL
+	} else {
+		if remoteURL == "" {
+			return nil, fmt.Errorf("upload failed: unknown URL for remote: %s", name)
+		}
+
+		gitURL := config.ParseGitURL(remoteURL)
+		if gitURL == nil {
+			return nil, fmt.Errorf("unsupport git url: %s", remoteURL)
+		}
+		mr.Review = gitURL.GetReviewURL()
+	}
+
+	return loadRemote(&mr)
+}
+
+func (v GitWorkSpace) newProject(worktree, gitdir string) (*project.Project, error) {
 	name := filepath.Base(worktree)
 	s := project.RepoSettings{
 		RepoRoot: worktree,
@@ -60,50 +108,10 @@ func (v GitWorkSpace) newProject(worktree, gitdir string) (*project.Project, err
 		IsBare: false,
 	}
 
-	head := repo.GetHead()
-	if project.IsHead(head) {
-		head = strings.TrimPrefix(head, config.RefsHeads)
-		remoteName = repo.TrackRemote(head)
-		remoteRevision = repo.TrackBranch(head)
-		if remoteName == "" || remoteRevision == "" {
-			return nil, fmt.Errorf("upload failed: cannot find tracking branch\n\n" +
-				"Please run command \"git branch -u <upstream>\" to track a remote branch. E.g.:\n\n" +
-				"    git branch -u origin/master")
-		}
-		remoteURL = repo.GitConfigRemoteURL(remoteName)
-		if remoteURL == "" {
-			return nil, fmt.Errorf("upload failed: unknown URL for remote: %s", remoteName)
-		}
-		repo.RemoteName = remoteName
-		repo.Revision = remoteRevision
-		repo.RemoteURL = remoteURL
-	} else {
-		log.Debugf("detached at %s", head)
-		return nil, fmt.Errorf("upload failed: not in a branch\n\n" +
-			"Please run command \"git checkout -b <branch>\" to create a new branch.")
-	}
-
-	gitURL := config.ParseGitURL(remoteURL)
-	if gitURL != nil {
-		name = gitURL.Repo
-		repo.Name = name
-	}
-
-	reviewURL := repo.Config().Get("remote." + remoteName + ".review")
-	if reviewURL == "" {
-		if gitURL == nil {
-			return nil, fmt.Errorf("cannot find review URL from '%s'", remoteURL)
-		}
-		reviewURL = gitURL.GetReviewURL()
-	}
-	log.Debugf("Review URL: %s", reviewURL)
-
 	p := project.Project{
 		Project: manifest.Project{
-			Name:       name,
-			Path:       ".",
-			RemoteName: remoteName,
-			Revision:   remoteRevision,
+			Name: name,
+			Path: ".",
 		},
 
 		WorkDir:          worktree,
@@ -112,19 +120,6 @@ func (v GitWorkSpace) newProject(worktree, gitdir string) (*project.Project, err
 		Settings:         &s,
 	}
 
-	mr := manifest.Remote{
-		Name:     remoteName,
-		Fetch:    remoteURL,
-		Revision: remoteRevision,
-		Review:   reviewURL,
-	}
-
-	remote, err := loadRemote(&mr)
-	if err != nil {
-		return nil, err
-	}
-
-	p.Remote = remote
 	return &p, nil
 }
 
@@ -170,7 +165,6 @@ func NewGitWorkSpace(dir string) (*GitWorkSpace, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	return newGitWorkSpace(worktree, gitdir)
 }
 

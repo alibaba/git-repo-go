@@ -48,6 +48,11 @@ func (v RepoWorkSpace) AdminDir() string {
 	return filepath.Join(v.RootDir, config.DotRepo)
 }
 
+// GetRemoteMap returns RemoteMap
+func (v *RepoWorkSpace) GetRemoteMap() map[string]project.Remote {
+	return v.RemoteMap
+}
+
 // IsSingle is false for workspace initialized by manifests project
 func (v RepoWorkSpace) IsSingle() bool {
 	return false
