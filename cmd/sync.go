@@ -32,6 +32,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const (
+	// SyncDefaultJobs is the default value of --jobs
+	SyncDefaultJobs = 4
+)
+
 type syncCommand struct {
 	cmd          *cobra.Command
 	ws           *workspace.RepoWorkSpace
@@ -104,7 +109,7 @@ func (v *syncCommand) Command() *cobra.Command {
 	v.cmd.Flags().IntVarP(&v.O.Jobs,
 		"jobs",
 		"j",
-		v.defaultJobs(),
+		SyncDefaultJobs,
 		fmt.Sprintf("projects to fetch simultaneously"))
 	v.cmd.Flags().StringVarP(&v.O.ManifestName,
 		"manifest-name",
