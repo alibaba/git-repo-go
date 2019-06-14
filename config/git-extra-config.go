@@ -12,7 +12,7 @@ import (
 
 // Macros for git-extra-config
 const (
-	GitExtraConfigVersion = "3"
+	GitExtraConfigVersion = "4"
 	GitExtraConfigFile    = "~/.git-repo/gitconfig"
 	CfgRepoConfigVersion  = "repo.configversion"
 )
@@ -39,6 +39,9 @@ var (
 [core]
 	# Do not quote path, show UTF-8 characters directly
 	quotepath = false
+[filter "keyword-subst"]
+	clean = git repo filter --clean %f
+	smudge = git repo filter --smudge %f
 [merge]
 	# Add at most 20 commit logs in merge log message
 	log = true
