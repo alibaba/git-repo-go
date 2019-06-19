@@ -14,7 +14,10 @@ test_expect_success "setup" '
 	(
 		cd work &&
 		git-repo init --mirror -g all -u $manifest_url &&
-		git-repo sync
+		git-repo sync \
+			--mock-ssh-info-status 200 \
+			--mock-ssh-info-response \
+			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}"
 	)
 '
 

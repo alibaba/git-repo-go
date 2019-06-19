@@ -163,7 +163,10 @@ test_expect_success 'git repo sync and update submodules' '
 	(
 		cd work2 &&
 		git repo init -u "$url" &&
-		git repo sync
+		git repo sync \
+			--mock-ssh-info-status 200 \
+			--mock-ssh-info-response \
+			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}"
 	) &&
 	(
 		cd work2/main &&
