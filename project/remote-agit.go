@@ -34,6 +34,11 @@ func (v *AGitRemote) GetType() string {
 	return config.RemoteTypeAGit
 }
 
+// GetCodeReviewRef returns code review reference: refs/merge-requests/<ID>/head
+func (v *AGitRemote) GetCodeReviewRef(reviewID int, patchID int) string {
+	return fmt.Sprintf("%s%d/head", config.RefsMr, reviewID)
+}
+
 // getReviewURL returns review url
 func (v *AGitRemote) getReviewURL(email string) string {
 	var (

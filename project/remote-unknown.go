@@ -29,6 +29,11 @@ func (v *UnknownRemote) GetType() string {
 	return config.RemoteTypeUnknown
 }
 
+// GetCodeReviewRef returns code review reference: refs/merge-requests/<ID>/head
+func (v *UnknownRemote) GetCodeReviewRef(reviewID int, patchID int) string {
+	return ""
+}
+
 // UploadCommands returns upload commands
 func (v *UnknownRemote) UploadCommands(o *UploadOptions, branch *ReviewableBranch) ([]string, error) {
 	return nil, fmt.Errorf("unknown remote for upload")

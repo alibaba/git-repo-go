@@ -20,6 +20,7 @@ type Remote interface {
 	GetSSHInfo() *SSHInfo
 	GetRemote() *manifest.Remote
 	GetType() string
+	GetCodeReviewRef(int, int) string
 	UploadCommands(o *UploadOptions, branch *ReviewableBranch) ([]string, error)
 }
 

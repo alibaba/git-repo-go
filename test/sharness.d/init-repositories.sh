@@ -1,6 +1,6 @@
 #!/bin/sh
 
-REPO_TEST_REPOSITORIES_VERSION=6
+REPO_TEST_REPOSITORIES_VERSION=7
 
 # Create test repositories in .repositories
 REPO_TEST_REPOSITORIES="${SHARNESS_TEST_SRCDIR}/test-repositories"
@@ -122,6 +122,19 @@ test_create_repository () {
 	git add -u &&
 	test_tick && git commit -m "Version 2.0.0-dev" &&
 	git push --tags origin master maint &&
+	git checkout v0.1.0 &&
+	echo "$name: patch-1" >topic.txt &&
+	git add topic.txt &&
+	test_tick && git commit -m "New topic" &&
+	git push origin HEAD:refs/changes/45/12345/1 &&
+	echo "$name: patch-2" >topic.txt &&
+	git add topic.txt &&
+	test_tick && git commit --amend -m "New topic" &&
+	git push origin HEAD:refs/changes/45/12345/2 &&
+	echo "$name: patch-3" >topic.txt &&
+	git add topic.txt &&
+	test_tick && git commit --amend -m "New topic" &&
+	git push origin HEAD:refs/merge-requests/12345/head &&
 	cd "$REPO_TEST_REPOSITORIES" &&
 	rm -rf "tmp-$name"
 }

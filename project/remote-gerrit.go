@@ -6,6 +6,7 @@ import (
 
 	"code.alibaba-inc.com/force/git-repo/config"
 	"code.alibaba-inc.com/force/git-repo/manifest"
+	log "github.com/jiangxin/multi-log"
 )
 
 // GerritRemote is Gerrit remote server
@@ -28,6 +29,15 @@ func (v *GerritRemote) GetRemote() *manifest.Remote {
 // GetType returns type of remote
 func (v *GerritRemote) GetType() string {
 	return config.RemoteTypeGerrit
+}
+
+// GetCodeReviewRef returns code review reference: refs/changes/xx/xxxx/<PatchID>
+func (v *GerritRemote) GetCodeReviewRef(reviewID int, patchID int) string {
+	if patchID == 0 {
+		log.Warn("Patch ID should not be 0, set it to 1")
+		patchID = 1
+	}
+	return fmt.Sprintf("%s%2.2d/%d/%d", config.RefsChanges, reviewID%100, reviewID, patchID)
 }
 
 // getReviewURL returns review url
