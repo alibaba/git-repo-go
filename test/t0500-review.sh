@@ -88,9 +88,10 @@ test_expect_success "upload error: unknown URL protocol" '
 	(
 		cd work &&
 		cat >expect<<-EOF &&
-		Error: unsupport git url: file:///path/of/main.git
+		WARNING: cannot upload, unknown type of remote '"'"'origin'"'"' for project '"'"'.'"'"'
+		NOTE: no branches ready for upload
 		EOF
-		test_must_fail git -C main peer-review >out 2>&1 &&
+		git -C main peer-review >out 2>&1 &&
 		sed -e "s#///.*/main.git#///path/of/main.git#" <out >actual 2>&1 &&
 		test_cmp expect actual
 	)

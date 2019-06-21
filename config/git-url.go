@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"regexp"
 	"strconv"
-	"strings"
 )
 
 var (
@@ -13,7 +12,11 @@ var (
 	// GitSSHProtocolPattern indicates git over SSH protocol
 	GitSSHProtocolPattern = regexp.MustCompile(`^(?P<proto>ssh)://((?P<user>.*?)@)?(?P<host>[^/]+?)(:(?P<port>[0-9]+))?(/(?P<repo>.+?)(\.git)?)?/?$`)
 	// GitRsyncProtocolPattern indicates rsync style git over SSH protocol
-	GitRsyncProtocolPattern = regexp.MustCompile(`^((?P<user>.*?)@)?(?P<host>[^/:]+?):(?P<repo>.*?)(\.git)?/?$`)
+	GitRsyncProtocolPattern = regexp.MustCompile(`^((?P<user>.*?)@)?(?P<host>[^/:]+?):(?P<repo>[^/].*?)(\.git)?/?$`)
+	// GitDaemonProtocolPattern indicates git over git-daemon protocol
+	GitDaemonProtocolPattern = regexp.MustCompile(`^(?P<proto>git)://(?P<host>[^/]+?)(:(?P<port>[0-9]+))?(/(?P<repo>.*?)(\.git)?/?)?$`)
+	// GitFileProtocolPattern indicates git over file protocol
+	GitFileProtocolPattern = regexp.MustCompile(`^(?:(?P<proto>file)://)?(?P<repo>/.+?)/?$`)
 
 	knownReviewHosts map[string]string
 )
@@ -50,6 +53,10 @@ func (v GitURL) GetReviewURL() string {
 		if v.Port > 0 && v.Port != 22 {
 			u += fmt.Sprintf(":%d", v.Port)
 		}
+	} else if v.Proto == "git" {
+		u = v.Host
+	} else if v.Proto == "file" {
+		u = ""
 	} else {
 		u = v.Host
 	}
@@ -62,12 +69,13 @@ func (v GitURL) IsSSH() bool {
 }
 
 func getMatchedGitURL(re *regexp.Regexp, data string) *GitURL {
+	var (
+		gitURL = GitURL{}
+	)
+
 	matches := re.FindStringSubmatch(data)
 	if len(matches) == 0 {
 		return nil
-	}
-	gitURL := GitURL{
-		Proto: "ssh",
 	}
 	for i, name := range re.SubexpNames() {
 		if name == "" {
@@ -99,25 +107,37 @@ func ParseGitURL(address string) *GitURL {
 		gitURL *GitURL
 	)
 
-	if strings.Contains(address, "://") {
-		proto := strings.Split(address, "://")[0]
-		if proto != "http" && proto != "https" && proto != "ssh" {
-			return nil
-		}
-	}
-
 	gitURL = getMatchedGitURL(GitHTTPProtocolPattern, address)
 	if gitURL != nil {
 		return gitURL
 	}
+
 	gitURL = getMatchedGitURL(GitSSHProtocolPattern, address)
 	if gitURL != nil {
 		return gitURL
 	}
-	gitURL = getMatchedGitURL(GitRsyncProtocolPattern, address)
+
+	gitURL = getMatchedGitURL(GitDaemonProtocolPattern, address)
 	if gitURL != nil {
 		return gitURL
 	}
+
+	gitURL = getMatchedGitURL(GitFileProtocolPattern, address)
+	if gitURL != nil {
+		if gitURL.Proto == "" {
+			gitURL.Proto = "file"
+		}
+		return gitURL
+	}
+
+	gitURL = getMatchedGitURL(GitRsyncProtocolPattern, address)
+	if gitURL != nil {
+		if gitURL.Proto == "" {
+			gitURL.Proto = "ssh"
+		}
+		return gitURL
+	}
+
 	return nil
 }
 
