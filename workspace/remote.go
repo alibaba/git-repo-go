@@ -41,11 +41,13 @@ func (v *RepoWorkSpace) LoadRemotes(noCache bool) error {
 				sshInfo := cfg.Get(fmt.Sprintf(config.CfgManifestRemoteSSHInfo, r.Name))
 				remote, err := project.NewRemote(&r, t, sshInfo)
 				v.RemoteMap[r.Name] = project.RemoteWithError{Remote: remote, Error: err}
+				log.Debugf("loaded remote from cache: %s, error: %s", remote, err)
 				continue
 			}
 		}
 
 		remote, err := v.loadRemote(&r)
+		log.Debugf("loaded remote: %s, error: %s", remote, err)
 		v.RemoteMap[r.Name] = project.RemoteWithError{Remote: remote, Error: err}
 
 		// Write back to git config
@@ -194,7 +196,16 @@ func loadRemote(r *manifest.Remote) (project.Remote, error) {
 		return project.NewRemote(r, remoteType, "")
 	}
 
-	infoURL := u + "/ssh_info"
+	infoURL := ""
+	if gitURL != nil && gitURL.Proto != "http" && gitURL.Proto != "https" {
+		if gitURL.Host != "" {
+			infoURL = gitURL.Host + "/ssh_info"
+		} else {
+			return nil, fmt.Errorf("bad review URL: %s", u)
+		}
+	} else {
+		infoURL = u + "/ssh_info"
+	}
 
 	// Mock ssh_info API
 	if config.GetMockSSHInfoResponse() != "" || config.GetMockSSHInfoStatus() != 0 {

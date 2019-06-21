@@ -37,18 +37,63 @@ test_expect_success "git peer-review -h" '
 	test_cmp expect actual
 '
 
-test_expect_success "upload error: not in a branch" '
+test_expect_success "upload error: no branch" '
 	(
 		cd work &&
 		cat >expect<<-EOF &&
 		Error: upload failed: not in a branch
-		
+
 		Please run command "git checkout -b <branch>" to create a new branch.
 		EOF
 		cd main &&
 		git checkout HEAD^0 &&
 		cd .. &&
-		test_must_fail git -C main peer-review >actual 2>&1 &&
+		test_must_fail git -C main peer-review 2>&1 | \
+			sed -e "s#file:///.*#file:///path/of/repo.git#" >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success "upload error: unsupport url protocol" '
+	(
+		cd work &&
+		cat >expect<<-EOF &&
+		Error: fail to parse remote: origin
+		EOF
+		git -C main checkout master &&
+		git -C main peer-review \
+			--no-cache \
+			2>&1 | \
+			sed -e "s#file:///.*#file:///path/of/repo.git#" >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success "update remote URL using http protocol" '
+	(
+		cd work &&
+		git -C main config remote.origin.url https://example.com/jiangxin/main.git
+	)
+'
+
+test_expect_success "upload error: not in a branch" '
+	(
+		cd work &&
+		cat >expect<<-EOF &&
+		Error: upload failed: not in a branch
+
+		Please run command "git checkout -b <branch>" to create a new branch.
+		EOF
+		cd main &&
+		git checkout HEAD^0 &&
+		cd .. &&
+		test_must_fail git -C main peer-review  \
+			--no-cache \
+			--mock-git-push \
+			--mock-ssh-info-status 200 \
+			--mock-ssh-info-response \
+				"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
+			>actual 2>&1 &&
 		test_cmp expect actual
 	)
 '
@@ -59,12 +104,18 @@ test_expect_success "upload error: cannot find track branch" '
 		git -C main checkout -b my/topic-test &&
 		cat >expect<<-EOF &&
 		Error: upload failed: cannot find tracking branch
-		
+
 		Please run command "git branch -u <upstream>" to track a remote branch. E.g.:
-		
+
 		    git branch -u origin/master
 		EOF
-		test_must_fail git -C main peer-review >actual 2>&1 &&
+		test_must_fail git -C main peer-review \
+			--no-cache \
+			--mock-git-push \
+			--mock-ssh-info-status 200 \
+			--mock-ssh-info-response \
+				"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
+			>actual 2>&1 &&
 		test_cmp expect actual
 	)
 '
@@ -73,26 +124,14 @@ test_expect_success "upload error: no remote URL" '
 	(
 		cd work &&
 		git -C main branch -u origin/master &&
-		oldurl=$(git -C main config remote.origin.url) &&
 		git -C main config --unset remote.origin.url &&
 		cat >expect<<-EOF &&
-		Error: upload failed: unknown URL for remote: origin
+		WARNING: no URL defined for remote: origin
+		Error: fail to parse remote: origin
 		EOF
-		test_must_fail git -C main peer-review >actual 2>&1 &&
-		test_cmp expect actual &&
-		git -C main config remote.origin.url $oldurl
-	)
-'
-
-test_expect_success "upload error: unknown URL protocol" '
-	(
-		cd work &&
-		cat >expect<<-EOF &&
-		WARNING: cannot upload, unknown type of remote '"'"'origin'"'"' for project '"'"'.'"'"'
-		NOTE: no branches ready for upload
-		EOF
-		git -C main peer-review >out 2>&1 &&
-		sed -e "s#///.*/main.git#///path/of/main.git#" <out >actual 2>&1 &&
+		test_must_fail git -C main peer-review \
+			--no-cache \
+			>actual 2>&1 &&
 		test_cmp expect actual
 	)
 '
@@ -111,10 +150,11 @@ test_expect_success "No commit ready for upload" '
 		NOTE: no branches ready for upload
 		EOF
 		git -C main peer-review \
+			--no-cache \
 			--mock-git-push \
 			--mock-ssh-info-status 200 \
 			--mock-ssh-info-response \
-			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
+				"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
 			>actual 2>&1 &&
 		test_cmp expect actual
 	)
@@ -150,10 +190,11 @@ test_expect_success "will upload one commit for review (http/dryrun/draft/no-edi
 		to https://example.com (y/N)? Yes
 		NOTE: will execute command: git push --receive-pack=agit-receive-pack ssh://git@ssh.example.com/jiangxin/main.git refs/heads/my/topic-test:refs/drafts/master/my/topic-test
 		NOTE: will update-ref refs/published/my/topic-test on refs/heads/my/topic-test, reason: review from my/topic-test to master on https://example.com
-		
+
 		----------------------------------------------------------------------
 		EOF
 		git -C main peer-review \
+			--no-cache \
 			--assume-yes \
 			--no-edit \
 			--dryrun \
@@ -188,41 +229,42 @@ test_expect_success "will upload one commit for review (http/dryrun/draft/with e
 		#
 		# Note: Input your options below the comments and keep the comments unchanged
 		##############################################################################
-		
+
 		# [Title]       : one line message below as the title of code review
-		
+
 		# [Description] : multiple lines of text as the description of code review
-		
+
 		# [Issue]       : multiple lines of issue IDs for cross references
-		
+
 		# [Reviewer]    : multiple lines of user names as the reviewers for code review
-		
+
 		# [Cc]          : multiple lines of user names as the watchers for code review
-		
+
 		# [Draft]       : a boolean (yes/no, or true/false) to turn on/off draft mode
-		
+
 		yes
-		
+
 		# [Private]     : a boolean (yes/no, or true/false) to turn on/off private mode
-		
-		
+
+
 		##############################################################################
 		# Step 2: Select project and branches for upload
 		#
 		# Note: Uncomment the branches to upload, and not touch the project lines
 		##############################################################################
-		
+
 		#
 		# project ./:
 		   branch my/topic-test ( 1 commit(s)) to remote branch master:
 		#         <hash>
-		
+
 		NOTE: will execute command: git push --receive-pack=agit-receive-pack ssh://git@ssh.example.com/jiangxin/main.git refs/heads/my/topic-test:refs/drafts/master/my/topic-test
 		NOTE: will update-ref refs/published/my/topic-test on refs/heads/my/topic-test, reason: review from my/topic-test to master on https://example.com
-		
+
 		----------------------------------------------------------------------
 		EOF
 		git -C main peer-review \
+			--no-cache \
 			--assume-yes \
 			--dryrun \
 			--draft \
@@ -245,10 +287,11 @@ test_expect_success "will upload one commit for review (http/dryrun)" '
 		to https://example.com (y/N)? Yes
 		NOTE: will execute command: git push --receive-pack=agit-receive-pack -o title=review example -o description={base64}6K+m57uG6K+05piOXG4uLi5cbg== -o reviewers=user1,user2,user3,user4 -o cc=user5,user6,user7 -o notify=no -o private=yes -o wip=yes ssh://git@ssh.example.com/jiangxin/main.git refs/heads/my/topic-test:refs/for/master/my/topic-test
 		NOTE: will update-ref refs/published/my/topic-test on refs/heads/my/topic-test, reason: review from my/topic-test to master on https://example.com
-		
+
 		----------------------------------------------------------------------
 		EOF
 		git -C main peer-review \
+			--no-cache \
 			--assume-yes \
 			--no-edit \
 			--dryrun \
@@ -279,10 +322,11 @@ test_expect_success "will upload one commit for review (http/mock-git-push/not-d
 		         <hash>
 		to https://example.com (y/N)? Yes
 		NOTE: will execute command: git push --receive-pack=agit-receive-pack ssh://git@ssh.example.com:10022/jiangxin/main.git refs/heads/my/topic-test:refs/for/master/my/topic-test
-		
+
 		----------------------------------------------------------------------
 		EOF
 		git -C main peer-review \
+			--no-cache \
 			--assume-yes \
 			--no-edit \
 			--mock-git-push \
@@ -312,6 +356,7 @@ test_expect_success "upload again, no branch ready for upload" '
 		NOTE: no branches ready for upload
 		EOF
 		git -C main peer-review \
+			--no-cache \
 			--assume-yes \
 			--mock-git-push \
 			--mock-ssh-info-status 200 \
@@ -347,10 +392,11 @@ test_expect_success "upload to a ssh review url" '
 		to ssh://git@example.com:10022 (y/N)? Yes
 		NOTE: will execute command: git push --receive-pack=agit-receive-pack ssh://git@example.com:10022/jiangxin/main.git refs/heads/my/topic-test:refs/for/master/my/topic-test
 		NOTE: will update-ref refs/published/my/topic-test on refs/heads/my/topic-test, reason: review from my/topic-test to master on ssh://git@example.com:10022
-		
+
 		----------------------------------------------------------------------
 		EOF
 		git -C main peer-review \
+			--no-cache \
 			--assume-yes \
 			--no-edit \
 			--dryrun \
@@ -371,18 +417,50 @@ test_expect_success "no gerrit hooks before review on gerrit" '
 	test ! -e work/main/.git/hooks/commit-msg
 '
 
-test_expect_success "upload to gerrit ssh review url (assume-no, dryrun)" '
+test_expect_success "upload to gerrit ssh review url (assume-no, dryrun, use ssh_info cache)" '
 	(
 		cd work &&
 		cat >expect<<-EOF &&
 		Upload project (jiangxin/main) to remote branch master:
 		  branch my/topic-test ( 1 commit(s)):
 		         <hash>
-		to ssh://git@example.com:29418 (y/N)? No
-		Error: upload aborted by user
+		to ssh://git@example.com:29418 (y/N)? Yes
+		NOTE: will execute command: git push --receive-pack=agit-receive-pack ssh://git@ssh.example.com/jiangxin/main.git refs/heads/my/topic-test:refs/for/master/my/topic-test
+		NOTE: will update-ref refs/published/my/topic-test on refs/heads/my/topic-test, reason: review from my/topic-test to master on ssh://git@example.com:29418
+
+		----------------------------------------------------------------------
 		EOF
-		test_must_fail git -C main peer-review \
-			--assume-no \
+
+		git -C main peer-review \
+			--assume-yes \
+			--no-edit \
+			--dryrun \
+			>out 2>&1 &&
+		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success "gerrit hooks not installed" '
+	test ! -e work/main/.git/hooks/commit-msg
+'
+
+test_expect_success "upload to gerrit ssh review url (assume-no, dryrun, no-cache)" '
+	(
+		cd work &&
+		cat >expect<<-EOF &&
+		Upload project (jiangxin/main) to remote branch master:
+		  branch my/topic-test ( 1 commit(s)):
+		         <hash>
+		to ssh://git@example.com:29418 (y/N)? Yes
+		NOTE: will execute command: git push --receive-pack=gerrit receive-pack ssh://git@example.com:29418/jiangxin/main.git refs/heads/my/topic-test:refs/for/master
+		NOTE: will update-ref refs/published/my/topic-test on refs/heads/my/topic-test, reason: review from my/topic-test to master on ssh://git@example.com:29418
+
+		----------------------------------------------------------------------
+		EOF
+		git -C main peer-review \
+			--no-cache \
+			--assume-yes \
 			--no-edit \
 			--dryrun \
 			>out 2>&1 &&
@@ -405,10 +483,11 @@ test_expect_success "upload to gerrit ssh review url" '
 		to ssh://git@example.com:29418 (y/N)? Yes
 		NOTE: will execute command: git push --receive-pack=gerrit receive-pack ssh://git@example.com:29418/jiangxin/main.git refs/heads/my/topic-test:refs/for/master
 		NOTE: will update-ref refs/published/my/topic-test on refs/heads/my/topic-test, reason: review from my/topic-test to master on ssh://git@example.com:29418
-		
+
 		----------------------------------------------------------------------
 		EOF
 		git -C main peer-review \
+			--no-cache \
 			--assume-yes \
 			--no-edit \
 			--dryrun \
@@ -417,7 +496,6 @@ test_expect_success "upload to gerrit ssh review url" '
 		test_cmp expect actual
 	)
 '
-
 
 test_expect_success "update remote URL with a rcp style URL" '
 	(
@@ -436,10 +514,11 @@ test_expect_success "upload to a ssh review using rcp style URL" '
 		to ssh://git@example.com (y/N)? Yes
 		NOTE: will execute command: git push --receive-pack=agit-receive-pack ssh://git@example.com/jiangxin/main.git refs/heads/my/topic-test:refs/for/master/my/topic-test
 		NOTE: will update-ref refs/published/my/topic-test on refs/heads/my/topic-test, reason: review from my/topic-test to master on ssh://git@example.com
-		
+
 		----------------------------------------------------------------------
 		EOF
 		git -C main peer-review \
+			--no-cache \
 			--assume-yes \
 			--no-edit \
 			--dryrun \
@@ -493,6 +572,7 @@ test_expect_success "ATTENTION confirm if there are too many commits for review"
 		----------------------------------------------------------------------
 		EOF
 		git -C main peer-review \
+			--no-cache \
 			--assume-yes \
 			--no-edit \
 			--mock-git-push \

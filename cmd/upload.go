@@ -844,8 +844,13 @@ func (v uploadCommand) runE(args []string) error {
 			remoteURL = repo.GitConfigRemoteURL(remoteName)
 			gitURL := config.ParseGitURL(remoteURL)
 			if gitURL != nil && gitURL.Repo != "" {
-				repo.Name = gitURL.Repo
-				p.Project.Name = gitURL.Repo
+				if gitURL.Proto == "file" {
+					repo.Name = filepath.Base(gitURL.Repo)
+					p.Project.Name = repo.Name
+				} else {
+					repo.Name = gitURL.Repo
+					p.Project.Name = gitURL.Repo
+				}
 			}
 
 			// Set other missing fields

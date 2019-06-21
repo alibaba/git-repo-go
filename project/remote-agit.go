@@ -7,6 +7,7 @@ import (
 
 	"code.alibaba-inc.com/force/git-repo/config"
 	"code.alibaba-inc.com/force/git-repo/manifest"
+	log "github.com/jiangxin/multi-log"
 )
 
 // AGitRemote is AGit remote server
@@ -15,6 +16,8 @@ type AGitRemote struct {
 
 	SSHInfo *SSHInfo
 }
+
+var _ = log.Notef
 
 // GetSSHInfo returns SSHInfo field of AGitRemote
 func (v *AGitRemote) GetSSHInfo() *SSHInfo {
@@ -68,8 +71,8 @@ func (v *AGitRemote) UploadCommands(o *UploadOptions, branch *ReviewableBranch) 
 	url += p.Name + ".git"
 
 	gitURL := config.ParseGitURL(url)
-	if gitURL == nil {
-		return nil, fmt.Errorf("bad review url: %s", url)
+	if gitURL == nil || (gitURL.Proto != "ssh" && gitURL.Proto != "http" && gitURL.Proto != "https") {
+		return nil, fmt.Errorf("bad review URL: %s", url)
 	}
 
 	cmds = append(cmds, "git", "push")

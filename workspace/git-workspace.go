@@ -11,6 +11,7 @@ import (
 	"code.alibaba-inc.com/force/git-repo/manifest"
 	"code.alibaba-inc.com/force/git-repo/path"
 	"code.alibaba-inc.com/force/git-repo/project"
+	log "github.com/jiangxin/multi-log"
 )
 
 // GitWorkSpace defines structure for single git workspace
@@ -47,49 +48,91 @@ func (v *GitWorkSpace) LoadRemotes(noCache bool) error {
 		return errors.New("git workspace should contain only one project")
 	}
 	p := v.Projects[0]
-	for _, name := range p.Config().Sections() {
-		if strings.HasPrefix(name, "remote.") {
-			name = strings.TrimPrefix(name, "remote.")
-			remote, err := v.loadRemote(name)
-			v.RemoteMap[name] = project.RemoteWithError{Remote: remote, Error: err}
+	cfg := p.Config()
+	for _, name := range cfg.Sections() {
+		if !strings.HasPrefix(name, "remote.") {
+			continue
+		}
+
+		name = strings.TrimPrefix(name, "remote.")
+		remoteURL := p.WorkRepository.GitConfigRemoteURL(name)
+		if remoteURL == "" {
+			log.Warnf("no URL defined for remote: %s", name)
+			continue
+		}
+		log.Debugf("URL of remote %s: %s", name, remoteURL)
+		mr := manifest.Remote{
+			Name:  name,
+			Fetch: remoteURL,
+		}
+		reviewURL := cfg.Get("remote." + name + ".review")
+		if reviewURL != "" {
+			mr.Review = reviewURL
+		} else {
+			gitURL := config.ParseGitURL(remoteURL)
+			if gitURL == nil {
+				log.Debugf("fail to parse remote: %s, URL: %s", name, remoteURL)
+				continue
+			}
+			reviewURL = gitURL.GetReviewURL()
+			if reviewURL == "" {
+				log.Debugf("cannot get review URL from remote: %s, URL: %s", name, remoteURL)
+				continue
+			}
+			mr.Review = reviewURL
+		}
+		log.Debugf("review of remote %s is: %s", name, reviewURL)
+
+		changed := false
+		if !noCache && config.GetMockSSHInfoResponse() == "" {
+			t := cfg.Get(fmt.Sprintf(config.CfgManifestRemoteType, mr.Name))
+			if t != "" {
+				sshInfo := cfg.Get(fmt.Sprintf(config.CfgManifestRemoteSSHInfo, mr.Name))
+				remote, err := project.NewRemote(&mr, t, sshInfo)
+				v.RemoteMap[mr.Name] = project.RemoteWithError{Remote: remote, Error: err}
+				log.Debugf("loaded remote from cache: %s, error: %s", remote, err)
+				continue
+			}
+		}
+
+		remote, err := v.loadRemote(&mr)
+		log.Debugf("loaded remote: %s, error: %s", remote, err)
+		v.RemoteMap[mr.Name] = project.RemoteWithError{Remote: remote, Error: err}
+		if err != nil {
+			continue
+		}
+
+		// Write back to git config
+		if remote != nil && remote.GetType() != "" && remote.GetSSHInfo() != nil {
+			cfg.Set(fmt.Sprintf(config.CfgManifestRemoteType, mr.Name),
+				remote.GetType())
+			cfg.Set(fmt.Sprintf(config.CfgManifestRemoteSSHInfo, mr.Name),
+				remote.GetSSHInfo().String())
+			changed = true
+		}
+		if changed {
+			p.SaveConfig(cfg)
 		}
 	}
+
+	if len(v.RemoteMap) == 1 {
+		for name := range v.RemoteMap {
+			if v.RemoteMap[name].Error != nil {
+				return v.RemoteMap[name].Error
+			}
+			v.Projects[0].Remote = v.RemoteMap[name].Remote
+		}
+	}
+
 	return nil
 }
 
-func (v *GitWorkSpace) loadRemote(name string) (project.Remote, error) {
-	if _, ok := v.RemoteMap[name]; ok {
-		return v.RemoteMap[name].Remote, v.RemoteMap[name].Error
+func (v *GitWorkSpace) loadRemote(r *manifest.Remote) (project.Remote, error) {
+	if _, ok := v.RemoteMap[r.Name]; ok {
+		return v.RemoteMap[r.Name].Remote, v.RemoteMap[r.Name].Error
 	}
 
-	p := v.Projects[0]
-	repo := p.WorkRepository
-	if repo == nil {
-		return nil, fmt.Errorf("cannot find repository for project: %s", p.Name)
-	}
-
-	remoteURL := repo.GitConfigRemoteURL(name)
-	mr := manifest.Remote{
-		Name:  name,
-		Fetch: remoteURL,
-	}
-
-	reviewURL := repo.Config().Get("remote." + name + ".review")
-	if reviewURL != "" {
-		mr.Review = reviewURL
-	} else {
-		if remoteURL == "" {
-			return nil, fmt.Errorf("upload failed: unknown URL for remote: %s", name)
-		}
-
-		gitURL := config.ParseGitURL(remoteURL)
-		if gitURL == nil {
-			return nil, fmt.Errorf("unsupport git url: %s", remoteURL)
-		}
-		mr.Review = gitURL.GetReviewURL()
-	}
-
-	return loadRemote(&mr)
+	return loadRemote(r)
 }
 
 func (v GitWorkSpace) newProject(worktree, gitdir string) (*project.Project, error) {
