@@ -9,7 +9,7 @@ import (
 type WorkSpace interface {
 	AdminDir() string
 	GetRemoteMap() map[string]project.RemoteWithError
-	LoadRemotes() error
+	LoadRemotes(bool) error
 	IsSingle() bool
 	GetProjects(*GetProjectsOptions, ...string) ([]*project.Project, error)
 }

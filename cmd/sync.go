@@ -51,6 +51,7 @@ type syncCommand struct {
 		CurrentBranchOnly      bool
 		Jobs                   int
 		ManifestName           string
+		NoCache                bool
 		NoCloneBundle          bool
 		ManifestServerUsername string
 		ManifestServerPassword string
@@ -116,6 +117,10 @@ func (v *syncCommand) Command() *cobra.Command {
 		"m",
 		"",
 		"temporary manifest to use for this sync")
+	v.cmd.Flags().BoolVar(&v.O.NoCache,
+		"no-cache",
+		false,
+		"Ignore ssh-info cache, and recheck ssh-info API")
 	v.cmd.Flags().BoolVar(&v.O.NoCloneBundle,
 		"no-clone-bundle",
 		false,
@@ -726,7 +731,7 @@ func (v syncCommand) runE(args []string) error {
 	}
 
 	// Call ssh_info API to detect types of remote servers
-	err = ws.LoadRemotes()
+	err = ws.LoadRemotes(v.O.NoCache)
 	if err != nil {
 		log.Notef("fail to check remote server, you may need to install gerrit hooks by hands")
 		log.Error(err)

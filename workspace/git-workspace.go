@@ -42,7 +42,7 @@ func (v GitWorkSpace) IsSingle() bool {
 }
 
 // LoadRemotes implements LoadRemotes interface
-func (v *GitWorkSpace) LoadRemotes() error {
+func (v *GitWorkSpace) LoadRemotes(noCache bool) error {
 	if len(v.Projects) != 1 {
 		return errors.New("git workspace should contain only one project")
 	}

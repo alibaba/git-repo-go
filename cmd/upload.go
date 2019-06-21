@@ -57,6 +57,7 @@ type uploadOptions struct {
 	Issue          string
 	MockGitPush    bool
 	MockEditScript string
+	NoCache        bool
 	NoCertChecks   bool
 	NoEdit         bool
 	NoEmails       bool
@@ -175,6 +176,10 @@ func (v *uploadCommand) Command() *cobra.Command {
 		"verify",
 		false,
 		"Run the upload hook without prompting")
+	v.cmd.Flags().BoolVar(&v.O.NoCache,
+		"no-cache",
+		false,
+		"Ignore ssh-info cache, and recheck ssh-info API")
 
 	v.cmd.Flags().BoolVar(&v.O.NoEdit,
 		"no-edit",
@@ -782,7 +787,7 @@ func (v *uploadCommand) UploadAndReport(branches []project.ReviewableBranch) err
 
 func (v uploadCommand) runE(args []string) error {
 	ws := v.WorkSpace()
-	err := ws.LoadRemotes()
+	err := ws.LoadRemotes(v.O.NoCache)
 	if err != nil {
 		return err
 	}

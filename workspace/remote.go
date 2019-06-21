@@ -27,7 +27,7 @@ var (
 )
 
 // LoadRemotes calls remote API to get server type and other info
-func (v *RepoWorkSpace) LoadRemotes() error {
+func (v *RepoWorkSpace) LoadRemotes(noCache bool) error {
 	if v.Manifest == nil || v.Manifest.Remotes == nil {
 		return nil
 	}
@@ -35,24 +35,26 @@ func (v *RepoWorkSpace) LoadRemotes() error {
 	cfg := v.ManifestProject.Config()
 	changed := false
 	for _, r := range v.Manifest.Remotes {
-		t := cfg.Get(fmt.Sprintf(config.CfgManifestRemoteType, r.Name))
-		if t != "" &&
-			config.GetMockSSHInfoResponse() == "" {
-			sshInfo := cfg.Get(fmt.Sprintf(config.CfgManifestRemoteSSHInfo, r.Name))
-			remote, err := project.NewRemote(&r, t, sshInfo)
-			v.RemoteMap[r.Name] = project.RemoteWithError{Remote: remote, Error: err}
-		} else {
-			remote, err := v.loadRemote(&r)
-			v.RemoteMap[r.Name] = project.RemoteWithError{Remote: remote, Error: err}
-
-			// Write back to git config
-			if remote.GetType() != "" && remote.GetSSHInfo() != nil {
-				cfg.Set(fmt.Sprintf(config.CfgManifestRemoteType, r.Name),
-					remote.GetType())
-				cfg.Set(fmt.Sprintf(config.CfgManifestRemoteSSHInfo, r.Name),
-					remote.GetSSHInfo().String())
-				changed = true
+		if !noCache && config.GetMockSSHInfoResponse() == "" {
+			t := cfg.Get(fmt.Sprintf(config.CfgManifestRemoteType, r.Name))
+			if t != "" {
+				sshInfo := cfg.Get(fmt.Sprintf(config.CfgManifestRemoteSSHInfo, r.Name))
+				remote, err := project.NewRemote(&r, t, sshInfo)
+				v.RemoteMap[r.Name] = project.RemoteWithError{Remote: remote, Error: err}
+				continue
 			}
+		}
+
+		remote, err := v.loadRemote(&r)
+		v.RemoteMap[r.Name] = project.RemoteWithError{Remote: remote, Error: err}
+
+		// Write back to git config
+		if remote != nil && remote.GetType() != "" && remote.GetSSHInfo() != nil {
+			cfg.Set(fmt.Sprintf(config.CfgManifestRemoteType, r.Name),
+				remote.GetType())
+			cfg.Set(fmt.Sprintf(config.CfgManifestRemoteSSHInfo, r.Name),
+				remote.GetSSHInfo().String())
+			changed = true
 		}
 	}
 	if changed {
