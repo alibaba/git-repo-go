@@ -12,7 +12,7 @@ import (
 
 // Macros for git-extra-config
 const (
-	GitExtraConfigVersion = "4"
+	GitExtraConfigVersion = "5"
 	GitExtraConfigFile    = "~/.git-repo/gitconfig"
 	CfgRepoConfigVersion  = "repo.configversion"
 )
@@ -28,12 +28,13 @@ var (
 	ci = commit -s
 	co = checkout
 	cp = cherry-pick
+	st = status
 	logf = log --pretty=fuller
 	logs = log --pretty=refs  --date=short
 	pr = repo upload --single
 	peer-review = repo upload --single
 	review = repo upload --single
-	st = status
+	download = repo download --single
 [color]
 	ui = auto
 [core]

@@ -138,4 +138,33 @@ test_expect_success "download failed using ff-only" '
 	test_cmp expect actual
 '
 
+test_expect_success "alias download command (cherry-pick)" '
+	(
+		cd work/main &&
+		git checkout jx/topic &&
+		git reset --quiet --hard origin/master &&
+		git download \
+			--no-cache \
+			--mock-ssh-info-status 200 \
+			--mock-ssh-info-response "ssh.example.com 29418" \
+			--cherry-pick \
+			12345/2
+	) &&
+	(
+		cd work/main &&
+		echo "Branch: $(git branch --show-current)" &&
+		git log --pretty="    %s" -2
+		git show-ref | cut -c 42- | grep changes
+	) >actual 2>&1 &&
+	cat >expect<<-EOF &&
+	Branch: jx/topic
+	    New topic
+	    Version 2.0.0-dev
+	refs/changes/45/12345/1
+	refs/changes/45/12345/2
+	EOF
+	test_cmp expect actual
+'
+
+
 test_done
