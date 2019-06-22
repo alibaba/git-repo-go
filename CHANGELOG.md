@@ -2,6 +2,34 @@
 
 Changes of git-repo.
 
+## 0.3.0 (2019-6-22)
+
+New Features:
+
++ Add alias command: git download
++ New command: download, for offline code review
++ Add --no-cache option to ignore `ssh_info` API cache
++ config: add new filter driver keyword-subst
++ New command: filter, for keyword-subst content filter
++ Install gerrit hooks if review server is gerrit
++ Set push.default to nothing if remote is reviewable
+
+Enhancement and bugfix:
+
++ test: change branch name to upper case for test
++ goconfig: fix upper case section name issue
++ refactor LoadRemote for single repository workspace
++ ParseGitURL can parse file:// and other protocol
++ test: add mock options for git-repo sync command
++ test: add test cases for git-repo filter
++ sync: default use 4 jobs
++ test: add test case for git pr --br <branch>
++ Not quit immediately if cannot get review url
++ refactor: delay load remote for GitWorkspace
++ Only save config for DisableDefaultPush when necessary
++ Format every multi-log imports by adding alias log
++ Fix some spellings
+
 ## 0.2.0 (2019-6-9)
 
 + "git repo --version" follows the same rule as version command
