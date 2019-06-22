@@ -13,10 +13,10 @@ test_expect_success "setup" '
 	mkdir work
 '
 
-test_expect_success "git-repo init -b maint" '
+test_expect_success "git-repo init -b Maint" '
 	(
 		cd work &&
-		git-repo init -u $manifest_url -b maint
+		git-repo init -u $manifest_url -b Maint
 	)
 '
 
@@ -50,7 +50,7 @@ test_expect_success "no change for remote track" '
 	(
 		cd work &&
 		cat >expect <<-EOF &&
-		refs/heads/maint
+		refs/heads/Maint
 		EOF
 		git -C .repo/manifests config branch.default.merge >actual &&
 		test_cmp expect actual
@@ -132,9 +132,9 @@ test_expect_success "edit default.xml" '
 test_expect_success "switch from tag and ignore dirty" '
 	(
 		cd work &&
-		git-repo init -u $manifest_url -b maint &&
+		git-repo init -u $manifest_url -b Maint &&
 		cat >expect <<-EOF &&
-		refs/heads/maint
+		refs/heads/Maint
 		EOF
 		git -C .repo/manifests config branch.default.merge >actual &&
 		test_cmp expect actual

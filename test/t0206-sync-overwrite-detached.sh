@@ -13,10 +13,10 @@ test_expect_success "setup" '
 	mkdir work
 '
 
-test_expect_success "git-repo sync to maint branch" '
+test_expect_success "git-repo sync to Maint branch" '
 	(
 		cd work &&
-		git-repo init -u $manifest_url -b maint &&
+		git-repo init -u $manifest_url -b Maint &&
 		git-repo sync \
 			--mock-ssh-info-status 200 \
 			--mock-ssh-info-response \

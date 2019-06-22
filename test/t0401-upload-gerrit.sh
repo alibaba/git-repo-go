@@ -16,7 +16,7 @@ test_expect_success "setup" '
 test_expect_success "git-repo init & sync" '
 	(
 		cd work &&
-		git-repo init -u $manifest_url -g all -b maint &&
+		git-repo init -u $manifest_url -g all -b Maint &&
 		git-repo sync  \
 			--mock-ssh-info-status 200 \
 			--mock-ssh-info-response \
@@ -90,8 +90,8 @@ test_expect_success "upload --dryrun --drafts" '
 		  branch my/topic1 ( 1 commit(s)):
 		         <hash>
 		to https://example.com (y/N)? Yes
-		NOTE: will execute command: git push --receive-pack=gerrit receive-pack ssh://committer@ssh.example.com:29418/main.git refs/heads/my/topic1:refs/drafts/maint
-		NOTE: will update-ref refs/published/my/topic1 on refs/heads/my/topic1, reason: review from my/topic1 to maint on https://example.com
+		NOTE: will execute command: git push --receive-pack=gerrit receive-pack ssh://committer@ssh.example.com:29418/main.git refs/heads/my/topic1:refs/drafts/Maint
+		NOTE: will update-ref refs/published/my/topic1 on refs/heads/my/topic1, reason: review from my/topic1 to Maint on https://example.com
 		
 		----------------------------------------------------------------------
 		EOF
@@ -117,8 +117,8 @@ test_expect_success "upload --dryrun with reviewers" '
 		  branch my/topic1 ( 1 commit(s)):
 		         <hash>
 		to https://example.com (y/N)? Yes
-		NOTE: will execute command: git push --receive-pack=gerrit receive-pack ssh://committer@ssh.example.com:29418/main.git refs/heads/my/topic1:refs/for/maint/my/topic1%r=user1,r=user2,r=user3,r=user4,cc=user5,cc=user6,cc=user7,private,wip
-		NOTE: will update-ref refs/published/my/topic1 on refs/heads/my/topic1, reason: review from my/topic1 to maint on https://example.com
+		NOTE: will execute command: git push --receive-pack=gerrit receive-pack ssh://committer@ssh.example.com:29418/main.git refs/heads/my/topic1:refs/for/Maint/my/topic1%r=user1,r=user2,r=user3,r=user4,cc=user5,cc=user6,cc=user7,private,wip
+		NOTE: will update-ref refs/published/my/topic1 on refs/heads/my/topic1, reason: review from my/topic1 to Maint on https://example.com
 		
 		----------------------------------------------------------------------
 		EOF

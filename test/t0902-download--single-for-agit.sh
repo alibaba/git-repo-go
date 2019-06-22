@@ -14,7 +14,7 @@ test_expect_success "setup" '
 		cd work &&
 		git clone $main_repo_url main &&
 		cd main &&
-		git checkout -b jx/topic origin/master
+		git checkout -b jx/topic origin/Maint
 	)
 '
 
@@ -99,7 +99,7 @@ test_expect_success "download using cherry-pick" '
 	(
 		cd work/main &&
 		git checkout jx/topic &&
-		git reset --quiet --hard origin/master &&
+		git reset --quiet --hard origin/Maint &&
 		git-repo download --single \
 			--no-cache \
 			--mock-ssh-info-status 200 \
@@ -117,7 +117,7 @@ test_expect_success "download using cherry-pick" '
 	cat >expect<<-EOF &&
 	Branch: jx/topic
 	    New topic
-	    Version 2.0.0-dev
+	    Version 1.0.0
 	refs/merge-requests/12345/head
 	EOF
 	test_cmp expect actual
@@ -126,7 +126,7 @@ test_expect_success "download using cherry-pick" '
 test_expect_success "download failed using ff-only" '
 	(
 		cd work/main &&
-		git reset --quiet --hard origin/master &&
+		git reset --quiet --hard origin/Maint &&
 		test_must_fail git-repo download --single \
 			--no-cache \
 			--mock-ssh-info-status 200 \
@@ -146,7 +146,7 @@ test_expect_success "alias download command (cherry-pick)" '
 	(
 		cd work/main &&
 		git checkout jx/topic &&
-		git reset --quiet --hard origin/master &&
+		git reset --quiet --hard origin/Maint &&
 		git download \
 			--no-cache \
 			--mock-ssh-info-status 200 \
@@ -164,7 +164,7 @@ test_expect_success "alias download command (cherry-pick)" '
 	cat >expect<<-EOF &&
 	Branch: jx/topic
 	    New topic
-	    Version 2.0.0-dev
+	    Version 1.0.0
 	refs/merge-requests/12345/head
 	EOF
 	test_cmp expect actual

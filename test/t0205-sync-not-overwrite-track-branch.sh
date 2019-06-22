@@ -13,10 +13,10 @@ test_expect_success "setup" '
 	mkdir work
 '
 
-test_expect_success "git-repo sync to maint branch" '
+test_expect_success "git-repo sync to Maint branch" '
 	(
 		cd work &&
-		git-repo init -u $manifest_url -b maint &&
+		git-repo init -u $manifest_url -b Maint &&
 		git-repo sync \
 			--mock-ssh-info-status 200 \
 			--mock-ssh-info-response \
@@ -27,10 +27,10 @@ test_expect_success "git-repo sync to maint branch" '
 test_expect_success "create branch and track remote branch" '
 	(
 		cd work &&
-		(cd drivers/driver-1 && git checkout -b test driver/maint) &&
-		(cd projects/app1 && git checkout -b test aone/maint) &&
-		(cd projects/app1/module1 && git checkout -b test aone/maint) &&
-		(cd projects/app2 && git checkout -b test aone/maint)
+		(cd drivers/driver-1 && git checkout -b test driver/Maint) &&
+		(cd projects/app1 && git checkout -b test aone/Maint) &&
+		(cd projects/app1/module1 && git checkout -b test aone/Maint) &&
+		(cd projects/app2 && git checkout -b test aone/Maint)
 	)
 '
 

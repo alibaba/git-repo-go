@@ -103,10 +103,10 @@ test_expect_success "no remote track for version 0.2" '
 	)
 '
 
-test_expect_success "init -b maint" '
+test_expect_success "init -b Maint" '
 	(
 		cd work &&
-		git-repo init -u $manifest_url -b maint
+		git-repo init -u $manifest_url -b Maint
 	)
 '
 
@@ -121,11 +121,11 @@ test_expect_success "head commit: version 1.0" '
 	)
 '
 
-test_expect_success "remote track: refs/heads/maint" '
+test_expect_success "remote track: refs/heads/Maint" '
 	(
 		cd work &&
 		cat >expect<<-EOF &&
-		refs/heads/maint
+		refs/heads/Maint
 		EOF
 		git -C .repo/manifests config branch.default.merge >actual &&
 		test_cmp expect actual
@@ -161,10 +161,10 @@ test_expect_success "remote track: refs/heads/master" '
 	)
 '
 
-test_expect_success "back to maint" '
+test_expect_success "back to Maint" '
 	(
 		cd work &&
-		git-repo init -u $manifest_url -b maint
+		git-repo init -u $manifest_url -b Maint
 	)
 '
 
@@ -179,11 +179,11 @@ test_expect_success "head commit still is: version 2.0" '
 	)
 '
 
-test_expect_success "but remote track switched: refs/heads/maint" '
+test_expect_success "but remote track switched: refs/heads/Maint" '
 	(
 		cd work &&
 		cat >expect<<-EOF &&
-		refs/heads/maint
+		refs/heads/Maint
 		EOF
 		git -C .repo/manifests config branch.default.merge >actual &&
 		test_cmp expect actual

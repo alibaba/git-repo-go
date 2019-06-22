@@ -16,7 +16,7 @@ test_expect_success "setup" '
 test_expect_success "git-repo sync in mirror mode" '
 	(
 		cd work &&
-		git-repo init -u $manifest_url -g all --mirror -b maint &&
+		git-repo init -u $manifest_url -g all --mirror -b Maint &&
 		git-repo sync \
 			--mock-ssh-info-status 200 \
 			--mock-ssh-info-response \

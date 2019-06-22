@@ -16,7 +16,7 @@ test_expect_success "setup" '
 test_expect_success "git-repo init & sync" '
 	(
 		cd work &&
-		git-repo init -u $manifest_url -g all -b maint &&
+		git-repo init -u $manifest_url -g all -b Maint &&
 		git-repo sync \
 			--mock-ssh-info-status 200 \
 			--mock-ssh-info-response \
@@ -81,11 +81,11 @@ test_expect_success "edit script for multiple uploadable branches" '
 		
 		#
 		# project main/:
-		#  branch my/topic1 ( 1 commit(s)) to remote branch maint:
+		#  branch my/topic1 ( 1 commit(s)) to remote branch Maint:
 		#         <hash>
 		#
 		# project projects/app1/:
-		#  branch my/topic1 ( 1 commit(s)) to remote branch maint:
+		#  branch my/topic1 ( 1 commit(s)) to remote branch Maint:
 		#         <hash>
 
 		FATAL: nothing uncommented for upload
@@ -245,11 +245,11 @@ test_expect_success "upload with args: main, projects/app1" '
 		
 		#
 		# project main/:
-		#  branch my/topic1 ( 1 commit(s)) to remote branch maint:
+		#  branch my/topic1 ( 1 commit(s)) to remote branch Maint:
 		#         <hash>
 		#
 		# project projects/app1/:
-		#  branch my/topic1 ( 1 commit(s)) to remote branch maint:
+		#  branch my/topic1 ( 1 commit(s)) to remote branch Maint:
 		#         <hash>
 
 		FATAL: nothing uncommented for upload
@@ -303,11 +303,11 @@ test_expect_success "upload with args: main, projects/app1" '
 		
 		#
 		# project main/:
-		#  branch my/topic1 ( 1 commit(s)) to remote branch maint:
+		#  branch my/topic1 ( 1 commit(s)) to remote branch Maint:
 		#         <hash>
 		#
 		# project projects/app1/:
-		#  branch my/topic1 ( 1 commit(s)) to remote branch maint:
+		#  branch my/topic1 ( 1 commit(s)) to remote branch Maint:
 		#         <hash>
 		
 		FATAL: nothing uncommented for upload
@@ -317,11 +317,11 @@ test_expect_success "upload with args: main, projects/app1" '
 		# Uncomment the branches to upload:
 		#
 		# project main/:
-		branch my/topic1 ( 1 commit(s)) to remote branch maint:
+		branch my/topic1 ( 1 commit(s)) to remote branch Maint:
 		#         <hash>
 		#
 		# project projects/app1/:
-		 branch my/topic1 ( 1 commit(s)) to remote branch maint:
+		 branch my/topic1 ( 1 commit(s)) to remote branch Maint:
 		#         <hash>
 		FATAL: nothing uncommented for upload
 		EOF
@@ -373,7 +373,7 @@ test_expect_success "if has many commits, must confirm before upload" '
 		ATTENTION: You are uploading an unusually high number of commits.
 		YOU PROBABLY DO NOT MEAN TO DO THIS. (Did you rebase across branches?)
 		If you are sure you intend to do this, type '"'"'yes'"'"': Yes
-		NOTE: will execute command: git push --receive-pack=agit-receive-pack ssh://git@ssh.example.com/project1.git refs/heads/my/topic1:refs/for/maint/my/topic1
+		NOTE: will execute command: git push --receive-pack=agit-receive-pack ssh://git@ssh.example.com/project1.git refs/heads/my/topic1:refs/for/Maint/my/topic1
 		
 		----------------------------------------------------------------------
 		EOF

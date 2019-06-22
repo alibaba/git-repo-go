@@ -112,7 +112,7 @@ test_expect_success "switch file: test init -m <file>" '
 test_expect_success "switch branch: maint, no rollback" '
 	(
 		cd work &&
-		git-repo init -u $manifest_url -b maint &&
+		git-repo init -u $manifest_url -b Maint &&
 		cat >expect<<-EOF &&
 		.repo/manifests/default.xml
 		.repo/manifests/next.xml
@@ -126,7 +126,7 @@ test_expect_success "after switch, remote track: maint" '
 	(
 		cd work &&
 		cat >expect <<-EOF &&
-		refs/heads/maint
+		refs/heads/Maint
 		EOF
 		git -C .repo/manifests config branch.default.merge >actual &&
 		test_cmp expect actual
@@ -138,7 +138,7 @@ test_expect_success "no -b for repo init, use previous branch" '
 		cd work &&
 		git-repo init -u $manifest_url &&
 		cat >expect <<-EOF &&
-		refs/heads/maint
+		refs/heads/Maint
 		EOF
 		git -C .repo/manifests config branch.default.merge >actual &&
 		test_cmp expect actual
@@ -153,10 +153,10 @@ test_expect_success "detached manifest, drop default branch" '
 	)
 '
 
-test_expect_success "switch branch: maint, file: default.xml" '
+test_expect_success "switch branch: Maint, file: default.xml" '
 	(
 		cd work &&
-		git-repo init -u $manifest_url -b maint -m default.xml &&
+		git-repo init -u $manifest_url -b Maint -m default.xml &&
 		# manifest.xml => manifests/default.xml
 		echo manifests/default.xml >expect &&
 		readlink .repo/manifest.xml >actual &&
@@ -174,7 +174,7 @@ test_expect_success "manifest.name => default.xml" '
 	)
 '
 
-test_expect_success "branch: maint, no next.xml" '
+test_expect_success "branch: Maint, no next.xml" '
 	(
 		cd work &&
 		# Branch switched, no release.xml

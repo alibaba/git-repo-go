@@ -1,6 +1,6 @@
 #!/bin/sh
 
-REPO_TEST_REPOSITORIES_VERSION=7
+REPO_TEST_REPOSITORIES_VERSION=8
 
 # Create test repositories in .repositories
 REPO_TEST_REPOSITORIES="${SHARNESS_TEST_SRCDIR}/test-repositories"
@@ -117,11 +117,11 @@ test_create_repository () {
 	git add -u &&
 	test_tick && git commit -m "Version 1.0.0" &&
 	test_tick && git tag -m v1.0.0 v1.0.0 &&
-	git branch maint v1.0.0 &&
+	git branch Maint v1.0.0 &&
 	echo v2.0.0-dev >VERSION &&
 	git add -u &&
 	test_tick && git commit -m "Version 2.0.0-dev" &&
-	git push --tags origin master maint &&
+	git push --tags origin master Maint &&
 	git checkout v0.1.0 &&
 	echo "$name: patch-1" >topic.txt &&
 	git add topic.txt &&
@@ -203,7 +203,7 @@ test_create_manifest_projects () {
 		   fetch=".."
 		   review="https://example.com" />
 	  <default remote="aone"
-	           revision="maint"
+	           revision="Maint"
 		   sync-j="4" />
 	  <project name="main" path="main" groups="app">
 	    <copyfile src="VERSION" dest="VERSION"></copyfile>
@@ -221,7 +221,7 @@ test_create_manifest_projects () {
 	git add default.xml &&
 	test_tick && git commit -m "Version 1.0" &&
 	test_tick && git tag -m v1.0 v1.0 &&
-	git branch maint &&
+	git branch Maint &&
 
 	cat >default.xml <<-EOF &&
 	<?xml version="1.0" encoding="UTF-8"?>
@@ -232,7 +232,7 @@ test_create_manifest_projects () {
 		   review="https://example.com" />
 	  <remote  name="driver"
 		   fetch=".."
-	           revision="maint"
+	           revision="Maint"
 		   review="https://example.com" />
 	  <default remote="aone"
 	           revision="master"
@@ -281,7 +281,7 @@ test_create_manifest_projects () {
 	git add default.xml next.xml &&
 	test_tick && git commit -m "Version 2.0" &&
 	test_tick && git tag -m v2.0 v2.0
-	git push --tags origin maint master &&
+	git push --tags origin Maint master &&
 
 	cd "$REPO_TEST_REPOSITORIES" &&
 	rm -rf "tmp-manifests"

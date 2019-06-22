@@ -16,7 +16,7 @@ test_expect_success "setup" '
 test_expect_success "git-repo init" '
 	(
 		cd work &&
-		git-repo init -u $manifest_url -g all -b maint &&
+		git-repo init -u $manifest_url -g all -b Maint &&
 		git-repo sync \
 			--mock-ssh-info-status 200 \
 			--mock-ssh-info-response \
@@ -58,22 +58,22 @@ test_expect_success "check current branch" '
 test_expect_success "check tracking branch" '
 	(
 		cd work &&
-		echo "main: refs/heads/maint" >expect &&
+		echo "main: refs/heads/Maint" >expect &&
 		(printf "main: " && git -C main config branch.my/topic1.merge) >actual &&
 		test_cmp expect actual &&
-		echo "driver1: refs/heads/maint" >expect &&
+		echo "driver1: refs/heads/Maint" >expect &&
 		(printf "driver1: " && git -C drivers/driver-1 config branch.my/topic1.merge) >actual &&
 		test_cmp expect actual &&
-		echo "driver2: refs/heads/maint" >expect &&
+		echo "driver2: refs/heads/Maint" >expect &&
 		(printf "driver2: " && git -C drivers/driver-2 config branch.my/topic1.merge) >actual &&
 		test_cmp expect actual &&
-		echo "app1: refs/heads/maint" >expect &&
+		echo "app1: refs/heads/Maint" >expect &&
 		(printf "app1: " && git -C projects/app1 config branch.my/topic1.merge) >actual &&
 		test_cmp expect actual &&
-		echo "app2: refs/heads/maint" >expect &&
+		echo "app2: refs/heads/Maint" >expect &&
 		(printf "app2: " && git -C projects/app2 config branch.my/topic1.merge) >actual &&
 		test_cmp expect actual &&
-		echo "module1: refs/heads/maint" >expect &&
+		echo "module1: refs/heads/Maint" >expect &&
 		(printf "module1: " && git -C projects/app1/module1 config branch.my/topic1.merge) >actual &&
 		test_cmp expect actual
 	)
