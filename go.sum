@@ -33,6 +33,8 @@ github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99/go.mod h1:1lJo3i
 github.com/jessevdk/go-flags v1.4.0/go.mod h1:4FA24M0QyGHXBuZZK/XkWh8h0e1EYbRYJSGM75WSRxI=
 github.com/jiangxin/goconfig v1.0.2 h1:yhGI8Mk5kQz4D9ESE70OiWodJJ00Kh1qTaSt3w1G0DY=
 github.com/jiangxin/goconfig v1.0.2/go.mod h1:SfAuMwUcCiqunXvftVyKfIIc7rMmlhqtRzckpETcXNA=
+github.com/jiangxin/goconfig v1.0.3 h1:67v9yAvkJ/WyYiUM/VSQMkmuVVy4/3KXNngvJ3prjE4=
+github.com/jiangxin/goconfig v1.0.3/go.mod h1:SfAuMwUcCiqunXvftVyKfIIc7rMmlhqtRzckpETcXNA=
 github.com/jiangxin/multi-log v0.3.0 h1:cn8f6/29V/pFc1bDnSVbPMckxSgQfy4Gu/A5cGz+uW0=
 github.com/jiangxin/multi-log v0.3.0/go.mod h1:jLsX0ka/H6flS8APgh5zaTmi+MyWYU5rGwtjMUXirFU=
 github.com/kevinburke/ssh_config v0.0.0-20180830205328-81db2a75821e h1:RgQk53JHp/Cjunrr1WlsXSZpqXn+uREuHvUVcK82CV8=
