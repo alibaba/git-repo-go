@@ -338,6 +338,7 @@ func (v *Project) SetGitRemoteURL(remoteURL string) error {
 func (v *Project) DisableDefaultPush() error {
 	cfg := v.Config()
 	if cfg.Get("push.default") != "nothing" {
+		log.Debug("disable default push by setting push.default to noting")
 		cfg.Set("push.default", "nothing")
 		return v.SaveConfig(cfg)
 	}

@@ -88,6 +88,7 @@ func (v Project) CheckoutRevision(args ...string) error {
 	}
 	cmdArgs = append(cmdArgs, args...)
 	cmdArgs = append(cmdArgs, "--")
+	log.Debugf("checking out using command: %s", strings.Join(cmdArgs, " "))
 	return executeCommandIn(v.WorkDir, cmdArgs)
 }
 
@@ -100,6 +101,7 @@ func (v Project) HardReset(args ...string) error {
 	}
 	cmdArgs = append(cmdArgs, args...)
 	cmdArgs = append(cmdArgs, "--")
+	log.Debugf("hard reset using command: %s", strings.Join(cmdArgs, " "))
 	return executeCommandIn(v.WorkDir, cmdArgs)
 }
 
@@ -111,6 +113,7 @@ func (v Project) Rebase(args ...string) error {
 	}
 	cmdArgs = append(cmdArgs, args...)
 	cmdArgs = append(cmdArgs, "--")
+	log.Debugf("rebasing using command: %s", strings.Join(cmdArgs, " "))
 	return executeCommandIn(v.WorkDir, cmdArgs)
 }
 
@@ -122,6 +125,7 @@ func (v Project) FastForward(args ...string) error {
 	}
 	cmdArgs = append(cmdArgs, args...)
 	cmdArgs = append(cmdArgs, "--")
+	log.Debugf("fastforward using command: %s", strings.Join(cmdArgs, " "))
 	return executeCommandIn(v.WorkDir, cmdArgs)
 }
 
@@ -136,6 +140,7 @@ func (v Project) SubmoduleUpdate(args ...string) error {
 	}
 	cmdArgs = append(cmdArgs, args...)
 	cmdArgs = append(cmdArgs, "--")
+	log.Debugf("submodule update using command: %s", strings.Join(cmdArgs, " "))
 	return executeCommandIn(v.WorkDir, cmdArgs)
 }
 
@@ -164,6 +169,7 @@ func (v Project) SyncLocalHalf(o *CheckoutOptions) error {
 			v.Revision,
 			err)
 	}
+	log.Debugf("remote tracking ref: %s", revid)
 
 	// Read current branch to 'branch' and parsed revision to 'headid'
 	// If repository is in detached head mode, or has invalid HEAD, branch is empty.
@@ -182,7 +188,7 @@ func (v Project) SyncLocalHalf(o *CheckoutOptions) error {
 		track = v.TrackBranch(branch)
 	}
 
-	log.Debugf("Fetch (project, %s, head: %s, branch: %s, track: %s, headid: %s, revid: %s, revision: %s)",
+	log.Debugf("fetching project %s (head: %s, branch: %s, track: %s, headid: %s, revid: %s, revision: %s)",
 		v.Name, head, branch, track, headid, revid, v.Revision)
 
 	PostUpdate := func(update bool) error {
@@ -199,6 +205,7 @@ func (v Project) SyncLocalHalf(o *CheckoutOptions) error {
 				log.Notef("manifest no longer tracks %s", track)
 			}
 
+			log.Debugf("updating tracking of %s to %s/%s", branch, v.RemoteName, v.Revision)
 			// Update remote tracking, or delete tracking if v.Revision is empty
 			v.UpdateBranchTracking(branch, v.RemoteName, v.Revision)
 		}
@@ -351,6 +358,7 @@ func (v Project) InstallGerritHooks() error {
 		return err
 	}
 	if !path.Exists(hooksDir) {
+		log.Warnf("cannot find hooks in %s", hooksDir)
 		return nil
 	}
 
@@ -359,6 +367,7 @@ func (v Project) InstallGerritHooks() error {
 	if p, err := filepath.EvalSymlinks(localHooksDir); err == nil {
 		localHooksDir = p
 	}
+	log.Debugf("installing gerrit hooks for %s", v.Path)
 	for name := range config.GerritHooks {
 		src := filepath.Join(hooksDir, name)
 		target := filepath.Join(localHooksDir, name)
