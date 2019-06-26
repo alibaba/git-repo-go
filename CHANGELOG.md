@@ -14,7 +14,8 @@ Enhancement and bugfix:
 + debug: add more debug info for repo sync
 + upload: clean published refs for single mode
 
-## 0.3.0 (2019-6-22)
+
+## 0.3.0 (2019-6-22) DEPRECATED
 
 New Features:
 
@@ -42,7 +43,16 @@ Enhancement and bugfix:
 + Format every multi-log imports by adding alias log
 + Fix some spellings
 
-## 0.2.0 (2019-6-9)
+
+## 0.2.1 (2019-6-26)
+
+Enhancement and bugfix:
+
++ bugfix: add protection for write git extra config file
++ Makfile: build with vendor and new release target
+
+
+## 0.2.0 (2019-6-9) DEPRECATED
 
 + "git repo --version" follows the same rule as version command
 + test: add test cases for submodule projects
@@ -55,6 +65,7 @@ Enhancement and bugfix:
 + Install ~/.git-repo/config.yml.example file
 + refactor: store extra git config and comments in string
 
+
 ## 0.1.0 (2019-6-5)
 
 + upgrade: show download progress
@@ -62,6 +73,7 @@ Enhancement and bugfix:
 + upgrade: validate package by sha256 sum and gpg signature
 + refactor: viper only bind necessary flags in rootcmd
 + bugfix: continue push if consume yes on dirty worktree
+
 
 ## 0.0.3 (2019-5-29)
 
