@@ -16,3 +16,4 @@ REPO-VERSION-FILE
 *.out
 
 /_build
+/vendor
