@@ -124,10 +124,11 @@ func (v *keywordSubstFilterDriver) Smudge() error {
 	return nil
 }
 
-func (v *keywordSubstFilterDriver) initialKeywordMap() error {
+func (v *keywordSubstFilterDriver) initialKeywordMap() {
 	v.KeywordMap = make(map[string]string)
 
-	cmd := exec.Command("git",
+	cmdArgs := []string{
+		"git",
 		"log",
 		"-1",
 		"--no-color",
@@ -135,15 +136,16 @@ func (v *keywordSubstFilterDriver) initialKeywordMap() error {
 		"--pretty=fuller",
 		"--",
 		v.Filename,
-	)
+	}
+	cmd := exec.Command(cmdArgs[0], cmdArgs[1:]...)
 	cmd.Stdin = nil
 	out, err := cmd.Output()
 	if err != nil {
 		if exitError, ok := err.(*exec.ExitError); ok {
-			log.Errorf("fail to run git log: %s", string(exitError.Stderr))
+			log.Debugf("fail to get log for filter, maybe current branch is unborn: %s", string(exitError.Stderr))
 		}
 
-		return err
+		return
 	}
 
 	for _, line := range strings.Split(string(out), "\n") {
@@ -168,17 +170,22 @@ func (v *keywordSubstFilterDriver) initialKeywordMap() error {
 		}
 	}
 
-	cmd = exec.Command("git",
+	cmdArgs = []string{
+		"git",
 		"describe",
 		"--always",
 		v.KeywordMap["Commit"],
 		"--",
-	)
+	}
+
+	cmd = exec.Command(cmdArgs[0], cmdArgs[1:]...)
 	cmd.Stdin = nil
 	out, err = cmd.Output()
 	if err == nil {
 		v.KeywordMap["Revision"] = string(bytes.TrimSpace(out))
 		v.KeywordMap["LastChangedRevision"] = v.KeywordMap["Revision"]
+	} else {
+		log.Debugf("fail to run '%s' to get LastChangedRevision: %s", strings.Join(cmdArgs, " "), err)
 	}
 
 	v.KeywordMap["Id"] = fmt.Sprintf("%s %s %s %s",
@@ -213,16 +220,11 @@ func (v *keywordSubstFilterDriver) initialKeywordMap() error {
 	)
 
 	v.KeywordMap["HeadURL"] = fullPath
-
-	return nil
 }
 
 func (v *keywordSubstFilterDriver) replace(buf []byte, match [][]byte) []byte {
 	if v.KeywordMap == nil {
-		err := v.initialKeywordMap()
-		if err != nil {
-			log.Errorf("fail to initial keywordMap: %s", err)
-		}
+		v.initialKeywordMap()
 	}
 
 	keyword := match[1]
