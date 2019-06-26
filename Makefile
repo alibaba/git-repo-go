@@ -1,8 +1,16 @@
 TARGETS := git-repo
 PKG := code.alibaba-inc.com/force/git-repo
-#GOBUILD := GO111MODULE=on CGO_ENABLED=0 go build -mod=vendor -tags netgo -ldflags "-extldflags '-static'"
+VENDOR_EXISTS=$(shell test -d vendor && echo 1 || echo 0)
+ifeq ($(VENDOR_EXISTS), 1)
+    #GOFLAGS=-mod=vendor
+    GOBUILD := CGO_ENABLED=0 go build -mod=vendor
+else
+    GOBUILD := CGO_ENABLED=0 go build
+endif
+
+# GOBUILD := GO111MODULE=on CGO_ENABLED=0 go build -mod=vendor -tags netgo -ldflags "-extldflags '-static'"
 # GOBUILD := GO111MODULE=on CGO_ENABLED=0 go build -mod=vendor -tags netgo -ldflags "-X main.Version=$(VERSION) -extldflags '-static'"
-GOBUILD := CGO_ENABLED=0 go build
+
 GOBUILD_LINUX_64 := env GOOS=linux GOARCH=amd64 $(GOBUILD)
 GOBUILD_LINUX_32 := env GOOS=linux GOARCH=386 $(GOBUILD)
 GOBUILD_WINDOWS_64 := env GOOS=windows GOARCH=amd64 $(GOBUILD)
@@ -33,11 +41,11 @@ git-repo: $(shell find . -name '*.go') | REPO-VERSION-FILE
 
 golint:
 	$(call message,Testing git-repo using golint for coding style)
-	@golint ./...
+	@golint $(LOCAL_PACKAGES)
 
 test: golint $(TARGETS)
 	$(call message,Testing git-repo for unit tests)
-	@go test $(LOCAL_PACKAGES)
+	@go test $(PKG)/...
 	$(call message,Testing git-repo for integration tests)
 	@make -C test
 
@@ -46,6 +54,9 @@ version-yml: REPO-VERSION-FILE
 	@echo "production: $(REPO_VERSION)" > _build/version.yml
 	@echo "test: $(REPO_VERSION)" >> _build/version.yml
 
+release: linux windows darwin
+
+linux: linux-amd64 linux-386
 linux-amd64: $(shell find . -name '*.go') | REPO-VERSION-FILE
 	$(call message,Building $@)
 	@mkdir -p _build/$(REPO_VERSION)/linux/amd64
@@ -58,6 +69,7 @@ linux-386: $(shell find . -name '*.go') | REPO-VERSION-FILE
 	$(GOBUILD_LINUX_32) -o _build/$(REPO_VERSION)/linux/386/git-repo -ldflags "-X $(PKG)/versions.Version=$(REPO_VERSION)"
 	@(cd _build/$(REPO_VERSION)/linux/386 && $(SHA256SUM) git-repo >git-repo.sha256 && $(GPGSIGN) -o git-repo.sha256.gpg git-repo.sha256)
 
+windows: windows-amd64 windows-386
 windows-amd64: $(shell find . -name '*.go') | REPO-VERSION-FILE
 	$(call message,Building $@)
 	@mkdir -p _build/$(REPO_VERSION)/windows/amd64
@@ -70,6 +82,7 @@ windows-386: $(shell find . -name '*.go') | REPO-VERSION-FILE
 	$(GOBUILD_WINDOWS_32) -o _build/$(REPO_VERSION)/windows/386/git-repo.exe -ldflags "-X $(PKG)/versions.Version=$(REPO_VERSION)"
 	@(cd _build/$(REPO_VERSION)/windows/386 && $(SHA256SUM) git-repo.exe >git-repo.exe.sha256 && $(GPGSIGN) -o git-repo.exe.sha256.gpg git-repo.exe.sha256)
 
+darwin: darwin-amd64 darwin-386
 darwin-amd64: $(shell find . -name '*.go') | REPO-VERSION-FILE
 	$(call message,Building $@)
 	@mkdir -p _build/$(REPO_VERSION)/darwin/amd64
@@ -95,3 +108,4 @@ clean:
 .PHONY: test clean
 .PHONY: FORCE
 .PHONY: version-yml index
+.PHONY: release
