@@ -2,6 +2,18 @@
 
 Changes of git-repo.
 
+## 0.3.1 (2019-6-26)
+
+Enhancement and bugfix:
+
++ bugfix: add protection for write git extra config file
++ Only set push.default to nothing if it is unset
++ Makfile: build with vendor and new release target
++ Ignore vendor dir
++ filter: ignore errors for smudge
++ debug: add more debug info for repo sync
++ upload: clean published refs for single mode
+
 ## 0.3.0 (2019-6-22)
 
 New Features:
