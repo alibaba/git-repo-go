@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -80,6 +81,7 @@ func saveExtraGitConfig() error {
 
 	filename, _ := path.Abs(GitExtraConfigFile)
 	dir := filepath.Dir(filename)
+	lockfile := filename + ".lock"
 
 	if _, err := os.Stat(dir); err != nil {
 		err = os.MkdirAll(dir, 0755)
@@ -88,13 +90,26 @@ func saveExtraGitConfig() error {
 		}
 	}
 
-	file, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE, 0644)
+	file, err := os.OpenFile(lockfile, os.O_CREATE|os.O_TRUNC|os.O_RDWR, 0644)
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+
+	defer os.Remove(lockfile)
+
 	_, err = file.WriteString(gitConfigExtension)
-	return err
+	if err != nil {
+		file.Close()
+		return fmt.Errorf("fail to write file %s: %s", lockfile, err)
+	}
+	file.Close()
+
+	_, err = goconfig.Load(lockfile)
+	if err != nil {
+		return fmt.Errorf("bad git config in %s: %s", lockfile, err)
+	}
+
+	return os.Rename(lockfile, filename)
 }
 
 // InstallExtraGitConfig if necessary
