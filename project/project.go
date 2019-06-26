@@ -207,7 +207,6 @@ func (v Project) CleanPublishedCache() error {
 			} else if strings.HasPrefix(string(ref.Name()), config.RefsHeads) {
 				headsMap[string(ref.Name())] = ref.Hash().String()
 			}
-			fmt.Println(ref)
 		}
 		return nil
 	})

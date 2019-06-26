@@ -902,7 +902,18 @@ func (v uploadCommand) runE(args []string) error {
 			}
 		}
 	}
-	return v.UploadForReviewWithEditor(tasks)
+
+	err = v.UploadForReviewWithEditor(tasks)
+	if err != nil {
+		return err
+	}
+
+	// For single mode, clean published refs, because we don't have chance to
+	// run other commands, such as `git-repo sync`.
+	if config.IsSingleMode() && len(allProjects) > 0 {
+		err = allProjects[0].CleanPublishedCache()
+	}
+	return err
 }
 
 var uploadCmd = uploadCommand{}
