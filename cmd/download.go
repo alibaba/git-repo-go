@@ -195,7 +195,22 @@ func (v *downloadCommand) runE(args []string) error {
 		}
 
 		if v.O.CherryPick {
-			err = c.Project.CherryPick(dl.Commit)
+			answer := true
+			if len(dl.Commits) > UnusualCommitThreshold {
+				input := userInput(
+					fmt.Sprintf("Too many commits(%d) to cherry pick, are you sure (y/N)? ", len(dl.Commits)),
+					"N",
+				)
+				if !answerIsTrue(input) {
+					answer = false
+				}
+			}
+
+			if answer {
+				err = c.Project.CherryPick(dl.Commits...)
+			} else {
+				err = fmt.Errorf("cherry-pick aborted by user")
+			}
 		} else if v.O.Revert {
 			if c.Project.Remote != nil && c.Project.Remote.GetType() == config.RemoteTypeGerrit {
 				err = c.Project.Revert(dl.Commit)
