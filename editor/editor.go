@@ -1,3 +1,18 @@
+// Copyright © 2019 Alibaba Co. Ltd.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// Package editor implements content edition.
 package editor
 
 import (
@@ -14,29 +29,29 @@ import (
 	"github.com/mattn/go-shellwords"
 )
 
-// Editor is used to edit file
-type Editor struct {
+// theEditor is wapper for editor.
+type theEditor struct {
 	cfg    goconfig.GitConfig
 	editor string
 }
 
-// Config returns git default settings
-func (v *Editor) Config() goconfig.GitConfig {
+// Config returns git default settings.
+func (v *theEditor) Config() goconfig.GitConfig {
 	if v.cfg == nil {
 		v.cfg = goconfig.DefaultConfig()
 	}
 	return v.cfg
 }
 
-// Editor returns editor program name
-func (v *Editor) Editor() string {
+// Editor returns program name of the editor.
+func (v *theEditor) Editor() string {
 	if v.editor == "" {
 		v.editor = v.selectEditor()
 	}
 	return v.editor
 }
 
-func (v Editor) selectEditor() string {
+func (v theEditor) selectEditor() string {
 	var e string
 
 	e = os.Getenv("GIT_EDITOR")
@@ -96,8 +111,8 @@ func editorCommands(editor string, args ...string) []string {
 	return cmdArgs
 }
 
-// EditString starts editor and returns data after edition
-func (v Editor) EditString(data string) string {
+// EditString starts the editor to edit data, and returns the edited data.
+func (v theEditor) EditString(data string) string {
 	var (
 		err    error
 		editor string
@@ -151,4 +166,10 @@ func (v Editor) EditString(data string) string {
 		log.Fatal(err)
 	}
 	return string(buf)
+}
+
+// EditString starts an editor to edit data, and returns the edited data.
+func EditString(data string) string {
+	e := theEditor{}
+	return e.EditString(data)
 }

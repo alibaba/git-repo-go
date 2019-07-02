@@ -371,7 +371,6 @@ func (v uploadCommand) UploadForReviewWithEditor(branchesMap map[string][]projec
 		branchesIdx[p.Name] = b
 	}
 
-	editor := editor.Editor{}
 	script = append(script, "")
 	editString := editor.EditString(strings.Join(script, "\n"))
 
