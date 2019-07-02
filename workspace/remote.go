@@ -26,7 +26,7 @@ var (
 	httpClient *http.Client
 )
 
-// LoadRemotes calls remote API to get server type and other info
+// LoadRemotes calls remote API to get server type and other info.
 func (v *RepoWorkSpace) LoadRemotes(noCache bool) error {
 	if v.Manifest == nil || v.Manifest.Remotes == nil {
 		return nil

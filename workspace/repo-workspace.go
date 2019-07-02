@@ -18,7 +18,7 @@ import (
 	log "github.com/jiangxin/multi-log"
 )
 
-// RepoWorkSpace is the toplevel structure for manipulating git-repo worktree
+// RepoWorkSpace is the toplevel structure for manipulating git-repo worktree.
 type RepoWorkSpace struct {
 	RootDir         string
 	Manifest        *manifest.Manifest
@@ -30,7 +30,7 @@ type RepoWorkSpace struct {
 	httpClient      *http.Client
 }
 
-// Exists checks whether workspace is exist
+// Exists checks whether workspace is exist.
 func Exists(dir string) bool {
 	manifestsDir := filepath.Join(dir, config.DotRepo, config.Manifests)
 	if _, err := os.Stat(filepath.Join(manifestsDir, ".git")); err != nil {
@@ -43,42 +43,42 @@ func Exists(dir string) bool {
 	return cfg.Get("remote.origin.url") != ""
 }
 
-// AdminDir returns .repo dir
+// AdminDir returns .repo dir.
 func (v RepoWorkSpace) AdminDir() string {
 	return filepath.Join(v.RootDir, config.DotRepo)
 }
 
-// GetRemoteMap returns RemoteMap
+// GetRemoteMap returns RemoteMap.
 func (v *RepoWorkSpace) GetRemoteMap() map[string]project.RemoteWithError {
 	return v.RemoteMap
 }
 
-// IsSingle is false for workspace initialized by manifests project
+// IsSingle is false for workspace initialized by manifests project.
 func (v RepoWorkSpace) IsSingle() bool {
 	return false
 }
 
-// ManifestURL returns URL of manifest project
+// ManifestURL returns URL of manifest project.
 func (v *RepoWorkSpace) ManifestURL() string {
 	return v.Settings().ManifestURL
 }
 
-// Settings returns manifest project's Settings
+// Settings returns manifest project's Settings.
 func (v *RepoWorkSpace) Settings() *project.RepoSettings {
 	return v.ManifestProject.Settings
 }
 
-// Config returns git config file parser
+// Config returns git config file parser.
 func (v *RepoWorkSpace) Config() goconfig.GitConfig {
 	return v.ManifestProject.Config()
 }
 
-// SaveConfig will save config to git config file
+// SaveConfig will save config to git config file.
 func (v *RepoWorkSpace) SaveConfig(cfg goconfig.GitConfig) error {
 	return v.ManifestProject.SaveConfig(cfg)
 }
 
-// LinkManifest creates link of manifest.xml
+// LinkManifest creates link of manifest.xml.
 func (v *RepoWorkSpace) LinkManifest() error {
 	srcAbs := filepath.Join(v.RootDir, config.DotRepo, config.Manifests, v.Settings().ManifestName)
 	srcRel := filepath.Join(config.Manifests, v.Settings().ManifestName)
@@ -103,7 +103,7 @@ func (v *RepoWorkSpace) LinkManifest() error {
 	return nil
 }
 
-// Load will read manifest XML file and reset ManifestURL if it changed,
+// Load will read manifest XML file and reset ManifestURL if it changed
 // and reset URL of all projects in workspace.
 func (v *RepoWorkSpace) load(manifestURL string) error {
 	m, err := manifest.Load(filepath.Join(v.RootDir, config.DotRepo))
@@ -116,7 +116,7 @@ func (v *RepoWorkSpace) load(manifestURL string) error {
 	return v.loadProjects(manifestURL)
 }
 
-// Override will read alternate manifest XML file to initialize workspace
+// Override will read alternate manifest XML file to initialize workspace.
 func (v *RepoWorkSpace) Override(name string) error {
 	manifestFile := filepath.Join(v.RootDir, config.DotRepo, config.Manifests, name)
 	if _, err := os.Stat(manifestFile); err != nil {
@@ -225,24 +225,24 @@ func (v *RepoWorkSpace) loadProjects(manifestURL string) error {
 	return nil
 }
 
-// GetProjectsWithName returns projects which has matching name
+// GetProjectsWithName returns projects which has matching name.
 func (v RepoWorkSpace) GetProjectsWithName(name string) []*project.Project {
 	return v.projectByName[name]
 }
 
-// GetProjectWithPath returns project which has matching path
+// GetProjectWithPath returns project which has matching path.
 func (v RepoWorkSpace) GetProjectWithPath(p string) *project.Project {
 	return v.projectByPath[p]
 }
 
-// GetProjectsOptions is options for GetProjects() function
+// GetProjectsOptions is options for GetProjects() function.
 type GetProjectsOptions struct {
 	Groups       string
 	MissingOK    bool
 	SubmodulesOK bool
 }
 
-// GetProjects returns all matching projects
+// GetProjects returns all matching projects.
 func (v RepoWorkSpace) GetProjects(o *GetProjectsOptions, args ...string) ([]*project.Project, error) {
 	var (
 		groups      string

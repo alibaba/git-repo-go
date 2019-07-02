@@ -14,7 +14,7 @@ import (
 	log "github.com/jiangxin/multi-log"
 )
 
-// GitWorkSpace defines structure for single git workspace
+// GitWorkSpace defines structure for single git workspace.
 type GitWorkSpace struct {
 	RootDir         string
 	GitDir          string
@@ -27,22 +27,22 @@ type GitWorkSpace struct {
 	httpClient      *http.Client
 }
 
-// AdminDir returns .git dir
+// AdminDir returns .git dir.
 func (v GitWorkSpace) AdminDir() string {
 	return v.GitDir
 }
 
-// GetRemoteMap returns RemoteMap
+// GetRemoteMap returns RemoteMap.
 func (v *GitWorkSpace) GetRemoteMap() map[string]project.RemoteWithError {
 	return v.RemoteMap
 }
 
-// IsSingle is true for git workspace
+// IsSingle is true for git workspace.
 func (v GitWorkSpace) IsSingle() bool {
 	return true
 }
 
-// LoadRemotes implements LoadRemotes interface
+// LoadRemotes implements LoadRemotes interface.
 func (v *GitWorkSpace) LoadRemotes(noCache bool) error {
 	if len(v.Projects) != 1 {
 		return errors.New("git workspace should contain only one project")
@@ -162,12 +162,12 @@ func (v GitWorkSpace) newProject(worktree, gitdir string) (*project.Project, err
 	return &p, nil
 }
 
-// GetProjects returns all projects
+// GetProjects returns all projects.
 func (v GitWorkSpace) GetProjects(*GetProjectsOptions, ...string) ([]*project.Project, error) {
 	return v.Projects, nil
 }
 
-// Load sets fields of git work space
+// Load sets fields of git work space.
 func (v *GitWorkSpace) load() error {
 	var (
 		worktree = v.RootDir
@@ -192,7 +192,7 @@ func (v *GitWorkSpace) load() error {
 	return nil
 }
 
-// NewGitWorkSpace returns workspace interface for single git repository
+// NewGitWorkSpace returns workspace interface for single git repository.
 func NewGitWorkSpace(dir string) (*GitWorkSpace, error) {
 	worktree, gitdir, err := path.FindGitWorkSpace(dir)
 	if err != nil {
