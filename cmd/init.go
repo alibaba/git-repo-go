@@ -504,15 +504,15 @@ func (v initCommand) configureColor() {
 
 	for _, c := range []string{"black", "red", "green", "yellow", "blue", "magenta", "cyan"} {
 		fmt.Print(" ")
-		fmt.Printf("%s %-6s %s", color.Color(c, "", ""), c, color.ResetColor)
+		fmt.Printf("%s %-6s %s", color.Color(c, "", ""), c, color.Reset())
 	}
 	fmt.Print(" ")
-	fmt.Printf("%s %s %s", color.Color("white", "black", ""), "white", color.ResetColor)
+	fmt.Printf("%s %s %s", color.Color("white", "black", ""), "white", color.Reset())
 	fmt.Println("")
 
 	for _, c := range []string{"bold", "dim", "ul", "reverse"} {
 		fmt.Print(" ")
-		fmt.Printf("%s %-6s %s", color.Color("black", "", c), c, color.ResetColor)
+		fmt.Printf("%s %-6s %s", color.Color("black", "", c), c, color.Reset())
 	}
 	fmt.Println("")
 

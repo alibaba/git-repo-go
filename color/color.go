@@ -1,3 +1,18 @@
+// Copyright © 2019 Alibaba Co. Ltd.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// Package color implements color output on console.
 package color
 
 import (
@@ -19,11 +34,9 @@ func (v mapping) has(s string) bool {
 	return ok
 }
 
-// Consts for color
 const (
-	// Prefix is control sequences to start color output
-	Prefix     = "\033["
-	ResetColor = "\033[m"
+	colorPrefix = "\033["
+	colorReset  = "\033[m"
 )
 
 var colorMap = mapping{
@@ -53,15 +66,25 @@ func colorEnabled() bool {
 	return true
 }
 
-// Reset shows reset if color is enabled
-func Reset() string {
-	if colorEnabled() {
-		return ResetColor
-	}
-	return ""
-}
-
 // Color returns color code for terminal display
+//
+// Available colors:
+//	normal
+//	black
+//	red
+//	green
+//	yellow
+//	blue
+//	magenta
+//	cyan
+//	white
+//
+// Available attributes:
+//	bold
+//	dim
+//	ul
+//	blink
+//	reverse
 func Color(fgColor, bgColor, attrVal string) string {
 	var (
 		code string
@@ -105,7 +128,15 @@ func Color(fgColor, bgColor, attrVal string) string {
 		code += "m"
 	}
 	if len(code) > 0 {
-		return Prefix + code
+		return colorPrefix + code
+	}
+	return ""
+}
+
+// Reset returns ResetColor to reset color output.
+func Reset() string {
+	if colorEnabled() {
+		return colorReset
 	}
 	return ""
 }
