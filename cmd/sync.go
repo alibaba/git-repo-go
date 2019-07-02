@@ -33,8 +33,8 @@ import (
 )
 
 const (
-	// SyncDefaultJobs is the default value of --jobs
-	SyncDefaultJobs = 4
+	// syncDefaultJobs is the default value of --jobs
+	syncDefaultJobs = 4
 )
 
 type syncCommand struct {
@@ -110,7 +110,7 @@ func (v *syncCommand) Command() *cobra.Command {
 	v.cmd.Flags().IntVarP(&v.O.Jobs,
 		"jobs",
 		"j",
-		SyncDefaultJobs,
+		syncDefaultJobs,
 		fmt.Sprintf("projects to fetch simultaneously"))
 	v.cmd.Flags().StringVarP(&v.O.ManifestName,
 		"manifest-name",

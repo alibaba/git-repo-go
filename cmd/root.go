@@ -12,6 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package cmd implements verious git-repo subcommands using cobra as the
+// command-line framework.
+//
+// Root command is defined in `cmd/root.go`, it implements public options
+// for git-repo. Such as: --asume-yes, --quiet, --single.
+//
+// Each subcommand has a corresponding file, named `cmd/<subcmd>.go`, and
+// the entrance of each subcommand is is defined in function `runE(args)`.
 package cmd
 
 import (
@@ -37,17 +45,17 @@ var (
 	rootCmd     = rootCommand{}
 )
 
-// The Response value from Execute.
+// Response wraps error for subcommand, and is returned from cmd package.
 type Response struct {
-	// Err is set when the command failed to execute.
+	// Err contains error returned from the subcommand executed.
 	Err error
 
-	// The command that was executed.
+	// Cmd contains the command object.
 	Cmd *cobra.Command
 }
 
-// IsUserError returns true is the Response error is a user error rather than a
-// system error.
+// IsUserError indicates it is a user fault, and should display the command
+// usage in addition to displaying the error itself.
 func (r Response) IsUserError() bool {
 	return r.Err != nil && isUserError(r.Err)
 }

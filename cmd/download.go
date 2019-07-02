@@ -38,8 +38,8 @@ type downloadCommand struct {
 	}
 }
 
-// ProjectWithReviewID wraps download project and review ID
-type ProjectWithReviewID struct {
+// projectChange wraps download project and review ID
+type projectChange struct {
 	Project  *project.Project
 	ReviewID int
 	PatchID  int
@@ -84,9 +84,9 @@ func (v *downloadCommand) Command() *cobra.Command {
 	return v.cmd
 }
 
-func (v *downloadCommand) parseChanges(args ...string) ([]ProjectWithReviewID, error) {
+func (v *downloadCommand) parseChanges(args ...string) ([]projectChange, error) {
 	var (
-		changes []ProjectWithReviewID
+		changes []projectChange
 		p       *project.Project
 	)
 
@@ -110,7 +110,7 @@ func (v *downloadCommand) parseChanges(args ...string) ([]ProjectWithReviewID, e
 			}
 		}
 
-		pr := ProjectWithReviewID{Project: p}
+		pr := projectChange{Project: p}
 		pr.ReviewID, _ = strconv.Atoi(matches[1])
 		if len(matches) >= 3 {
 			pr.PatchID, _ = strconv.Atoi(matches[2])
@@ -196,7 +196,7 @@ func (v *downloadCommand) runE(args []string) error {
 
 		if v.O.CherryPick {
 			answer := true
-			if len(dl.Commits) > UnusualCommitThreshold {
+			if len(dl.Commits) > unusualCommitThreshold {
 				input := userInput(
 					fmt.Sprintf("Too many commits(%d) to cherry pick, are you sure (y/N)? ", len(dl.Commits)),
 					"N",

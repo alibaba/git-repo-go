@@ -33,11 +33,11 @@ import (
 )
 
 const (
-	// UnusualCommitThreshold defines threshold of number of commits to confirm
-	UnusualCommitThreshold = 5
+	// unusualCommitThreshold defines threshold of number of commits to confirm
+	unusualCommitThreshold = 5
 
-	// UploadOptionsFile stores upload options to file
-	UploadOptionsFile = "UPLOAD_OPTIONS"
+	// uploadOptionsFile stores upload options to file
+	uploadOptionsFile = "UPLOAD_OPTIONS"
 )
 
 var (
@@ -270,7 +270,7 @@ func (v uploadCommand) UploadForReviewWithConfirm(branch *project.ReviewableBran
 		}
 	}
 
-	if len(commitList) > UnusualCommitThreshold {
+	if len(commitList) > unusualCommitThreshold {
 		fmt.Printf("ATTENTION: You are uploading an unusually high number of commits.\n")
 		fmt.Println("YOU PROBABLY DO NOT MEAN TO DO THIS. (Did you rebase across branches?)")
 		input := userInput("If you are sure you intend to do this, type 'yes': ", "N")
@@ -441,7 +441,7 @@ func (v uploadCommand) UploadForReviewWithEditor(branchesMap map[string][]projec
 }
 
 func (v uploadCommand) saveUploadOptions(content string) error {
-	file := filepath.Join(v.ws.AdminDir(), UploadOptionsFile)
+	file := filepath.Join(v.ws.AdminDir(), uploadOptionsFile)
 	lockFile := file + ".lock"
 	err := ioutil.WriteFile(lockFile, []byte(content), 0644)
 	if err != nil {
@@ -549,7 +549,7 @@ func (v uploadCommand) fmtUploadOptionsScript() []string {
 	)
 
 	// Load upload options file created by last upload
-	buf, err := ioutil.ReadFile(filepath.Join(v.ws.AdminDir(), UploadOptionsFile))
+	buf, err := ioutil.ReadFile(filepath.Join(v.ws.AdminDir(), uploadOptionsFile))
 	if err == nil {
 		v.loadUploadOptions(&o, string(buf))
 

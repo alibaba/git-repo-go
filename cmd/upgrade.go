@@ -44,8 +44,8 @@ import (
 )
 
 const (
-	// DefaultUpgradeURL indicates where to download git-repo new package
-	DefaultUpgradeURL = "http://repo.code.alibaba-inc.com/download"
+	// defaultUpgradeURL indicates where to download git-repo new package
+	defaultUpgradeURL = "http://repo.code.alibaba-inc.com/download"
 )
 
 type upgradeCommand struct {
@@ -81,7 +81,7 @@ func (v *upgradeCommand) Command() *cobra.Command {
 	v.cmd.Flags().StringVarP(&v.O.URL,
 		"url",
 		"u",
-		DefaultUpgradeURL,
+		defaultUpgradeURL,
 		"upgrade from this URL")
 	v.cmd.Flags().StringVar(&v.O.Version,
 		"version",
