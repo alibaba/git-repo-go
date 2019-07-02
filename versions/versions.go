@@ -1,3 +1,18 @@
+// Copyright © 2019 Alibaba Co. Ltd.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// Package versions implements versions related functions
 package versions
 
 import (
@@ -9,22 +24,22 @@ import (
 	log "github.com/jiangxin/multi-log"
 )
 
-// Macros for version package
 const (
+	// MinGitVersion defines the minimal version of Git.
 	MinGitVersion = "1.7.2"
 )
 
 var (
-	// Version of git-repo
+	// Version is the verison of git-repo.
 	Version = "undefined"
 )
 
-// GetVersion show git-repo version
+// GetVersion returns git-repo version.
 func GetVersion() string {
 	return Version
 }
 
-// GetGitVersion gets current installed git version
+// GetGitVersion gets current installed git version.
 func GetGitVersion() string {
 	var out bytes.Buffer
 
@@ -38,7 +53,7 @@ func GetGitVersion() string {
 	return strings.TrimSpace(strings.TrimPrefix(out.String(), "git version "))
 }
 
-// CompareVersion compares two versions
+// CompareVersion compares two versions.
 func CompareVersion(_left, _right string) int {
 	left := strings.Split(_left, ".")
 	right := strings.Split(_right, ".")
@@ -87,7 +102,7 @@ func CompareVersion(_left, _right string) int {
 	return 0
 }
 
-// ValidateGitVersion is used to check installed git version
+// ValidateGitVersion is used to check installed git version.
 func ValidateGitVersion() bool {
 	return CompareVersion(GetGitVersion(), MinGitVersion) >= 0
 }
