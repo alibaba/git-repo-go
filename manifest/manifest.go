@@ -1,3 +1,18 @@
+// Copyright © 2019 Alibaba Co. Ltd.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// Package manifest implements marshal and unmarshal of manifest XML.
 package manifest
 
 import (
@@ -19,7 +34,7 @@ const (
 	maxRecursiveDepth = 10
 )
 
-// Manifest is for toplevel XML structure
+// Manifest is for toplevel XML structure.
 type Manifest struct {
 	XMLName        xml.Name        `xml:"manifest"`
 	Notice         string          `xml:"notice,omitempty"`
@@ -34,7 +49,7 @@ type Manifest struct {
 	SourceFile     string          `xml:"-"`
 }
 
-// Remote is for remote XML element
+// Remote is for remote XML element.
 type Remote struct {
 	Name     string `xml:"name,attr,omitempty"`
 	Alias    string `xml:"alias,attr,omitempty"`
@@ -45,7 +60,7 @@ type Remote struct {
 	Type     string `xml:"type,attr,omitempty"`
 }
 
-// Default is for default XML element
+// Default is for default XML element.
 type Default struct {
 	RemoteName string `xml:"remote,attr,omitempty"`
 	Revision   string `xml:"revision,attr,omitempty"`
@@ -57,12 +72,12 @@ type Default struct {
 	SyncTags   string `xml:"sync-tags,attr,omitempty"`
 }
 
-// Server is for manifest-server XML element
+// Server is for manifest-server XML element.
 type Server struct {
 	URL string `xml:"url,attr,omitempty"`
 }
 
-// Project is for project XML element
+// Project is for project XML element.
 type Project struct {
 	Annotations []Annotation `xml:"annotation,omitempty"`
 	Projects    []Project    `xml:"project,omitempty"`
@@ -87,26 +102,26 @@ type Project struct {
 	ManifestRemote *Remote `xml:"-"`
 }
 
-// Annotation is for annotation XML element
+// Annotation is for annotation XML element.
 type Annotation struct {
 	Name  string `xml:"name,attr,omitempty"`
 	Value string `xml:"value,attr,omitempty"`
 	Keep  string `xml:"keep,attr,omitempty"`
 }
 
-// CopyFile is for copyfile XML element
+// CopyFile is for copyfile XML element.
 type CopyFile struct {
 	Src  string `xml:"src,attr,omitempty"`
 	Dest string `xml:"dest,attr,omitempty"`
 }
 
-// LinkFile is for linkfile XML element
+// LinkFile is for linkfile XML element.
 type LinkFile struct {
 	Src  string `xml:"src,attr,omitempty"`
 	Dest string `xml:"dest,attr,omitempty"`
 }
 
-// ExtendProject is for extend-project XML element
+// ExtendProject is for extend-project XML element.
 type ExtendProject struct {
 	Name     string `xml:"name,attr,omitempty"`
 	Path     string `xml:"path,attr,omitempty"`
@@ -114,23 +129,24 @@ type ExtendProject struct {
 	Revision string `xml:"revision,attr,omitempty"`
 }
 
-// RemoveProject is for remove-project XML element
+// RemoveProject is for remove-project XML element.
 type RemoveProject struct {
 	Name string `xml:"name,attr,omitempty"`
 }
 
-// RepoHooks is for repo-hooks XML element
+// RepoHooks is for repo-hooks XML element.
 type RepoHooks struct {
 	InProject   string `xml:"in-project,attr,omitempty"`
 	EnabledList string `xml:"enabled-list,attr,omitempty"`
 }
 
-// Include is for include XML element
+// Include is for include XML element.
 type Include struct {
 	Name string `xml:"name,attr,omitempty"`
 }
 
-// AllProjects returns projects of a project recursively
+// AllProjects returns all projects (include current project and all sub-projects)
+// of a project recursively.
 func (v *Project) AllProjects(parent *Project) []Project {
 	var project Project
 
@@ -198,32 +214,32 @@ func isTrue(value string, def bool) bool {
 	return false
 }
 
-// IsRebase causes repo sync using rebase instead of reset.
+// IsRebase indicates a project should use rebase instead of reset for syncing.
 func (v Project) IsRebase() bool {
 	return isTrue(v.Rebase, true)
 }
 
-// IsSyncS indicates should sync submodule
+// IsSyncS indicates a project should sync submodules.
 func (v Project) IsSyncS() bool {
 	return isTrue(v.SyncS, false)
 }
 
-// IsSyncC indicates should sync current branch
+// IsSyncC indicates a project should sync current branch.
 func (v Project) IsSyncC() bool {
 	return isTrue(v.SyncC, false)
 }
 
-// IsSyncTags indicates should sync tags
+// IsSyncTags indicates a project should sync tags.
 func (v Project) IsSyncTags() bool {
 	return isTrue(v.SyncTags, true)
 }
 
-// IsMetaProject indicates whether current project is a ManifestProject
+// IsMetaProject indicates current project is a ManifestProject or not.
 func (v *Project) IsMetaProject() bool {
 	return v.isMetaProject
 }
 
-// AllProjects returns all projects of manifest
+// AllProjects returns all projects defined by current manifest.
 func (v *Manifest) AllProjects() []Project {
 	projects := []Project{}
 	for _, p := range v.Projects {
@@ -268,7 +284,7 @@ func (v *Manifest) AllProjects() []Project {
 	return projects
 }
 
-// Merge will merge another manifest to self
+// Merge implements merging another manifest to self.
 func (v *Manifest) Merge(m *Manifest) error {
 	if m.Notice != "" {
 		if v.Notice == "" {
@@ -452,7 +468,7 @@ func mergeManifests(ms []*Manifest) (*Manifest, error) {
 	return manifest, nil
 }
 
-// Load will load and parse manifest XML file
+// Load implements load and parse manifest XML file in repoDir.
 func Load(repoDir string) (*Manifest, error) {
 	var (
 		file string
@@ -481,7 +497,7 @@ func Load(repoDir string) (*Manifest, error) {
 	return LoadFile(repoDir, file)
 }
 
-// LoadFile will load specific manifest file inside repoDir
+// LoadFile implements load specific manifest file inside repoDir.
 func LoadFile(repoDir, file string) (*Manifest, error) {
 	var (
 		dir       string
@@ -543,7 +559,7 @@ func LoadFile(repoDir, file string) (*Manifest, error) {
 	return mergeManifests(manifests)
 }
 
-// ManifestsProject is a instance of Project
+// ManifestsProject is a special instance of Project.
 var ManifestsProject = &Project{
 	Name:          "manifests",
 	Path:          "manifests",
