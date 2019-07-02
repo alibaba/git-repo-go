@@ -235,7 +235,7 @@ func (v Project) IsSyncTags() bool {
 }
 
 // IsMetaProject indicates current project is a ManifestProject or not.
-func (v *Project) IsMetaProject() bool {
+func (v Project) IsMetaProject() bool {
 	return v.isMetaProject
 }
 
@@ -398,8 +398,7 @@ func cleanPath(name string) string {
 	return filepath.Clean(strings.ReplaceAll(strings.TrimSuffix(name, ".git"), "\\", "/"))
 }
 
-func unmarshal(file string) (*Manifest, error) {
-	manifest := Manifest{}
+func unmarshalFile(file string) (*Manifest, error) {
 	if _, err := os.Stat(file); err != nil {
 		return nil, err
 	}
@@ -409,18 +408,18 @@ func unmarshal(file string) (*Manifest, error) {
 		return nil, fmt.Errorf("cannot read manifest file '%s': %s", file, err)
 	}
 
-	err = xml.Unmarshal(buf, &manifest)
+	ms, err := Unmarshal(buf)
 	if err != nil {
 		return nil, fmt.Errorf("fail to parse manifest file '%s': %s", file, err)
 	}
 
-	return &manifest, nil
+	return ms, nil
 }
 
 func parseXML(file string, depth int) ([]*Manifest, error) {
 	ms := []*Manifest{}
 
-	m, err := unmarshal(file)
+	m, err := unmarshalFile(file)
 	if err != nil {
 		return ms, err
 	}
@@ -557,6 +556,19 @@ func LoadFile(repoDir, file string) (*Manifest, error) {
 	}
 
 	return mergeManifests(manifests)
+}
+
+// Unmarshal implements decoding XML (in buf) to manifest.
+func Unmarshal(buf []byte) (*Manifest, error) {
+	var ms = Manifest{}
+
+	err := xml.Unmarshal(buf, &ms)
+	return &ms, err
+}
+
+// Marshal implements encoding manifest to XML.
+func Marshal(ms *Manifest) ([]byte, error) {
+	return xml.MarshalIndent(ms, "", "  ")
 }
 
 // ManifestsProject is a special instance of Project.
