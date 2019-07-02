@@ -33,7 +33,7 @@ var (
 `
 )
 
-// InstallRepoConfig will install default git-repo config example file
+// InstallRepoConfig installs default git-repo config example file.
 func InstallRepoConfig() error {
 	filename, err := path.Abs(DefaultGitRepoConfigFile + ".yml.example")
 	if err != nil {

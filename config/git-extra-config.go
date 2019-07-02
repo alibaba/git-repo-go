@@ -11,11 +11,10 @@ import (
 	log "github.com/jiangxin/multi-log"
 )
 
-// Macros for git-extra-config
 const (
-	GitExtraConfigVersion = "5"
-	GitExtraConfigFile    = "~/.git-repo/gitconfig"
-	CfgRepoConfigVersion  = "repo.configversion"
+	gitExtraConfigVersion = "5"
+	gitExtraConfigFile    = "~/.git-repo/gitconfig"
+	cfgRepoConfigVersion  = "repo.configversion"
 )
 
 var (
@@ -54,7 +53,7 @@ var (
 	autosquash = true
 [repo]
 	# Version of this git config extension
-	configversion = ` + GitExtraConfigVersion + `
+	configversion = ` + gitExtraConfigVersion + `
 `
 )
 
@@ -79,7 +78,7 @@ func saveExtraGitConfig() error {
 		err error
 	)
 
-	filename, _ := path.Abs(GitExtraConfigFile)
+	filename, _ := path.Abs(gitExtraConfigFile)
 	dir := filepath.Dir(filename)
 	lockfile := filename + ".lock"
 
@@ -112,22 +111,22 @@ func saveExtraGitConfig() error {
 	return os.Rename(lockfile, filename)
 }
 
-// InstallExtraGitConfig if necessary
+// InstallExtraGitConfig installs extra git config file if necessary.
 func InstallExtraGitConfig() error {
 	var err error
 
 	globalConfig, err := goconfig.GlobalConfig()
-	version := globalConfig.Get(CfgRepoConfigVersion)
-	if version == GitExtraConfigVersion {
+	version := globalConfig.Get(cfgRepoConfigVersion)
+	if version == gitExtraConfigVersion {
 		return nil
 	}
 
-	log.Debugf("unmatched git config version: %s != %s", version, GitExtraConfigVersion)
+	log.Debugf("unmatched git config version: %s != %s", version, gitExtraConfigVersion)
 	found := false
-	gitExtraConfigFile, _ := path.Abs(GitExtraConfigFile)
+	absExtraConfigFile, _ := path.Abs(gitExtraConfigFile)
 	for _, p := range globalConfig.GetAll("include.path") {
 		p, _ = path.Abs(p)
-		if p == gitExtraConfigFile {
+		if p == absExtraConfigFile {
 			found = true
 			break
 		}
@@ -138,7 +137,7 @@ func InstallExtraGitConfig() error {
 			"--global",
 			"--add",
 			"include.path",
-			GitExtraConfigFile,
+			gitExtraConfigFile,
 		}
 		err = exec.Command(cmds[0], cmds[1:]...).Run()
 		if err != nil {

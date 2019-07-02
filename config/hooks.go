@@ -11,12 +11,12 @@ import (
 )
 
 const (
-	// GitHooksVersion is version of hooks, and should be promoted if
+	// gitHooksVersion is version of hooks, and should be promoted if
 	// anything changed in hooks
-	GitHooksVersion = "1"
+	gitHooksVersion = "1"
 
-	// GerritCommitMsgHook is content of commit-msg hook for Gerrit
-	GerritCommitMsgHook = `#!/bin/sh
+	// gerritCommitMsgHook is content of commit-msg hook for Gerrit
+	gerritCommitMsgHook = `#!/bin/sh
 # From Gerrit Code Review 3.0.0-rc3-236-g33e7081a25
 #
 # Part of Gerrit Code Review (https://www.gerritcodereview.com/)
@@ -83,13 +83,13 @@ fi
 )
 
 var (
-	// GerritHooks defines map of Gerrit hooks
+	// GerritHooks defines map of Gerrit hooks.
 	GerritHooks = map[string]string{
-		"commit-msg": GerritCommitMsgHook,
+		"commit-msg": gerritCommitMsgHook,
 	}
 )
 
-// GetRepoHooksDir returns git-repo hooks dir
+// GetRepoHooksDir returns the hooks template dir for git-repo.
 func GetRepoHooksDir() (string, error) {
 	home, err := path.HomeDir()
 	if err != nil {
@@ -112,13 +112,13 @@ func isHooksUptodate() bool {
 	if err != nil {
 		return false
 	}
-	if strings.TrimSpace(string(data)) != GitHooksVersion {
+	if strings.TrimSpace(string(data)) != gitHooksVersion {
 		return false
 	}
 	return true
 }
 
-// InstallRepoHooks will install hooks into ~/.git-repo/hooks
+// InstallRepoHooks installs hooks into ~/.git-repo/hooks.
 func InstallRepoHooks() error {
 	if isHooksUptodate() {
 		return nil
@@ -144,6 +144,6 @@ func InstallRepoHooks() error {
 			}
 		}
 	}
-	err = ioutil.WriteFile(hooksVersionFile(), []byte(GitHooksVersion+"\n"), 0644)
+	err = ioutil.WriteFile(hooksVersionFile(), []byte(gitHooksVersion+"\n"), 0644)
 	return nil
 }

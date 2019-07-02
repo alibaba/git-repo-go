@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package config provides global variables, macros, environments and settings.
 package config
 
 import (
@@ -83,32 +84,32 @@ const (
 	ViperEnvPrefix = "GIT_REPO"
 )
 
-// AssumeNo checks --asume-no option
+// AssumeNo gets --asume-no option.
 func AssumeNo() bool {
 	return viper.GetBool("assume-no")
 }
 
-// AssumeYes checks --asume-yes option
+// AssumeYes gets --asume-yes option.
 func AssumeYes() bool {
 	return viper.GetBool("assume-yes")
 }
 
-// GetVerbose gets --verbose option
+// GetVerbose gets --verbose option.
 func GetVerbose() int {
 	return viper.GetInt("verbose")
 }
 
-// GetQuiet gets --quiet option
+// GetQuiet gets --quiet option.
 func GetQuiet() bool {
 	return viper.GetBool("quiet")
 }
 
-// IsSingleMode checks --single option
+// IsSingleMode gets --single option.
 func IsSingleMode() bool {
 	return viper.GetBool("single")
 }
 
-// GetLogFile gets --logfile option
+// GetLogFile gets --logfile option.
 func GetLogFile() string {
 	logfile := viper.GetString("logfile")
 	if logfile != "" && !filepath.IsAbs(logfile) {
@@ -123,12 +124,12 @@ func GetLogFile() string {
 	return logfile
 }
 
-// GetLogLevel gets --loglevel option
+// GetLogLevel gets --loglevel option.
 func GetLogLevel() string {
 	return viper.GetString("loglevel")
 }
 
-// GetLogRotateSize gets logrotate size from config
+// GetLogRotateSize gets logrotate size from config.
 func GetLogRotateSize() int64 {
 	logrotate := strings.ToLower(viper.GetString("logrotate"))
 	if logrotate == "" {
@@ -161,7 +162,7 @@ func GetLogRotateSize() int64 {
 	return size
 }
 
-// NoCertChecks indicates whether ignore ssl cert checks
+// NoCertChecks indicates whether ignore ssl cert.
 func NoCertChecks() bool {
 	cfg, err := goconfig.LoadAll("")
 	if err != nil {
@@ -170,32 +171,32 @@ func NoCertChecks() bool {
 	return !cfg.GetBool("http.sslverify", true)
 }
 
-// GetMockSSHInfoStatus gets --mock-ssh-info-status option
+// GetMockSSHInfoStatus gets --mock-ssh-info-status option.
 func GetMockSSHInfoStatus() int {
 	return viper.GetInt("mock-ssh-info-status")
 }
 
-// GetMockSSHInfoResponse gets --mock-ssh-info-status option
+// GetMockSSHInfoResponse gets --mock-ssh-info-response option.
 func GetMockSSHInfoResponse() string {
 	return viper.GetString("mock-ssh-info-response")
 }
 
-// MockNoSymlink checks --mock-no-symlink option
+// MockNoSymlink checks --mock-no-symlink option.
 func MockNoSymlink() bool {
 	return viper.GetBool("mock-no-symlink")
 }
 
-// MockNoTTY checks --mock-no-tty option
+// MockNoTTY checks --mock-no-tty option.
 func MockNoTTY() bool {
 	return viper.GetBool("mock-no-tty")
 }
 
-// MockUploadOptionsEditScript checks --mock-upload-options-edit-script option
+// MockUploadOptionsEditScript gets --mock-upload-options-edit-script option.
 func MockUploadOptionsEditScript() string {
 	return viper.GetString("mock-upload-options-edit-script")
 }
 
-// IsDryRun gets --dryrun option
+// IsDryRun gets --dryrun option.
 func IsDryRun() bool {
 	return viper.GetBool("dryrun")
 }

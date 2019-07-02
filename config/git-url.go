@@ -18,10 +18,10 @@ var (
 	// GitFileProtocolPattern indicates git over file protocol
 	GitFileProtocolPattern = regexp.MustCompile(`^(?:(?P<proto>file)://)?(?P<repo>/.+?)/?$`)
 
-	knownReviewHosts map[string]string
+	mapReviewHosts map[string]string
 )
 
-// GitURL holds Git URL
+// GitURL holds Git URL.
 type GitURL struct {
 	Proto string
 	User  string
@@ -30,11 +30,11 @@ type GitURL struct {
 	Repo  string
 }
 
-// GetReviewURL returns review URL
+// GetReviewURL returns review URL.
 func (v GitURL) GetReviewURL() string {
 	var u string
 
-	if u, ok := knownReviewHosts[v.Host]; ok {
+	if u, ok := mapReviewHosts[v.Host]; ok {
 		return u
 	}
 
@@ -63,7 +63,7 @@ func (v GitURL) GetReviewURL() string {
 	return u
 }
 
-// IsSSH indicates protocol is SSH
+// IsSSH indicates whether protocol is SSH.
 func (v GitURL) IsSSH() bool {
 	return v.Proto == "ssh"
 }
@@ -101,7 +101,7 @@ func getMatchedGitURL(re *regexp.Regexp, data string) *GitURL {
 	return &gitURL
 }
 
-// ParseGitURL parses address and returns GitURL
+// ParseGitURL parses address and returns GitURL.
 func ParseGitURL(address string) *GitURL {
 	var (
 		gitURL *GitURL
@@ -142,8 +142,8 @@ func ParseGitURL(address string) *GitURL {
 }
 
 func init() {
-	// TODO: remove review URL mapping after implement /ssh_api in git server
-	knownReviewHosts = map[string]string{
+	// TODO: remove review URL mapping after implement the ssh_api in git server.
+	mapReviewHosts = map[string]string{
 		"gitlab.alibaba-inc.com": "https://code.aone.alibaba-inc.com",
 	}
 }

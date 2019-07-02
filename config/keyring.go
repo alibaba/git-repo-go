@@ -1,9 +1,7 @@
 package config
 
 var (
-	// PGPKeyRing for verify git-repo package
-	PGPKeyRing = map[string]string{
-		"Jiang Xin": `
+	pubkey1 = `
      Maintainer: Jiang Xin <worldhello.net@gmail.com>
 -----BEGIN PGP PUBLIC KEY BLOCK-----
 
@@ -133,8 +131,9 @@ e/Zgn0Jl9wuXLLGkGSiFXyoCKq1otidxBSrQOhIALCTr2Rj6YBbYrTSBDpeQGi8Z
 /c19mxklEurekpd5P8OOK0tbza8oRemGsHXcTQI1ktbVDN9P4yo=
 =cUNP
 -----END PGP PUBLIC KEY BLOCK-----
-`,
-		"Alibaba": `
+`
+
+	pubkey2 = `
      Signer: Alibaba <zhiyou.jx@alibaba-inc.com>
 -----BEGIN PGP PUBLIC KEY BLOCK-----
 
@@ -188,6 +187,11 @@ UbP+/sBcBuOBUTGDRWds29VNpimmgVhSAqcLhUbpyO4ak7071RUaM0a1Gi7KWfzq
 rV1awAGNRRwjdHv4Vkd8bTb1H7QLjrffzRB1tXrPxhLSGyC6k3wIfg==
 =JniF
 -----END PGP PUBLIC KEY BLOCK-----
-`,
+`
+
+	// PGPKeyRing for verify git-repo package
+	PGPKeyRing = map[string]string{
+		"Jiang Xin": pubkey1,
+		"Alibaba":   pubkey2,
 	}
 )
