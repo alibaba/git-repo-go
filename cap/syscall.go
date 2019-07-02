@@ -6,7 +6,7 @@ import (
 	"syscall"
 )
 
-// GetRlimitNoFile gets syscall.RLIMIT_NOFILE
+// GetRlimitNoFile calls syscall to get RLIMIT_NOFILE.
 func GetRlimitNoFile() (uint64, error) {
 	rlimit := syscall.Rlimit{}
 	syscall.Getrlimit(syscall.RLIMIT_NOFILE, &rlimit)

@@ -1,3 +1,18 @@
+// Copyright © 2019 Alibaba Co. Ltd.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// Package cap implements inspections of OS capabilities.
 package cap
 
 import (
@@ -8,43 +23,46 @@ import (
 	"github.com/mattn/go-isatty"
 )
 
-// WindowsInterface is interface to check OS type
+// WindowsInterface is the interface to implement IsWindows(),
+// which checks whether current OS is Windows.
 type WindowsInterface interface {
 	IsWindows() bool
 }
 
-// TTYInterface is interface to check terminal is a tty
+// TTYInterface is the interface to implement Isatty(),
+// which checks whether a valid terminal is attached.
 type TTYInterface interface {
 	Isatty() bool
 }
 
-// SymlinkInterface is interface to check terminal is a tty
+// SymlinkInterface is the interface to implement CanSymink(),
+// which indicates symlink is available on current OS.
 type SymlinkInterface interface {
 	CanSymlink() bool
 }
 
-// Export interfaces, use can override these interfaces by mocking
+// Instance of interface, which can be overridden for test by mocking.
 var (
 	CapWindows WindowsInterface
 	CapTTY     TTYInterface
 	CapSymlink SymlinkInterface
 )
 
-// Windows implements WindowsInterface
-type Windows struct {
+// defaultWindowsImpl implements WindowsInterface.
+type defaultWindowsImpl struct {
 }
 
-// IsWindows returns true if current OS is Windows
-func (v Windows) IsWindows() bool {
+// IsWindows indicates whether current OS is windows.
+func (v defaultWindowsImpl) IsWindows() bool {
 	return runtime.GOOS == "windows"
 }
 
-// TTY implements TTYInterface
-type TTY struct {
+// defaultTTYImpl implements TTYInterface.
+type defaultTTYImpl struct {
 }
 
-// Isatty is true if has terminal
-func (v TTY) Isatty() bool {
+// Isatty indicates whether program has a valid terminal attached.
+func (v defaultTTYImpl) Isatty() bool {
 	if config.MockNoTTY() {
 		return false
 	}
@@ -59,35 +77,35 @@ func (v TTY) Isatty() bool {
 	return false
 }
 
-// Symlink implements SymlinkInterface
-type Symlink struct {
+// defaultSymlinkImpl implements SymlinkInterface.
+type defaultSymlinkImpl struct {
 }
 
-// CanSymlink returns true if support symlink
-func (v Symlink) CanSymlink() bool {
+// CanSymlink indicates whether symlink is available for current OS.
+func (v defaultSymlinkImpl) CanSymlink() bool {
 	if config.MockNoSymlink() {
 		return false
 	}
 	return runtime.GOOS != "windows"
 }
 
-// IsWindows checks whether current OS is windows
+// IsWindows indicates whether current OS is windows.
 func IsWindows() bool {
 	return CapWindows.IsWindows()
 }
 
-// CanSymlink checks whether symlink is available for current system
+// CanSymlink indicates whether symlink is available for current OS.
 func CanSymlink() bool {
 	return CapSymlink.CanSymlink()
 }
 
-// Isatty indicates current terminal is a interactive terminal
+// Isatty indicates whether program has a valid terminal attached.
 func Isatty() bool {
 	return CapTTY.Isatty()
 }
 
 func init() {
-	CapWindows = &Windows{}
-	CapTTY = &TTY{}
-	CapSymlink = &Symlink{}
+	CapWindows = &defaultWindowsImpl{}
+	CapTTY = &defaultTTYImpl{}
+	CapSymlink = &defaultSymlinkImpl{}
 }
