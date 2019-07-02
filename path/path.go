@@ -1,3 +1,18 @@
+// Copyright © 2019 Alibaba Co. Ltd.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// Package path implements path related functions.
 package path
 
 import (
@@ -13,10 +28,11 @@ import (
 
 // Macros for path
 const (
+	// DotRepo is ".repo".
 	DotRepo = ".repo"
 )
 
-// HomeDir returns home directory
+// HomeDir returns home directory.
 func HomeDir() (string, error) {
 	var (
 		home string
@@ -58,7 +74,7 @@ func xdgConfigHome(file string) (string, error) {
 	return filepath.Join(home, ".config", "git", file), nil
 }
 
-// ExpendHome expends path prefix "~/" to home dir
+// ExpendHome expends path prefix "~/" to home dir.
 func ExpendHome(name string) (string, error) {
 	if filepath.IsAbs(name) {
 		return name, nil
@@ -78,7 +94,7 @@ func ExpendHome(name string) (string, error) {
 	return filepath.Join(home, name), nil
 }
 
-// Abs returns absolute path and will expend homedir if path has "~/' prefix
+// Abs returns absolute path and will expend homedir if path has "~/' prefix.
 func Abs(name string) (string, error) {
 	if name == "" {
 		return os.Getwd()
@@ -95,7 +111,7 @@ func Abs(name string) (string, error) {
 	return filepath.Abs(name)
 }
 
-// AbsJoin returns absolute path, and use <dir> as parent dir for relative path
+// AbsJoin returns absolute path, and use <dir> as parent dir for relative path.
 func AbsJoin(dir, name string) (string, error) {
 	if name == "" {
 		return filepath.Abs(dir)
@@ -112,7 +128,7 @@ func AbsJoin(dir, name string) (string, error) {
 	return Abs(filepath.Join(dir, name))
 }
 
-// IsGitDir test whether dir is a valid git dir
+// IsGitDir test whether dir is a valid git dir.
 func IsGitDir(dir string) bool {
 	var (
 		err error
@@ -137,7 +153,7 @@ func IsGitDir(dir string) bool {
 	return true
 }
 
-// FindRepoRoot finds repo root path, where has a '.repo' subdir
+// FindRepoRoot finds repo root path, where has a '.repo' subdir.
 func FindRepoRoot(dir string) (string, error) {
 	var (
 		p   string
@@ -174,7 +190,7 @@ func FindRepoRoot(dir string) (string, error) {
 	return "", errors.ErrRepoDirNotFound
 }
 
-// FindGitWorkSpace walks to upper directories to find gitdir and worktree
+// FindGitWorkSpace walks to upper directories to find gitdir and worktree.
 func FindGitWorkSpace(dir string) (string, string, error) {
 	var (
 		err        error
@@ -244,7 +260,7 @@ func FindGitWorkSpace(dir string) (string, string, error) {
 	return worktree, repository, nil
 }
 
-// UnsetHome unsets HOME related environments
+// UnsetHome unsets HOME related environments.
 func UnsetHome() {
 	if runtime.GOOS == "windows" {
 		os.Unsetenv("USERPROFILE")
@@ -254,7 +270,7 @@ func UnsetHome() {
 	os.Unsetenv("HOME")
 }
 
-// SetHome sets proper HOME environments
+// SetHome sets proper HOME environments.
 func SetHome(home string) {
 	if runtime.GOOS == "windows" {
 		os.Setenv("USERPROFILE", home)
@@ -276,9 +292,4 @@ func Exist(name string) bool {
 		return true
 	}
 	return false
-}
-
-// Exists check if path is exist.
-func Exists(name string) bool {
-	return Exist(name)
 }

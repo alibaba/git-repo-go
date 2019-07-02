@@ -137,9 +137,9 @@ func (v Repository) GetHead() string {
 
 // IsRebaseInProgress checks whether is in middle of a rebase.
 func (v Repository) IsRebaseInProgress() bool {
-	return path.Exists(filepath.Join(v.Path, "rebase-apply")) ||
-		path.Exists(filepath.Join(v.Path, "rebase-merge")) ||
-		path.Exists(filepath.Join(v.Path, ".dotest"))
+	return path.Exist(filepath.Join(v.Path, "rebase-apply")) ||
+		path.Exist(filepath.Join(v.Path, "rebase-merge")) ||
+		path.Exist(filepath.Join(v.Path, ".dotest"))
 }
 
 // RevisionIsValid returns true if revision can be resolved

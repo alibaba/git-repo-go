@@ -105,7 +105,7 @@ func hooksVersionFile() string {
 }
 
 func isHooksUptodate() bool {
-	if !path.Exists(hooksVersionFile()) {
+	if !path.Exist(hooksVersionFile()) {
 		return false
 	}
 	data, err := ioutil.ReadFile(hooksVersionFile())
@@ -128,7 +128,7 @@ func InstallRepoHooks() error {
 	if err != nil {
 		return err
 	}
-	if !path.Exists(hooksDir) {
+	if !path.Exist(hooksDir) {
 		err = os.MkdirAll(hooksDir, 0755)
 		if err != nil {
 			return fmt.Errorf("fail to install hooks: %s", err)

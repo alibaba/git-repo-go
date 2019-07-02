@@ -211,7 +211,7 @@ func (v statusCommand) showResult(result *project.CmdExecResult, i, count int) {
 }
 
 func (v statusCommand) executeCommand(p *project.Project) *project.CmdExecResult {
-	if !path.Exists(p.WorkDir) {
+	if !path.Exist(p.WorkDir) {
 		result := project.CmdExecResult{}
 		result.Project = p
 		result.Error = errors.New(`missing (run "repo sync")`)

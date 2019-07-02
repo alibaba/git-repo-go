@@ -26,7 +26,7 @@ type CheckoutOptions struct {
 
 // IsClean checks whether repository dir is clean
 func IsClean(dir string) (bool, error) {
-	if !path.Exists(dir) {
+	if !path.Exist(dir) {
 		return false, fmt.Errorf("dir %s does not exist", dir)
 	}
 
@@ -357,7 +357,7 @@ func (v Project) InstallGerritHooks() error {
 	if err != nil {
 		return err
 	}
-	if !path.Exists(hooksDir) {
+	if !path.Exist(hooksDir) {
 		log.Warnf("cannot find hooks in %s", hooksDir)
 		return nil
 	}
@@ -410,7 +410,7 @@ func (v Project) CopyFile(src, dest string) error {
 		return nil
 	}
 
-	if !path.Exists(filepath.Dir(destAbs)) {
+	if !path.Exist(filepath.Dir(destAbs)) {
 		os.MkdirAll(filepath.Dir(destAbs), 0755)
 	}
 
@@ -452,14 +452,14 @@ func (v Project) LinkFile(src, dest string) error {
 	}
 
 	destDir := filepath.Dir(destAbs)
-	if !path.Exists(destDir) {
+	if !path.Exist(destDir) {
 		os.MkdirAll(destDir, 0755)
 	}
 	srcRel, err := filepath.Rel(destDir, srcAbs)
 	if err != nil {
 		srcRel = srcAbs
 	}
-	if path.Exists(destAbs) {
+	if path.Exist(destAbs) {
 		os.Remove(destAbs)
 	}
 	if cap.CanSymlink() {

@@ -286,7 +286,7 @@ func (v forallCommand) showResult(result *project.CmdExecResult, i, count int) {
 }
 
 func (v forallCommand) executeCommand(p *project.Project, cmds []string) *project.CmdExecResult {
-	if !path.Exists(p.WorkDir) {
+	if !path.Exist(p.WorkDir) {
 		log.Infof("skipping %s/", p.Path)
 		return nil
 	}

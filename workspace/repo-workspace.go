@@ -83,7 +83,7 @@ func (v *RepoWorkSpace) LinkManifest() error {
 	srcAbs := filepath.Join(v.RootDir, config.DotRepo, config.Manifests, v.Settings().ManifestName)
 	srcRel := filepath.Join(config.Manifests, v.Settings().ManifestName)
 
-	if !path.Exists(srcAbs) {
+	if !path.Exist(srcAbs) {
 		return fmt.Errorf("link manifest failed, cannot find file '%s'", srcRel)
 	}
 	if v.Settings().ManifestName != "" {
