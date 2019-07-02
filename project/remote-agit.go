@@ -10,7 +10,7 @@ import (
 	log "github.com/jiangxin/multi-log"
 )
 
-// AGitRemote is AGit remote server
+// AGitRemote is AGit remote server.
 type AGitRemote struct {
 	manifest.Remote
 
@@ -19,27 +19,27 @@ type AGitRemote struct {
 
 var _ = log.Notef
 
-// GetSSHInfo returns SSHInfo field of AGitRemote
+// GetSSHInfo returns SSHInfo field of AGitRemote.
 func (v *AGitRemote) GetSSHInfo() *SSHInfo {
 	return v.SSHInfo
 }
 
-// GetRemote returns manifest remote field of AGitRemote
+// GetRemote returns manifest remote field of AGitRemote.
 func (v *AGitRemote) GetRemote() *manifest.Remote {
 	return &v.Remote
 }
 
-// GetType returns type of remote
+// GetType returns type of remote.
 func (v *AGitRemote) GetType() string {
 	return config.RemoteTypeAGit
 }
 
-// GetCodeReviewRef returns code review reference: refs/merge-requests/<ID>/head
+// GetCodeReviewRef returns code review reference: refs/merge-requests/<ID>/head.
 func (v *AGitRemote) GetCodeReviewRef(reviewID int, patchID int) string {
 	return fmt.Sprintf("%s%d/head", config.RefsMr, reviewID)
 }
 
-// getReviewURL returns review url
+// getReviewURL returns review url.
 func (v *AGitRemote) getReviewURL(email string) string {
 	var (
 		review string
@@ -59,7 +59,7 @@ func (v *AGitRemote) getReviewURL(email string) string {
 	return review
 }
 
-// UploadCommands returns upload commands for AGit
+// UploadCommands returns upload commands for AGit.
 func (v *AGitRemote) UploadCommands(o *UploadOptions, branch *ReviewableBranch) ([]string, error) {
 	var (
 		cmds []string

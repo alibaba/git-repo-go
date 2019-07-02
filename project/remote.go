@@ -15,7 +15,7 @@ var (
 	sshInfoPattern = regexp.MustCompile(`^[\S]+ [0-9]+$`)
 )
 
-// Remote interface wraps remote server of Gerrit or Alibaba
+// Remote interface wraps remote server of Gerrit or Alibaba.
 type Remote interface {
 	GetSSHInfo() *SSHInfo
 	GetRemote() *manifest.Remote
@@ -24,13 +24,13 @@ type Remote interface {
 	UploadCommands(o *UploadOptions, branch *ReviewableBranch) ([]string, error)
 }
 
-// RemoteWithError wraps Remote and Error when parsing remote
+// RemoteWithError wraps Remote and Error when parsing remote.
 type RemoteWithError struct {
 	Remote Remote
 	Error  error
 }
 
-// SSHInfo wraps host and port which ssh_info returned
+// SSHInfo wraps host and port which ssh_info returned.
 type SSHInfo struct {
 	Host   string `json:"host,omitempty"`
 	Port   int    `json:"port,omitempty"`
@@ -38,7 +38,7 @@ type SSHInfo struct {
 	Expire int64  `json:"expire,omitempty"`
 }
 
-// Strings returns "<Host><SP><Port>"
+// Strings returns "<Host><SP><Port>".
 func (v SSHInfo) String() string {
 	if v.Host == "" || v.Port == 0 {
 		return ""
@@ -71,7 +71,7 @@ func newSSHInfo(data string) (*SSHInfo, error) {
 	}, nil
 }
 
-// NewRemote parses ssh_info and return Remote interface
+// NewRemote parses ssh_info and return Remote interface.
 func NewRemote(r *manifest.Remote, remoteType, data string) (Remote, error) {
 	var (
 		err     error

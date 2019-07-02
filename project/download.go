@@ -7,14 +7,14 @@ import (
 	log "github.com/jiangxin/multi-log"
 )
 
-// PatchSet contains code review reference and commits
+// PatchSet contains code review reference and commits.
 type PatchSet struct {
 	Reference string
 	Commits   []string
 	Commit    string
 }
 
-// DownloadPatchSet will fetch code review and return downloaded PatchSet
+// DownloadPatchSet fetches code review and return the downloaded PatchSet.
 func (v Project) DownloadPatchSet(reviewID, patchID int) (*PatchSet, error) {
 	reviewRef := ""
 	if v.Remote != nil {
@@ -65,7 +65,7 @@ func (v Project) DownloadPatchSet(reviewID, patchID int) (*PatchSet, error) {
 	return &dl, nil
 }
 
-// CherryPick will run cherry-pick on commits
+// CherryPick runs cherry-pick on commits.
 func (v Project) CherryPick(commits ...string) error {
 	for i := len(commits) - 1; i >= 0; i-- {
 		c := commits[i]
@@ -84,7 +84,7 @@ func (v Project) CherryPick(commits ...string) error {
 	return nil
 }
 
-// Revert will run revert on commit
+// Revert runs revert on commit.
 func (v Project) Revert(commit string) error {
 	cmdArgs := []string{
 		GIT,

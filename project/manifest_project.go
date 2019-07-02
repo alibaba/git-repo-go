@@ -6,7 +6,7 @@ import (
 	"github.com/jiangxin/goconfig"
 )
 
-// RepoSettings holds settings in manifest project
+// RepoSettings holds settings in manifest project.
 type RepoSettings struct {
 	RepoRoot     string
 	ManifestURL  string
@@ -22,12 +22,12 @@ type RepoSettings struct {
 	Config       goconfig.GitConfig
 }
 
-// ManifestProject is a special type of project
+// ManifestProject is a special type of project.
 type ManifestProject struct {
 	Project
 }
 
-// ReadSettings reads settings from manifest project
+// ReadSettings reads settings from manifest project.
 func (v *ManifestProject) ReadSettings() *RepoSettings {
 	cfg := v.Config()
 
@@ -46,7 +46,7 @@ func (v *ManifestProject) ReadSettings() *RepoSettings {
 	return s
 }
 
-// SaveSettings saves settings to manifest project
+// SaveSettings saves settings to manifest project.
 func (v *ManifestProject) SaveSettings(s *RepoSettings) error {
 	cfg := v.Config()
 
@@ -103,22 +103,22 @@ func (v *ManifestProject) SaveSettings(s *RepoSettings) error {
 	return v.SaveConfig(cfg)
 }
 
-// MirrorEnabled checks if config variable repo.mirror is true
+// MirrorEnabled checks if config variable repo.mirror is true.
 func (v ManifestProject) MirrorEnabled() bool {
 	return v.Config().GetBool(config.CfgRepoMirror, false)
 }
 
-// SubmoduleEnabled checks if config variable repo.submodules is true
+// SubmoduleEnabled checks if config variable repo.submodules is true.
 func (v ManifestProject) SubmoduleEnabled() bool {
 	return v.Config().GetBool(config.CfgRepoSubmodules, false)
 }
 
-// ArchiveEnabled checks if config variable repo.archive is true
+// ArchiveEnabled checks if config variable repo.archive is true.
 func (v ManifestProject) ArchiveEnabled() bool {
 	return v.Config().GetBool(config.CfgRepoArchive, false)
 }
 
-// DissociateEnabled checks if config variable repo.dissociate is true
+// DissociateEnabled checks if config variable repo.dissociate is true.
 func (v ManifestProject) DissociateEnabled() bool {
 	return v.Config().GetBool(config.CfgRepoDissociate, false)
 }
@@ -129,7 +129,7 @@ func (v *ManifestProject) SetRevision(rev string) {
 	v.WorkRepository.Revision = rev
 }
 
-// NewManifestProject returns a manifest project: a worktree with a seperate repository
+// NewManifestProject returns a manifest project: a worktree with a seperate repository.
 func NewManifestProject(repoRoot, mURL string) *ManifestProject {
 	p := ManifestProject{
 		Project: *(NewProject(manifest.ManifestsProject,

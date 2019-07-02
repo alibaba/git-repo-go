@@ -8,14 +8,14 @@ import (
 	log "github.com/jiangxin/multi-log"
 )
 
-// CmdExecResult defines struct to hold command output
+// CmdExecResult holds command output, and error.
 type CmdExecResult struct {
 	Project *Project
 	Out     []byte
 	Error   error
 }
 
-// NewCmdExecResult creates new instance of CmdExecResult
+// NewCmdExecResult creates new instance of CmdExecResult.
 func NewCmdExecResult(p *Project) *CmdExecResult {
 	result := CmdExecResult{
 		Project: p,
@@ -23,12 +23,12 @@ func NewCmdExecResult(p *Project) *CmdExecResult {
 	return &result
 }
 
-// Stdout is command output on stdout
+// Stdout is command output on stdout.
 func (v *CmdExecResult) Stdout() string {
 	return string(v.Out)
 }
 
-// Stderr is command output on stderr
+// Stderr is command output on stderr.
 func (v *CmdExecResult) Stderr() string {
 	if v.Error == nil {
 		return ""
@@ -41,12 +41,12 @@ func (v *CmdExecResult) Stderr() string {
 	return v.Error.Error()
 }
 
-// Empty indicates output and error output is empty
+// Empty indicates output and error output is empty.
 func (v *CmdExecResult) Empty() bool {
 	return len(v.Stdout()) == 0 && len(v.Stderr()) == 0
 }
 
-// Success indicates command runs successfully or not
+// Success indicates command runs successfully or not.
 func (v CmdExecResult) Success() bool {
 	if v.Error == nil {
 		return true
@@ -59,7 +59,7 @@ func (v CmdExecResult) Success() bool {
 	return false
 }
 
-// ExecuteCommand runs command
+// ExecuteCommand runs command.
 func (v Project) ExecuteCommand(args ...string) *CmdExecResult {
 	result := CmdExecResult{
 		Project: &v,

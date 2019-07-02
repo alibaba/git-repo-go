@@ -20,7 +20,7 @@ import (
 	"gopkg.in/src-d/go-git.v4/plumbing"
 )
 
-// Project inherits manifest's Project and has two related repositories
+// Project inherits manifest's Project and has two related repositories.
 type Project struct {
 	manifest.Project
 
@@ -31,12 +31,12 @@ type Project struct {
 	Remote           Remote
 }
 
-// ConfigWithDefault checks git config from both project and manifest project
+// ConfigWithDefault checks git config from both project and manifest project.
 type ConfigWithDefault struct {
 	Project *Project
 }
 
-// HasKey checks whether key is set in both project and manifest project
+// HasKey checks whether key is set in both project and manifest project.
 func (v ConfigWithDefault) HasKey(key string) bool {
 	value := v.Project.Config().HasKey(key)
 	if value || v.Project.IsMetaProject() {
@@ -48,7 +48,7 @@ func (v ConfigWithDefault) HasKey(key string) bool {
 	return false
 }
 
-// Get returns config of both project and manifest project
+// Get returns config of both project and manifest project.
 func (v ConfigWithDefault) Get(key string) string {
 	value := v.Project.Config().Get(key)
 	if value != "" || v.Project.IsMetaProject() {
@@ -60,7 +60,7 @@ func (v ConfigWithDefault) Get(key string) string {
 	return ""
 }
 
-// GetBool returns boolean config of both project and manifest project
+// GetBool returns boolean config of both project and manifest project.
 func (v ConfigWithDefault) GetBool(key string, defaultVal bool) bool {
 	value := v.Get(key)
 	switch strings.ToLower(value) {
@@ -77,12 +77,12 @@ func (v Project) RepoRoot() string {
 	return v.Settings.RepoRoot
 }
 
-// ManifestURL returns manifest URL
+// ManifestURL returns manifest URL.
 func (v Project) ManifestURL() string {
 	return v.Settings.ManifestURL
 }
 
-// ReferencePath returns path of reference git dir
+// ReferencePath returns path of reference git dir.
 func (v Project) ReferencePath() string {
 	var (
 		rdir = ""
@@ -162,7 +162,7 @@ func (v Project) Exists() bool {
 	return true
 }
 
-// PrepareWorkdir setup workdir layout: .git is gitdir file points to repository
+// PrepareWorkdir setup workdir layout: .git is gitdir file points to repository.
 func (v *Project) PrepareWorkdir() error {
 	err := os.MkdirAll(v.WorkDir, 0755)
 	if err != nil {
@@ -268,12 +268,12 @@ func (v Project) PublishedRevision(branch string) string {
 	return ""
 }
 
-// GitRepository returns go-git's repository object for project worktree
+// GitRepository returns go-git's repository object for project worktree.
 func (v *Project) GitRepository() (*git.Repository, error) {
 	return git.PlainOpen(v.WorkDir)
 }
 
-// GitWorktree returns go-git's worktree oject
+// GitWorktree returns go-git's worktree oject.
 func (v *Project) GitWorktree() (*git.Worktree, error) {
 	r, err := v.GitRepository()
 	if err != nil {
@@ -282,7 +282,7 @@ func (v *Project) GitWorktree() (*git.Worktree, error) {
 	return r.Worktree()
 }
 
-// Head returns current branch of project's workdir
+// Head returns current branch of project's workdir.
 func (v *Project) Head() string {
 	r, err := v.GitRepository()
 	if err != nil {
@@ -302,7 +302,7 @@ func (v *Project) Head() string {
 	return headName
 }
 
-// SetManifestURL sets manifestURL and change remote url if is MetaProject
+// SetManifestURL sets manifestURL and change remote url if is MetaProject.
 func (v *Project) SetManifestURL(manifestURL string) error {
 	if manifestURL != "" && !strings.HasSuffix(manifestURL, ".git") {
 		manifestURL += ".git"
@@ -317,7 +317,7 @@ func (v *Project) SetManifestURL(manifestURL string) error {
 	return nil
 }
 
-// SetGitRemoteURL sets remote.<remote>.url setting in git config
+// SetGitRemoteURL sets remote.<remote>.url setting in git config.
 func (v *Project) SetGitRemoteURL(remoteURL string) error {
 	remote := v.RemoteName
 	if remote == "" {
@@ -334,7 +334,7 @@ func (v *Project) SetGitRemoteURL(remoteURL string) error {
 	return repo.SaveConfig(cfg)
 }
 
-// DisableDefaultPush sets git config push.default to nothing
+// DisableDefaultPush sets git config push.default to nothing.
 func (v *Project) DisableDefaultPush() error {
 	cfg := v.Config()
 	if cfg.Get("push.default") == "" {
@@ -345,7 +345,7 @@ func (v *Project) DisableDefaultPush() error {
 	return nil
 }
 
-// GitConfigRemoteURL returns remote.<remote>.url setting in git config
+// GitConfigRemoteURL returns remote.<remote>.url setting in git config.
 func (v *Project) GitConfigRemoteURL() string {
 	remote := v.RemoteName
 	if remote == "" {
@@ -378,39 +378,39 @@ func (v *Project) GetRemoteURL() (string, error) {
 	return u, nil
 }
 
-// Config returns git config file parser
+// Config returns git config file parser.
 func (v *Project) Config() goconfig.GitConfig {
 	return v.WorkRepository.Config()
 }
 
-// ConfigWithDefault returns git config file parser
+// ConfigWithDefault returns git config file parser.
 func (v *Project) ConfigWithDefault() ConfigWithDefault {
 	return ConfigWithDefault{Project: v}
 }
 
-// ManifestConfig returns git config of manifest project
+// ManifestConfig returns git config of manifest project.
 func (v *Project) ManifestConfig() goconfig.GitConfig {
 	return v.Settings.Config
 }
 
-// SaveConfig will save config to git config file
+// SaveConfig will save config to git config file.
 func (v *Project) SaveConfig(cfg goconfig.GitConfig) error {
 	return v.WorkRepository.SaveConfig(cfg)
 }
 
-// MatchGroups indecates if project belongs to special groups
+// MatchGroups indecates if project belongs to special groups.
 func (v Project) MatchGroups(expect string) bool {
 	return MatchGroups(expect, v.Groups)
 }
 
-// GetSubmoduleProjects returns submodule projects
+// GetSubmoduleProjects returns submodule projects.
 func (v Project) GetSubmoduleProjects() []*Project {
 	// TODO: return submodule projects
 	log.Panic("not implement GitSubmodules")
 	return nil
 }
 
-// UserEmail returns user identity
+// UserEmail returns user identity.
 func (v Project) UserEmail() string {
 	username := os.Getenv("GIT_COMMITTER_NAME")
 	useremail := os.Getenv("GIT_COMMITTER_EMAIL")
@@ -429,7 +429,7 @@ func (v Project) UserEmail() string {
 	return ""
 }
 
-// NewProject returns a project: project worktree with a bared repo and a seperate repository
+// NewProject returns a project: project worktree with a bared repo and a seperate repository.
 func NewProject(project *manifest.Project, s *RepoSettings) *Project {
 	var (
 		objectRepoPath string
@@ -503,7 +503,7 @@ func NewProject(project *manifest.Project, s *RepoSettings) *Project {
 	return &p
 }
 
-// NewMirrorProject returns a mirror project
+// NewMirrorProject returns a mirror project.
 func NewMirrorProject(project *manifest.Project, s *RepoSettings) *Project {
 	var (
 		repoPath string
@@ -552,7 +552,7 @@ func isHashRevision(rev string) bool {
 	return re.MatchString(rev)
 }
 
-// Join two group of projects, ignore duplicated projects
+// Join two group of projects, ignore duplicated projects.
 func Join(group1, group2 []*Project) []*Project {
 	projectMap := make(map[string]bool)
 	result := make([]*Project, len(group1)+len(group2))
@@ -572,7 +572,7 @@ func Join(group1, group2 []*Project) []*Project {
 	return result
 }
 
-// IndexByName returns a map using project name as index to group projects
+// IndexByName returns a map using project name as index to group projects.
 func IndexByName(projects []*Project) map[string][]*Project {
 	result := make(map[string][]*Project)
 	for _, p := range projects {
@@ -585,7 +585,7 @@ func IndexByName(projects []*Project) map[string][]*Project {
 	return result
 }
 
-// IndexByPath returns a map using project path as index to group projects
+// IndexByPath returns a map using project path as index to group projects.
 func IndexByPath(projects []*Project) map[string]*Project {
 	result := make(map[string]*Project)
 	for _, p := range projects {
@@ -601,7 +601,7 @@ type Tree struct {
 	Trees   []*Tree
 }
 
-// ProjectsTree returns a map using project path as index to group projects
+// ProjectsTree returns a map using project path as index to group projects.
 func ProjectsTree(projects []*Project) *Tree {
 	pMap := make(map[string]*Project)
 	paths := []string{}
@@ -646,7 +646,7 @@ func treeAppend(tree *Tree, paths []string, pMap map[string]*Project) {
 	}
 }
 
-// DetachHead makes detached HEAD
+// DetachHead makes detached HEAD.
 func (v Project) DetachHead() error {
 	cmdArgs := []string{
 		GIT,

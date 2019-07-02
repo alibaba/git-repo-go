@@ -16,7 +16,7 @@ import (
 	log "github.com/jiangxin/multi-log"
 )
 
-// CheckoutOptions is options for git fetch
+// CheckoutOptions is options for git fetch.
 type CheckoutOptions struct {
 	RepoSettings
 
@@ -24,7 +24,7 @@ type CheckoutOptions struct {
 	DetachHead bool
 }
 
-// IsClean checks whether repository dir is clean
+// IsClean indicates git worktree is clean.
 func IsClean(dir string) (bool, error) {
 	if !path.Exist(dir) {
 		return false, fmt.Errorf("dir %s does not exist", dir)
@@ -74,13 +74,13 @@ func IsClean(dir string) (bool, error) {
 	return false, nil
 }
 
-// IsClean indicates worktree is clean or dirty.
-// TODO: go-git failed with invalid checksum
+// IsClean indicates git worktree is clean.
+// TODO: cannot use go-git, because it is incompatible with git new index format.
 func (v Project) IsClean() (bool, error) {
 	return IsClean(v.WorkDir)
 }
 
-// CheckoutRevision runs git checkout
+// CheckoutRevision runs git checkout.
 func (v Project) CheckoutRevision(args ...string) error {
 	cmdArgs := []string{
 		GIT,
@@ -92,7 +92,7 @@ func (v Project) CheckoutRevision(args ...string) error {
 	return executeCommandIn(v.WorkDir, cmdArgs)
 }
 
-// HardReset runs git reset --hard
+// HardReset runs git reset --hard.
 func (v Project) HardReset(args ...string) error {
 	cmdArgs := []string{
 		GIT,
@@ -105,7 +105,7 @@ func (v Project) HardReset(args ...string) error {
 	return executeCommandIn(v.WorkDir, cmdArgs)
 }
 
-// Rebase runs git rebase
+// Rebase runs git rebase.
 func (v Project) Rebase(args ...string) error {
 	cmdArgs := []string{
 		GIT,
@@ -129,7 +129,7 @@ func (v Project) FastForward(args ...string) error {
 	return executeCommandIn(v.WorkDir, cmdArgs)
 }
 
-// SubmoduleUpdate runs git submodule update
+// SubmoduleUpdate runs git submodule update.
 func (v Project) SubmoduleUpdate(args ...string) error {
 	cmdArgs := []string{
 		GIT,
@@ -351,7 +351,7 @@ func (v Project) SyncLocalHalf(o *CheckoutOptions) error {
 	return PostUpdate(true)
 }
 
-// InstallGerritHooks install gerrit hooks if remote of current project is gerrit
+// InstallGerritHooks installs gerrit hooks if remote of current project is gerrit.
 func (v Project) InstallGerritHooks() error {
 	hooksDir, err := config.GetRepoHooksDir()
 	if err != nil {
@@ -392,7 +392,7 @@ func (v Project) InstallGerritHooks() error {
 	return nil
 }
 
-// CopyFile copy files from src to dest
+// CopyFile copy files from src to dest.
 func (v Project) CopyFile(src, dest string) error {
 	srcAbs := filepath.Clean(filepath.Join(v.WorkDir, src))
 	destAbs := filepath.Clean(filepath.Join(v.RepoRoot(), dest))
@@ -433,7 +433,7 @@ func (v Project) CopyFile(src, dest string) error {
 	return nil
 }
 
-// LinkFile copy files from src to dest
+// LinkFile copy files from src to dest.
 func (v Project) LinkFile(src, dest string) error {
 	srcAbs := filepath.Clean(filepath.Join(v.WorkDir, src))
 	destAbs := filepath.Clean(filepath.Join(v.RepoRoot(), dest))
@@ -468,7 +468,7 @@ func (v Project) LinkFile(src, dest string) error {
 	return os.Link(srcRel, destAbs)
 }
 
-// CopyAndLinkFiles copies and links files
+// CopyAndLinkFiles copies and links files.
 func (v Project) CopyAndLinkFiles() error {
 	var (
 		err  error

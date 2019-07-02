@@ -10,18 +10,17 @@ import (
 	"code.alibaba-inc.com/force/git-repo/config"
 )
 
-// const for project
 const (
-	GroupDefault    = "default"
-	GroupAll        = "all"
-	GroupNotDefault = "notdefault"
+	groupDefaultConst    = "default"
+	groupAllConst        = "all"
+	groupNotDefaultConst = "notdefault"
 )
 
 var (
 	emailUserPattern = regexp.MustCompile(`^.* <([^\s]+)@[^\s]+>$`)
 )
 
-// urlJoin appends fetch path (in remote element) and project name to manifest url
+// urlJoin appends fetch path (in remote element) and project name to manifest url.
 func urlJoin(u string, paths ...string) (string, error) {
 	var err error
 
@@ -90,27 +89,27 @@ func joinTwoURL(u, p string) (string, error) {
 	return prefix + remain, nil
 }
 
-// MatchGroups checks if project has matched groups
+// MatchGroups checks if project has matched groups.
 func MatchGroups(match, groups string) bool {
 	matchGroups := []string{}
 	for _, g := range strings.Split(match, ",") {
 		matchGroups = append(matchGroups, strings.TrimSpace(g))
 	}
 	if len(matchGroups) == 0 {
-		matchGroups = append(matchGroups, GroupDefault)
+		matchGroups = append(matchGroups, groupDefaultConst)
 	}
 
-	projectGroups := []string{GroupAll}
+	projectGroups := []string{groupAllConst}
 	hasNotDefault := false
 	for _, g := range strings.Split(groups, ",") {
 		g = strings.TrimSpace(g)
 		projectGroups = append(projectGroups, g)
-		if g == GroupNotDefault {
+		if g == groupNotDefaultConst {
 			hasNotDefault = true
 		}
 	}
 	if !hasNotDefault {
-		projectGroups = append(projectGroups, GroupDefault)
+		projectGroups = append(projectGroups, groupDefaultConst)
 	}
 
 	matched := false
@@ -179,7 +178,7 @@ func IsImmutable(revision string) bool {
 	return false
 }
 
-// IsASCII checks if string contains only ASCII
+// IsASCII indicates string contains only ASCII.
 func IsASCII(s string) bool {
 	for i := 0; i < len(s); i++ {
 		if s[i] > unicode.MaxASCII {

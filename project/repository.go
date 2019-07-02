@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"code.alibaba-inc.com/force/git-repo/config"
 	"code.alibaba-inc.com/force/git-repo/path"
 	"github.com/jiangxin/goconfig"
 	log "github.com/jiangxin/multi-log"
@@ -14,12 +15,12 @@ import (
 	"gopkg.in/src-d/go-git.v4/plumbing"
 )
 
-// Macros for project package
 const (
-	GIT = "git"
+	// GIT is git command name
+	GIT = config.GIT
 )
 
-// Repository has repository related operations
+// Repository has repository related operations.
 type Repository struct {
 	Name       string // Project name
 	Path       string // Repository real path
@@ -32,7 +33,7 @@ type Repository struct {
 	raw        *git.Repository
 }
 
-// Exists checks repository layout
+// Exists checks repository layout.
 func (v Repository) Exists() bool {
 	return path.IsGitDir(v.Path)
 }
@@ -84,7 +85,7 @@ func (v Repository) setAlternates(reference string) {
 	}
 }
 
-// GitConfigRemoteURL returns remote url in git config
+// GitConfigRemoteURL returns remote url in git config.
 func (v Repository) GitConfigRemoteURL(name string) string {
 	return v.Config().Get("remote." + name + ".url")
 }
@@ -98,7 +99,7 @@ func (v Repository) isUnborn() bool {
 	return err != nil
 }
 
-// HasAlternates checks if repository has defined alternates
+// HasAlternates checks if repository has defined alternates.
 func (v Repository) HasAlternates() bool {
 	altFile := filepath.Join(v.Path, "objects", "info", "alternates")
 	finfo, err := os.Stat(altFile)
@@ -155,7 +156,7 @@ func (v Repository) RevisionIsValid(revision string) bool {
 	return false
 }
 
-// Revlist works like rev-list
+// Revlist works like rev-list.
 // TODO: Hack go-git plumbing/revlist package to replace git exec
 func (v Repository) Revlist(args ...string) ([]string, error) {
 	result := []string{}
@@ -196,7 +197,7 @@ func (v Repository) Revlist(args ...string) ([]string, error) {
 	return result, nil
 }
 
-// Raw returns go-git repository object
+// Raw returns go-git repository object.
 func (v Repository) Raw() *git.Repository {
 	var err error
 
@@ -216,7 +217,7 @@ func (v Repository) configFile() string {
 	return filepath.Join(v.Path, "config")
 }
 
-// Config returns git config file parser
+// Config returns git config file parser.
 func (v Repository) Config() goconfig.GitConfig {
 	cfg, err := goconfig.Load(v.configFile())
 	if err != nil && err != goconfig.ErrNotExist {
@@ -228,7 +229,7 @@ func (v Repository) Config() goconfig.GitConfig {
 	return cfg
 }
 
-// SaveConfig will save config to git config file
+// SaveConfig will save config to git config file.
 func (v *Repository) SaveConfig(cfg goconfig.GitConfig) error {
 	if cfg == nil {
 		cfg = goconfig.NewGitConfig()

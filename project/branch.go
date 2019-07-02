@@ -9,24 +9,24 @@ import (
 	"gopkg.in/src-d/go-git.v4/plumbing"
 )
 
-// Branch wraps branch name and object ID
+// Branch wraps branch name and object ID.
 type Branch struct {
 	Name string
 	Hash string
 }
 
-// ShortName removes prefix "refs/heads/"
+// ShortName removes prefix "refs/heads/".
 func (v Branch) ShortName() string {
 	return strings.TrimPrefix(v.Name, config.RefsHeads)
 }
 
-// Reference wraps reference name and object ID
+// Reference wraps reference name and object ID.
 type Reference struct {
 	Name string
 	Hash string
 }
 
-// Heads returns branches of repository
+// Heads returns branches of repository.
 func (v Repository) Heads() []Branch {
 	var heads []Branch
 	branches, err := v.Raw().Branches()
@@ -45,7 +45,7 @@ func (v Repository) Heads() []Branch {
 	return heads
 }
 
-// TrackBranch gets remote tracking branch
+// TrackBranch gets remote tracking branch.
 func (v Repository) TrackBranch(branch string) string {
 	if branch == "" {
 		branch = v.GetHead()
@@ -59,7 +59,7 @@ func (v Repository) TrackBranch(branch string) string {
 	return strings.TrimPrefix(cfg.Get("branch."+branch+".merge"), config.RefsHeads)
 }
 
-// TrackRemote gets the remote name what current branch is tracking
+// TrackRemote gets the remote name what current branch is tracking.
 func (v Repository) TrackRemote(branch string) string {
 	if branch == "" {
 		branch = v.GetHead()
@@ -92,7 +92,7 @@ func (v Repository) LocalTrackBranch(branch string) string {
 	return config.RefsRemotes + remote + "/" + track
 }
 
-// DeleteBranch deletes a branch
+// DeleteBranch deletes a branch.
 func (v Repository) DeleteBranch(branch string) error {
 	// TODO: go-git fail to delete a branch
 	// TODO: return v.Raw().DeleteBranch(branch)
@@ -109,7 +109,7 @@ func (v Repository) DeleteBranch(branch string) error {
 	return executeCommandIn(v.Path, cmdArgs)
 }
 
-// UpdateRef creates new reference
+// UpdateRef creates new reference.
 func (v Repository) UpdateRef(refname, base, reason string) error {
 	var (
 		err error
@@ -148,12 +148,12 @@ func (v Project) GetHead() string {
 	return v.Head()
 }
 
-// Heads returns branches of repository
+// Heads returns branches of repository.
 func (v Project) Heads() []Branch {
 	return v.WorkRepository.Heads()
 }
 
-// RemoteTracking returns name of current remote tracking branch
+// RemoteTracking returns name of current remote tracking branch.
 func (v Project) RemoteTracking(rev string) string {
 	if rev == "" || IsSha(rev) {
 		return ""
@@ -167,7 +167,7 @@ func (v Project) RemoteTracking(rev string) string {
 	return v.Config().Get("branch." + rev + ".merge")
 }
 
-// ResolveRevision checks and resolves reference to revid
+// ResolveRevision checks and resolves reference to revid.
 func (v Project) ResolveRevision(rev string) (string, error) {
 	if rev == "" {
 		return "", nil
@@ -189,7 +189,7 @@ func (v Project) ResolveRevision(rev string) (string, error) {
 	return revid.String(), nil
 }
 
-// ResolveRemoteTracking returns revision id of current remote tracking branch
+// ResolveRemoteTracking returns revision id of current remote tracking branch.
 func (v Project) ResolveRemoteTracking(rev string) (string, error) {
 	raw := v.WorkRepository.Raw()
 	if raw == nil {
@@ -217,17 +217,17 @@ func (v Project) ResolveRemoteTracking(rev string) (string, error) {
 	return revid.String(), nil
 }
 
-// DeleteBranch deletes a branch
+// DeleteBranch deletes a branch.
 func (v Project) DeleteBranch(branch string) error {
 	return v.WorkRepository.DeleteBranch(branch)
 }
 
-// UpdateRef creates new reference
+// UpdateRef creates new reference.
 func (v Project) UpdateRef(ref, base, reason string) error {
 	return v.WorkRepository.UpdateRef(ref, base, reason)
 }
 
-// StartBranch creates new branch
+// StartBranch creates new branch.
 func (v Project) StartBranch(branch, track string) error {
 	var err error
 
@@ -283,12 +283,12 @@ func (v Project) StartBranch(branch, track string) error {
 	return nil
 }
 
-// TrackBranch gets remote track branch name
+// TrackBranch gets remote track branch name.
 func (v Project) TrackBranch(branch string) string {
 	return v.WorkRepository.TrackBranch(branch)
 }
 
-// LocalTrackBranch gets local tracking remote branch
+// LocalTrackBranch gets local tracking remote branch.
 func (v Project) LocalTrackBranch(branch string) string {
 	return v.WorkRepository.LocalTrackBranch(branch)
 }

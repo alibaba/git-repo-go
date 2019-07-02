@@ -10,7 +10,7 @@ import (
 	log "github.com/jiangxin/multi-log"
 )
 
-// UploadOptions is options for upload related methods
+// UploadOptions is options for upload related methods.
 type UploadOptions struct {
 	AutoTopic    bool
 	Description  string
@@ -28,7 +28,7 @@ type UploadOptions struct {
 	WIP          bool
 }
 
-// ReviewableBranch holds branch of proect ready for upload
+// ReviewableBranch holds branch of proect ready for upload.
 type ReviewableBranch struct {
 	Project     *Project
 	Branch      Branch
@@ -38,7 +38,7 @@ type ReviewableBranch struct {
 	Error       error
 }
 
-// AppendReviewers adds reviewers to people
+// AppendReviewers adds reviewers to people.
 func (v ReviewableBranch) AppendReviewers(people [][]string) {
 	cfg := v.Project.ConfigWithDefault()
 	review := v.Project.Remote.GetRemote().Review
@@ -62,7 +62,7 @@ func (v ReviewableBranch) AppendReviewers(people [][]string) {
 	}
 }
 
-// Published returns published reference
+// Published returns published reference.
 func (v ReviewableBranch) Published() *Reference {
 	pub := Reference{}
 	pub.Name = config.RefsPub + v.Branch.ShortName()
@@ -75,7 +75,7 @@ func (v ReviewableBranch) Published() *Reference {
 	return &pub
 }
 
-// Commits contains commits avaiable for review
+// Commits contains commits avaiable for review.
 func (v ReviewableBranch) Commits() []string {
 	commits, err := v.Project.Revlist(v.Branch.Hash, "--not", v.RemoteTrack.Hash)
 	if err != nil {
@@ -85,7 +85,7 @@ func (v ReviewableBranch) Commits() []string {
 	return commits
 }
 
-// UploadForReview sends review for branch
+// UploadForReview sends review for branch.
 func (v ReviewableBranch) UploadForReview(o *UploadOptions, people [][]string) error {
 	var err error
 
@@ -151,7 +151,7 @@ func (v ReviewableBranch) UploadForReview(o *UploadOptions, people [][]string) e
 	return nil
 }
 
-// GetUploadableBranch returns branch which has commits ready for upload
+// GetUploadableBranch returns branch which has commits ready for upload.
 func (v *Project) GetUploadableBranch(branch string) *ReviewableBranch {
 	if branch == "" {
 		branch = v.GetHead()
@@ -219,7 +219,7 @@ func (v *Project) GetUploadableBranch(branch string) *ReviewableBranch {
 	return &rb
 }
 
-// GetUploadableBranches returns branches which has commits ready for upload
+// GetUploadableBranches returns branches which has commits ready for upload.
 func (v *Project) GetUploadableBranches(branch string) []ReviewableBranch {
 	var (
 		avail = []ReviewableBranch{}

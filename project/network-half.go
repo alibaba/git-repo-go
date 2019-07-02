@@ -10,7 +10,7 @@ import (
 	log "github.com/jiangxin/multi-log"
 )
 
-// FetchOptions is options for git fetch
+// FetchOptions is options for git fetch.
 type FetchOptions struct {
 	RepoSettings
 
@@ -24,7 +24,7 @@ type FetchOptions struct {
 	Prune             bool
 }
 
-// Fetch runs git-fetch on repository
+// Fetch runs git-fetch on repository.
 func (v *Repository) Fetch(remote string, o *FetchOptions) error {
 	var (
 		err           error
@@ -203,7 +203,7 @@ func (v *Project) extractArchive(tarpath string) error {
 	return executeCommandIn(v.RepoRoot(), cmdArgs)
 }
 
-// SyncNetworkHalf will fetch from remote repository
+// SyncNetworkHalf starts to fetch from remote repository.
 func (v *Project) SyncNetworkHalf(o *FetchOptions) error {
 	var err error
 

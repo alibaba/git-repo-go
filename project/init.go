@@ -9,7 +9,7 @@ import (
 	"gopkg.in/src-d/go-git.v4"
 )
 
-// IsRepoInitialized checks if repository is initialized
+// IsRepoInitialized indicates repository is initialized or not.
 func (v Project) IsRepoInitialized() bool {
 	if v.ObjectRepository != nil {
 		if !v.ObjectRepository.Exists() {
@@ -25,7 +25,7 @@ func (v Project) IsRepoInitialized() bool {
 	return true
 }
 
-// GitInit will init project's repositories
+// GitInit starts to init repositories.
 func (v *Project) GitInit() error {
 	var (
 		referenceGitDir string
@@ -107,7 +107,7 @@ func (v *Repository) initMissing() error {
 	return nil
 }
 
-// Init runs git-init on repository
+// Init runs git-init on repository.
 func (v *Repository) Init(remoteName, remoteURL, referenceGitDir string) error {
 	var err error
 
@@ -142,7 +142,7 @@ func (v *Repository) Init(remoteName, remoteURL, referenceGitDir string) error {
 	return nil
 }
 
-// InitByLink will init repository by attaching other repository
+// InitByLink starts to init repository by attaching other repository.
 func (v *Repository) InitByLink(remoteName, remoteURL string, repo *Repository) error {
 	var err error
 

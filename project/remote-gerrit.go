@@ -9,29 +9,29 @@ import (
 	log "github.com/jiangxin/multi-log"
 )
 
-// GerritRemote is Gerrit remote server
+// GerritRemote is Gerrit remote server..
 type GerritRemote struct {
 	manifest.Remote
 
 	SSHInfo *SSHInfo
 }
 
-// GetSSHInfo returns SSHInfo field of GerritRemote
+// GetSSHInfo returns SSHInfo field of GerritRemote.
 func (v *GerritRemote) GetSSHInfo() *SSHInfo {
 	return v.SSHInfo
 }
 
-// GetRemote returns manifest remote field of GerritRemote
+// GetRemote returns manifest remote field of GerritRemote.
 func (v *GerritRemote) GetRemote() *manifest.Remote {
 	return &v.Remote
 }
 
-// GetType returns type of remote
+// GetType returns type of remote.
 func (v *GerritRemote) GetType() string {
 	return config.RemoteTypeGerrit
 }
 
-// GetCodeReviewRef returns code review reference: refs/changes/xx/xxxx/<PatchID>
+// GetCodeReviewRef returns code review reference: refs/changes/xx/xxxx/<PatchID>.
 func (v *GerritRemote) GetCodeReviewRef(reviewID int, patchID int) string {
 	if patchID == 0 {
 		log.Warn("Patch ID should not be 0, set it to 1")
@@ -40,7 +40,7 @@ func (v *GerritRemote) GetCodeReviewRef(reviewID int, patchID int) string {
 	return fmt.Sprintf("%s%2.2d/%d/%d", config.RefsChanges, reviewID%100, reviewID, patchID)
 }
 
-// getReviewURL returns review url
+// getReviewURL returns review url.
 func (v *GerritRemote) getReviewURL(email string) string {
 	var (
 		review string
@@ -66,7 +66,7 @@ func (v *GerritRemote) getReviewURL(email string) string {
 	return review
 }
 
-// UploadCommands returns upload commands for Gerrit
+// UploadCommands returns upload commands for Gerrit.
 func (v *GerritRemote) UploadCommands(o *UploadOptions, branch *ReviewableBranch) ([]string, error) {
 	var (
 		cmds []string
