@@ -30,7 +30,7 @@ import (
 	"code.alibaba-inc.com/force/git-repo/config"
 	"code.alibaba-inc.com/force/git-repo/manifest"
 	"code.alibaba-inc.com/force/git-repo/path"
-	"code.alibaba-inc.com/force/git-repo/versions"
+	"code.alibaba-inc.com/force/git-repo/version"
 
 	log "github.com/jiangxin/multi-log"
 	"github.com/spf13/cobra"
@@ -189,9 +189,9 @@ func (v rootCommand) runE(args []string) error {
 }
 
 func (v rootCommand) checkGitVersion() {
-	if !versions.ValidateGitVersion() {
+	if !version.ValidateGitVersion() {
 		log.Fatalf("Please install or upgrade git to version %s or above",
-			versions.MinGitVersion)
+			version.MinGitVersion)
 	}
 }
 

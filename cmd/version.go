@@ -18,7 +18,7 @@ import (
 	"fmt"
 
 	"code.alibaba-inc.com/force/git-repo/config"
-	"code.alibaba-inc.com/force/git-repo/versions"
+	"code.alibaba-inc.com/force/git-repo/version"
 	"github.com/spf13/cobra"
 )
 
@@ -33,8 +33,8 @@ var versionCmd = &cobra.Command{
 }
 
 func showVersion() {
-	fmt.Printf("git-repo version %s\n", versions.GetVersion())
-	fmt.Printf("git version %s\n", versions.GetGitVersion())
+	fmt.Printf("git-repo version %s\n", version.GetVersion())
+	fmt.Printf("git version %s\n", version.GetGitVersion())
 }
 
 func init() {

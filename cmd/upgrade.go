@@ -36,7 +36,7 @@ import (
 	"code.alibaba-inc.com/force/git-repo/config"
 	"code.alibaba-inc.com/force/git-repo/format"
 	"code.alibaba-inc.com/force/git-repo/path"
-	"code.alibaba-inc.com/force/git-repo/versions"
+	"code.alibaba-inc.com/force/git-repo/version"
 	log "github.com/jiangxin/multi-log"
 	"github.com/spf13/cobra"
 	"golang.org/x/crypto/openpgp"
@@ -131,7 +131,7 @@ func (v *upgradeCommand) HTTPClient() *http.Client {
 
 func (v upgradeCommand) GetUpgradeVersion() (string, error) {
 	var (
-		version = upgradeVersion{}
+		targetVersion = upgradeVersion{}
 	)
 
 	vURL := v.O.URL + "/version.yml"
@@ -156,15 +156,15 @@ func (v upgradeCommand) GetUpgradeVersion() (string, error) {
 	}
 
 	decoder := yaml.NewDecoder(resp.Body)
-	err = decoder.Decode(&version)
+	err = decoder.Decode(&targetVersion)
 	if err != nil {
 		return "", err
 	}
 
 	if v.O.Test {
-		return version.Test, nil
+		return targetVersion.Test, nil
 	}
-	return version.Production, nil
+	return targetVersion.Production, nil
 }
 
 func (v upgradeCommand) Download(URL string, f *os.File, showProgress bool) error {
@@ -392,7 +392,7 @@ func (v upgradeCommand) Verify(binURL, binFile string) error {
 	return nil
 }
 
-func (v upgradeCommand) UpgradeVersion(target, version string) error {
+func (v upgradeCommand) UpgradeVersion(target, targetVersion string) error {
 	var (
 		binURL string
 		err    error
@@ -400,7 +400,7 @@ func (v upgradeCommand) UpgradeVersion(target, version string) error {
 
 	binURL = fmt.Sprintf("%s/%s/%s/%s/%s",
 		v.O.URL,
-		version,
+		targetVersion,
 		runtime.GOOS,
 		runtime.GOARCH,
 		"git-repo",
@@ -428,8 +428,8 @@ func (v upgradeCommand) UpgradeVersion(target, version string) error {
 
 	if config.IsDryRun() {
 		log.Notef("will upgrade git-repo from version %s to %s, from file %s",
-			versions.Version,
-			version,
+			version.Version,
+			targetVersion,
 			binFile.Name())
 		return nil
 	}
@@ -440,8 +440,8 @@ func (v upgradeCommand) UpgradeVersion(target, version string) error {
 	}
 
 	log.Notef("successfully upgrade git-repo from %s to %s",
-		versions.Version,
-		version,
+		version.Version,
+		targetVersion,
 	)
 	return nil
 }
@@ -549,16 +549,16 @@ func (v upgradeCommand) runE(args []string) error {
 		uv = v.O.Version
 	}
 
-	if versions.CompareVersion(uv, versions.Version) <= 0 {
+	if version.CompareVersion(uv, version.Version) <= 0 {
 		if v.O.Version != "" {
-			log.Warnf("will downgrade version from %s to %s", versions.Version, v.O.Version)
+			log.Warnf("will downgrade version from %s to %s", version.Version, v.O.Version)
 		} else {
-			log.Notef("current version (%s) is uptodate", versions.Version)
+			log.Notef("current version (%s) is uptodate", version.Version)
 			v.O.Version = uv
 			return nil
 		}
 	} else {
-		log.Debugf("compare versions: %s > %s", uv, versions.Version)
+		log.Debugf("compare versions: %s > %s", uv, version.Version)
 	}
 
 	if v.O.Version == "" {

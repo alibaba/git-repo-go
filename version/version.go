@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package versions implements versions related functions
-package versions
+// Package version implements versions related functions
+package version
 
 import (
 	"bytes"
