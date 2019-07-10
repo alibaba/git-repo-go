@@ -52,7 +52,7 @@ if test "false" = "$(git config --bool --get gerrit.createChangeId)" ; then
 fi
 
 # $RANDOM will be undefined if not using bash, so don't use set -u
-random=$( (whoami ; hostname ; date; cat $1 ; echo $RANDOM) | git hash-object --stdin)
+random=$( (whoami ; hostname ; date; cat "$1" ; echo $RANDOM) | git hash-object --stdin)
 dest="$1.tmp.${random}"
 
 trap 'rm -f "${dest}"' EXIT
