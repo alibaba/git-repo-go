@@ -3,9 +3,11 @@ PKG := code.alibaba-inc.com/force/git-repo
 VENDOR_EXISTS=$(shell test -d vendor && echo 1 || echo 0)
 ifeq ($(VENDOR_EXISTS), 1)
     #GOFLAGS=-mod=vendor
-    GOBUILD := CGO_ENABLED=0 go build -mod=vendor
+    GOBUILD := GO111MODULE=on CGO_ENABLED=0 go build -mod=vendor
+    GOTEST := GO111MODULE=on go test -mod=vendor
 else
-    GOBUILD := CGO_ENABLED=0 go build
+    GOBUILD := GO111MODULE=on CGO_ENABLED=0 go build
+    GOTEST := GO111MODULE=on go test
 endif
 
 # GOBUILD := GO111MODULE=on CGO_ENABLED=0 go build -mod=vendor -tags netgo -ldflags "-extldflags '-static'"
@@ -47,7 +49,7 @@ test: golint ut it
 
 ut: $(TARGETS)
 	$(call message,Testing git-repo for unit tests)
-	@go test $(PKG)/...
+	$(GOTEST) $(PKG)/...
 
 it: $(TARGETS)
 	$(call message,Testing git-repo for integration tests)
