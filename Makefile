@@ -43,9 +43,13 @@ golint:
 	$(call message,Testing git-repo using golint for coding style)
 	@golint $(LOCAL_PACKAGES)
 
-test: golint $(TARGETS)
+test: golint ut it
+
+ut: $(TARGETS)
 	$(call message,Testing git-repo for unit tests)
 	@go test $(PKG)/...
+
+it: $(TARGETS)
 	$(call message,Testing git-repo for integration tests)
 	@make -C test
 
@@ -109,3 +113,4 @@ clean:
 .PHONY: FORCE
 .PHONY: version-yml index
 .PHONY: release
+.PHONY: ut it
