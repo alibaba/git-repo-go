@@ -395,7 +395,7 @@ func (v *Manifest) Merge(m *Manifest) error {
 }
 
 func cleanPath(name string) string {
-	return filepath.Clean(strings.ReplaceAll(strings.TrimSuffix(name, ".git"), "\\", "/"))
+	return filepath.Clean(strings.Replace(strings.TrimSuffix(name, ".git"), "\\", "/", -1))
 }
 
 func unmarshalFile(file string) (*Manifest, error) {

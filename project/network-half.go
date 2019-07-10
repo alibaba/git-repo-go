@@ -224,7 +224,7 @@ func (v *Project) SyncNetworkHalf(o *FetchOptions) error {
 			return fmt.Errorf("%s: Cannot fetch archives from http/https remotes", v.Name)
 		}
 
-		tarpath := strings.ReplaceAll(v.Name, "/", "_")
+		tarpath := strings.Replace(v.Name, "/", "_", -1)
 		tarpath += ".tar"
 		err = v.fetchArchive(tarpath)
 		if err != nil {
