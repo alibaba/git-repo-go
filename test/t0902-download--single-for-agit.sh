@@ -53,12 +53,12 @@ test_expect_success "download and checkout" '
 	) &&
 	(
 		cd work/main &&
-		echo "Branch: $(git branch --show-current)" &&
+		echo "Branch: $(git_current_branch)" &&
 		git log --pretty="    %s" -2 &&
 		git show-ref | cut -c 42- | grep merge-requests
 	) >actual 2>&1 &&
 	cat >expect<<-EOF &&
-	Branch: 
+	Branch: Detached HEAD
 	    New topic
 	    Version 0.1.0
 	refs/merge-requests/12345/head
@@ -82,12 +82,12 @@ test_expect_success "download again with already merged notice" '
 	test_cmp expect actual &&
 	(
 		cd work/main &&
-		echo "Branch: $(git branch --show-current)" &&
+		echo "Branch: $(git_current_branch)" &&
 		git log --pretty="    %s" -2
 		git show-ref | cut -c 42- | grep merge-requests
 	) >actual 2>&1 &&
 	cat >expect<<-EOF &&
-	Branch: 
+	Branch: Detached HEAD
 	    New topic
 	    Version 0.1.0
 	refs/merge-requests/12345/head
@@ -110,7 +110,7 @@ test_expect_success "download using cherry-pick" '
 	) &&
 	(
 		cd work/main &&
-		echo "Branch: $(git branch --show-current)" &&
+		echo "Branch: $(git_current_branch)" &&
 		git log --pretty="    %s" -2
 		git show-ref | cut -c 42- | grep merge-requests
 	) >actual 2>&1 &&
@@ -157,7 +157,7 @@ test_expect_success "alias download command (cherry-pick)" '
 	) &&
 	(
 		cd work/main &&
-		echo "Branch: $(git branch --show-current)" &&
+		echo "Branch: $(git_current_branch)" &&
 		git log --pretty="    %s" -2
 		git show-ref | cut -c 42- | grep merge-requests
 	) >actual 2>&1 &&

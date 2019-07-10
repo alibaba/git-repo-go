@@ -29,14 +29,6 @@ test_expect_success "install git review aliases command" '
 	test_cmp expect actual
 '
 
-test_expect_success "git peer-review -h" '
-	cat >expect<<-EOF &&
-	'"'"'peer-review'"'"' is aliased to '"'"'repo upload --single'"'"'
-	EOF
-	git peer-review -h >/dev/null 2>actual &&
-	test_cmp expect actual
-'
-
 test_expect_success "upload error: no branch" '
 	(
 		cd work &&
