@@ -55,6 +55,10 @@ it: $(TARGETS)
 	$(call message,Testing git-repo for integration tests)
 	@make -C test
 
+it-no-prove: $(TARGETS)
+	$(call message,Testing git-repo for integration tests (not using prove))
+	@make -C test test
+
 version-yml: REPO-VERSION-FILE
 	@mkdir -p _build
 	@echo "production: $(REPO_VERSION)" > _build/version.yml
@@ -115,4 +119,4 @@ clean:
 .PHONY: FORCE
 .PHONY: version-yml index
 .PHONY: release
-.PHONY: ut it
+.PHONY: ut it it-no-prove
