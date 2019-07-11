@@ -44,8 +44,8 @@ test_expect_success "keyword substitude after new checkout" '
 	Test keyword subst:
 	+ Author: \$Author: A U Thor <author@example.com> \$,  \$LastChangedBy: A U Thor <author@example.com> \$
 	+ Date: \$Date: 2005-04-07 22:14:13 +0000 \$,  \$LastChangedDate: 2005-04-07 22:14:13 +0000 \$
-	+ Rev: \$Revision: v1.0.0-3-g138e0e7 \$, \$LastChangedRevision: v1.0.0-3-g138e0e7 \$
-	+ Id: \$Id: test-kw-subst.md v1.0.0-3-g138e0e7 2005-04-07 22:14:13 +0000 A U Thor <author@example.com> \$
+	+ Rev: \$Revision: v1.0.0-3-gfcced8c \$, \$LastChangedRevision: v1.0.0-3-gfcced8c \$
+	+ Id: \$Id: test-kw-subst.md v1.0.0-3-gfcced8c 2005-04-07 22:14:13 +0000 A U Thor <author@example.com> \$
 	EOF
 	test_cmp expect actual
 '

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-REPO_TEST_REPOSITORIES_VERSION=8
+REPO_TEST_REPOSITORIES_VERSION=9
 
 # Create test repositories in .repositories
 REPO_TEST_REPOSITORIES="${SHARNESS_TEST_SRCDIR}/test-repositories"
@@ -101,7 +101,7 @@ test_create_repository () {
 	cd "tmp-$name" &&
 	echo "# projecct: $name" >README.md &&
 	echo v0.1.0 >VERSION &&
-	echo "all:\n\t@echo \"$name: \$(shell cat VERSION)\"\n">Makefile &&
+	printf "all:\n\t@echo \"$name: \$(shell cat VERSION)\"\n">Makefile &&
 	git add README.md VERSION Makefile &&
 	test_tick && git commit -m "Version 0.1.0" &&
 	test_tick && git tag -m v0.1.0 v0.1.0 &&

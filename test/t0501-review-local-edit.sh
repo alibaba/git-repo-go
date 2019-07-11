@@ -53,7 +53,7 @@ test_expect_success "confirm if has local edit" '
 		cat >expect<<-EOF &&
 		Upload project (jiangxin/main) to remote branch master:
 		  branch my/topic-test ( 1 commit(s)):
-		         725d95a019384bec328ae99b1565f0eec25d02e5
+		         7075c01b035c930ecb67e0230462a170e2f4f391
 		to https://example.com (y/N)? Yes
 		Uncommitted changes in jiangxin/main (did you forget to amend?):
 		Continue uploading? (y/N) Yes
