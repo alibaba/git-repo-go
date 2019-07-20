@@ -39,7 +39,7 @@ REPO-VERSION-FILE: FORCE
 
 git-repo: $(shell find . -name '*.go') | REPO-VERSION-FILE
 	$(call message,Building $@)
-	$(GOBUILD)  -ldflags "-X $(PKG)/versions.Version=$(REPO_VERSION)"
+	$(GOBUILD)  -ldflags "-X $(PKG)/version.Version=$(REPO_VERSION)"
 
 golint:
 	$(call message,Testing git-repo using golint for coding style)
