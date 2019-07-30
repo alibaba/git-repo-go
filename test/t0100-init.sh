@@ -43,7 +43,10 @@ test_expect_success "git config variable manifest.name = default.xml" '
 	(
 		cd work &&
 		echo default.xml >expect &&
-		git -C .repo/manifests config manifest.name >actual &&
+		(
+			cd .repo/manifests &&
+			git config manifest.name
+		) >actual &&
 		test_cmp expect actual
 	)
 '
@@ -76,7 +79,10 @@ test_expect_success "remote track: master" '
 		cat >expect <<-EOF &&
 		refs/heads/master
 		EOF
-		git -C .repo/manifests config branch.default.merge >actual &&
+		(
+			cd .repo/manifests &&
+			git config branch.default.merge
+		) >actual &&
 		test_cmp expect actual
 	)
 '
@@ -104,7 +110,10 @@ test_expect_success "switch file: test init -m <file>" '
 		test_cmp expect actual &&
 		# git config variable manifest.name => next.xml
 		echo next.xml >expect &&
-		git -C .repo/manifests config manifest.name >actual &&
+		(
+			cd .repo/manifests &&
+			git config manifest.name
+		) >actual &&
 		test_cmp expect actual
 	)
 '
@@ -128,7 +137,10 @@ test_expect_success "after switch, remote track: maint" '
 		cat >expect <<-EOF &&
 		refs/heads/Maint
 		EOF
-		git -C .repo/manifests config branch.default.merge >actual &&
+		(
+			cd .repo/manifests &&
+			git config branch.default.merge
+		) >actual &&
 		test_cmp expect actual
 	)
 '
@@ -140,7 +152,10 @@ test_expect_success "no -b for repo init, use previous branch" '
 		cat >expect <<-EOF &&
 		refs/heads/Maint
 		EOF
-		git -C .repo/manifests config branch.default.merge >actual &&
+		(
+			cd .repo/manifests &&
+			git config branch.default.merge
+		) >actual &&
 		test_cmp expect actual
 	)
 '
@@ -169,7 +184,10 @@ test_expect_success "manifest.name => default.xml" '
 		cd work &&
 		# git config variable manifest.name is set to default.xml
 		echo default.xml >expect &&
-		git -C .repo/manifests config manifest.name >actual &&
+		(
+			cd .repo/manifests &&
+			git config manifest.name
+		) >actual &&
 		test_cmp expect actual
 	)
 '
@@ -206,7 +224,10 @@ test_expect_success "again, remote track: master" '
 		cat >expect <<-EOF &&
 		refs/heads/master
 		EOF
-		git -C .repo/manifests config branch.default.merge >actual &&
+		(
+			cd .repo/manifests &&
+			git config branch.default.merge
+		) >actual &&
 		test_cmp expect actual
 	)
 '

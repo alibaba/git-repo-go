@@ -33,7 +33,7 @@ test_expect_success "install git config by running git-repo --version" '
 	test -f .gitconfig &&
 	test -f .git-repo/gitconfig &&
 	cat >expect <<-EOF &&
-	~/.git-repo/gitconfig
+	$HOME/.git-repo/gitconfig
 	EOF
 	git config --global --get-all include.path >actual &&
 	test_cmp expect actual &&

@@ -16,26 +16,26 @@ test_expect_success 'setup submodules' '
 	(
 		cd repo/main.git &&
 		test_tick &&
-		commit=$(git commit-tree -m initial 4b825dc642cb6eb9a060e54bf8d69288fbee4904) &&
+		commit=$(echo initial | git commit-tree 4b825dc642cb6eb9a060e54bf8d69288fbee4904) &&
 		git update-ref refs/heads/master $commit
 	) &&
 	(
 		cd repo/submodule-1.git &&
 		test_tick &&
-		commit=$(git commit-tree -m initial 4b825dc642cb6eb9a060e54bf8d69288fbee4904) &&
+		commit=$(echo initial | git commit-tree 4b825dc642cb6eb9a060e54bf8d69288fbee4904) &&
 		git update-ref refs/heads/master $commit
 	) &&
 	(
 		cd repo/submodule-2.git &&
 		test_tick &&
-		commit=$(git commit-tree -m initial 4b825dc642cb6eb9a060e54bf8d69288fbee4904) &&
+		commit=$(echo initial | git commit-tree 4b825dc642cb6eb9a060e54bf8d69288fbee4904) &&
 		git update-ref refs/heads/master $commit
 	) &&
 
 	(
 		cd repo/submodule-1-1.git &&
 		test_tick &&
-		commit=$(git commit-tree -m initial 4b825dc642cb6eb9a060e54bf8d69288fbee4904) &&
+		commit=$(echo initial | git commit-tree 4b825dc642cb6eb9a060e54bf8d69288fbee4904) &&
 		git update-ref refs/heads/master $commit
 	) &&
 	mkdir work1 &&
@@ -152,7 +152,7 @@ test_expect_success 'create manifest project' '
 		EOF
 		git add default.xml &&
 		git commit -m "initial manifests" &&
-		git push
+		git push -u origin master
 	)
 '
 
@@ -177,9 +177,9 @@ test_expect_success 'git repo sync and update submodules' '
 		cd work2/main &&
 		test -f .git &&
 		git log -1 --pretty="%s" &&
-		git -C submodule-1 log -1 --pretty="%s" &&
-		git -C submodule-1/submodule-1-1 log -1 --pretty="%s" &&
-		git -C submodule-2 log -1 --pretty="%s"
+		( cd submodule-1 && git log -1 --pretty="%s" ) &&
+		( cd submodule-1/submodule-1-1 && git log -1 --pretty="%s" ) &&
+		( cd submodule-2 && git log -1 --pretty="%s" )
 	) >actual &&
 	cat >expect <<-EOF &&
 	update submodule-1

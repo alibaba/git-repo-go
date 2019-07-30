@@ -30,7 +30,10 @@ test_expect_success "manifests version: 1.0" '
 		cat >expect<<-EOF &&
 		manifests: Version 1.0
 		EOF
-		git -C .repo/manifests log -1 --pretty="manifests: %s" >actual &&
+		(
+			cd .repo/manifests &&
+			git log -1 --pretty="manifests: %s"
+		) >actual &&
 		test_cmp expect actual
 	)
 '
@@ -66,7 +69,10 @@ test_expect_success "manifests version: 2.0" '
 		cat >expect<<-EOF &&
 		manifests: Version 2.0
 		EOF
-		git -C .repo/manifests log -1 --pretty="manifests: %s" >actual &&
+		(
+			cd .repo/manifests &&
+			git log -1 --pretty="manifests: %s"
+		) >actual &&
 		test_cmp expect actual
 	)
 '

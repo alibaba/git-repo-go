@@ -29,9 +29,9 @@ test_expect_success "install git pr alias command" '
 
 test_expect_success "creant topic branch and set url to http protocol" '
 	(
-		cd work &&
-		git -C main checkout -b my/topic-test origin/master &&
-		git -C main config remote.origin.url \
+		cd work/main &&
+		git checkout -b my/topic-test origin/master &&
+		git config remote.origin.url \
 			https://example.com/jiangxin/main.git
 	)
 '
@@ -61,14 +61,16 @@ test_expect_success "confirm if has local edit" '
 		
 		----------------------------------------------------------------------
 		EOF
-		git -C main pr \
-			--assume-yes \
-			--no-edit \
-			--mock-git-push \
-			--mock-ssh-info-status 200 \
-			--mock-ssh-info-response \
-			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
-			>actual 2>&1 &&
+		(
+			cd main &&
+			git pr \
+				--assume-yes \
+				--no-edit \
+				--mock-git-push \
+				--mock-ssh-info-status 200 \
+				--mock-ssh-info-response \
+				"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}"
+		) >actual 2>&1 &&
 		test_cmp expect actual
 	)
 '

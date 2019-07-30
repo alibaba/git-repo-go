@@ -21,7 +21,10 @@ test_expect_success "no platform & group settings" '
 	(
 		cd work &&
 		printf "" >expect &&
-		test_must_fail git -C .repo/manifests config manifest.groups >actual &&
+		(
+			cd .repo/manifests &&
+			test_must_fail git config manifest.groups
+		) >actual &&
 		test_cmp expect actual
 	)
 '
@@ -31,7 +34,10 @@ test_expect_success "platform = all, groups = <default>" '
 		cd work &&
 		git-repo init --platform all &&
 		echo "default,platform-linux,platform-darwin,platform-windows" >expect &&
-		git -C .repo/manifests config manifest.groups >actual &&
+		(
+			cd .repo/manifests &&
+			git config manifest.groups
+		) >actual &&
 		test_cmp expect actual
 	)
 '
@@ -41,7 +47,10 @@ test_expect_success "platform = all, groups = all" '
 		cd work &&
 		git-repo init --platform all --groups all &&
 		echo "all,platform-linux,platform-darwin,platform-windows" >expect &&
-		git -C .repo/manifests config manifest.groups >actual &&
+		(
+			cd .repo/manifests &&
+			git config manifest.groups
+		) >actual &&
 		test_cmp expect actual
 	)
 '
@@ -51,7 +60,10 @@ test_expect_success "platform = auto, groups = <default>" '
 		cd work &&
 		git-repo init --platform auto &&
 		printf "" >expect &&
-		test_must_fail git -C .repo/manifests config manifest.groups >actual &&
+		(
+			cd .repo/manifests &&
+			test_must_fail git config manifest.groups
+		) >actual &&
 		test_cmp expect actual
 	)
 '
@@ -61,7 +73,10 @@ test_expect_success "platform = auto, groups = default" '
 		cd work &&
 		git-repo init --platform auto &&
 		printf "" >expect &&
-		test_must_fail git -C .repo/manifests config manifest.groups >actual &&
+		(
+			cd .repo/manifests &&
+			test_must_fail git config manifest.groups
+		) >actual &&
 		test_cmp expect actual
 	)
 '
@@ -71,9 +86,11 @@ test_expect_success "platform = <default>, groups = app" '
 		cd work &&
 		git-repo init -g app &&
 		echo "app,platform-*" >expect &&
-		git -C .repo/manifests config manifest.groups | \
-			sed -e "s/platform-[^,]*/platform-*/" \
-			>actual &&
+		(
+			cd .repo/manifests &&
+			git config manifest.groups | \
+				sed -e "s/platform-[^,]*/platform-*/"
+		) >actual &&
 		test_cmp expect actual
 	)
 '
@@ -83,9 +100,11 @@ test_expect_success "platform = <default>, groups = <default> # nothing changed"
 		cd work &&
 		git-repo init -u $manifest_url
 		echo "app,platform-*" >expect &&
-		git -C .repo/manifests config manifest.groups | \
-			sed -e "s/platform-[^,]*/platform-*/" \
-			>actual &&
+		(
+			cd .repo/manifests &&
+			git config manifest.groups | \
+				sed -e "s/platform-[^,]*/platform-*/" \
+		) >actual &&
 		test_cmp expect actual
 	)
 '
@@ -95,7 +114,10 @@ test_expect_success "platform = auto, groups = default" '
 		cd work &&
 		git-repo init -p auto -g default -u $manifest_url
 		printf "" >expect &&
-		test_must_fail git -C .repo/manifests config manifest.groups >actual &&
+		(
+			cd .repo/manifests &&
+			test_must_fail git config manifest.groups
+		) >actual &&
 		test_cmp expect actual
 	)
 '

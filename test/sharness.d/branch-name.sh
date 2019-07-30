@@ -1,11 +1,11 @@
 #!/bin/sh
 
 git_current_branch() {
-	branch=$(git branch -l | grep "^*")
-	if echo "$branch" | grep -q "detached "
+	branch=$(git symbolic-ref HEAD 2>/dev/null | sed -e "s#refs/heads/##")
+	if test -n "$branch"
 	then
-		echo "Detached HEAD"
+		echo "$branch"
 	else
-		echo "${branch#* }"
+		echo "Detached HEAD"
 	fi
 }

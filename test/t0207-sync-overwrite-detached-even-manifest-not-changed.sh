@@ -55,7 +55,10 @@ test_expect_success "nothing changed in manifests" '
 		cat >expect<<-EOF &&
 		manifests: Version 2.0
 		EOF
-		git -C .repo/manifests log -1 --pretty="manifests: %s" >actual &&
+		(
+			cd .repo/manifests &&
+			git log -1 --pretty="manifests: %s"
+		) >actual &&
 		test_cmp expect actual
 	)
 '

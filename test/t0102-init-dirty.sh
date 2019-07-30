@@ -52,7 +52,10 @@ test_expect_success "no change for remote track" '
 		cat >expect <<-EOF &&
 		refs/heads/Maint
 		EOF
-		git -C .repo/manifests config branch.default.merge >actual &&
+		(
+			cd .repo/manifests &&
+			git config branch.default.merge
+		) >actual &&
 		test_cmp expect actual
 	)
 '
@@ -72,7 +75,10 @@ test_expect_success "switch and ignore dirty" '
 		cat >expect <<-EOF &&
 		refs/heads/master
 		EOF
-		git -C .repo/manifests config branch.default.merge >actual &&
+		(
+			cd .repo/manifests &&
+			git config branch.default.merge
+		) >actual &&
 		test_cmp expect actual
 	)
 '
@@ -104,7 +110,10 @@ test_expect_success "tag points to version 0.1" '
 		cat >expect<<-EOF &&
 		Version 0.1
 		EOF
-		git -C .repo/manifests log -1 --pretty="%s">actual &&
+		(
+			cd .repo/manifests &&
+			git log -1 --pretty="%s"
+		) >actual &&
 		test_cmp expect actual
 	)
 '
@@ -136,7 +145,10 @@ test_expect_success "switch from tag and ignore dirty" '
 		cat >expect <<-EOF &&
 		refs/heads/Maint
 		EOF
-		git -C .repo/manifests config branch.default.merge >actual &&
+		(
+			cd .repo/manifests &&
+			git config branch.default.merge 
+		) >actual &&
 		test_cmp expect actual
 	)
 '

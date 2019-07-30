@@ -27,7 +27,10 @@ test_expect_success "manifests version: 2.0" '
 		cat >expect<<-EOF &&
 		manifests: Version 2.0
 		EOF
-		git -C .repo/manifests log -1 --pretty="manifests: %s" >actual &&
+		(
+			cd .repo/manifests &&
+			git log -1 --pretty="manifests: %s"
+		) >actual &&
 		test_cmp expect actual
 	)
 '
@@ -103,11 +106,11 @@ test_expect_success "git-repo sync (-l)" '
 test_expect_success "push.default is nothing after sync local-half" '
 	(
 		cd work &&
-		git -C main config push.default &&
-		git -C projects/app1 config push.default
-		git -C projects/app1/module1 config push.default
-		git -C projects/app2 config push.default
-		git -C drivers/driver-1 config push.default
+		( cd main && git config push.default ) &&
+		( cd projects/app1 && git config push.default ) &&
+		( cd projects/app1/module1 && git config push.default ) &&
+		( cd projects/app2 && git config push.default ) &&
+		( cd drivers/driver-1 && git config push.default )
 	) >actual &&
 	cat >expect <<-EOF &&
 	nothing

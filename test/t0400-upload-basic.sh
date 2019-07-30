@@ -274,8 +274,8 @@ test_expect_success "mock-git-push, but do update-ref for upload" '
 test_expect_success "check update-ref" '
 	(
 		cd work &&
-		git -C main rev-parse refs/heads/my/topic1 >expect &&
-		git -C main rev-parse refs/published/my/topic1 >actual &&
+		( cd main && git rev-parse refs/heads/my/topic1 ) >expect &&
+		( cd main && git rev-parse refs/published/my/topic1 ) >actual &&
 		test_cmp expect actual
 	)
 '

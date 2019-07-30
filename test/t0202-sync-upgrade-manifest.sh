@@ -21,8 +21,8 @@ test_expect_success "git-repo sync with history version of manifests" '
 			--mock-ssh-info-status 200 \
 			--mock-ssh-info-response \
 			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" &&
-		git -C .repo/manifests config branch.default.merge refs/heads/master &&
-		git -C .repo/manifests config branch.default.remote origin
+		( cd .repo/manifests && git config branch.default.merge refs/heads/master ) &&
+		( cd .repo/manifests && git config branch.default.remote origin )
 	)
 '
 
@@ -32,7 +32,10 @@ test_expect_success "manifests version: 0.1.0" '
 		cat >expect<<-EOF &&
 		manifests: Version 0.1
 		EOF
-		git -C .repo/manifests log -1 --pretty="manifests: %s" >actual &&
+		(
+			cd .repo/manifests &&
+			git log -1 --pretty="manifests: %s"
+		) >actual &&
 		test_cmp expect actual
 	)
 '
@@ -66,7 +69,10 @@ test_expect_success "verify checkout commits of v0.1" '
 		cat >expect<<-EOF &&
 		main: Version 0.1.0
 		EOF
-		git -C main log -1 --pretty="main: %s" >actual &&
+		(
+			cd main &&
+			git log -1 --pretty="main: %s"
+		) >actual &&
 		test_cmp expect actual
 	)
 '
@@ -88,7 +94,10 @@ test_expect_success "manifests version: 2.0" '
 		cat >expect<<-EOF &&
 		manifests: Version 2.0
 		EOF
-		git -C .repo/manifests log -1 --pretty="manifests: %s" >actual &&
+		(
+			cd .repo/manifests &&
+			git log -1 --pretty="manifests: %s"
+		) >actual &&
 		test_cmp expect actual
 	)
 '
@@ -117,11 +126,14 @@ test_expect_success "verify checkout commits of master" '
 		projects/app1/module1: Version 1.0.0
 		projects/app2: Version 2.0.0-dev
 		EOF
-		git -C drivers/driver-1 log -1 --pretty="drivers/dirver1: %s" >actual &&
-		git -C main log -1 --pretty="main: %s" >>actual &&
-		git -C projects/app1 log -1 --pretty="projects/app1: %s" >>actual &&
-		git -C projects/app1/module1 log -1 --pretty="projects/app1/module1: %s" >>actual &&
-		git -C projects/app2 log -1 --pretty="projects/app2: %s" >>actual &&
+		(
+			cd drivers/driver-1 &&
+			git log -1 --pretty="drivers/dirver1: %s"
+		) >actual &&
+		( cd  main && git log -1 --pretty="main: %s" ) >>actual &&
+		( cd  projects/app1 && git log -1 --pretty="projects/app1: %s" ) >>actual &&
+		( cd  projects/app1/module1 && git log -1 --pretty="projects/app1/module1: %s" ) >>actual &&
+		( cd  projects/app2 && git log -1 --pretty="projects/app2: %s" ) >>actual &&
 		test_cmp expect actual
 	)
 '

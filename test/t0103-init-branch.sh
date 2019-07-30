@@ -26,7 +26,10 @@ test_expect_success "head commit: version 0.1" '
 		cat >expect<<-EOF &&
 		Version 0.1
 		EOF
-		git -C .repo/manifests log -1 --pretty="%s">actual &&
+		(
+			cd .repo/manifests &&
+			git log -1 --pretty="%s"
+		) >actual &&
 		test_cmp expect actual
 	)
 '
@@ -44,7 +47,10 @@ test_expect_success "no remote track" '
 	(
 		cd work &&
 		printf "" >expect &&
-		test_must_fail git -C .repo/manifests config branch.default.merge >actual &&
+		(
+			cd .repo/manifests &&
+			test_must_fail git config branch.default.merge 
+		) >actual &&
 		test_cmp expect actual
 	)
 '
@@ -62,7 +68,10 @@ test_expect_success "head commit still is: version 0.1" '
 		cat >expect<<-EOF &&
 		Version 0.1
 		EOF
-		git -C .repo/manifests log -1 --pretty="%s">actual &&
+		(
+			cd .repo/manifests &&
+			git log -1 --pretty="%s"
+		) >actual &&
 		test_cmp expect actual
 	)
 '
@@ -71,7 +80,10 @@ test_expect_success "still no remote track" '
 	(
 		cd work &&
 		printf "" >expect &&
-		test_must_fail git -C .repo/manifests config branch.default.merge >actual &&
+		(
+			cd .repo/manifests &&
+			test_must_fail git config branch.default.merge 
+		) >actual &&
 		test_cmp expect actual
 	)
 '
@@ -89,7 +101,10 @@ test_expect_success "head commit: version 0.2" '
 		cat >expect<<-EOF &&
 		Version 0.2
 		EOF
-		git -C .repo/manifests log -1 --pretty="%s">actual &&
+		(
+			cd .repo/manifests &&
+			git log -1 --pretty="%s"
+		) >actual &&
 		test_cmp expect actual
 	)
 '
@@ -98,7 +113,10 @@ test_expect_success "no remote track for version 0.2" '
 	(
 		cd work &&
 		printf "" >expect &&
-		test_must_fail git -C .repo/manifests config branch.default.merge >actual &&
+		(
+			cd .repo/manifests &&
+			test_must_fail git config branch.default.merge 
+		) >actual &&
 		test_cmp expect actual
 	)
 '
@@ -116,7 +134,10 @@ test_expect_success "head commit: version 1.0" '
 		cat >expect<<-EOF &&
 		Version 1.0
 		EOF
-		git -C .repo/manifests log -1 --pretty="%s">actual &&
+		(
+			cd .repo/manifests &&
+			git log -1 --pretty="%s"
+		) >actual &&
 		test_cmp expect actual
 	)
 '
@@ -127,7 +148,10 @@ test_expect_success "remote track: refs/heads/Maint" '
 		cat >expect<<-EOF &&
 		refs/heads/Maint
 		EOF
-		git -C .repo/manifests config branch.default.merge >actual &&
+		(
+			cd .repo/manifests &&
+			git config branch.default.merge 
+		) >actual &&
 		test_cmp expect actual
 	)
 '
@@ -145,7 +169,10 @@ test_expect_success "head commit: version 2.0" '
 		cat >expect<<-EOF &&
 		Version 2.0
 		EOF
-		git -C .repo/manifests log -1 --pretty="%s">actual &&
+		(
+			cd .repo/manifests &&
+			git log -1 --pretty="%s"
+		) >actual &&
 		test_cmp expect actual
 	)
 '
@@ -156,7 +183,10 @@ test_expect_success "remote track: refs/heads/master" '
 		cat >expect<<-EOF &&
 		refs/heads/master
 		EOF
-		git -C .repo/manifests config branch.default.merge >actual &&
+		(
+			cd .repo/manifests &&
+			git config branch.default.merge 
+		) >actual &&
 		test_cmp expect actual
 	)
 '
@@ -174,7 +204,10 @@ test_expect_success "head commit still is: version 2.0" '
 		cat >expect<<-EOF &&
 		Version 2.0
 		EOF
-		git -C .repo/manifests log -1 --pretty="%s">actual &&
+		(
+			cd .repo/manifests &&
+			git log -1 --pretty="%s"
+		) >actual &&
 		test_cmp expect actual
 	)
 '
@@ -185,7 +218,10 @@ test_expect_success "but remote track switched: refs/heads/Maint" '
 		cat >expect<<-EOF &&
 		refs/heads/Maint
 		EOF
-		git -C .repo/manifests config branch.default.merge >actual &&
+		(
+			cd .repo/manifests &&
+			git config branch.default.merge 
+		) >actual &&
 		test_cmp expect actual
 	)
 '

@@ -31,8 +31,8 @@ test_expect_success "install git review aliases command" '
 
 test_expect_success "update remote URL using http protocol" '
 	(
-		cd work &&
-		git -C main config remote.origin.url https://example.com/jiangxin/main.git
+		cd work/main &&
+		git config remote.origin.url https://example.com/jiangxin/main.git
 	)
 '
 
@@ -44,21 +44,22 @@ test_expect_success "upload error: not in a branch" '
 		
 		Please run command "git checkout -b <branch>" to create a new branch.
 		EOF
-		cd main &&
-		git checkout -b jx/topic1 origin/master &&
-		echo hack >topic1.txt &&
-		git add topic1.txt &&
-		git commit -m "add topic1.txt" &&
-		git checkout master^0 &&
-		cd .. &&
-		test_must_fail git -C main peer-review \
-			--assume-yes \
-			--no-edit \
-			--dryrun \
-			--mock-ssh-info-status 200 \
-			--mock-ssh-info-response \
-			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
-			>actual 2>&1 &&
+		(
+			cd main &&
+			# git v1.7.10: "git checkout -q" is not really quiet.
+			git checkout -q -b jx/topic1 origin/master >/dev/null &&
+			echo hack >topic1.txt &&
+			git add topic1.txt &&
+			git commit -q -m "add topic1.txt" &&
+			git checkout -q master^0 &&
+			test_must_fail git peer-review \
+				--assume-yes \
+				--no-edit \
+				--dryrun \
+				--mock-ssh-info-status 200 \
+				--mock-ssh-info-response \
+				"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}"
+		) >actual 2>&1 &&
 		test_cmp expect actual
 	)
 '
@@ -66,16 +67,18 @@ test_expect_success "upload error: not in a branch" '
 test_expect_success "upload: pr --br <branch> to upload specific branch" '
 	(
 		cd work &&
-		git -C main peer-review \
-			--br jx/topic1 \
-			--assume-yes \
-			--no-edit \
-			--dryrun \
-			--draft \
-			--mock-ssh-info-status 200 \
-			--mock-ssh-info-response \
-			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
-			>out 2>&1 &&
+		(
+			cd main &&
+			git peer-review \
+				--br jx/topic1 \
+				--assume-yes \
+				--no-edit \
+				--dryrun \
+				--draft \
+				--mock-ssh-info-status 200 \
+				--mock-ssh-info-response \
+				"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}"
+		) >out 2>&1 &&
 		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
 		cat >expect<<-EOF &&
 		Upload project (jiangxin/main) to remote branch master (draft):

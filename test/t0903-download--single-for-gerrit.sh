@@ -35,8 +35,8 @@ test_expect_success "bad review url" '
 
 test_expect_success "set review-url" '
 	(
-		cd work &&
-		git -C main config remote.origin.review https://example.com
+		cd work/main &&
+		git config remote.origin.review https://example.com
 	)
 '
 
@@ -54,7 +54,7 @@ test_expect_success "download and checkout" '
 		echo "Branch: $(git_current_branch)" &&
 		git log --pretty="    %s" -2 &&
 		git show-ref | cut -c 42- | grep changes
-	) >actual 2>&1 &&
+	) | sed -e "s/(no branch)/Detached HEAD/g" >actual 2>&1 &&
 	cat >expect<<-EOF &&
 	Branch: Detached HEAD
 	    New topic
@@ -82,7 +82,7 @@ test_expect_success "download again with already merged notice" '
 		echo "Branch: $(git_current_branch)" &&
 		git log --pretty="    %s" -2
 		git show-ref | cut -c 42- | grep changes
-	) >actual 2>&1 &&
+	) | sed -e "s/(no branch)/Detached HEAD/g" >actual 2>&1 &&
 	cat >expect<<-EOF &&
 	Branch: Detached HEAD
 	    New topic
