@@ -90,4 +90,23 @@ test_expect_success "reinstall .git-repo/gitconfig by git-repo version" '
 	test_cmp expect actual
 '
 
+test_expect_success "include.path has bad file location" '
+	location=$(git config -f .gitconfig include.path) &&
+	test -f "$location" &&
+	test_cmp expect actual &&
+	git config -f .gitconfig include.path bad/file &&
+	test_must_fail git config alias.pr
+'
+
+test_expect_success "fix wrong abs git repo config path" '
+	test -f .git-repo/gitconfig &&
+	test -f .gitconfig &&
+	git-repo version &&
+	cat >expect <<-EOF &&
+	repo upload --single
+	EOF
+	git config -f .git-repo/gitconfig alias.pr >actual &&
+	test_cmp expect actual
+'
+
 test_done

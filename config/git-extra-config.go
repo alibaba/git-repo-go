@@ -132,12 +132,13 @@ func InstallExtraGitConfig() error {
 		}
 	}
 	if !found {
+		// git 1.7.10 does not support relative path (~/.git-repo) as include.path.
 		cmds := []string{"git",
 			"config",
 			"--global",
 			"--add",
 			"include.path",
-			gitExtraConfigFile,
+			absExtraConfigFile,
 		}
 		err = exec.Command(cmds[0], cmds[1:]...).Run()
 		if err != nil {
