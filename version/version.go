@@ -17,6 +17,8 @@ package version
 
 import (
 	"bytes"
+	"fmt"
+	"os"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -24,15 +26,37 @@ import (
 	log "github.com/jiangxin/multi-log"
 )
 
-const (
-	// MinGitVersion defines the minimal version of Git.
-	MinGitVersion = "1.7.2"
-)
-
 var (
 	// Version is the verison of git-repo.
 	Version = "undefined"
+
+	// GitVersion is version of git.
+	GitVersion = ""
 )
+
+type gitCompatibleIssue struct {
+	Version string
+	Message string
+	Fatal   bool
+}
+
+var gitCompatibleIssues = []gitCompatibleIssue{
+	gitCompatibleIssue{
+		"1.7.10",
+		"Git config extensions (by include.path directive) are only supported in git 1.7.10 and above",
+		true,
+	},
+	gitCompatibleIssue{
+		"2.2.0",
+		"The git-interpret-trailers command introduced in git 2.2.0 is used for the Gerrit commit-msg hook.",
+		false,
+	},
+	gitCompatibleIssue{
+		"2.10.0",
+		"Some review options are sent using git push-options which are available in git 2.10.0 and above.",
+		false,
+	},
+}
 
 // GetVersion returns git-repo version.
 func GetVersion() string {
@@ -103,6 +127,59 @@ func CompareVersion(_left, _right string) int {
 }
 
 // ValidateGitVersion is used to check installed git version.
-func ValidateGitVersion() bool {
-	return CompareVersion(GetGitVersion(), MinGitVersion) >= 0
+func ValidateGitVersion() {
+	var (
+		// lower conflict verison
+		lcVersion string
+		// higher compatible version
+		hcVersion      string
+		messages       []string
+		suppressIssues bool
+	)
+
+	if _, ok := os.LookupEnv("GIT_REPO_SUPPRESS_COMPATIBLE_ISSUES"); ok {
+		suppressIssues = true
+	}
+
+	for _, issue := range gitCompatibleIssues {
+		if CompareVersion(GitVersion, issue.Version) < 0 {
+			if issue.Fatal {
+				if CompareVersion(issue.Version, lcVersion) > 0 {
+					lcVersion = issue.Version
+				}
+			} else {
+				if CompareVersion(issue.Version, hcVersion) > 0 {
+					hcVersion = issue.Version
+				}
+			}
+			messages = append(messages, issue.Message)
+		}
+	}
+
+	if GitVersion == "" {
+		log.Errorf("Please install git to version %s or above", lcVersion)
+	} else if lcVersion != "" {
+		log.Errorf("Please upgrade git to version %s or above", lcVersion)
+	} else if hcVersion != "" {
+		if !suppressIssues {
+			log.Warnf("You are suggested to install or upgrade git to version %s or above",
+				hcVersion)
+		}
+	} else {
+		return
+	}
+
+	if !suppressIssues {
+		for _, msg := range messages {
+			fmt.Printf("\t* %s\n", msg)
+		}
+	}
+
+	if lcVersion != "" || GitVersion == "" {
+		os.Exit(1)
+	}
+}
+
+func init() {
+	GitVersion = GetGitVersion()
 }

@@ -189,10 +189,7 @@ func (v rootCommand) runE(args []string) error {
 }
 
 func (v rootCommand) checkGitVersion() {
-	if !version.ValidateGitVersion() {
-		log.Fatalf("Please install or upgrade git to version %s or above",
-			version.MinGitVersion)
-	}
+	version.ValidateGitVersion()
 }
 
 func (v rootCommand) installConfigFiles() {
