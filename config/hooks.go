@@ -71,8 +71,9 @@ fi
 # Avoid the --if-exists option which only appeared in Git 2.15
 if ! git -c trailer.ifexists=doNothing interpret-trailers \
       --trailer "Change-Id: I${random}" < "$1" > "${dest}" ; then
-  echo "cannot insert change-id line in $1"
-  exit 1
+  if ! grep -q "^ChangeId: I" "${dest}"; then
+    echo "Change-Id: I${random}" >>"${dest}"
+  fi
 fi
 
 if ! mv "${dest}" "$1" ; then
