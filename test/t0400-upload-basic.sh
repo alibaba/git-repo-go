@@ -217,7 +217,17 @@ test_expect_success "upload --dryrun" '
 		  branch my/topic1 ( 1 commit(s)):
 		         <hash>
 		to https://example.com (y/N)? Yes
-		NOTE: will execute command: git push --receive-pack=agit-receive-pack -o title=review example -o description={base64}6K+m57uG6K+05piOXG4uLi5cbg== -o reviewers=user1,user2,user3,user4 -o cc=user5,user6,user7 -o notify=no -o private=yes -o wip=yes ssh://git@ssh.example.com/main.git refs/heads/my/topic1:refs/for/Maint/my/topic1
+		EOF
+		if git-repo test version --git lt 2.10.0; then
+			cat >>expect<<-EOF
+			NOTE: will execute command: git push --receive-pack=agit-receive-pack ssh://git@ssh.example.com/main.git refs/heads/my/topic1:refs/for/Maint/my/topic1%r=user1,r=user2,r=user3,r=user4,cc=user5,cc=user6,cc=user7,notify=NONE,private,wip
+			EOF
+		else
+			cat >>expect<<-EOF
+			NOTE: will execute command: git push --receive-pack=agit-receive-pack -o title=review example -o description={base64}6K+m57uG6K+05piOXG4uLi5cbg== -o reviewers=user1,user2,user3,user4 -o cc=user5,user6,user7 -o notify=no -o private=yes -o wip=yes ssh://git@ssh.example.com/main.git refs/heads/my/topic1:refs/for/Maint/my/topic1
+			EOF
+		fi &&
+		cat >>expect<<-EOF &&
 		NOTE: will update-ref refs/published/my/topic1 on refs/heads/my/topic1, reason: review from my/topic1 to Maint on https://example.com
 		
 		----------------------------------------------------------------------

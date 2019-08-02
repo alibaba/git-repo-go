@@ -208,7 +208,17 @@ test_expect_success "will upload one commit for review (http/dryrun)" '
 		  branch jx/topic ( 1 commit(s)):
 		         <hash>
 		to https://example.com (y/N)? Yes
-		NOTE: will execute command: git push --receive-pack=agit-receive-pack -o title=review example -o description={base64}6K+m57uG6K+05piOXG4uLi5cbg== -o reviewers=user1,user2,user3,user4 -o cc=user5,user6,user7 -o notify=no -o private=yes -o wip=yes ssh://git@ssh.example.com/jiangxin/main.git refs/heads/jx/topic:refs/for/Maint/jx/topic
+		EOF
+		if git-repo test version --git lt 2.10.0; then
+			cat >>expect<<-EOF
+			NOTE: will execute command: git push --receive-pack=agit-receive-pack ssh://git@ssh.example.com/jiangxin/main.git refs/heads/jx/topic:refs/for/Maint/jx/topic%r=user1,r=user2,r=user3,r=user4,cc=user5,cc=user6,cc=user7,notify=NONE,private,wip
+			EOF
+		else
+			cat >>expect<<-EOF
+			NOTE: will execute command: git push --receive-pack=agit-receive-pack -o title=review example -o description={base64}6K+m57uG6K+05piOXG4uLi5cbg== -o reviewers=user1,user2,user3,user4 -o cc=user5,user6,user7 -o notify=no -o private=yes -o wip=yes ssh://git@ssh.example.com/jiangxin/main.git refs/heads/jx/topic:refs/for/Maint/jx/topic
+			EOF
+		fi &&
+		cat >>expect<<-EOF &&
 		NOTE: will update-ref refs/published/jx/topic on refs/heads/jx/topic, reason: review from jx/topic to Maint on https://example.com
 
 		----------------------------------------------------------------------
