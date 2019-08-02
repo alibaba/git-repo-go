@@ -51,11 +51,11 @@ test_expect_success "git-repo sync (-l), server has gerrit response" '
 test_expect_success "push.default is nothing after sync local-half" '
 	(
 		cd work &&
-		git -C main config push.default &&
-		git -C projects/app1 config push.default
-		git -C projects/app1/module1 config push.default
-		git -C projects/app2 config push.default
-		git -C drivers/driver-1 config push.default
+		( cd main && git config push.default) &&
+		( cd projects/app1 && git config push.default ) &&
+		( cd projects/app1/module1 && git config push.default ) &&
+		( cd projects/app2 && git config push.default ) &&
+		( cd drivers/driver-1 && git config push.default )
 	) >actual &&
 	cat >expect <<-EOF &&
 	nothing

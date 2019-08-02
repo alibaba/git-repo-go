@@ -34,23 +34,23 @@ test_expect_success "create branch: my/topic1" '
 test_expect_success "check current branch" '
 	(
 		cd work &&
-		echo "main: refs/heads/my/topic1" >expect &&
-		(printf "main: " && git -C main symbolic-ref HEAD) >actual &&
+		echo "main: my/topic1" >expect &&
+		(printf "main: " && cd main && git_current_branch) >actual &&
 		test_cmp expect actual &&
-		echo "driver1: refs/heads/my/topic1" >expect &&
-		(printf "driver1: " && git -C drivers/driver-1 symbolic-ref HEAD) >actual &&
+		echo "driver1: my/topic1" >expect &&
+		(printf "driver1: " && cd drivers/driver-1 && git_current_branch) >actual &&
 		test_cmp expect actual &&
-		echo "driver2: refs/heads/my/topic1" >expect &&
-		(printf "driver2: " && git -C drivers/driver-2 symbolic-ref HEAD) >actual &&
+		echo "driver2: my/topic1" >expect &&
+		(printf "driver2: " && cd drivers/driver-2 && git_current_branch) >actual &&
 		test_cmp expect actual &&
-		echo "app1: refs/heads/my/topic1" >expect &&
-		(printf "app1: " && git -C projects/app1 symbolic-ref HEAD) >actual &&
+		echo "app1: my/topic1" >expect &&
+		(printf "app1: " && cd projects/app1 && git_current_branch) >actual &&
 		test_cmp expect actual &&
-		echo "app2: refs/heads/my/topic1" >expect &&
-		(printf "app2: " && git -C projects/app2 symbolic-ref HEAD) >actual &&
+		echo "app2: my/topic1" >expect &&
+		(printf "app2: " && cd projects/app2 && git_current_branch) >actual &&
 		test_cmp expect actual &&
-		echo "module1: refs/heads/my/topic1" >expect &&
-		(printf "module1: " && git -C projects/app1/module1 symbolic-ref HEAD) >actual &&
+		echo "module1: my/topic1" >expect &&
+		(printf "module1: " && cd projects/app1/module1 && git_current_branch) >actual &&
 		test_cmp expect actual
 	)
 '
@@ -59,22 +59,22 @@ test_expect_success "check tracking branch" '
 	(
 		cd work &&
 		echo "main: refs/heads/Maint" >expect &&
-		(printf "main: " && git -C main config branch.my/topic1.merge) >actual &&
+		(printf "main: " && cd main && git config branch.my/topic1.merge) >actual &&
 		test_cmp expect actual &&
 		echo "driver1: refs/heads/Maint" >expect &&
-		(printf "driver1: " && git -C drivers/driver-1 config branch.my/topic1.merge) >actual &&
+		(printf "driver1: " && cd drivers/driver-1 && git config branch.my/topic1.merge) >actual &&
 		test_cmp expect actual &&
 		echo "driver2: refs/heads/Maint" >expect &&
-		(printf "driver2: " && git -C drivers/driver-2 config branch.my/topic1.merge) >actual &&
+		(printf "driver2: " && cd drivers/driver-2 && git config branch.my/topic1.merge) >actual &&
 		test_cmp expect actual &&
 		echo "app1: refs/heads/Maint" >expect &&
-		(printf "app1: " && git -C projects/app1 config branch.my/topic1.merge) >actual &&
+		(printf "app1: " && cd projects/app1 && git config branch.my/topic1.merge) >actual &&
 		test_cmp expect actual &&
 		echo "app2: refs/heads/Maint" >expect &&
-		(printf "app2: " && git -C projects/app2 config branch.my/topic1.merge) >actual &&
+		(printf "app2: " && cd projects/app2 && git config branch.my/topic1.merge) >actual &&
 		test_cmp expect actual &&
 		echo "module1: refs/heads/Maint" >expect &&
-		(printf "module1: " && git -C projects/app1/module1 config branch.my/topic1.merge) >actual &&
+		(printf "module1: " && cd projects/app1/module1 && git config branch.my/topic1.merge) >actual &&
 		test_cmp expect actual
 	)
 '
@@ -100,8 +100,9 @@ test_expect_success "check current commit of app1" '
 		my/topic2> Version 1.0.0
 		EOF
 		(
-			printf "$(git -C projects/app1 symbolic-ref --short HEAD)> " &&
-			git -C projects/app1 log -1 --pretty="%s"
+			printf "$(cd projects/app1 && git_current_branch)> " &&
+			cd projects/app1 &&
+			git log -1 --pretty="%s"
 		) >actual &&
 		test_cmp expect actual
 	)
@@ -121,8 +122,9 @@ test_expect_success "check current commit of app1" '
 		my/topic1> my/topic1: test-commit
 		EOF
 		(
-			printf "$(git -C projects/app1 symbolic-ref --short HEAD)> " &&
-			git -C projects/app1 log -1 --pretty="%s"
+			printf "$(cd projects/app1 && git_current_branch)> " &&
+			cd projects/app1 &&
+			git log -1 --pretty="%s"
 		) >actual &&
 		test_cmp expect actual
 	)

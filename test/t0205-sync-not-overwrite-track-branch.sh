@@ -45,7 +45,10 @@ test_expect_success "edit files in workdir" '
 		echo hacked >projects/app1/module1/VERSION &&
 		test -f projects/app2/VERSION &&
 		echo hacked >projects/app2/VERSION &&
-		git -C projects/app2 add -A
+		(
+			cd projects/app2 &&
+			git add -A
+		)
 	)
 '
 
@@ -66,7 +69,10 @@ test_expect_success "manifests version: 2.0" '
 		cat >expect<<-EOF &&
 		manifests: Version 2.0
 		EOF
-		git -C .repo/manifests log -1 --pretty="manifests: %s" >actual &&
+		(
+			cd .repo/manifests &&
+			git log -1 --pretty="manifests: %s"
+		) >actual &&
 		test_cmp expect actual
 	)
 '
@@ -77,7 +83,10 @@ test_expect_success "fail to sync drivers/driver-1, workspace is dirty (not stag
 		cat >expect<<-EOF &&
 		 M VERSION
 		EOF
-		git -C drivers/driver-1 status -uno --porcelain >actual &&
+		(
+			cd drivers/driver-1 &&
+			git status -uno --porcelain
+		) >actual &&
 		test_cmp expect actual &&
 		test_must_fail git-repo sync -l \
 			--mock-ssh-info-status 200 \
@@ -99,7 +108,10 @@ test_expect_success "fail to sync projects/app1, workspace is dirty (not staged)
 		cat >expect<<-EOF &&
 		 M VERSION
 		EOF
-		git -C projects/app1 status -uno --porcelain >actual &&
+		(
+			cd projects/app1 &&
+			git status -uno --porcelain
+		) >actual &&
 		test_cmp expect actual &&
 		test_must_fail git-repo sync -l \
 			--mock-ssh-info-status 200 \
@@ -121,7 +133,10 @@ test_expect_success "fail to sync projects/app2, workspace is dirty (staged)" '
 		cat >expect<<-EOF &&
 		M  VERSION
 		EOF
-		git -C projects/app2 status -uno --porcelain >actual &&
+		(
+			cd projects/app2 &&
+			git status -uno --porcelain
+		) >actual &&
 		test_cmp expect actual &&
 		test_must_fail git-repo sync -l \
 			--mock-ssh-info-status 200 \

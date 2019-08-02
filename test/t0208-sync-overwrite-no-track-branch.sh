@@ -45,7 +45,10 @@ test_expect_success "edit files in workdir" '
 		echo hacked >projects/app1/module1/VERSION &&
 		test -f projects/app2/VERSION &&
 		echo hacked >projects/app2/VERSION &&
-		git -C projects/app2 add -A
+		(
+			cd projects/app2 &&
+			git add -A
+		)
 	)
 '
 
