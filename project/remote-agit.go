@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"code.alibaba-inc.com/force/git-repo/cap"
 	"code.alibaba-inc.com/force/git-repo/config"
 	"code.alibaba-inc.com/force/git-repo/manifest"
 	log "github.com/jiangxin/multi-log"
@@ -84,39 +85,17 @@ func (v *AGitRemote) UploadCommands(o *UploadOptions, branch *ReviewableBranch) 
 	if gitURL.IsSSH() {
 		cmds = append(cmds, "--receive-pack=agit-receive-pack")
 	}
-	for _, pushOption := range o.PushOptions {
-		cmds = append(cmds, "-o", pushOption)
-	}
 
-	if o.Title != "" {
-		cmds = append(cmds, "-o", "title="+encodeString(o.Title))
+	gitCanPushOptions := cap.GitCanPushOptions()
+	if len(o.PushOptions) > 0 {
+		if !gitCanPushOptions {
+			log.Warnf("cannot send push options, for your git version is too low")
+		} else {
+			for _, pushOption := range o.PushOptions {
+				cmds = append(cmds, "-o", pushOption)
+			}
+		}
 	}
-	if o.Description != "" {
-		cmds = append(cmds, "-o", "description="+encodeString(o.Description))
-	}
-	if o.Issue != "" {
-		cmds = append(cmds, "-o", "issue="+encodeString(o.Issue))
-	}
-	if len(o.People[0]) > 0 {
-		reviewers := strings.Join(o.People[0], ",")
-		cmds = append(cmds, "-o", "reviewers="+encodeString(reviewers))
-	}
-	if len(o.People[1]) > 0 {
-		cc := strings.Join(o.People[1], ",")
-		cmds = append(cmds, "-o", "cc="+encodeString(cc))
-	}
-
-	if o.NoEmails {
-		cmds = append(cmds, "-o", "notify=no")
-	}
-	if o.Private {
-		cmds = append(cmds, "-o", "private=yes")
-	}
-	if o.WIP {
-		cmds = append(cmds, "-o", "wip=yes")
-	}
-
-	cmds = append(cmds, url)
 
 	destBranch := o.DestBranch
 	if strings.HasPrefix(destBranch, config.RefsHeads) {
@@ -137,7 +116,57 @@ func (v *AGitRemote) UploadCommands(o *UploadOptions, branch *ReviewableBranch) 
 		destBranch,
 		branchName)
 
-	cmds = append(cmds, refSpec)
+	if gitCanPushOptions {
+		if o.Title != "" {
+			cmds = append(cmds, "-o", "title="+encodeString(o.Title))
+		}
+		if o.Description != "" {
+			cmds = append(cmds, "-o", "description="+encodeString(o.Description))
+		}
+		if o.Issue != "" {
+			cmds = append(cmds, "-o", "issue="+encodeString(o.Issue))
+		}
+		if len(o.People[0]) > 0 {
+			reviewers := strings.Join(o.People[0], ",")
+			cmds = append(cmds, "-o", "reviewers="+encodeString(reviewers))
+		}
+		if len(o.People[1]) > 0 {
+			cc := strings.Join(o.People[1], ",")
+			cmds = append(cmds, "-o", "cc="+encodeString(cc))
+		}
+
+		if o.NoEmails {
+			cmds = append(cmds, "-o", "notify=no")
+		}
+		if o.Private {
+			cmds = append(cmds, "-o", "private=yes")
+		}
+		if o.WIP {
+			cmds = append(cmds, "-o", "wip=yes")
+		}
+	} else {
+		opts := []string{}
+		for _, u := range o.People[0] {
+			opts = append(opts, "r="+u)
+		}
+		for _, u := range o.People[1] {
+			opts = append(opts, "cc="+u)
+		}
+		if o.NoEmails {
+			opts = append(opts, "notify=NONE")
+		}
+		if o.Private {
+			opts = append(opts, "private")
+		}
+		if o.WIP {
+			opts = append(opts, "wip")
+		}
+		if len(opts) > 0 {
+			refSpec = refSpec + "%" + strings.Join(opts, ",")
+		}
+	}
+
+	cmds = append(cmds, url, refSpec)
 
 	return cmds, nil
 }

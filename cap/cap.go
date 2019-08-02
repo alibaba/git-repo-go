@@ -20,6 +20,7 @@ import (
 	"runtime"
 
 	"code.alibaba-inc.com/force/git-repo/config"
+	"code.alibaba-inc.com/force/git-repo/version"
 	"github.com/mattn/go-isatty"
 )
 
@@ -41,11 +42,17 @@ type SymlinkInterface interface {
 	CanSymlink() bool
 }
 
+// GitInterface is the interface to implement Git related capabilities.
+type GitInterface interface {
+	GitCanPushOptions() bool
+}
+
 // Instance of interface, which can be overridden for test by mocking.
 var (
 	CapWindows WindowsInterface
 	CapTTY     TTYInterface
 	CapSymlink SymlinkInterface
+	CapGit     GitInterface
 )
 
 // defaultWindowsImpl implements WindowsInterface.
@@ -89,6 +96,15 @@ func (v defaultSymlinkImpl) CanSymlink() bool {
 	return runtime.GOOS != "windows"
 }
 
+// defaultCapGitImpl implements GitInterface.
+type defaultCapGitImpl struct {
+}
+
+// GitCanPushOption indicates git can sent push-optoins or not
+func (v defaultCapGitImpl) GitCanPushOptions() bool {
+	return version.CompareVersion(version.GitVersion, "2.10.0") >= 0
+}
+
 // IsWindows indicates whether current OS is windows.
 func IsWindows() bool {
 	return CapWindows.IsWindows()
@@ -104,8 +120,14 @@ func Isatty() bool {
 	return CapTTY.Isatty()
 }
 
+// GitCanPushOptions indicates whether git can sent push options.
+func GitCanPushOptions() bool {
+	return CapGit.GitCanPushOptions()
+}
+
 func init() {
 	CapWindows = &defaultWindowsImpl{}
 	CapTTY = &defaultTTYImpl{}
 	CapSymlink = &defaultSymlinkImpl{}
+	CapGit = &defaultCapGitImpl{}
 }
