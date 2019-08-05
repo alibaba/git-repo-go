@@ -796,8 +796,13 @@ func (v uploadCommand) runE(args []string) error {
 		return err
 	}
 
+	if len(allProjects) == 0 {
+		log.Note("no projects ready for upload")
+		return nil
+	}
+
 	// if --single, set project.Remote according to branch name
-	if config.IsSingleMode() && len(allProjects) > 0 {
+	if config.IsSingleMode() {
 		var (
 			head           string
 			remoteName     string
@@ -817,56 +822,55 @@ func (v uploadCommand) runE(args []string) error {
 				head = config.RefsHeads + head
 			}
 		}
-		if project.IsHead(head) {
-			head = strings.TrimPrefix(head, config.RefsHeads)
-			remoteName = repo.TrackRemote(head)
-			remoteRevision = repo.TrackBranch(head)
-			if remoteName == "" || remoteRevision == "" {
-				return fmt.Errorf("upload failed: cannot find tracking branch\n\n" +
-					"Please run command \"git branch -u <upstream>\" to track a remote branch. E.g.:\n\n" +
-					"    git branch -u origin/master")
-			}
-			if remote, ok := remoteMap[remoteName]; ok {
-				if remote.Error != nil {
-					return remote.Error
-				}
-				p.Remote = remote.Remote
-			} else {
-				return fmt.Errorf("fail to parse remote: %s", remoteName)
-			}
 
-			// Set Revision of manifest.Remote to tracking branch.
-			manifestRemote := p.Remote.GetRemote()
-			manifestRemote.Revision = remoteRevision
-
-			// Set project and repository name
-			remoteURL = repo.GitConfigRemoteURL(remoteName)
-			gitURL := config.ParseGitURL(remoteURL)
-			if gitURL != nil && gitURL.Repo != "" {
-				if gitURL.Proto == "file" {
-					repo.Name = filepath.Base(gitURL.Repo)
-					p.Project.Name = repo.Name
-				} else {
-					repo.Name = gitURL.Repo
-					p.Project.Name = gitURL.Repo
-				}
-			}
-
-			// Set other missing fields
-			repo.RemoteURL = remoteURL
-			repo.RemoteName = remoteName
-			repo.Revision = remoteRevision
-			p.Project.RemoteName = remoteName
-			p.Project.Revision = remoteRevision
-		} else {
+		if !project.IsHead(head) {
 			log.Debugf("detached at %s", head)
 			return fmt.Errorf("upload failed: not in a branch\n\n" +
 				"Please run command \"git checkout -b <branch>\" to create a new branch.")
 		}
-	}
 
-	// Install hooks if remote is Gerrit server
-	if config.IsSingleMode() && len(allProjects) > 0 {
+		head = strings.TrimPrefix(head, config.RefsHeads)
+		remoteName = repo.TrackRemote(head)
+		remoteRevision = repo.TrackBranch(head)
+		if remoteName == "" || remoteRevision == "" {
+			return fmt.Errorf("upload failed: cannot find tracking branch\n\n" +
+				"Please run command \"git branch -u <upstream>\" to track a remote branch. E.g.:\n\n" +
+				"    git branch -u origin/master")
+		}
+		if remote, ok := remoteMap[remoteName]; ok {
+			if remote.Error != nil {
+				return remote.Error
+			}
+			p.Remote = remote.Remote
+		} else {
+			return fmt.Errorf("fail to parse remote: %s", remoteName)
+		}
+
+		// Set Revision of manifest.Remote to tracking branch.
+		manifestRemote := p.Remote.GetRemote()
+		manifestRemote.Revision = remoteRevision
+
+		// Set project and repository name
+		remoteURL = repo.GitConfigRemoteURL(remoteName)
+		gitURL := config.ParseGitURL(remoteURL)
+		if gitURL != nil && gitURL.Repo != "" {
+			if gitURL.Proto == "file" {
+				repo.Name = filepath.Base(gitURL.Repo)
+				p.Project.Name = repo.Name
+			} else {
+				repo.Name = gitURL.Repo
+				p.Project.Name = gitURL.Repo
+			}
+		}
+
+		// Set other missing fields
+		repo.RemoteURL = remoteURL
+		repo.RemoteName = remoteName
+		repo.Revision = remoteRevision
+		p.Project.RemoteName = remoteName
+		p.Project.Revision = remoteRevision
+
+		// Install hooks if remote is Gerrit server
 		if allProjects[0].Remote.GetType() == config.RemoteTypeGerrit {
 			allProjects[0].InstallGerritHooks()
 		}
@@ -909,7 +913,7 @@ func (v uploadCommand) runE(args []string) error {
 
 	// For single mode, clean published refs, because we don't have chance to
 	// run other commands, such as `git-repo sync`.
-	if config.IsSingleMode() && len(allProjects) > 0 {
+	if config.IsSingleMode() {
 		err = allProjects[0].CleanPublishedCache()
 	}
 	return err
