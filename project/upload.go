@@ -28,12 +28,19 @@ type UploadOptions struct {
 	WIP          bool
 }
 
-// ReviewableBranch holds branch of proect ready for upload.
+// RemoteTrack holds info of remote tracking branch
+type RemoteTrack struct {
+	Remote string
+	Branch string
+	Track  Reference
+}
+
+// ReviewableBranch holds branch of project ready for upload.
 type ReviewableBranch struct {
 	Project     *Project
 	Branch      Branch
 	DestBranch  string
-	RemoteTrack Reference
+	RemoteTrack RemoteTrack
 	Uploaded    bool
 	Error       error
 }
@@ -77,7 +84,7 @@ func (v ReviewableBranch) Published() *Reference {
 
 // Commits contains commits avaiable for review.
 func (v ReviewableBranch) Commits() []string {
-	commits, err := v.Project.Revlist(v.Branch.Hash, "--not", v.RemoteTrack.Hash)
+	commits, err := v.Project.Revlist(v.Branch.Hash, "--not", v.RemoteTrack.Track.Hash)
 	if err != nil {
 		log.Errorf("fail to get commits of ReviewableBranch %s: %s", v.Branch, err)
 		return nil
@@ -161,6 +168,7 @@ func (v *Project) GetUploadableBranch(branch string) *ReviewableBranch {
 	}
 	branch = strings.TrimPrefix(branch, config.RefsHeads)
 	remote := v.Config().Get("branch." + branch + ".remote")
+	remoteBranch := v.Config().Get("branch." + branch + ".merge")
 
 	if v.Remote == nil || v.Remote.GetType() == config.RemoteTypeUnknown {
 		log.Warnf("cannot upload, unknown type of remote '%s' for project '%s'",
@@ -199,9 +207,14 @@ func (v *Project) GetUploadableBranch(branch string) *ReviewableBranch {
 			Name: branch,
 			Hash: branchID},
 		DestBranch: v.TrackBranch(branch),
-		RemoteTrack: Reference{
-			Name: track,
-			Hash: trackID},
+		RemoteTrack: RemoteTrack{
+			Remote: remote,
+			Branch: remoteBranch,
+			Track: Reference{
+				Name: track,
+				Hash: trackID,
+			},
+		},
 	}
 
 	if len(rb.Commits()) == 0 {

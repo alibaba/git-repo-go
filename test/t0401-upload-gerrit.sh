@@ -65,7 +65,7 @@ test_expect_success "new commit: ready for upload" '
 		git commit -m "topic1: new file" &&
 		cd .. &&
 		cat >expect<<-EOF &&
-		Upload project main/ to remote branch :
+		Upload project main/ to remote branch Maint:
 		  branch my/topic1 ( 1 commit(s)):
 		         <hash>
 		to https://example.com (y/N)? No
@@ -86,7 +86,7 @@ test_expect_success "upload --dryrun --drafts" '
 		cd work &&
 		git repo start --all my/topic2 &&
 		cat >expect<<-EOF &&
-		Upload project main/ to remote branch  (draft):
+		Upload project main/ to remote branch Maint (draft):
 		  branch my/topic1 ( 1 commit(s)):
 		         <hash>
 		to https://example.com (y/N)? Yes
@@ -113,7 +113,7 @@ test_expect_success "upload --dryrun with reviewers" '
 		cd work &&
 		git repo start --all my/topic2 &&
 		cat >expect<<-EOF &&
-		Upload project main/ to remote branch :
+		Upload project main/ to remote branch Maint:
 		  branch my/topic1 ( 1 commit(s)):
 		         <hash>
 		to https://example.com (y/N)? Yes

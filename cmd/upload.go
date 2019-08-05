@@ -216,6 +216,28 @@ func (v *uploadCommand) reloadWorkSpace() {
 	}
 }
 
+func (v *uploadCommand) getDestBranch(branch *project.ReviewableBranch) (string, error) {
+	var (
+		destBranch string
+	)
+
+	if branch == nil {
+		return "", fmt.Errorf("reviewable branch is nil")
+	}
+	p := branch.Project
+	if p == nil {
+		return "", fmt.Errorf("project of reviewable branch is nil")
+	}
+	if v.O.DestBranch != "" {
+		destBranch = v.O.DestBranch
+	} else if p.DestBranch != "" {
+		destBranch = p.DestBranch
+	} else if p.Revision != "" {
+		destBranch = p.Revision
+	}
+	return destBranch, nil
+}
+
 func (v uploadCommand) UploadForReviewWithConfirm(branch *project.ReviewableBranch) error {
 	var (
 		answer bool
@@ -232,15 +254,10 @@ func (v uploadCommand) UploadForReviewWithConfirm(branch *project.ReviewableBran
 			return fmt.Errorf("upload blocked by %s = false", key)
 		}
 	} else {
-		destBranch := ""
-		if v.O.DestBranch != "" {
-			destBranch = v.O.DestBranch
-		} else if p.DestBranch != "" {
-			destBranch = p.DestBranch
-		} else if remote.Revision != "" {
-			destBranch = remote.Revision
+		destBranch, err := v.getDestBranch(branch)
+		if err != nil {
+			return err
 		}
-
 		draftStr := ""
 		if v.O.Draft {
 			draftStr = " (draft)"
@@ -342,13 +359,9 @@ func (v uploadCommand) UploadForReviewWithEditor(branchesMap map[string][]projec
 			if len(b) > 0 {
 				script = append(script, "#")
 			}
-			var destBranch string
-			if v.O.DestBranch != "" {
-				destBranch = v.O.DestBranch
-			} else if branch.Project.DestBranch != "" {
-				destBranch = branch.Project.DestBranch
-			} else {
-				destBranch = branch.Project.Revision
+			destBranch, err := v.getDestBranch(&branch)
+			if err != nil {
+				return err
 			}
 			script = append(script,
 				fmt.Sprintf("%s  branch %s (%2d commit(s)) to remote branch %s:",
@@ -703,24 +716,22 @@ func (v *uploadCommand) UploadAndReport(branches []project.ReviewableBranch) err
 			v.O.AutoTopic = cfg.GetBool(key, false)
 		}
 
-		destBranch := ""
-		if v.O.DestBranch != "" {
-			destBranch = v.O.DestBranch
-		} else if branch.Project.DestBranch != "" {
-			destBranch = branch.Project.DestBranch
+		destBranch, err := v.getDestBranch(&branch)
+		if err != nil {
+			return err
 		}
 		if destBranch != "" {
 			fullDest := destBranch
 			if !strings.HasPrefix(fullDest, config.RefsHeads) {
 				fullDest = config.RefsHeads + fullDest
 			}
-			mergeBranch := branch.RemoteTrack.Name
+			mergeBranch := branch.RemoteTrack.Branch
 			if v.O.DestBranch == "" && mergeBranch != "" && mergeBranch != fullDest {
-				fmt.Printf("merge branch %s does not match destination branch %s\n",
+				log.Errorf("merge branch %s does not match destination branch %s\n",
 					mergeBranch,
 					fullDest)
-				fmt.Println("skipping upload.")
-				fmt.Printf("Please use `--destination %s` if this is intentional\n",
+				log.Errorf("skipping upload.")
+				log.Errorf("Please use `--destination %s` if this is intentional\n",
 					destBranch)
 				branch.Uploaded = false
 				continue

@@ -59,9 +59,13 @@ func TestUploadCommandsWithPushOptions(t *testing.T) {
 			Hash: "1234",
 		},
 		DestBranch: "master",
-		RemoteTrack: Reference{
-			Name: "refs/remotes/origin/master",
-			Hash: "2345",
+		RemoteTrack: RemoteTrack{
+			Remote: "origin",
+			Branch: "refs/heads/master",
+			Track: Reference{
+				Name: "refs/remotes/origin/master",
+				Hash: "2345",
+			},
 		},
 		Uploaded: false,
 	}
@@ -159,9 +163,13 @@ func TestUploadCommandsWithoutPushOptions(t *testing.T) {
 			Hash: "1234",
 		},
 		DestBranch: "master",
-		RemoteTrack: Reference{
-			Name: "refs/remotes/origin/master",
-			Hash: "2345",
+		RemoteTrack: RemoteTrack{
+			Remote: "origin",
+			Branch: "refs/heads/master",
+			Track: Reference{
+				Name: "refs/remotes/origin/master",
+				Hash: "2345",
+			},
 		},
 		Uploaded: false,
 	}

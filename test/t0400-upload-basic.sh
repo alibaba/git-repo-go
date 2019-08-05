@@ -67,7 +67,7 @@ test_expect_success "with new commit, ready for upload (--no-edit)" '
 	(
 		cd work &&
 		cat >expect<<-EOF &&
-		Upload project main/ to remote branch :
+		Upload project main/ to remote branch Maint:
 		  branch my/topic1 ( 1 commit(s)):
 		         <hash>
 		to https://example.com (y/N)? No
@@ -137,7 +137,7 @@ test_expect_success "with new commit, ready for upload (edit push options)" '
 		test_cmp expect actual
 	)
 '
-
+test_done
 test_expect_success "new branch, and do nothing for for upload --cbr" '
 	(
 		cd work &&
@@ -161,7 +161,7 @@ test_expect_success "upload branch without --cbr" '
 		cd work &&
 		git repo start --all my/topic2 &&
 		cat >expect<<-EOF &&
-		Upload project main/ to remote branch :
+		Upload project main/ to remote branch Maint:
 		  branch my/topic1 ( 1 commit(s)):
 		         <hash>
 		to https://example.com (y/N)? No
@@ -184,7 +184,7 @@ test_expect_success "upload --dryrun --drafts" '
 		cd work &&
 		git repo start --all my/topic2 &&
 		cat >expect<<-EOF &&
-		Upload project main/ to remote branch  (draft):
+		Upload project main/ to remote branch Maint (draft):
 		  branch my/topic1 ( 1 commit(s)):
 		         <hash>
 		to https://example.com (y/N)? Yes
@@ -213,7 +213,7 @@ test_expect_success "upload --dryrun" '
 		cd work &&
 		git repo start --all my/topic2 &&
 		cat >expect<<-EOF &&
-		Upload project main/ to remote branch :
+		Upload project main/ to remote branch Maint:
 		  branch my/topic1 ( 1 commit(s)):
 		         <hash>
 		to https://example.com (y/N)? Yes
@@ -260,7 +260,7 @@ test_expect_success "mock-git-push, but do update-ref for upload" '
 		cd work &&
 		git repo start --all my/topic2 &&
 		cat >expect<<-EOF &&
-		Upload project main/ to remote branch :
+		Upload project main/ to remote branch Maint:
 		  branch my/topic1 ( 1 commit(s)):
 		         <hash>
 		to https://example.com (y/N)? Yes
