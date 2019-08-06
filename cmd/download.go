@@ -35,6 +35,7 @@ type downloadCommand struct {
 		Revert     bool
 		FFOnly     bool
 		NoCache    bool
+		Remote     string
 	}
 }
 
@@ -80,6 +81,10 @@ func (v *downloadCommand) Command() *cobra.Command {
 		"no-cache",
 		false,
 		"Ignore ssh-info cache, and recheck ssh-info API")
+	v.cmd.Flags().StringVar(&v.O.Remote,
+		"remote",
+		"",
+		"download from location defined by git remote")
 
 	return v.cmd
 }
@@ -156,6 +161,10 @@ func (v *downloadCommand) runE(args []string) error {
 		return fmt.Errorf("cannot use more than one of `-c`, `-r`, or `-f` options")
 	}
 
+	if v.O.Remote != "" && !config.IsSingleMode() {
+		return fmt.Errorf("--remote can be only used with --single")
+	}
+
 	if len(args) == 0 {
 		return newUserError("no args")
 	}
@@ -165,7 +174,36 @@ func (v *downloadCommand) runE(args []string) error {
 		return err
 	}
 
+	var remoteMap = ws.GetRemoteMap()
 	for _, c := range changes {
+		if c.Project.Remote == nil && config.IsSingleMode() {
+			if remoteMap.Size() == 0 {
+				log.Warnf("no remote defined for project %s", c.Project.Name)
+			} else if remoteMap.Size() > 1 {
+				if v.O.Remote != "" {
+					remote, err := remoteMap.GetRemote(v.O.Remote)
+					if err != nil {
+						log.Errorf("error found when get remote: %s", err)
+						continue
+					} else if remote == nil {
+						log.Errorf("cannot find remote %s", v.O.Remote)
+						continue
+					} else {
+						c.Project.Remote = remote
+					}
+				} else {
+					remote, err := remoteMap.GetRemote("origin")
+					if err == nil && remote != nil {
+						log.Warning("no tracking remote defined, try to download from origin")
+						c.Project.Remote = remote
+					} else {
+						log.Error("no tracking remote defined, and don't know where to download from.")
+						log.Error("please try to use --remote option for download")
+						continue
+					}
+				}
+			}
+		}
 		dl, err := c.Project.DownloadPatchSet(c.ReviewID, c.PatchID)
 		if err != nil {
 			return err

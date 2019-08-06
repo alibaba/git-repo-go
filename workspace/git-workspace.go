@@ -33,7 +33,7 @@ func (v GitWorkSpace) AdminDir() string {
 }
 
 // GetRemoteMap returns RemoteMap.
-func (v *GitWorkSpace) GetRemoteMap() map[string]project.RemoteWithError {
+func (v *GitWorkSpace) GetRemoteMap() RemoteMap {
 	return v.RemoteMap
 }
 

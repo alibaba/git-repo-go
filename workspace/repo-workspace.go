@@ -49,7 +49,7 @@ func (v RepoWorkSpace) AdminDir() string {
 }
 
 // GetRemoteMap returns RemoteMap.
-func (v *RepoWorkSpace) GetRemoteMap() map[string]project.RemoteWithError {
+func (v *RepoWorkSpace) GetRemoteMap() RemoteMap {
 	return v.RemoteMap
 }
 

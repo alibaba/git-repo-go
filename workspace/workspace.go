@@ -20,10 +20,26 @@ import (
 	"code.alibaba-inc.com/force/git-repo/project"
 )
 
+// RemoteMap maps name to RemoteWithError
+type RemoteMap map[string]project.RemoteWithError
+
+// GetRemote returns remote and error from matching RemoteWithError
+func (v RemoteMap) GetRemote(name string) (project.Remote, error) {
+	if result, ok := v[name]; ok {
+		return result.Remote, result.Error
+	}
+	return nil, nil
+}
+
+// Size is size of map
+func (v RemoteMap) Size() int {
+	return len(v)
+}
+
 // WorkSpace is interface for workspace, implemented with repo workspace or single git workspace.
 type WorkSpace interface {
 	AdminDir() string
-	GetRemoteMap() map[string]project.RemoteWithError
+	GetRemoteMap() RemoteMap
 	LoadRemotes(bool) error
 	IsSingle() bool
 	GetProjects(*GetProjectsOptions, ...string) ([]*project.Project, error)

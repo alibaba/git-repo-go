@@ -17,6 +17,9 @@ type PatchSet struct {
 // DownloadPatchSet fetches code review and return the downloaded PatchSet.
 func (v Project) DownloadPatchSet(reviewID, patchID int) (*PatchSet, error) {
 	reviewRef := ""
+	if v.Remote == nil {
+		log.Fatal("not remote tracking defined, and do not know where to download")
+	}
 	if v.Remote != nil {
 		reviewRef = v.Remote.GetCodeReviewRef(reviewID, patchID)
 	}
