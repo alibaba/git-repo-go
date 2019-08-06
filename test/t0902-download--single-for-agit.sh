@@ -29,7 +29,8 @@ test_expect_success "bad review url" '
 			12345
 	) >actual 2>&1 &&
 	cat >expect<<-EOF &&
-	Error: cannot find review reference for main
+	WARNING: no remote defined for project main
+	FATAL: not remote tracking defined, and do not know where to download
 	EOF
 	test_cmp expect actual
 '
