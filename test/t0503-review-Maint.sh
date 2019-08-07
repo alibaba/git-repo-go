@@ -34,7 +34,7 @@ test_expect_success "upload error: unsupport url protocol" '
 	(
 		cd work &&
 		cat >expect<<-EOF &&
-		Error: fail to parse remote: origin
+		Error: no remote defined for project main
 		EOF
 		(
 			cd main &&

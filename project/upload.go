@@ -159,7 +159,7 @@ func (v ReviewableBranch) UploadForReview(o *UploadOptions, people [][]string) e
 }
 
 // GetUploadableBranch returns branch which has commits ready for upload.
-func (v *Project) GetUploadableBranch(branch string) *ReviewableBranch {
+func (v *Project) GetUploadableBranch(branch, remote, remoteBranch string) *ReviewableBranch {
 	if branch == "" {
 		branch = v.GetHead()
 		if branch == "" {
@@ -167,8 +167,12 @@ func (v *Project) GetUploadableBranch(branch string) *ReviewableBranch {
 		}
 	}
 	branch = strings.TrimPrefix(branch, config.RefsHeads)
-	remote := v.Config().Get("branch." + branch + ".remote")
-	remoteBranch := v.Config().Get("branch." + branch + ".merge")
+	if remote == "" {
+		remote = v.Config().Get("branch." + branch + ".remote")
+	}
+	if remoteBranch == "" {
+		remoteBranch = v.Config().Get("branch." + branch + ".merge")
+	}
 
 	if v.Remote == nil || v.Remote.GetType() == config.RemoteTypeUnknown {
 		log.Warnf("cannot upload, unknown type of remote '%s' for project '%s'",
@@ -179,7 +183,7 @@ func (v *Project) GetUploadableBranch(branch string) *ReviewableBranch {
 
 	manifestRemote := v.Remote.GetRemote().Name
 
-	if remote != manifestRemote {
+	if remote != manifestRemote && !config.IsSingleMode() {
 		log.Warnf("cannot upload, unmatch remote for '%s': %s != %s",
 			branch,
 			remote,
@@ -192,7 +196,7 @@ func (v *Project) GetUploadableBranch(branch string) *ReviewableBranch {
 	if err != nil {
 		return nil
 	}
-	track := v.LocalTrackBranch(branch)
+	track := v.RemoteMatchingBranch(remote, remoteBranch)
 	if track == "" {
 		return nil
 	}
@@ -239,7 +243,7 @@ func (v *Project) GetUploadableBranches(branch string) []ReviewableBranch {
 	)
 
 	if branch != "" {
-		rb := v.GetUploadableBranch(branch)
+		rb := v.GetUploadableBranch(branch, "", "")
 		if rb == nil {
 			return nil
 		}
@@ -248,7 +252,7 @@ func (v *Project) GetUploadableBranches(branch string) []ReviewableBranch {
 	}
 
 	for _, head := range v.Heads() {
-		rb := v.GetUploadableBranch(head.Name)
+		rb := v.GetUploadableBranch(head.Name, "", "")
 		if rb == nil {
 			continue
 		}

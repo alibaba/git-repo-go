@@ -89,7 +89,15 @@ func (v Repository) LocalTrackBranch(branch string) string {
 	if remote == "" || track == "" {
 		return ""
 	}
-	return config.RefsRemotes + remote + "/" + track
+	return v.RemoteMatchingBranch(remote, track)
+}
+
+// RemoteMatchingBranch gets local tracking branch name of a match remote branch
+func (v Repository) RemoteMatchingBranch(remote, branch string) string {
+	branch = strings.TrimPrefix(branch, config.RefsHeads)
+
+	// TODO: map according to remote.<name>.fetch
+	return config.RefsRemotes + remote + "/" + branch
 }
 
 // DeleteBranch deletes a branch.
@@ -291,6 +299,11 @@ func (v Project) TrackBranch(branch string) string {
 // LocalTrackBranch gets local tracking remote branch.
 func (v Project) LocalTrackBranch(branch string) string {
 	return v.WorkRepository.LocalTrackBranch(branch)
+}
+
+// RemoteMatchingBranch gets local tracking branch name of a match remote branch
+func (v Project) RemoteMatchingBranch(remote, branch string) string {
+	return v.WorkRepository.RemoteMatchingBranch(remote, branch)
 }
 
 // UpdateBranchTracking updates branch tracking info.

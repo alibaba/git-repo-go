@@ -15,6 +15,7 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -64,6 +65,7 @@ type uploadOptions struct {
 	Private        bool
 	PushOptions    []string
 	Reviewers      []string
+	Remote         string
 	Title          string
 	WIP            bool
 }
@@ -159,6 +161,10 @@ func (v *uploadCommand) Command() *cobra.Command {
 		"o",
 		nil,
 		"Additional push options to transmit")
+	v.cmd.Flags().StringVar(&v.O.Remote,
+		"remote",
+		"",
+		"use specific remote for upload (use with --single)")
 	v.cmd.Flags().StringVarP(&v.O.DestBranch,
 		"dest",
 		"D",
@@ -726,12 +732,15 @@ func (v *uploadCommand) UploadAndReport(branches []project.ReviewableBranch) err
 				fullDest = config.RefsHeads + fullDest
 			}
 			mergeBranch := branch.RemoteTrack.Branch
+			if !strings.HasPrefix(mergeBranch, config.RefsHeads) {
+				mergeBranch = config.RefsHeads + mergeBranch
+			}
 			if v.O.DestBranch == "" && mergeBranch != "" && mergeBranch != fullDest {
 				log.Errorf("merge branch %s does not match destination branch %s\n",
 					mergeBranch,
 					fullDest)
 				log.Errorf("skipping upload.")
-				log.Errorf("Please use `--destination %s` if this is intentional\n",
+				log.Errorf("Please use `--dest %s` if this is intentional\n",
 					destBranch)
 				branch.Uploaded = false
 				continue
@@ -796,10 +805,20 @@ func (v *uploadCommand) UploadAndReport(branches []project.ReviewableBranch) err
 }
 
 func (v uploadCommand) runE(args []string) error {
+	var (
+		head           string
+		remoteName     string
+		remoteRevision string
+	)
+
 	ws := v.WorkSpace()
 	err := ws.LoadRemotes(v.O.NoCache)
 	if err != nil {
 		return err
+	}
+
+	if v.O.Remote != "" && !config.IsSingleMode() {
+		return fmt.Errorf("--remote can be only used with --single")
 	}
 
 	allProjects, err := ws.GetProjects(nil, args...)
@@ -815,10 +834,7 @@ func (v uploadCommand) runE(args []string) error {
 	// if --single, set project.Remote according to branch name
 	if config.IsSingleMode() {
 		var (
-			head           string
-			remoteName     string
-			remoteRevision string
-			remoteURL      string
+			remoteURL string
 		)
 
 		p := allProjects[0]
@@ -841,20 +857,56 @@ func (v uploadCommand) runE(args []string) error {
 		}
 
 		head = strings.TrimPrefix(head, config.RefsHeads)
-		remoteName = repo.TrackRemote(head)
-		remoteRevision = repo.TrackBranch(head)
-		if remoteName == "" || remoteRevision == "" {
+		if v.O.Remote == "" {
+			remoteName = repo.TrackRemote(head)
+		} else {
+			remoteName = v.O.Remote
+		}
+		if v.O.DestBranch == "" {
+			remoteRevision = repo.TrackBranch(head)
+		} else {
+			remoteRevision = v.O.DestBranch
+		}
+
+		if remoteMap.Size() == 0 {
+			return fmt.Errorf("no remote defined for project %s", p.Name)
+		}
+
+		if remoteName != "" {
+			remote, err := remoteMap.GetRemote(remoteName)
+			if err != nil {
+				return fmt.Errorf("error found when get remote: %s", err)
+			} else if remote == nil {
+				return fmt.Errorf("cannot find remote %s", v.O.Remote)
+			} else {
+				p.Remote = remote
+			}
+		} else {
+			for name, remote := range remoteMap {
+				if remoteMap.Size() > 1 && name != "origin" {
+					continue
+				}
+				if remote.Error != nil {
+					return fmt.Errorf("error found when get remote: %s", err)
+				}
+				if remoteMap.Size() != 1 {
+					log.Warning("no tracking remote defined, try to upload to origin")
+				}
+				remoteName = name
+				p.Remote = remote.Remote
+			}
+			if p.Remote == nil {
+				return errors.New("no tracking remote defined, and don't know where to upload.\n" +
+					"please try to use --remote option for upload")
+			}
+		}
+
+		if remoteRevision == "" {
 			return fmt.Errorf("upload failed: cannot find tracking branch\n\n" +
 				"Please run command \"git branch -u <upstream>\" to track a remote branch. E.g.:\n\n" +
-				"    git branch -u origin/master")
-		}
-		if remote, ok := remoteMap[remoteName]; ok {
-			if remote.Error != nil {
-				return remote.Error
-			}
-			p.Remote = remote.Remote
-		} else {
-			return fmt.Errorf("fail to parse remote: %s", remoteName)
+				"    git branch -u origin/master\n\n" +
+				"Or give the following options when uploading:\n\n" +
+				"    --dest <dest-branch> [--remote <remote>]")
 		}
 
 		// Set Revision of manifest.Remote to tracking branch.
@@ -889,9 +941,14 @@ func (v uploadCommand) runE(args []string) error {
 
 	tasks := make(map[string][]project.ReviewableBranch)
 	for _, p := range allProjects {
-		if v.O.CurrentBranch {
+		if config.IsSingleMode() {
+			uploadBranch := p.GetUploadableBranch(head, remoteName, remoteRevision)
+			if uploadBranch != nil {
+				tasks[p.Path] = []project.ReviewableBranch{*uploadBranch}
+			}
+		} else if v.O.CurrentBranch {
 			cbr := p.GetHead()
-			uploadBranch := p.GetUploadableBranch(cbr)
+			uploadBranch := p.GetUploadableBranch(cbr, "", "")
 			if uploadBranch != nil {
 				tasks[p.Path] = []project.ReviewableBranch{*uploadBranch}
 			}
