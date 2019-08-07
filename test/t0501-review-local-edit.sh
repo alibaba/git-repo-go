@@ -17,7 +17,7 @@ test_expect_success "setup" '
 '
 
 test_expect_success "install git pr alias command" '
-	git-repo --version &&
+	git-repo version &&
 	git config alias.pr >actual &&
 	git config alias.peer-review >>actual &&
 	cat >expect <<-EOF &&

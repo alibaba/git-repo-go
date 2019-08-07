@@ -17,7 +17,7 @@ test_expect_success "setup" '
 '
 
 test_expect_success "install git review aliases command" '
-	git-repo --version &&
+	git-repo version &&
 	git config alias.peer-review >actual &&
 	git config alias.pr >>actual &&
 	git config alias.review >>actual &&

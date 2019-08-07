@@ -24,6 +24,21 @@ test_expect_success "git-repo init & sync" '
 	)
 '
 
+test_expect_success "--remote only work with --single" '
+	(
+		cd work &&
+		test_must_fail git-repo upload --remote origin \
+			--mock-ssh-info-status 200 \
+			--mock-ssh-info-response \
+			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
+			>actual 2>&1 &&
+		cat >expect<<-EOF &&
+		Error: --remote can be only used with --single
+		EOF
+		test_cmp expect actual
+	)
+'
+
 test_expect_success "detached: no branch ready for upload" '
 	(
 		cd work &&
