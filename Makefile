@@ -16,11 +16,14 @@ GOBUILD_WINDOWS_32 := env GOOS=windows GOARCH=386 $(GOBUILD)
 GOBUILD_MAC_64 := env GOOS=darwin GOARCH=amd64 $(GOBUILD)
 GOBUILD_MAC_32 := env GOOS=darwin GOARCH=386 $(GOBUILD)
 
+BUILD_RELEASE_FLAG=-ldflags "-s -w"
+
 SHA256SUM=shasum -a 256
 GPGSIGN=gpg -sba -u Alibaba
 # Returns a list of all non-vendored (local packages)
 LOCAL_PACKAGES = $(shell go list ./... | grep -v -e '^$(PKG)/vendor/')
 LOCAL_GO_FILES = $(shell find -L $BUILD_DIR  -name "*.go" -not -path "$(PKG_BUILD_DIR)/vendor/*" -not -path "$(PKG_BUILD_DIR)/_build/*")
+UPX = upx
 
 define message
 	@echo "### $(1)"
@@ -33,12 +36,13 @@ REPO-VERSION-FILE: FORCE
 	@/bin/sh ./REPO-VERSION-GEN
 -include REPO-VERSION-FILE
 
-# Define build version flags after include of REPO-VERSION-FILE
-BUILD_VERSION_FLAGS := -ldflags "-X $(PKG)/version.Version=$(REPO_VERSION)"
+# Define LDFLAGS after include of REPO-VERSION-FILE
+LDFLAGS := -ldflags "-X $(PKG)/version.Version=$(REPO_VERSION)"
+RELEASE_LDFLAGS := -ldflags "-X $(PKG)/version.Version=$(REPO_VERSION) -s -w"
 
 git-repo: $(shell find . -name '*.go') | REPO-VERSION-FILE
 	$(call message,Building $@)
-	$(GOBUILD) $(BUILD_VERSION_FLAGS)
+	$(GOBUILD) $(LDFLAGS)
 
 golint:
 	$(call message,Testing git-repo using golint for coding style)
@@ -63,46 +67,70 @@ version-yml: REPO-VERSION-FILE
 	@echo "production: $(REPO_VERSION)" > _build/version.yml
 	@echo "test: $(REPO_VERSION)" >> _build/version.yml
 
-release: linux windows darwin
+release: darwin linux windows
 
 linux: linux-amd64 linux-386
-linux-amd64: $(shell find . -name '*.go') | REPO-VERSION-FILE
-	$(call message,Building $@)
-	@mkdir -p _build/$(REPO_VERSION)/linux/amd64
-	$(GOBUILD_LINUX_64) $(BUILD_VERSION_FLAGS) -o _build/$(REPO_VERSION)/linux/amd64/git-repo
-	@(cd _build/$(REPO_VERSION)/linux/amd64 && $(SHA256SUM) git-repo >git-repo.sha256 && $(GPGSIGN) -o git-repo.sha256.gpg git-repo.sha256)
+linux-amd64: _build/$(REPO_VERSION)/linux/amd64/git-repo
+_build/$(REPO_VERSION)/linux/amd64/git-repo: FORCE
+	@$(call message,Building $@)
+	@mkdir -p $(shell dirname $@)
+	$(GOBUILD_LINUX_64) $(RELEASE_LDFLAGS) -o $@
+	$(UPX) $@
+	(cd $(shell dirname $@) && \
+		$(SHA256SUM) $(shell basename $@) >$(shell basename $@).sha256 && \
+		$(GPGSIGN) -o $(shell basename $@).sha256.gpg $(shell basename $@).sha256)
 
-linux-386: $(shell find . -name '*.go') | REPO-VERSION-FILE
+linux-386: _build/$(REPO_VERSION)/linux/386/git-repo
+_build/$(REPO_VERSION)/linux/386/git-repo: FORCE
 	$(call message,Building $@)
-	@mkdir -p _build/$(REPO_VERSION)/linux/386
-	$(GOBUILD_LINUX_32) $(BUILD_VERSION_FLAGS) -o _build/$(REPO_VERSION)/linux/386/git-repo
-	@(cd _build/$(REPO_VERSION)/linux/386 && $(SHA256SUM) git-repo >git-repo.sha256 && $(GPGSIGN) -o git-repo.sha256.gpg git-repo.sha256)
+	@mkdir -p $(shell dirname $@)
+	$(GOBUILD_LINUX_32) $(RELEASE_LDFLAGS) -o $@
+	$(UPX) $@
+	(cd $(shell dirname $@) && \
+		$(SHA256SUM) $(shell basename $@) >$(shell basename $@).sha256 && \
+		$(GPGSIGN) -o $(shell basename $@).sha256.gpg $(shell basename $@).sha256)
 
 windows: windows-amd64 windows-386
-windows-amd64: $(shell find . -name '*.go') | REPO-VERSION-FILE
+windows-amd64: _build/$(REPO_VERSION)/windows/amd64/git-repo.exe
+_build/$(REPO_VERSION)/windows/amd64/git-repo.exe: FORCE
 	$(call message,Building $@)
-	@mkdir -p _build/$(REPO_VERSION)/windows/amd64
-	$(GOBUILD_WINDOWS_64) $(BUILD_VERSION_FLAGS) -o _build/$(REPO_VERSION)/windows/amd64/git-repo.exe
-	@(cd _build/$(REPO_VERSION)/windows/amd64 && $(SHA256SUM) git-repo.exe >git-repo.exe.sha256 && $(GPGSIGN) -o git-repo.exe.sha256.gpg git-repo.exe.sha256)
+	@mkdir -p $(shell dirname $@)
+	$(GOBUILD_WINDOWS_64) $(RELEASE_LDFLAGS) -o $@
+	$(UPX) $@
+	(cd $(shell dirname $@) && \
+		$(SHA256SUM) $(shell basename $@) >$(shell basename $@).sha256 && \
+		$(GPGSIGN) -o $(shell basename $@).sha256.gpg $(shell basename $@).sha256)
 
-windows-386: $(shell find . -name '*.go') | REPO-VERSION-FILE
+windows-386: _build/$(REPO_VERSION)/windows/386/git-repo.exe
+_build/$(REPO_VERSION)/windows/386/git-repo.exe: FORCE
 	$(call message,Building $@)
-	@mkdir -p _build/$(REPO_VERSION)/windows/386
-	$(GOBUILD_WINDOWS_32) $(BUILD_VERSION_FLAGS) -o _build/$(REPO_VERSION)/windows/386/git-repo.exe
-	@(cd _build/$(REPO_VERSION)/windows/386 && $(SHA256SUM) git-repo.exe >git-repo.exe.sha256 && $(GPGSIGN) -o git-repo.exe.sha256.gpg git-repo.exe.sha256)
+	@mkdir -p $(shell dirname $@)
+	$(GOBUILD_WINDOWS_32) $(RELEASE_LDFLAGS) -o $@
+	$(UPX) $@
+	(cd $(shell dirname $@) && \
+		$(SHA256SUM) $(shell basename $@) >$(shell basename $@).sha256 && \
+		$(GPGSIGN) -o $(shell basename $@).sha256.gpg $(shell basename $@).sha256)
 
 darwin: darwin-amd64 darwin-386
-darwin-amd64: $(shell find . -name '*.go') | REPO-VERSION-FILE
+darwin-amd64: _build/$(REPO_VERSION)/darwin/amd64/git-repo
+_build/$(REPO_VERSION)/darwin/amd64/git-repo: FORCE
 	$(call message,Building $@)
-	@mkdir -p _build/$(REPO_VERSION)/darwin/amd64
-	$(GOBUILD_MAC_64) $(BUILD_VERSION_FLAGS) -o _build/$(REPO_VERSION)/darwin/amd64/git-repo
-	@(cd _build/$(REPO_VERSION)/darwin/amd64 && $(SHA256SUM) git-repo >git-repo.sha256 && $(GPGSIGN) -o git-repo.sha256.gpg git-repo.sha256)
+	@mkdir -p $(shell dirname $@)
+	$(GOBUILD_MAC_64) $(RELEASE_LDFLAGS) -o $@
+	$(UPX) $@
+	(cd $(shell dirname $@) && \
+		$(SHA256SUM) $(shell basename $@) >$(shell basename $@).sha256 && \
+		$(GPGSIGN) -o $(shell basename $@).sha256.gpg $(shell basename $@).sha256)
 
-darwin-386: $(shell find . -name '*.go') | REPO-VERSION-FILE
+darwin-386: _build/$(REPO_VERSION)/darwin/386/git-repo
+_build/$(REPO_VERSION)/darwin/386/git-repo: FORCE
 	$(call message,Building $@)
-	@mkdir -p _build/$(REPO_VERSION)/darwin/386
-	$(GOBUILD_MAC_32) $(BUILD_VERSION_FLAGS) -o _build/$(REPO_VERSION)/darwin/386/git-repo
-	@(cd _build/$(REPO_VERSION)/darwin/386 && $(SHA256SUM) git-repo >git-repo.sha256 && $(GPGSIGN) -o git-repo.sha256.gpg git-repo.sha256)
+	@mkdir -p $(shell dirname $@)
+	$(GOBUILD_MAC_32) $(RELEASE_LDFLAGS) -o $@
+	$(UPX) $@
+	(cd $(shell dirname $@) && \
+		$(SHA256SUM) $(shell basename $@) >$(shell basename $@).sha256 && \
+		$(GPGSIGN) -o $(shell basename $@).sha256.gpg $(shell basename $@).sha256)
 
 index:
 	$(call message,Building $@)
