@@ -108,7 +108,7 @@ test_expect_success "upload with args: project1" '
 	(
 		cd work &&
 		cat >expect<<-EOF &&
-		Upload project projects/app1/ to remote branch :
+		Upload project projects/app1/ to remote branch Maint:
 		  branch my/topic1 ( 1 commit(s)):
 		         <hash>
 		to https://example.com (y/N)? No
@@ -133,7 +133,7 @@ test_expect_success "upload with args: projects/app1" '
 	(
 		cd work &&
 		cat >expect<<-EOF &&
-		Upload project projects/app1/ to remote branch :
+		Upload project projects/app1/ to remote branch Maint:
 		  branch my/topic1 ( 1 commit(s)):
 		         <hash>
 		to https://example.com (y/N)? No
@@ -158,7 +158,7 @@ test_expect_success "upload with args: app1" '
 	(
 		cd work &&
 		cat >expect<<-EOF &&
-		Upload project projects/app1/ to remote branch :
+		Upload project projects/app1/ to remote branch Maint:
 		  branch my/topic1 ( 1 commit(s)):
 		         <hash>
 		to https://example.com (y/N)? No
@@ -186,7 +186,7 @@ test_expect_success "upload with args: ." '
 	(
 		cd work &&
 		cat >expect<<-EOF &&
-		Upload project projects/app1/ to remote branch :
+		Upload project projects/app1/ to remote branch Maint:
 		  branch my/topic1 ( 1 commit(s)):
 		         <hash>
 		to https://example.com (y/N)? No
@@ -361,7 +361,7 @@ test_expect_success "if has many commits, must confirm before upload" '
 	(
 		cd work &&
 		cat >expect<<-EOF &&
-		Upload project projects/app1/ to remote branch :
+		Upload project projects/app1/ to remote branch Maint:
 		  branch my/topic1 ( 6 commit(s)):
 		         <hash>
 		         <hash>

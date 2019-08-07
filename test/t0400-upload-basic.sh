@@ -24,6 +24,21 @@ test_expect_success "git-repo init & sync" '
 	)
 '
 
+test_expect_success "--remote only work with --single" '
+	(
+		cd work &&
+		test_must_fail git-repo upload --remote origin \
+			--mock-ssh-info-status 200 \
+			--mock-ssh-info-response \
+			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
+			>actual 2>&1 &&
+		cat >expect<<-EOF &&
+		Error: --remote can be only used with --single
+		EOF
+		test_cmp expect actual
+	)
+'
+
 test_expect_success "detached: no branch ready for upload" '
 	(
 		cd work &&
@@ -67,7 +82,7 @@ test_expect_success "with new commit, ready for upload (--no-edit)" '
 	(
 		cd work &&
 		cat >expect<<-EOF &&
-		Upload project main/ to remote branch :
+		Upload project main/ to remote branch Maint:
 		  branch my/topic1 ( 1 commit(s)):
 		         <hash>
 		to https://example.com (y/N)? No
@@ -137,7 +152,7 @@ test_expect_success "with new commit, ready for upload (edit push options)" '
 		test_cmp expect actual
 	)
 '
-
+test_done
 test_expect_success "new branch, and do nothing for for upload --cbr" '
 	(
 		cd work &&
@@ -161,7 +176,7 @@ test_expect_success "upload branch without --cbr" '
 		cd work &&
 		git repo start --all my/topic2 &&
 		cat >expect<<-EOF &&
-		Upload project main/ to remote branch :
+		Upload project main/ to remote branch Maint:
 		  branch my/topic1 ( 1 commit(s)):
 		         <hash>
 		to https://example.com (y/N)? No
@@ -184,7 +199,7 @@ test_expect_success "upload --dryrun --drafts" '
 		cd work &&
 		git repo start --all my/topic2 &&
 		cat >expect<<-EOF &&
-		Upload project main/ to remote branch  (draft):
+		Upload project main/ to remote branch Maint (draft):
 		  branch my/topic1 ( 1 commit(s)):
 		         <hash>
 		to https://example.com (y/N)? Yes
@@ -213,7 +228,7 @@ test_expect_success "upload --dryrun" '
 		cd work &&
 		git repo start --all my/topic2 &&
 		cat >expect<<-EOF &&
-		Upload project main/ to remote branch :
+		Upload project main/ to remote branch Maint:
 		  branch my/topic1 ( 1 commit(s)):
 		         <hash>
 		to https://example.com (y/N)? Yes
@@ -260,7 +275,7 @@ test_expect_success "mock-git-push, but do update-ref for upload" '
 		cd work &&
 		git repo start --all my/topic2 &&
 		cat >expect<<-EOF &&
-		Upload project main/ to remote branch :
+		Upload project main/ to remote branch Maint:
 		  branch my/topic1 ( 1 commit(s)):
 		         <hash>
 		to https://example.com (y/N)? Yes

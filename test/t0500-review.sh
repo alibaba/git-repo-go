@@ -53,7 +53,7 @@ test_expect_success "upload error: unsupport url protocol" '
 	(
 		cd work &&
 		cat >expect<<-EOF &&
-		Error: fail to parse remote: origin
+		Error: no remote defined for project main
 		EOF
 		(
 			cd main &&
@@ -105,6 +105,10 @@ test_expect_success "upload error: cannot find track branch" '
 		Please run command "git branch -u <upstream>" to track a remote branch. E.g.:
 
 		    git branch -u origin/master
+		
+		Or give the following options when uploading:
+		
+		    --dest <dest-branch> [--remote <remote>]
 		EOF
 		(
 			cd main &&
@@ -125,7 +129,7 @@ test_expect_success "upload error: no remote URL" '
 		cd work &&
 		cat >expect<<-EOF &&
 		WARNING: no URL defined for remote: origin
-		Error: fail to parse remote: origin
+		Error: no remote defined for project main
 		EOF
 		(
 			cd main &&

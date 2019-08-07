@@ -84,7 +84,7 @@ func (v *downloadCommand) Command() *cobra.Command {
 	v.cmd.Flags().StringVar(&v.O.Remote,
 		"remote",
 		"",
-		"download from location defined by git remote")
+		"use specific remote to download (use with --single)")
 
 	return v.cmd
 }
