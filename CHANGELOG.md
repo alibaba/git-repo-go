@@ -2,6 +2,23 @@
 
 Changes of git-repo.
 
+## 0.4.1 (2019-08-07)
+
++ peer-review: support --remote and --dest option
++ New command: git repo list
++ download: support --remote option
++ compatibility: Use push options only if git is greater than 2.10.0
++ compatibility: Show compatible issues of git versions
++ compatibility: Fix compatible issue of gerrit hook
++ compatibility: Use absolute path for 'include.path' directive
++ README: add badge for CI build status
++ compatibility: Use strings.Replace to be compatible with go 1.11
++ compatibility: enable GO111MODULE for build and test
++ compatibility: remove test case which depends on higher version of git
++ doc: add godoc
++ download: cherry-pick all commits for one code review
+
+
 ## 0.3.1 (2019-6-26)
 
 Enhancement and bugfix:
@@ -100,6 +117,7 @@ Enhancement and bugfix:
 + Open an editor for user to custom upload options
 + refactor: parse reviewers later in UploadAndReport method
 
+
 ## 0.0.2 (2019-5-20)
 
 + test: add test case for install hooks
@@ -124,6 +142,7 @@ Enhancement and bugfix:
 + sync: call `ssh_info` API and install hooks if remote is gerrit
 + test: add test cases for git review (upload --single)
 + Add alias command 'git review'
+
 
 ## 0.0.1 (2019-5-14)
 
