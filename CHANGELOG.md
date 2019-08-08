@@ -2,6 +2,11 @@
 
 Changes of git-repo.
 
+## 0.4.2 (2019-08-08)
+
++ Compress binaries using UPX
+
+
 ## 0.4.1 (2019-08-07)
 
 + peer-review: support --remote and --dest option
