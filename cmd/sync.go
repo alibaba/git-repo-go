@@ -73,7 +73,7 @@ func (v *syncCommand) Command() *cobra.Command {
 		Use:   "sync",
 		Short: "Update working tree to the latest revision",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return v.runE(args)
+			return v.Execute(args)
 		},
 	}
 	v.cmd.Flags().BoolVarP(&v.O.ForceBroken,
@@ -644,7 +644,7 @@ func (v syncCommand) UpdateProjectList() error {
 	return nil
 }
 
-func (v syncCommand) runE(args []string) error {
+func (v syncCommand) Execute(args []string) error {
 	var (
 		err error
 	)

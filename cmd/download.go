@@ -59,7 +59,7 @@ func (v *downloadCommand) Command() *cobra.Command {
 		Use:   "download",
 		Short: "Download and checkout a code review",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return v.runE(args)
+			return v.Execute(args)
 		},
 	}
 	v.cmd.Flags().BoolVarP(&v.O.CherryPick,
@@ -140,7 +140,7 @@ func (v *downloadCommand) reloadWorkSpace() {
 	}
 }
 
-func (v *downloadCommand) runE(args []string) error {
+func (v *downloadCommand) Execute(args []string) error {
 	ws := v.WorkSpace()
 	err := ws.LoadRemotes(v.O.NoCache)
 	if err != nil {

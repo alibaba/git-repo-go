@@ -66,7 +66,7 @@ func (v *initCommand) Command() *cobra.Command {
 		Use:   "init",
 		Short: "Initialize manifest repo in the current directory",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return v.runE(args)
+			return v.Execute(args)
 		},
 	}
 
@@ -181,7 +181,7 @@ func (v initCommand) getGroups() string {
 	return groupStr
 }
 
-func (v initCommand) runE(args []string) error {
+func (v initCommand) Execute(args []string) error {
 	var (
 		err   error
 		isNew bool

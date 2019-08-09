@@ -53,7 +53,7 @@ func (v *forallCommand) Command() *cobra.Command {
 		Short: "Run a shell command in each project",
 		Long:  `Executes the same shell command in each project.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return v.runE(args)
+			return v.Execute(args)
 		},
 	}
 	v.cmd.Flags().StringArrayVarP(&v.O.Regex,
@@ -110,7 +110,7 @@ func (v *forallCommand) reloadRepoWorkSpace() {
 	}
 }
 
-func (v forallCommand) runE(args []string) error {
+func (v forallCommand) Execute(args []string) error {
 	var (
 		cmds        []string
 		allProjects []*project.Project

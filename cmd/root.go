@@ -19,7 +19,7 @@
 // for git-repo. Such as: --asume-yes, --quiet, --single.
 //
 // Each subcommand has a corresponding file, named `cmd/<subcmd>.go`, and
-// the entrance of each subcommand is is defined in function `runE(args)`.
+// the entrance of each subcommand is is defined in function `Execute(args)`.
 package cmd
 
 import (
@@ -91,7 +91,7 @@ this command with special options.`,
 		// Do not want to show usage on every error
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return v.runE(args)
+			return v.Execute(args)
 		},
 	}
 
@@ -178,7 +178,7 @@ this command with special options.`,
 	return v.cmd
 }
 
-func (v rootCommand) runE(args []string) error {
+func (v rootCommand) Execute(args []string) error {
 	config.CheckGitAlias()
 	if v.O.Version {
 		showVersion()

@@ -38,7 +38,7 @@ func (v *testVersionCommand) Command() *cobra.Command {
 		Use:   "version",
 		Short: "test version",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return v.runE(args)
+			return v.Execute(args)
 		},
 	}
 
@@ -51,7 +51,7 @@ func (v *testVersionCommand) Command() *cobra.Command {
 	return v.cmd
 }
 
-func (v testVersionCommand) runE(args []string) error {
+func (v testVersionCommand) Execute(args []string) error {
 	var (
 		cmp           int
 		err           error

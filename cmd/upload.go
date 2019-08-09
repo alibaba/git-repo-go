@@ -85,7 +85,7 @@ func (v *uploadCommand) Command() *cobra.Command {
 		Use:   "upload",
 		Short: "Upload changes for code review",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return v.runE(args)
+			return v.Execute(args)
 		},
 	}
 
@@ -804,7 +804,7 @@ func (v *uploadCommand) UploadAndReport(branches []project.ReviewableBranch) err
 	return nil
 }
 
-func (v uploadCommand) runE(args []string) error {
+func (v uploadCommand) Execute(args []string) error {
 	var (
 		head           string
 		remoteName     string

@@ -49,7 +49,7 @@ func (v *filterCommand) Command() *cobra.Command {
 		Use:   "filter",
 		Short: "Content filter drivers for git",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return v.runE(args)
+			return v.Execute(args)
 		},
 	}
 
@@ -70,7 +70,7 @@ func (v *filterCommand) Command() *cobra.Command {
 	return v.cmd
 }
 
-func (v filterCommand) runE(args []string) error {
+func (v filterCommand) Execute(args []string) error {
 	var (
 		err    error
 		driver filterDriver

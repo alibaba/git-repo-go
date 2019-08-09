@@ -50,7 +50,7 @@ func (v *listCommand) Command() *cobra.Command {
 		This is similar to running: git-repo forall -c 'echo "$REPO_PATH :
 		$REPO_PROJECT"'.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return v.runE(args)
+			return v.Execute(args)
 		},
 	}
 	v.cmd.Flags().StringArrayVarP(&v.O.Regex,
@@ -97,7 +97,7 @@ func (v *listCommand) reloadRepoWorkSpace() {
 	}
 }
 
-func (v listCommand) runE(args []string) error {
+func (v listCommand) Execute(args []string) error {
 	var (
 		projects    []*project.Project
 		allProjects []*project.Project

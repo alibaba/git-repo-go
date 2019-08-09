@@ -74,7 +74,7 @@ func (v *upgradeCommand) Command() *cobra.Command {
 		Use:   "upgrade",
 		Short: "Check and upgrade git-repo",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return v.runE(args)
+			return v.Execute(args)
 		},
 	}
 
@@ -504,7 +504,7 @@ func (v upgradeCommand) InstallImage(bin, target string) error {
 	return nil
 }
 
-func (v upgradeCommand) runE(args []string) error {
+func (v upgradeCommand) Execute(args []string) error {
 	var (
 		uv          string
 		err         error

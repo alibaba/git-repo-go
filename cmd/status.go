@@ -47,7 +47,7 @@ func (v *statusCommand) Command() *cobra.Command {
 		Use:   "status",
 		Short: "Show the working tree status",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return v.runE(args)
+			return v.Execute(args)
 		},
 	}
 	v.cmd.Flags().BoolVarP(&v.O.Orphans,
@@ -79,7 +79,7 @@ func (v *statusCommand) reloadRepoWorkSpace() {
 	}
 }
 
-func (v statusCommand) runE(args []string) error {
+func (v statusCommand) Execute(args []string) error {
 	var (
 		projects []*project.Project
 		err      error

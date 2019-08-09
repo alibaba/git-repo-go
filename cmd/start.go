@@ -40,7 +40,7 @@ func (v *startCommand) Command() *cobra.Command {
 		Short: "Start a new branch for development",
 		Long:  `Begin a new branch of development, starting from the revision specified in the manifest.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return v.runE(args)
+			return v.Execute(args)
 		},
 	}
 	v.cmd.Flags().BoolVar(&v.O.All,
@@ -66,7 +66,7 @@ func (v *startCommand) reloadRepoWorkSpace() {
 	}
 }
 
-func (v startCommand) runE(args []string) error {
+func (v startCommand) Execute(args []string) error {
 	var (
 		failed    = []string{}
 		execError error
