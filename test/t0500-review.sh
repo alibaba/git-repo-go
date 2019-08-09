@@ -42,9 +42,9 @@ test_expect_success "upload error: no branch" '
 		cd .. &&
 		(
 			cd main &&
-			test_must_fail git peer-review 2>&1 | \
-				sed -e "s#file:///.*#file:///path/of/repo.git#"
-		) >actual &&
+			test_must_fail git peer-review
+		) >out 2>&1 &&
+		sed -e "s#file:///.*#file:///path/of/repo.git#" out >actual &&
 		test_cmp expect actual
 	)
 '
@@ -58,11 +58,10 @@ test_expect_success "upload error: unsupport url protocol" '
 		(
 			cd main &&
 			git checkout -q master &&
-			git peer-review \
-				--no-cache \
-				2>&1 | \
-				sed -e "s#file:///.*#file:///path/of/repo.git#"
-		) >actual &&
+			test_must_fail git peer-review \
+				--no-cache
+		) >out 2>&1 &&
+		sed -e "s#file:///.*#file:///path/of/repo.git#" out >actual &&
 		test_cmp expect actual
 	)
 '

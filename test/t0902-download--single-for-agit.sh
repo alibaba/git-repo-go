@@ -57,7 +57,8 @@ test_expect_success "download and checkout" '
 		echo "Branch: $(git_current_branch)" &&
 		git log --pretty="    %s" -2 &&
 		git show-ref | cut -c 42- | grep merge-requests
-	) | sed -e "s/(no branch)/Detached HEAD/g" >actual 2>&1 &&
+	) >out 2>&1 &&
+	sed -e "s/(no branch)/Detached HEAD/g" out >actual &&
 	cat >expect<<-EOF &&
 	Branch: Detached HEAD
 	    New topic
@@ -86,7 +87,8 @@ test_expect_success "download again with already merged notice" '
 		echo "Branch: $(git_current_branch)" &&
 		git log --pretty="    %s" -2
 		git show-ref | cut -c 42- | grep merge-requests
-	) | sed -e "s/(no branch)/Detached HEAD/g" >actual 2>&1 &&
+	) >out 2>&1 &&
+	sed -e "s/(no branch)/Detached HEAD/g" out >actual &&
 	cat >expect<<-EOF &&
 	Branch: Detached HEAD
 	    New topic

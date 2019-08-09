@@ -76,7 +76,8 @@ test_expect_success "new commit: ready for upload" '
 			--no-edit \
 			--mock-ssh-info-status 200 \
 			--mock-ssh-info-response "ssh.example.com 29418" \
-			2>&1 | sed -e "s/[0-9a-f]\{40\}/<hash>/g" >actual &&
+			>out 2>&1 &&
+		sed -e "s/[0-9a-f]\{40\}/<hash>/g" out >actual &&
 		test_cmp expect actual
 	)
 '
@@ -103,7 +104,8 @@ test_expect_success "upload --dryrun --drafts" '
 			--mock-git-push \
 			--mock-ssh-info-status 200 \
 			--mock-ssh-info-response "ssh.example.com 29418" \
-			2>&1 | sed -e "s/[0-9a-f]\{40\}/<hash>/g" >actual &&
+			>out 2>&1 &&
+		sed -e "s/[0-9a-f]\{40\}/<hash>/g" out >actual &&
 		test_cmp expect actual
 	)
 '
@@ -136,7 +138,8 @@ test_expect_success "upload --dryrun with reviewers" '
 			--wip \
 			--private \
 			--auto-topic \
-			2>&1 | sed -e "s/[0-9a-f]\{40\}/<hash>/g" >actual &&
+			>out 2>&1 &&
+		sed -e "s/[0-9a-f]\{40\}/<hash>/g" out >actual &&
 		test_cmp expect actual
 	)
 '

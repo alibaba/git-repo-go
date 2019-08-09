@@ -271,6 +271,31 @@ test_expect_success "upload with args: main, projects/app1" '
 test_expect_success "upload with args: main, projects/app1" '
 	(
 		cd work &&
+		cat >mock-edit-script<<-EOF &&
+		INFO: editor is '"'"':'"'"', return directly:
+		# Uncomment the branches to upload:
+		#
+		# project main/:
+		branch my/topic1 ( 1 commit(s)) to remote branch Maint:
+		#         <hash>
+		#
+		# project projects/app1/:
+		 branch my/topic1 ( 1 commit(s)) to remote branch Maint:
+		#         <hash>
+		FATAL: nothing uncommented for upload
+		EOF
+		test_must_fail git-repo upload \
+			-v \
+			--assume-no \
+			--mock-no-tty \
+			--mock-git-push \
+			--mock-edit-script=mock-edit-script \
+			--mock-ssh-info-status 200 \
+			--mock-ssh-info-response \
+			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
+			main projects/app1 projects/app2 \
+			>out 2>&1 &&
+		sed -e "s/[0-9a-f]\{40\}/<hash>/g" out >actual &&
 		cat >expect<<-EOF &&
 		INFO: editor is '"'"':'"'"', return directly
 		NOTE: no editor, input data unchanged
@@ -312,32 +337,6 @@ test_expect_success "upload with args: main, projects/app1" '
 		
 		FATAL: nothing uncommented for upload
 		EOF
-		cat >mock-edit-script<<-EOF &&
-		INFO: editor is '"'"':'"'"', return directly:
-		# Uncomment the branches to upload:
-		#
-		# project main/:
-		branch my/topic1 ( 1 commit(s)) to remote branch Maint:
-		#         <hash>
-		#
-		# project projects/app1/:
-		 branch my/topic1 ( 1 commit(s)) to remote branch Maint:
-		#         <hash>
-		FATAL: nothing uncommented for upload
-		EOF
-		git-repo upload \
-			-v \
-			--assume-no \
-			--mock-no-tty \
-			--mock-git-push \
-			--mock-edit-script=mock-edit-script \
-			--mock-ssh-info-status 200 \
-			--mock-ssh-info-response \
-			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
-			main projects/app1 projects/app2 \
-			2>&1 \
-		| sed -e "s/[0-9a-f]\{40\}/<hash>/g" \
-		>actual &&
 		test_cmp expect actual
 	)
 '

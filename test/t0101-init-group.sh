@@ -98,7 +98,7 @@ test_expect_success "platform = <default>, groups = app" '
 test_expect_success "platform = <default>, groups = <default> # nothing changed" '
 	(
 		cd work &&
-		git-repo init -u $manifest_url
+		git-repo init -u $manifest_url &&
 		echo "app,platform-*" >expect &&
 		(
 			cd .repo/manifests &&
@@ -112,7 +112,7 @@ test_expect_success "platform = <default>, groups = <default> # nothing changed"
 test_expect_success "platform = auto, groups = default" '
 	(
 		cd work &&
-		git-repo init -p auto -g default -u $manifest_url
+		git-repo init -p auto -g default -u $manifest_url &&
 		printf "" >expect &&
 		(
 			cd .repo/manifests &&

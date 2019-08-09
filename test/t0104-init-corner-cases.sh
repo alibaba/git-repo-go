@@ -25,8 +25,8 @@ test_expect_success "init from wrong url" '
 test_expect_success "init from main url without a valid xml" '
 	(
 		cd work &&
-		test_must_fail git-repo init -u $main_repo_url 2>&1 | \
-			grep "^Error" >actual 2>&1 &&
+		test_must_fail git-repo init -u $main_repo_url >out 2>&1 &&
+		grep "^Error" out >actual &&
 		cat >expect<<-EOF &&
 		Error: link manifest failed, cannot find file '"'"'manifests/default.xml'"'"'
 		EOF

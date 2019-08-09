@@ -93,7 +93,8 @@ test_expect_success "fail to sync drivers/driver-1, workspace is dirty (not stag
 			--mock-ssh-info-response \
 			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
 			-- drivers/driver-1 \
-			2>&1 | grep "^Error:" >actual &&
+			>out 2>&1 &&
+		grep "^Error:" out >actual &&
 		cat >expect <<-EOF &&
 		Error: worktree of drivers/driver1 is dirty, checkout failed
 		EOF
@@ -118,7 +119,8 @@ test_expect_success "fail to sync projects/app1, workspace is dirty (not staged)
 			--mock-ssh-info-response \
 			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
 			-- projects/app1 \
-			2>&1 | grep "^Error:" >actual &&
+			>out 2>&1 &&
+		grep "^Error:" out >actual &&
 		cat >expect <<-EOF &&
 		Error: worktree of project1 is dirty, checkout failed
 		EOF
@@ -143,7 +145,8 @@ test_expect_success "fail to sync projects/app2, workspace is dirty (staged)" '
 			--mock-ssh-info-response \
 			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}"  \
 			-- projects/app2 \
-			2>&1 | grep "^Error:" >actual &&
+			>out 2>&1 &&
+		grep "^Error:" out >actual &&
 		cat >expect <<-EOF &&
 		Error: worktree of project2 is dirty, checkout failed
 		EOF

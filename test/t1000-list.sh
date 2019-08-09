@@ -73,9 +73,8 @@ test_expect_success "git-repo list -f" '
 	(
 		cd work &&
 		git-repo list -f
-	) | \
-		sed -e "s/^.*trash directory.t1000-list/.../g" \
-		>actual &&
+	) >out &&
+	sed -e "s/^.*trash directory.t1000-list/.../g" out >actual &&
 	cat >expect<<-EOF &&
 	.../work/drivers/driver-1 : drivers/driver1
 	.../work/drivers/driver-2 : drivers/driver2
@@ -113,9 +112,8 @@ test_expect_success "git-repo list -f -p" '
 	(
 		cd work &&
 		git-repo list -f -p
-	) | \
-		sed -e "s/^.*trash directory.t1000-list/.../g" \
-		>actual &&
+	) >out &&
+	sed -e "s/^.*trash directory.t1000-list/.../g" out >actual &&
 	cat >expect<<-EOF &&
 	.../work/drivers/driver-1
 	.../work/drivers/driver-2
@@ -212,9 +210,8 @@ test_expect_success "git-repo list -f -g app" '
 	(
 		cd work &&
 		git-repo list -f -g app
-	) | \
-		sed -e "s/^.*trash directory.t1000-list/.../g" \
-		>actual &&
+	) >out &&
+	sed -e "s/^.*trash directory.t1000-list/.../g" out >actual &&
 	cat >expect<<-EOF &&
 	.../work/main : main
 	.../work/projects/app1 : project1
@@ -250,9 +247,8 @@ test_expect_success "git-repo list -p -f -g app" '
 	(
 		cd work &&
 		git-repo list -p -f -g app
-	) | \
-		sed -e "s/^.*trash directory.t1000-list/.../g" \
-		>actual &&
+	) >out &&
+	sed -e "s/^.*trash directory.t1000-list/.../g" out >actual &&
 	cat >expect<<-EOF &&
 	.../work/main
 	.../work/projects/app1
@@ -341,9 +337,8 @@ test_expect_success "git-repo list -f -r ^pro.*" '
 	(
 		cd work &&
 		git-repo list -f -r "^pro.*"
-	) | \
-		sed -e "s/^.*trash directory.t1000-list/.../g" \
-		>actual &&
+	) >out &&
+	sed -e "s/^.*trash directory.t1000-list/.../g" out >actual &&
 	cat >expect<<-EOF &&
 	.../work/projects/app1 : project1
 	.../work/projects/app1/module1 : project1/module1
@@ -378,9 +373,8 @@ test_expect_success "git-repo list -f -p -r ^pro.*" '
 	(
 		cd work &&
 		git-repo list -f -p -r "^pro.*"
-	) | \
-		sed -e "s/^.*trash directory.t1000-list/.../g" \
-		>actual &&
+	) >out &&
+	sed -e "s/^.*trash directory.t1000-list/.../g" out >actual &&
 	cat >expect<<-EOF &&
 	.../work/projects/app1
 	.../work/projects/app1/module1
@@ -466,9 +460,8 @@ test_expect_success "git-repo list -f -g app -r ^pro.*" '
 	(
 		cd work &&
 		git-repo list -f -g app -r "^pro.*"
-	) | \
-		sed -e "s/^.*trash directory.t1000-list/.../g" \
-		>actual &&
+	) >out &&
+	sed -e "s/^.*trash directory.t1000-list/.../g" out >actual &&
 	cat >expect<<-EOF &&
 	.../work/projects/app1 : project1
 	.../work/projects/app1/module1 : project1/module1
@@ -503,9 +496,8 @@ test_expect_success "git-repo list -p -f -g app -r ^pro.*" '
 	(
 		cd work &&
 		git-repo list -p -f -g app -r "^pro.*"
-	) | \
-		sed -e "s/^.*trash directory.t1000-list/.../g" \
-		>actual &&
+	) >out &&
+	sed -e "s/^.*trash directory.t1000-list/.../g" out >actual &&
 	cat >expect<<-EOF &&
 	.../work/projects/app1
 	.../work/projects/app1/module1

@@ -152,7 +152,7 @@ test_expect_success "with new commit, ready for upload (edit push options)" '
 		test_cmp expect actual
 	)
 '
-test_done
+
 test_expect_success "new branch, and do nothing for for upload --cbr" '
 	(
 		cd work &&

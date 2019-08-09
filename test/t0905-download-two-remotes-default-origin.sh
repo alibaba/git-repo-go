@@ -36,21 +36,26 @@ test_expect_success "default download from origin" '
 			--mock-ssh-info-response \
 				"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
 			12345
-	) 2>&1 | head -1 >actual &&
+	) >out 2>&1 &&
+	head -1 out >actual &&
 	cat >expect<<-EOF &&
 	WARNING: no tracking remote defined, try to download from origin
 	EOF
-	test_cmp expect actual &&
+	test_cmp expect actual
+'
+
+test_expect_success "after download HEAD is detached" '
 	(
 		cd work/main &&
 		echo "Branch: $(git_current_branch)" &&
 		git log --pretty="    %s" -2 &&
 		git show-ref | cut -c 42- | grep merge-requests
-	) | sed -e "s/(no branch)/Detached HEAD/g" >actual 2>&1 &&
+	) >out 2>&1 &&
+	sed -e "s/(no branch)/Detached HEAD/g" out >actual &&
 	cat >expect<<-EOF &&
-	Branch: jx/topic
-	    Version 2.0.0-dev
-	    Version 1.0.0
+	Branch: Detached HEAD
+	    New topic
+	    Version 0.1.0
 	refs/merge-requests/12345/head
 	EOF
 	test_cmp expect actual

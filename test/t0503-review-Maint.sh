@@ -32,25 +32,20 @@ test_expect_success "install git review aliases command" '
 
 test_expect_success "upload error: unsupport url protocol" '
 	(
-		cd work &&
-		cat >expect<<-EOF &&
-		Error: no remote defined for project main
-		EOF
-		(
-			cd main &&
-			# git 1.7.10: "git checkout -q" is not really quiet.
-			git checkout -q -b jx/topic origin/Maint >/dev/null &&
-			git peer-review \
-				--no-cache \
-				--mock-git-push \
-				--mock-ssh-info-status 200 \
-				--mock-ssh-info-response \
-					"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
-				2>&1 | \
-			sed -e "s#file:///.*#file:///path/of/repo.git#"
-		) >actual &&
-		test_cmp expect actual
-	)
+		cd work/main &&
+		# git 1.7.10: "git checkout -q" is not really quiet.
+		git checkout -q -b jx/topic origin/Maint >/dev/null &&
+		test_must_fail git peer-review \
+			--no-cache \
+			--mock-git-push \
+			--mock-ssh-info-status 200 \
+			--mock-ssh-info-response \
+				"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
+	) >actual 2>&1 &&
+	cat >expect<<-EOF &&
+	Error: no remote defined for project main
+	EOF
+	test_cmp expect actual
 '
 
 test_expect_success "update remote URL using http protocol" '
