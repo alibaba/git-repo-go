@@ -15,8 +15,10 @@
 package cmd
 
 import (
-	"fmt"
+	"io"
+	"os"
 
+	"code.alibaba-inc.com/force/git-repo/manifest"
 	"code.alibaba-inc.com/force/git-repo/workspace"
 	log "github.com/jiangxin/multi-log"
 	"github.com/spf13/cobra"
@@ -77,11 +79,53 @@ func (v *manifestCommand) RepoWorkSpace() *workspace.RepoWorkSpace {
 	return v.ws
 }
 
-func (v manifestCommand) Execute(args []string) error {
+func (v manifestCommand) WriteManifest(writer io.Writer) error {
 	ws := v.RepoWorkSpace()
-	_ = ws
-	fmt.Println("manifest cmd test print.")
+
+	if v.O.PegRev {
+		err := ws.FreezeManifest(!v.O.PegRevNoUpstream)
+		if err != nil {
+			return err
+		}
+	}
+
+	data, err := manifest.Marshal(ws.Manifest)
+	if err != nil {
+		return err
+	}
+	_, err = writer.Write(data)
+	if err != nil {
+		return err
+	}
+	if data[len(data)-1] != '\n' {
+		writer.Write([]byte("\n"))
+	}
+
+	if v.O.OutputFile != "-" {
+		log.Notef("Saved manifest to %s", v.O.OutputFile)
+	}
 	return nil
+}
+
+func (v manifestCommand) Execute(args []string) error {
+	var (
+		writer io.ReadWriteCloser
+	)
+
+	if v.O.OutputFile == "" {
+		log.Fatal("no output file, no operation to perform")
+	} else if v.O.OutputFile == "-" {
+		writer = os.Stdout
+	} else {
+		file, err := os.OpenFile(v.O.OutputFile, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
+		if err != nil {
+			return err
+		}
+		writer = file
+		defer file.Close()
+	}
+
+	return v.WriteManifest(writer)
 }
 
 var manifestCmd = manifestCommand{}

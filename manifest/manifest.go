@@ -394,6 +394,49 @@ func (v *Manifest) Merge(m *Manifest) error {
 	return nil
 }
 
+// ProjectHandler is an interface to manipulate projects of manifest
+type ProjectHandler interface {
+	// The 1st parameter is pointer of a project, and the 2nd parameter
+	// is parent dir of the path of the project.
+	Process(*Project, string) error
+}
+
+// ProjectHandle executes Process method of the given handle on each project
+func (v *Manifest) ProjectHandle(handle ProjectHandler) error {
+	for i := range v.Projects {
+		err := v.Projects[i].execute(handle, "", 0)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *Project) execute(handle ProjectHandler, path string, depth int) error {
+	if depth > maxRecursiveDepth {
+		return fmt.Errorf("recursive is to deep")
+	}
+
+	err := handle.Process(v, path)
+	if err != nil {
+		return err
+	}
+
+	if path == "" {
+		path = v.Path
+	} else {
+		path = filepath.Join(path, v.Path)
+	}
+
+	for i := range v.Projects {
+		err := v.Projects[i].execute(handle, path, depth+1)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func cleanPath(name string) string {
 	return filepath.Clean(strings.Replace(strings.TrimSuffix(name, ".git"), "\\", "/", -1))
 }
