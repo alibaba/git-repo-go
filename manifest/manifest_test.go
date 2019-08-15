@@ -39,7 +39,7 @@ func TestMarshal(t *testing.T) {
 				Path: "platform-drivers",
 				Projects: []Project{
 					Project{
-						Name: "platform/nic",
+						Name: "nic",
 						Path: "nic",
 					},
 				},
@@ -57,11 +57,31 @@ func TestMarshal(t *testing.T) {
 		},
 	}
 
+	names := []string{}
+	for _, p := range manifest.AllProjects() {
+		names = append(names, p.Name)
+	}
+	assert.Equal([]string{
+		"platform/drivers",
+		"platform/drivers/nic",
+		"platform/manifest"},
+		names)
+
+	paths := []string{}
+	for _, p := range manifest.AllProjects() {
+		paths = append(paths, p.Path)
+	}
+	assert.Equal([]string{
+		"platform-drivers",
+		"platform-drivers/nic",
+		"platform-manifest"},
+		paths)
+
 	expected := `<manifest>
   <remote name="aone" alias="origin" fetch="https://code.aone.alibaba-inc.com" review="https://code.aone.alibaba-inc.com" revision="default"></remote>
   <default remote="origin" revision="master"></default>
   <project name="platform/drivers" path="platform-drivers">
-    <project name="platform/nic" path="nic"></project>
+    <project name="nic" path="nic"></project>
     <copyfile src="Makefile" dest="../Makefile"></copyfile>
   </project>
   <project name="platform/manifest" path="platform-manifest"></project>
@@ -139,7 +159,7 @@ func TestLoad(t *testing.T) {
 			Revision: "default"},
 		}, m.Remotes)
 	projects := []string{}
-	for _, p := range m.Projects {
+	for _, p := range m.AllProjects() {
 		projects = append(projects, p.Name)
 	}
 	assert.Equal([]string{
@@ -147,6 +167,16 @@ func TestLoad(t *testing.T) {
 		"platform/drivers/nic",
 		"platform/manifest"},
 		projects)
+
+	paths := []string{}
+	for _, p := range m.AllProjects() {
+		paths = append(paths, p.Path)
+	}
+	assert.Equal([]string{
+		"platform-drivers",
+		"platform-drivers/nic",
+		"platform-manifest"},
+		paths)
 }
 
 func TestInclude(t *testing.T) {
