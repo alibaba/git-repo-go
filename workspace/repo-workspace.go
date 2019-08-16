@@ -147,8 +147,8 @@ func (v *RepoWorkSpace) manifestsProjectName() string {
 		}
 	}
 	return manifestsProjectName(u, fetch)
-
 }
+
 func manifestsProjectName(url, fetch string) string {
 	if strings.Contains(url, "://") {
 		url = strings.SplitN(url, "://", 2)[1]
@@ -315,6 +315,66 @@ func (v RepoWorkSpace) GetProjects(o *GetProjectsOptions, args ...string) ([]*pr
 	}
 
 	return result, nil
+}
+
+type freezeProject struct {
+	WorkSpace    *RepoWorkSpace
+	FillUpstream bool
+}
+
+func (v *freezeProject) Process(mp *manifest.Project, parentDir string) error {
+	var (
+		rev string
+		err error
+	)
+
+	if parentDir == "" {
+		parentDir = mp.Path
+	} else {
+		parentDir = filepath.Join(parentDir, mp.Path)
+	}
+
+	p := v.WorkSpace.GetProjectWithPath(parentDir)
+	if p == nil {
+		log.Warnf("cannot find project '%s' to freeze", parentDir)
+		return nil
+	}
+
+	if v.WorkSpace.Settings().Mirror {
+		rev, err = p.ResolveRevision(p.Revision)
+		if err != nil {
+			log.Warn(err)
+			return nil
+		}
+	} else {
+		rev, err = p.ResolveRevision("HEAD")
+		if err != nil {
+			log.Warn(err)
+			return nil
+		}
+	}
+
+	if v.FillUpstream {
+		if p.Upstream != "" {
+			mp.Upstream = p.Upstream
+		} else {
+			mp.Upstream = p.Revision
+		}
+	}
+
+	mp.Revision = rev
+	return nil
+}
+
+// FreezeManifest changes projects of manifest, and set revision of project to
+// fixed revision.
+func (v *RepoWorkSpace) FreezeManifest(fillUpstream bool) error {
+
+	handle := &freezeProject{
+		WorkSpace:    v,
+		FillUpstream: fillUpstream,
+	}
+	return v.Manifest.ProjectHandle(handle)
 }
 
 // NewRepoWorkSpace finds and loads repo workspace. Will return an error if not found.
