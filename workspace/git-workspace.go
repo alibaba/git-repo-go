@@ -153,10 +153,9 @@ func (v GitWorkSpace) newProject(worktree, gitdir string) (*project.Project, err
 			Path: ".",
 		},
 
-		WorkDir:          worktree,
-		ObjectRepository: nil,
-		WorkRepository:   &repo,
-		Settings:         &s,
+		WorkDir:        worktree,
+		WorkRepository: &repo,
+		Settings:       &s,
 	}
 
 	return &p, nil
