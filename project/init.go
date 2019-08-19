@@ -16,10 +16,7 @@ func (v Project) IsRepoInitialized() bool {
 			return false
 		}
 	}
-	if v.WorkRepository == nil {
-		return false
-	}
-	if !v.WorkRepository.Exists() {
+	if !v.Repository.Exists() {
 		return false
 	}
 	return true
@@ -42,12 +39,10 @@ func (v *Project) GitInit() error {
 		v.ObjectRepository.Init("", "", referenceGitDir)
 	}
 
-	if v.WorkRepository != nil {
-		if v.ObjectRepository == nil {
-			v.WorkRepository.Init(v.RemoteName, remoteURL, referenceGitDir)
-		} else {
-			v.WorkRepository.InitByLink(v.RemoteName, remoteURL, v.ObjectRepository)
-		}
+	if v.ObjectRepository == nil {
+		v.Repository.Init(v.RemoteName, remoteURL, referenceGitDir)
+	} else {
+		v.Repository.InitByLink(v.RemoteName, remoteURL, v.ObjectRepository)
 	}
 
 	// TODO: install hooks
@@ -57,7 +52,7 @@ func (v *Project) GitInit() error {
 func (v *Repository) initMissing() error {
 	var err error
 
-	if _, err = os.Stat(v.Path); err != nil {
+	if _, err = os.Stat(v.RepoDir); err != nil {
 		return err
 	}
 
@@ -69,13 +64,13 @@ func (v *Repository) initMissing() error {
 		"refs",
 	}
 	files := map[string]string{
-		"description": fmt.Sprintf("Repository: %s, path: %s\n", v.Name, v.Path),
+		"description": fmt.Sprintf("Repository: %s, path: %s\n", v.Name, v.RepoDir),
 		"config":      "[core]\n\trepositoryformatversion = 0\n",
 		"HEAD":        "ref: refs/heads/master\n",
 	}
 
 	for _, dir := range dirs {
-		dir = filepath.Join(v.Path, dir)
+		dir = filepath.Join(v.RepoDir, dir)
 		if _, err = os.Stat(dir); err == nil {
 			continue
 		}
@@ -85,7 +80,7 @@ func (v *Repository) initMissing() error {
 	}
 
 	for file, content := range files {
-		file = filepath.Join(v.Path, file)
+		file = filepath.Join(v.RepoDir, file)
 		if _, err = os.Stat(file); err == nil {
 			continue
 		}
@@ -112,7 +107,7 @@ func (v *Repository) Init(remoteName, remoteURL, referenceGitDir string) error {
 	var err error
 
 	if !v.Exists() {
-		_, err = git.PlainInit(v.Path, true)
+		_, err = git.PlainInit(v.RepoDir, true)
 		if err != nil {
 			return err
 		}
@@ -147,11 +142,11 @@ func (v *Repository) InitByLink(remoteName, remoteURL string, repo *Repository) 
 	var err error
 
 	if !repo.Exists() {
-		return fmt.Errorf("attach a non-exist repo: %s", repo.Path)
+		return fmt.Errorf("attach a non-exist repo: %s", repo.RepoDir)
 	}
 	repo.initMissing()
 
-	err = os.MkdirAll(v.Path, 0755)
+	err = os.MkdirAll(v.RepoDir, 0755)
 	if err != nil {
 		return err
 	}
@@ -165,12 +160,12 @@ func (v *Repository) InitByLink(remoteName, remoteURL string, repo *Repository) 
 		"rr-cache",
 	}
 	for _, item := range items {
-		source := filepath.Join(repo.Path, item)
-		target := filepath.Join(v.Path, item)
+		source := filepath.Join(repo.RepoDir, item)
+		target := filepath.Join(v.RepoDir, item)
 		if _, err = os.Stat(source); err != nil {
 			continue
 		}
-		relpath, err := filepath.Rel(v.Path, source)
+		relpath, err := filepath.Rel(v.RepoDir, source)
 		if err != nil {
 			relpath = source
 		}

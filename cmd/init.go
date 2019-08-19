@@ -239,14 +239,18 @@ func (v initCommand) Execute(args []string) error {
 	}
 
 	if v.O.ManifestBranch != "" {
+		log.Debugf("set manifest project revision to %s", v.O.ManifestBranch)
 		v.ws.ManifestProject.SetRevision(v.O.ManifestBranch)
 	} else if isNew {
+		log.Debugf("set manifest project new setup revision to %s", "master")
 		v.ws.ManifestProject.SetRevision("master")
 	} else {
 		track := v.ws.ManifestProject.TrackBranch("")
 		if track != "" {
+			log.Debugf("set manifest project revision to track branch %s", track)
 			v.ws.ManifestProject.SetRevision(track)
 		} else {
+			log.Debug("not set manifest project revision")
 			v.ws.ManifestProject.SetRevision("")
 		}
 	}
@@ -346,13 +350,13 @@ Either delete the .repo folder in this workspace, or initialize in another locat
 	err = v.ws.ManifestProject.SyncNetworkHalf(&fetchOptions)
 	if err != nil {
 		if isNew {
-			if !strings.HasPrefix(v.ws.ManifestProject.WorkRepository.Path, v.ws.RootDir) ||
+			if !strings.HasPrefix(v.ws.ManifestProject.RepoDir, v.ws.RootDir) ||
 				v.ws.RootDir == "" {
-				log.Fatalf("manifest workdir '%s' beyond repo root '%s'", v.ws.ManifestProject.WorkRepository.Path, v.ws.RootDir)
+				log.Fatalf("manifest workdir '%s' beyond repo root '%s'", v.ws.ManifestProject.RepoDir, v.ws.RootDir)
 			}
 			// Better delete the manifest git dir if we created it; otherwise next
 			// time (when user fixes problems) we won't go through the "isNew" logic.
-			os.RemoveAll(v.ws.ManifestProject.WorkRepository.Path)
+			os.RemoveAll(v.ws.ManifestProject.RepoDir)
 			return err
 		}
 		log.Error(err)

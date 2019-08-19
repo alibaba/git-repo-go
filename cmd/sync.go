@@ -512,6 +512,8 @@ func (v syncCommand) removeWorktree(dir string, gitTrees []string) error {
 }
 
 func (v syncCommand) removeObsoletePaths(oldPaths, newPaths []string) error {
+	var err error
+
 	sort.Strings(oldPaths)
 	sort.Strings(newPaths)
 	obsoletePaths := v.findObsoletePaths(oldPaths, newPaths)
@@ -532,13 +534,7 @@ func (v syncCommand) removeObsoletePaths(oldPaths, newPaths []string) error {
 			continue
 		}
 
-		isClean, err := project.IsClean(workdir)
-		if err != nil {
-			log.Infof("fail to remove '%s': %s", p, err)
-			continue
-		}
-
-		if !isClean {
+		if ok, _ := project.IsClean(workdir); !ok {
 			return fmt.Errorf(`Cannot remove project "%s": uncommitted changes are present.
 Please commit changes, then run sync again`,
 				p)

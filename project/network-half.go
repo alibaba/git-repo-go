@@ -29,12 +29,13 @@ func (v *Repository) Fetch(remote string, o *FetchOptions) error {
 	var (
 		err           error
 		hasAlternates bool
+		revision      = v.Revision
 	)
 
 	if v.isUnborn() && v.Reference != "" && path.IsGitDir(v.Reference) {
 		hasAlternates = true
 
-		altFile := filepath.Join(v.Path, "objects", "info", "alternates")
+		altFile := filepath.Join(v.RepoDir, "objects", "info", "alternates")
 		os.MkdirAll(filepath.Dir(altFile), 0755)
 
 		var f *os.File
@@ -42,7 +43,7 @@ func (v *Repository) Fetch(remote string, o *FetchOptions) error {
 		defer f.Close()
 		if err == nil {
 			target := filepath.Join(v.Reference, "objects")
-			target, err = filepath.Rel(filepath.Join(v.Path, "objects"), target)
+			target, err = filepath.Rel(filepath.Join(v.RepoDir, "objects"), target)
 			if err != nil {
 				target = filepath.Join(v.Reference, "objects")
 			}
@@ -64,18 +65,18 @@ func (v *Repository) Fetch(remote string, o *FetchOptions) error {
 		return fmt.Errorf("don't know where to fetch repo %s from remote %s", v.Name, remote)
 	}
 
-	if v.Revision == "" {
-		v.Revision = v.TrackBranch("")
-		if v.Revision == "" {
+	if revision == "" {
+		revision = v.TrackBranch("")
+		if revision == "" {
 			log.Warnf("cannot get tracking branch for project '%s'", v.Name)
-			v.Revision = "master"
+			revision = "master"
 		}
 	}
 
-	isSha := IsSha(v.Revision)
-	isTag := IsTag(v.Revision)
+	isSha := IsSha(revision)
+	isTag := IsTag(revision)
 
-	if o.OptimizedFetch && isSha && v.RevisionIsValid(v.Revision) {
+	if o.OptimizedFetch && isSha && v.RevisionIsValid(revision) {
 		return nil
 	}
 
@@ -87,7 +88,7 @@ func (v *Repository) Fetch(remote string, o *FetchOptions) error {
 	}
 	if o.CurrentBranchOnly {
 		if isSha || isTag {
-			if v.RevisionIsValid(v.Revision) {
+			if v.RevisionIsValid(revision) {
 				return nil
 			}
 		}
@@ -100,7 +101,7 @@ func (v *Repository) Fetch(remote string, o *FetchOptions) error {
 
 	if o.Depth > 0 {
 		cmdArgs = append(cmdArgs, fmt.Sprintf("--depth=%d", o.Depth))
-	} else if path.Exist(filepath.Join(v.Path, "shallow")) {
+	} else if path.Exist(filepath.Join(v.RepoDir, "shallow")) {
 		cmdArgs = append(cmdArgs, "--unshallow")
 	}
 
@@ -127,18 +128,18 @@ func (v *Repository) Fetch(remote string, o *FetchOptions) error {
 	cmdArgs = append(cmdArgs, v.RemoteURL)
 	if o.CurrentBranchOnly {
 		if isSha {
-			cmdArgs = append(cmdArgs, v.Revision)
+			cmdArgs = append(cmdArgs, revision)
 		} else if isTag {
-			cmdArgs = append(cmdArgs, fmt.Sprintf("+%s:%s", v.Revision, v.Revision))
-		} else if strings.HasPrefix(v.Revision, "refs/heads/") || !strings.HasPrefix(v.Revision, "refs/") {
-			branch := strings.TrimPrefix(v.Revision, "refs/heads/")
+			cmdArgs = append(cmdArgs, fmt.Sprintf("+%s:%s", revision, revision))
+		} else if strings.HasPrefix(revision, "refs/heads/") || !strings.HasPrefix(revision, "refs/") {
+			branch := strings.TrimPrefix(revision, "refs/heads/")
 			if v.IsBare {
 				cmdArgs = append(cmdArgs, fmt.Sprintf("+refs/heads/%s:refs/heads/%s", branch, branch))
 			} else {
 				cmdArgs = append(cmdArgs, fmt.Sprintf("+refs/heads/%s:refs/remotes/%s/%s", branch, v.RemoteName, branch))
 			}
 		} else {
-			cmdArgs = append(cmdArgs, fmt.Sprintf("+%s:%s", v.Revision, v.Revision))
+			cmdArgs = append(cmdArgs, fmt.Sprintf("+%s:%s", revision, revision))
 		}
 	} else {
 		if v.IsBare {
@@ -149,7 +150,7 @@ func (v *Repository) Fetch(remote string, o *FetchOptions) error {
 	}
 	log.Debugf("fetching using command: %s", strings.Join(cmdArgs, " "))
 
-	err = executeCommandIn(v.Path, cmdArgs)
+	err = executeCommandIn(v.RepoDir, cmdArgs)
 	if err != nil {
 		return fmt.Errorf("fail to fetch project '%s': %s", v.Name, err)
 	}
@@ -163,7 +164,7 @@ func (v *Repository) Fetch(remote string, o *FetchOptions) error {
 		}
 		log.Debugf("repacking using command: %s", strings.Join(cmdArgs, " "))
 
-		err = executeCommandIn(v.Path, cmdArgs)
+		err = executeCommandIn(v.RepoDir, cmdArgs)
 		if err != nil {
 			return fmt.Errorf("fail to repack '%s': %s", v.Name, err)
 		}
@@ -241,8 +242,8 @@ func (v *Project) SyncNetworkHalf(o *FetchOptions) error {
 		return v.CopyAndLinkFiles()
 	}
 
-	if v.WorkRepository == nil {
+	if !v.Repository.Exists() {
 		return fmt.Errorf("WorkRepository of project '%s' is nil, sync-network-half failed", v.Name)
 	}
-	return v.WorkRepository.Fetch(v.RemoteName, o)
+	return v.Repository.Fetch(v.RemoteName, o)
 }

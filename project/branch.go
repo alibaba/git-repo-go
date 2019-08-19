@@ -114,7 +114,7 @@ func (v Repository) DeleteBranch(branch string) error {
 		branch,
 		"--",
 	}
-	return executeCommandIn(v.Path, cmdArgs)
+	return executeCommandIn(v.RepoDir, cmdArgs)
 }
 
 // UpdateRef creates new reference.
@@ -156,11 +156,6 @@ func (v Project) GetHead() string {
 	return v.Head()
 }
 
-// Heads returns branches of repository.
-func (v Project) Heads() []Branch {
-	return v.WorkRepository.Heads()
-}
-
 // RemoteTracking returns name of current remote tracking branch.
 func (v Project) RemoteTracking(rev string) string {
 	if rev == "" || IsSha(rev) {
@@ -181,7 +176,7 @@ func (v Project) ResolveRevision(rev string) (string, error) {
 		return "", nil
 	}
 
-	raw := v.WorkRepository.Raw()
+	raw := v.Raw()
 	if raw == nil {
 		return "", fmt.Errorf("repository for %s is missing, fail to parse %s", v.Name, rev)
 	}
@@ -199,7 +194,7 @@ func (v Project) ResolveRevision(rev string) (string, error) {
 
 // ResolveRemoteTracking returns revision id of current remote tracking branch.
 func (v Project) ResolveRemoteTracking(rev string) (string, error) {
-	raw := v.WorkRepository.Raw()
+	raw := v.Raw()
 	if raw == nil {
 		return "", fmt.Errorf("repository for %s is missing, fail to parse %s", v.Name, v.Revision)
 	}
@@ -223,16 +218,6 @@ func (v Project) ResolveRemoteTracking(rev string) (string, error) {
 		return "", fmt.Errorf("revision %s in %s not found", rev, v.Name)
 	}
 	return revid.String(), nil
-}
-
-// DeleteBranch deletes a branch.
-func (v Project) DeleteBranch(branch string) error {
-	return v.WorkRepository.DeleteBranch(branch)
-}
-
-// UpdateRef creates new reference.
-func (v Project) UpdateRef(ref, base, reason string) error {
-	return v.WorkRepository.UpdateRef(ref, base, reason)
 }
 
 // StartBranch creates new branch.
@@ -289,21 +274,6 @@ func (v Project) StartBranch(branch, track string) error {
 	// Create remote tracking
 	v.UpdateBranchTracking(branch, remote, track)
 	return nil
-}
-
-// TrackBranch gets remote track branch name.
-func (v Project) TrackBranch(branch string) string {
-	return v.WorkRepository.TrackBranch(branch)
-}
-
-// LocalTrackBranch gets local tracking remote branch.
-func (v Project) LocalTrackBranch(branch string) string {
-	return v.WorkRepository.LocalTrackBranch(branch)
-}
-
-// RemoteMatchingBranch gets local tracking branch name of a match remote branch
-func (v Project) RemoteMatchingBranch(remote, branch string) string {
-	return v.WorkRepository.RemoteMatchingBranch(remote, branch)
 }
 
 // UpdateBranchTracking updates branch tracking info.

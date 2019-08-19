@@ -76,8 +76,12 @@ func IsClean(dir string) (bool, error) {
 
 // IsClean indicates git worktree is clean.
 // TODO: cannot use go-git, because it is incompatible with git new index format.
-func (v Project) IsClean() (bool, error) {
-	return IsClean(v.WorkDir)
+func (v Project) IsClean() bool {
+	ok, err := IsClean(v.WorkDir)
+	if err != nil {
+		log.Warnf("fail to run IsClean: %s", err)
+	}
+	return ok
 }
 
 // CheckoutRevision runs git checkout.
@@ -156,6 +160,7 @@ func (v Project) SyncLocalHalf(o *CheckoutOptions) error {
 	}
 
 	if v.Revision == "" {
+		log.Debug("Revision is empty, do nothing")
 		return nil
 	}
 
@@ -169,7 +174,7 @@ func (v Project) SyncLocalHalf(o *CheckoutOptions) error {
 			v.Revision,
 			err)
 	}
-	log.Debugf("remote tracking ref: %s", revid)
+	log.Debugf("remote tracking ref for %s: %s", v.Revision, revid)
 
 	// Read current branch to 'branch' and parsed revision to 'headid'
 	// If repository is in detached head mode, or has invalid HEAD, branch is empty.
@@ -281,6 +286,7 @@ func (v Project) SyncLocalHalf(o *CheckoutOptions) error {
 		return PostUpdate(true)
 	}
 
+	log.Debugf("checking rev-list: %s..%s", headid, revid)
 	remoteChanges, err := v.Revlist(revid, "--not", headid)
 	if err != nil {
 		log.Errorf("rev-list failed: %s", err)
@@ -322,7 +328,7 @@ func (v Project) SyncLocalHalf(o *CheckoutOptions) error {
 	}
 
 	// Failed if worktree is dirty.
-	if ok, _ := v.IsClean(); !ok {
+	if !v.IsClean() {
 		return fmt.Errorf("worktree of %s is dirty, checkout failed", v.Name)
 	}
 
@@ -363,7 +369,7 @@ func (v Project) InstallGerritHooks() error {
 	}
 
 	// Hooks dir of work repository maybe a symlink to object repository
-	localHooksDir := filepath.Join(v.WorkRepository.Path, "hooks")
+	localHooksDir := filepath.Join(v.RepoDir, "hooks")
 	if p, err := filepath.EvalSymlinks(localHooksDir); err == nil {
 		localHooksDir = p
 	}

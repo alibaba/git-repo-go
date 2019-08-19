@@ -22,12 +22,10 @@ import (
 
 // Project inherits manifest's Project and has two related repositories.
 type Project struct {
-	manifest.Project
+	Repository
 
-	WorkDir          string
 	ObjectRepository *Repository
-	WorkRepository   *Repository
-	Settings         *RepoSettings
+	WorkDir          string
 	Remote           Remote
 }
 
@@ -82,43 +80,42 @@ func (v Project) ManifestURL() string {
 	return v.Settings.ManifestURL
 }
 
-// ReferencePath returns path of reference git dir.
-func (v Project) ReferencePath() string {
+func referencePath(mp *manifest.Project, s *RepoSettings) string {
 	var (
 		rdir = ""
 		err  error
 	)
 
-	if v.Settings.Reference == "" {
+	if s.Reference == "" {
 		return ""
 	}
 
-	if !filepath.IsAbs(v.Settings.Reference) {
-		v.Settings.Reference, err = path.Abs(v.Settings.Reference)
+	if !filepath.IsAbs(s.Reference) {
+		s.Reference, err = path.Abs(s.Reference)
 		if err != nil {
-			log.Errorf("bad reference path '%s': %s", v.Settings.Reference, err)
-			v.Settings.Reference = ""
+			log.Errorf("bad reference path '%s': %s", s.Reference, err)
+			s.Reference = ""
 			return ""
 		}
 	}
 
-	if !v.IsMetaProject() {
-		rdir = filepath.Join(v.Settings.Reference, v.Name+".git")
+	if !mp.IsMetaProject() {
+		rdir = filepath.Join(s.Reference, mp.Name+".git")
 		if path.Exist(rdir) {
 			return rdir
 		}
-		rdir = filepath.Join(v.Settings.Reference,
+		rdir = filepath.Join(s.Reference,
 			config.DotRepo,
 			config.Projects,
-			v.Path+".git")
+			mp.Path+".git")
 		if path.Exist(rdir) {
 			return rdir
 		}
 		return ""
 	}
 
-	if v.Settings.ManifestURL != "" {
-		u, err := url.Parse(v.Settings.ManifestURL)
+	if s.ManifestURL != "" {
+		u, err := url.Parse(s.ManifestURL)
 		if err == nil {
 			dir := u.RequestURI()
 			if !strings.HasSuffix(dir, ".git") {
@@ -126,7 +123,7 @@ func (v Project) ReferencePath() string {
 			}
 			dirs := strings.Split(dir, "/")
 			for i := 1; i < len(dirs); i++ {
-				dir = filepath.Join(v.Settings.Reference, filepath.Join(dirs[i:]...))
+				dir = filepath.Join(s.Reference, filepath.Join(dirs[i:]...))
 				if fi, err := os.Stat(dir); err == nil && fi.IsDir() {
 					rdir = dir
 					break
@@ -136,7 +133,7 @@ func (v Project) ReferencePath() string {
 	}
 
 	if rdir == "" {
-		dir := filepath.Join(v.Settings.Reference, config.DotRepo, config.ManifestsDotGit)
+		dir := filepath.Join(s.Reference, config.DotRepo, config.ManifestsDotGit)
 		if fi, err := os.Stat(dir); err == nil && fi.IsDir() {
 			rdir = dir
 		}
@@ -172,12 +169,12 @@ func (v *Project) PrepareWorkdir() error {
 	gitdir := filepath.Join(v.WorkDir, ".git")
 	if _, err = os.Stat(gitdir); err != nil {
 		// Remove index file for fresh checkout
-		idxfile := filepath.Join(v.WorkRepository.Path, "index")
+		idxfile := filepath.Join(v.RepoDir, "index")
 		err = os.Remove(idxfile)
 
-		relDir, err := filepath.Rel(v.WorkDir, v.WorkRepository.Path)
+		relDir, err := filepath.Rel(v.WorkDir, v.RepoDir)
 		if err != nil {
-			relDir = v.WorkRepository.Path
+			relDir = v.RepoDir
 		}
 		err = ioutil.WriteFile(gitdir,
 			[]byte("gitdir: "+relDir+"\n"),
@@ -193,7 +190,7 @@ func (v *Project) PrepareWorkdir() error {
 func (v Project) CleanPublishedCache() error {
 	var err error
 
-	raw := v.WorkRepository.Raw()
+	raw := v.Raw()
 	if raw == nil {
 		return nil
 	}
@@ -227,21 +224,6 @@ func (v Project) CleanPublishedCache() error {
 	return nil
 }
 
-// IsRebaseInProgress checks whether is in middle of a rebase.
-func (v Project) IsRebaseInProgress() bool {
-	return v.WorkRepository.IsRebaseInProgress()
-}
-
-// RevisionIsValid checks if revision is valid
-func (v Project) RevisionIsValid(revision string) bool {
-	return v.WorkRepository.RevisionIsValid(revision)
-}
-
-// Revlist works like rev-list
-func (v Project) Revlist(args ...string) ([]string, error) {
-	return v.WorkRepository.Revlist(args...)
-}
-
 // PublishedReference forms published reference for specific branch.
 func (v Project) PublishedReference(branch string) string {
 	pub := config.RefsPub + branch
@@ -254,7 +236,7 @@ func (v Project) PublishedReference(branch string) string {
 
 // PublishedRevision resolves published reference to revision id.
 func (v Project) PublishedRevision(branch string) string {
-	raw := v.WorkRepository.Raw()
+	raw := v.Raw()
 	pub := config.RefsPub + branch
 
 	if raw == nil {
@@ -324,14 +306,13 @@ func (v *Project) SetGitRemoteURL(remoteURL string) error {
 		remote = "origin"
 	}
 
-	repo := v.WorkRepository
-	if repo == nil {
+	if !v.Repository.Exists() {
 		return fmt.Errorf("project '%s' has no working repository", v.Name)
 	}
 
-	cfg := repo.Config()
+	cfg := v.Config()
 	cfg.Set("remote."+remote+".url", remoteURL)
-	return repo.SaveConfig(cfg)
+	return v.SaveConfig(cfg)
 }
 
 // DisableDefaultPush sets git config push.default to nothing.
@@ -345,21 +326,19 @@ func (v *Project) DisableDefaultPush() error {
 	return nil
 }
 
-// GitConfigRemoteURL returns remote.<remote>.url setting in git config.
-func (v *Project) GitConfigRemoteURL() string {
+func (v *Project) gitConfigRemoteURL() string {
 	remote := v.RemoteName
 	if remote == "" {
 		remote = "origin"
 	}
 
-	repo := v.WorkRepository
-	return repo.GitConfigRemoteURL(remote)
+	return v.GitConfigRemoteURL(remote)
 }
 
 // GetRemoteURL returns new remtoe url user provided or from manifest repo url
 func (v *Project) GetRemoteURL() (string, error) {
 	if v.Settings.ManifestURL == "" && v.IsMetaProject() {
-		v.Settings.ManifestURL = v.GitConfigRemoteURL()
+		v.Settings.ManifestURL = v.gitConfigRemoteURL()
 	}
 	if v.Settings.ManifestURL == "" {
 		return "", fmt.Errorf("project '%s' has empty manifest url", v.Name)
@@ -378,11 +357,6 @@ func (v *Project) GetRemoteURL() (string, error) {
 	return u, nil
 }
 
-// Config returns git config file parser.
-func (v *Project) Config() goconfig.GitConfig {
-	return v.WorkRepository.Config()
-}
-
 // ConfigWithDefault returns git config file parser.
 func (v *Project) ConfigWithDefault() ConfigWithDefault {
 	return ConfigWithDefault{Project: v}
@@ -391,11 +365,6 @@ func (v *Project) ConfigWithDefault() ConfigWithDefault {
 // ManifestConfig returns git config of manifest project.
 func (v *Project) ManifestConfig() goconfig.GitConfig {
 	return v.Settings.Config
-}
-
-// SaveConfig will save config to git config file.
-func (v *Project) SaveConfig(cfg goconfig.GitConfig) error {
-	return v.WorkRepository.SaveConfig(cfg)
 }
 
 // MatchGroups indecates if project belongs to special groups.
@@ -430,31 +399,55 @@ func (v Project) UserEmail() string {
 }
 
 // NewProject returns a project: project worktree with a bared repo and a seperate repository.
-func NewProject(project *manifest.Project, s *RepoSettings) *Project {
+func NewProject(mp *manifest.Project, s *RepoSettings) *Project {
 	var (
 		objectRepoPath string
 		workRepoPath   string
 	)
 
+	if !mp.IsMetaProject() && s.ManifestURL == "" {
+		log.Panicf("unknown remote url for %s", mp.Name)
+	}
+
 	if s.ManifestURL != "" && !strings.HasSuffix(s.ManifestURL, ".git") {
 		s.ManifestURL += ".git"
 	}
+
+	if mp.IsMetaProject() {
+		workRepoPath = filepath.Join(
+			s.RepoRoot,
+			config.DotRepo,
+			mp.Path+".git",
+		)
+	} else {
+		workRepoPath = filepath.Join(
+			s.RepoRoot,
+			config.DotRepo,
+			config.Projects,
+			mp.Path+".git",
+		)
+	}
+
+	repo := Repository{
+		Project: *mp,
+
+		RepoDir:   workRepoPath,
+		IsBare:    false,
+		Settings:  s,
+		Reference: referencePath(mp, s),
+	}
+
 	p := Project{
-		Project:  *project,
-		Settings: s,
+		Repository: repo,
 	}
 
-	if !p.IsMetaProject() && s.ManifestURL == "" {
-		log.Panicf("unknown remote url for %s", p.Name)
-	}
-
-	if p.IsMetaProject() {
+	if mp.IsMetaProject() {
 		p.WorkDir = filepath.Join(p.RepoRoot(), config.DotRepo, p.Path)
 	} else {
 		p.WorkDir = filepath.Join(p.RepoRoot(), p.Path)
 	}
 
-	if !p.IsMetaProject() && cap.CanSymlink() {
+	if !mp.IsMetaProject() && cap.CanSymlink() {
 		objectRepoPath = filepath.Join(
 			p.RepoRoot(),
 			config.DotRepo,
@@ -462,49 +455,25 @@ func NewProject(project *manifest.Project, s *RepoSettings) *Project {
 			p.Name+".git",
 		)
 		p.ObjectRepository = &Repository{
-			Name:     p.Name,
-			Path:     objectRepoPath,
+			Project: *mp,
+
+			RepoDir:  objectRepoPath,
 			IsBare:   true,
 			Settings: s,
 		}
-	}
-
-	if p.IsMetaProject() {
-		workRepoPath = filepath.Join(
-			p.RepoRoot(),
-			config.DotRepo,
-			p.Path+".git",
-		)
-	} else {
-		workRepoPath = filepath.Join(
-			p.RepoRoot(),
-			config.DotRepo,
-			config.Projects,
-			p.Path+".git",
-		)
-	}
-
-	p.WorkRepository = &Repository{
-		Name:       p.Name,
-		Path:       workRepoPath,
-		RemoteName: p.RemoteName,
-		Revision:   p.Revision,
-		IsBare:     false,
-		Reference:  p.ReferencePath(),
-		Settings:   s,
 	}
 
 	remoteURL, err := p.GetRemoteURL()
 	if err != nil {
 		log.Panicf("fail to get remote url for '%s': %s", p.Name, err)
 	}
-	p.WorkRepository.RemoteURL = remoteURL
+	p.Repository.RemoteURL = remoteURL
 
 	return &p
 }
 
 // NewMirrorProject returns a mirror project.
-func NewMirrorProject(project *manifest.Project, s *RepoSettings) *Project {
+func NewMirrorProject(mp *manifest.Project, s *RepoSettings) *Project {
 	var (
 		repoPath string
 	)
@@ -512,37 +481,36 @@ func NewMirrorProject(project *manifest.Project, s *RepoSettings) *Project {
 	if s.ManifestURL != "" && !strings.HasSuffix(s.ManifestURL, ".git") {
 		s.ManifestURL += ".git"
 	}
-	p := Project{
-		Project:  *project,
-		Settings: s,
-	}
-
-	if !p.IsMetaProject() && s.ManifestURL == "" {
-		log.Panicf("unknown remote url for %s", p.Name)
-	}
 
 	repoPath = filepath.Join(
-		p.RepoRoot(),
-		p.Name+".git",
+		s.RepoRoot,
+		mp.Name+".git",
 	)
 
-	p.WorkDir = repoPath
+	repo := Repository{
+		Project: *mp,
 
-	p.WorkRepository = &Repository{
-		Name:       p.Name,
-		Path:       repoPath,
-		RemoteName: p.RemoteName,
-		Revision:   p.Revision,
-		IsBare:     true,
-		Reference:  p.ReferencePath(),
-		Settings:   s,
+		RepoDir:   repoPath,
+		IsBare:    true,
+		Settings:  s,
+		Reference: referencePath(mp, s),
+	}
+
+	p := Project{
+		Repository: repo,
+
+		WorkDir: repoPath,
+	}
+
+	if !mp.IsMetaProject() && s.ManifestURL == "" {
+		log.Panicf("unknown remote url for %s", mp.Name)
 	}
 
 	remoteURL, err := p.GetRemoteURL()
 	if err != nil {
 		log.Panicf("fail to get remote url for '%s': %s", p.Name, err)
 	}
-	p.WorkRepository.RemoteURL = remoteURL
+	p.Repository.RemoteURL = remoteURL
 
 	return &p
 }
