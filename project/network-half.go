@@ -29,6 +29,7 @@ func (v *Repository) Fetch(remote string, o *FetchOptions) error {
 	var (
 		err           error
 		hasAlternates bool
+		revision      = v.Revision
 	)
 
 	if v.isUnborn() && v.Reference != "" && path.IsGitDir(v.Reference) {
@@ -64,18 +65,18 @@ func (v *Repository) Fetch(remote string, o *FetchOptions) error {
 		return fmt.Errorf("don't know where to fetch repo %s from remote %s", v.Name, remote)
 	}
 
-	if v.Revision == "" {
-		v.Revision = v.TrackBranch("")
-		if v.Revision == "" {
+	if revision == "" {
+		revision = v.TrackBranch("")
+		if revision == "" {
 			log.Warnf("cannot get tracking branch for project '%s'", v.Name)
-			v.Revision = "master"
+			revision = "master"
 		}
 	}
 
-	isSha := IsSha(v.Revision)
-	isTag := IsTag(v.Revision)
+	isSha := IsSha(revision)
+	isTag := IsTag(revision)
 
-	if o.OptimizedFetch && isSha && v.RevisionIsValid(v.Revision) {
+	if o.OptimizedFetch && isSha && v.RevisionIsValid(revision) {
 		return nil
 	}
 
@@ -87,7 +88,7 @@ func (v *Repository) Fetch(remote string, o *FetchOptions) error {
 	}
 	if o.CurrentBranchOnly {
 		if isSha || isTag {
-			if v.RevisionIsValid(v.Revision) {
+			if v.RevisionIsValid(revision) {
 				return nil
 			}
 		}
@@ -127,18 +128,18 @@ func (v *Repository) Fetch(remote string, o *FetchOptions) error {
 	cmdArgs = append(cmdArgs, v.RemoteURL)
 	if o.CurrentBranchOnly {
 		if isSha {
-			cmdArgs = append(cmdArgs, v.Revision)
+			cmdArgs = append(cmdArgs, revision)
 		} else if isTag {
-			cmdArgs = append(cmdArgs, fmt.Sprintf("+%s:%s", v.Revision, v.Revision))
-		} else if strings.HasPrefix(v.Revision, "refs/heads/") || !strings.HasPrefix(v.Revision, "refs/") {
-			branch := strings.TrimPrefix(v.Revision, "refs/heads/")
+			cmdArgs = append(cmdArgs, fmt.Sprintf("+%s:%s", revision, revision))
+		} else if strings.HasPrefix(revision, "refs/heads/") || !strings.HasPrefix(revision, "refs/") {
+			branch := strings.TrimPrefix(revision, "refs/heads/")
 			if v.IsBare {
 				cmdArgs = append(cmdArgs, fmt.Sprintf("+refs/heads/%s:refs/heads/%s", branch, branch))
 			} else {
 				cmdArgs = append(cmdArgs, fmt.Sprintf("+refs/heads/%s:refs/remotes/%s/%s", branch, v.RemoteName, branch))
 			}
 		} else {
-			cmdArgs = append(cmdArgs, fmt.Sprintf("+%s:%s", v.Revision, v.Revision))
+			cmdArgs = append(cmdArgs, fmt.Sprintf("+%s:%s", revision, revision))
 		}
 	} else {
 		if v.IsBare {
