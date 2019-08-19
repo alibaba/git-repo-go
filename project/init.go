@@ -16,10 +16,7 @@ func (v Project) IsRepoInitialized() bool {
 			return false
 		}
 	}
-	if v.WorkRepository == nil {
-		return false
-	}
-	if !v.WorkRepository.Exists() {
+	if !v.Repository.Exists() {
 		return false
 	}
 	return true
@@ -42,12 +39,10 @@ func (v *Project) GitInit() error {
 		v.ObjectRepository.Init("", "", referenceGitDir)
 	}
 
-	if v.WorkRepository != nil {
-		if v.ObjectRepository == nil {
-			v.WorkRepository.Init(v.RemoteName, remoteURL, referenceGitDir)
-		} else {
-			v.WorkRepository.InitByLink(v.RemoteName, remoteURL, v.ObjectRepository)
-		}
+	if v.ObjectRepository == nil {
+		v.Repository.Init(v.RemoteName, remoteURL, referenceGitDir)
+	} else {
+		v.Repository.InitByLink(v.RemoteName, remoteURL, v.ObjectRepository)
 	}
 
 	// TODO: install hooks

@@ -47,14 +47,13 @@ func TestProjectGitInit(t *testing.T) {
 	assert.Nil(err)
 	assert.Equal("https://github.com/my/foo.git", u)
 
-	assert.NotNil(p.WorkRepository)
 	// Call GitInit
 	assert.False(p.IsRepoInitialized())
 	err = p.GitInit()
 	assert.Nil(err)
 	// TODO: fix it
 	assert.Equal("https://github.com/my/foo.git",
-		p.GitConfigRemoteURL())
+		p.gitConfigRemoteURL())
 	return
 
 	u, err = p.GetRemoteURL()
@@ -68,7 +67,7 @@ func TestProjectGitInit(t *testing.T) {
 	assert.Nil(err)
 	// TODO: fix it
 	assert.Equal("https://code.aone.alibaba-inc.com/zhiyou.jx/my/foo.git",
-		p.GitConfigRemoteURL())
+		p.gitConfigRemoteURL())
 	u, err = p.GetRemoteURL()
 	assert.Equal("https://code.aone.alibaba-inc.com/zhiyou.jx/my/foo.git", u)
 }
@@ -151,33 +150,43 @@ func TestIndexByName(t *testing.T) {
 	assert := assert.New(t)
 	projects := []*Project{
 		&Project{
-			Project: manifest.Project{
-				Name: "Group3/Name1",
-				Path: "app/3-1",
+			Repository: Repository{
+				Project: manifest.Project{
+					Name: "Group3/Name1",
+					Path: "app/3-1",
+				},
 			},
 		},
 		&Project{
-			Project: manifest.Project{
-				Name: "Group1/Name1",
-				Path: "app/1-1",
+			Repository: Repository{
+				Project: manifest.Project{
+					Name: "Group1/Name1",
+					Path: "app/1-1",
+				},
 			},
 		},
 		&Project{
-			Project: manifest.Project{
-				Name: "Group2/Name2",
-				Path: "app/2-2-1",
+			Repository: Repository{
+				Project: manifest.Project{
+					Name: "Group2/Name2",
+					Path: "app/2-2-1",
+				},
 			},
 		},
 		&Project{
-			Project: manifest.Project{
-				Name: "Group2/Name1",
-				Path: "app/2-1",
+			Repository: Repository{
+				Project: manifest.Project{
+					Name: "Group2/Name1",
+					Path: "app/2-1",
+				},
 			},
 		},
 		&Project{
-			Project: manifest.Project{
-				Name: "Group2/Name2",
-				Path: "app/2-2-2",
+			Repository: Repository{
+				Project: manifest.Project{
+					Name: "Group2/Name2",
+					Path: "app/2-2-2",
+				},
 			},
 		},
 	}
@@ -200,39 +209,51 @@ func TestProjectsTree(t *testing.T) {
 	assert := assert.New(t)
 	projects := []*Project{
 		&Project{
-			Project: manifest.Project{
-				Name: "Group3/Name1",
-				Path: "app3/name1",
+			Repository: Repository{
+				Project: manifest.Project{
+					Name: "Group3/Name1",
+					Path: "app3/name1",
+				},
 			},
 		},
 		&Project{
-			Project: manifest.Project{
-				Name: "Group1/Name1",
-				Path: "app1/name1",
+			Repository: Repository{
+				Project: manifest.Project{
+					Name: "Group1/Name1",
+					Path: "app1/name1",
+				},
 			},
 		},
 		&Project{
-			Project: manifest.Project{
-				Name: "Group2/App",
-				Path: "app2",
+			Repository: Repository{
+				Project: manifest.Project{
+					Name: "Group2/App",
+					Path: "app2",
+				},
 			},
 		},
 		&Project{
-			Project: manifest.Project{
-				Name: "Group2/Name2/sub1",
-				Path: "app2/name2/sub1",
+			Repository: Repository{
+				Project: manifest.Project{
+					Name: "Group2/Name2/sub1",
+					Path: "app2/name2/sub1",
+				},
 			},
 		},
 		&Project{
-			Project: manifest.Project{
-				Name: "Group2/Name1",
-				Path: "app2/name1",
+			Repository: Repository{
+				Project: manifest.Project{
+					Name: "Group2/Name1",
+					Path: "app2/name1",
+				},
 			},
 		},
 		&Project{
-			Project: manifest.Project{
-				Name: "Group2/Name2",
-				Path: "app2/name2",
+			Repository: Repository{
+				Project: manifest.Project{
+					Name: "Group2/Name2",
+					Path: "app2/name2",
+				},
 			},
 		},
 	}

@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"code.alibaba-inc.com/force/git-repo/manifest"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
@@ -152,11 +153,13 @@ func TestRepositoryFetch(t *testing.T) {
 	// Create a reference repo
 	refRepoPath := filepath.Join(tmpdir, "ref.git")
 	refRepo := Repository{
-		RepoDir:    refRepoPath,
-		IsBare:     true,
-		RemoteName: "origin",
-		Settings:   &RepoSettings{},
-		Revision:   "master",
+		Project: manifest.Project{
+			RemoteName: "origin",
+			Revision:   "master",
+		},
+		RepoDir:  refRepoPath,
+		IsBare:   true,
+		Settings: &RepoSettings{},
 	}
 	remote = "origin"
 	remoteURL = repoDir
@@ -190,12 +193,14 @@ func TestRepositoryFetch(t *testing.T) {
 	// Create another repo
 	newRepoPath := filepath.Join(tmpdir, "repo.git")
 	newRepo := Repository{
-		Name:       "repo",
-		RepoDir:    newRepoPath,
-		Reference:  refRepoPath,
-		IsBare:     false,
-		RemoteName: "origin",
-		Settings:   &RepoSettings{},
+		Project: manifest.Project{
+			Name:       "repo",
+			RemoteName: "origin",
+		},
+		RepoDir:   newRepoPath,
+		Reference: refRepoPath,
+		IsBare:    false,
+		Settings:  &RepoSettings{},
 	}
 	remote = "origin"
 	remoteURL = repoDir

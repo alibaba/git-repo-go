@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"code.alibaba-inc.com/force/git-repo/config"
+	"code.alibaba-inc.com/force/git-repo/manifest"
 	"code.alibaba-inc.com/force/git-repo/path"
 	"github.com/jiangxin/goconfig"
 	log "github.com/jiangxin/multi-log"
@@ -22,15 +23,14 @@ const (
 
 // Repository has repository related operations.
 type Repository struct {
-	Name       string // Project name
-	RepoDir    string // Repository real path
-	IsBare     bool
-	RemoteURL  string
-	Reference  string // Alternate repository
-	RemoteName string // Project RemoteName field from manifest xml
-	Revision   string // Projeect Revision from manifest xml
-	Settings   *RepoSettings
-	raw        *git.Repository
+	manifest.Project
+
+	RepoDir   string // Repository real path
+	IsBare    bool
+	RemoteURL string
+	Reference string // Alternate repository
+	Settings  *RepoSettings
+	raw       *git.Repository
 }
 
 // Exists checks repository layout.

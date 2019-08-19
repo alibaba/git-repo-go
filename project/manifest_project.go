@@ -126,7 +126,6 @@ func (v ManifestProject) DissociateEnabled() bool {
 // SetRevision changes project default branch.
 func (v *ManifestProject) SetRevision(rev string) {
 	v.Revision = rev
-	v.WorkRepository.Revision = rev
 }
 
 // NewManifestProject returns a manifest project: a worktree with a seperate repository.

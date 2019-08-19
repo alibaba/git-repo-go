@@ -55,7 +55,7 @@ func (v *GitWorkSpace) LoadRemotes(noCache bool) error {
 		}
 
 		name = strings.TrimPrefix(name, "remote.")
-		remoteURL := p.WorkRepository.GitConfigRemoteURL(name)
+		remoteURL := p.GitConfigRemoteURL(name)
 		if remoteURL == "" {
 			log.Warnf("no URL defined for remote: %s", name)
 			continue
@@ -142,20 +142,20 @@ func (v GitWorkSpace) newProject(worktree, gitdir string) (*project.Project, err
 	}
 
 	repo := project.Repository{
-		Name:    name,
-		RepoDir: gitdir,
-		IsBare:  false,
-	}
-
-	p := project.Project{
 		Project: manifest.Project{
 			Name: name,
 			Path: ".",
 		},
 
-		WorkDir:        worktree,
-		WorkRepository: &repo,
-		Settings:       &s,
+		RepoDir:  gitdir,
+		IsBare:   false,
+		Settings: &s,
+	}
+
+	p := project.Project{
+		Repository: repo,
+
+		WorkDir: worktree,
 	}
 
 	return &p, nil

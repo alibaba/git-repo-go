@@ -834,11 +834,10 @@ func (v uploadCommand) Execute(args []string) error {
 		)
 
 		p := allProjects[0]
-		repo := p.WorkRepository
 		remoteMap := ws.GetRemoteMap()
 		if v.O.Branch == "" {
 			v.O.CurrentBranch = true
-			head = repo.GetHead()
+			head = p.GetHead()
 		} else {
 			head = v.O.Branch
 			if !strings.HasPrefix(head, config.RefsHeads) {
@@ -854,12 +853,12 @@ func (v uploadCommand) Execute(args []string) error {
 
 		head = strings.TrimPrefix(head, config.RefsHeads)
 		if v.O.Remote == "" {
-			remoteName = repo.TrackRemote(head)
+			remoteName = p.TrackRemote(head)
 		} else {
 			remoteName = v.O.Remote
 		}
 		if v.O.DestBranch == "" {
-			remoteRevision = repo.TrackBranch(head)
+			remoteRevision = p.TrackBranch(head)
 		} else {
 			remoteRevision = v.O.DestBranch
 		}
@@ -910,24 +909,20 @@ func (v uploadCommand) Execute(args []string) error {
 		manifestRemote.Revision = remoteRevision
 
 		// Set project and repository name
-		remoteURL = repo.GitConfigRemoteURL(remoteName)
+		remoteURL = p.GitConfigRemoteURL(remoteName)
 		gitURL := config.ParseGitURL(remoteURL)
 		if gitURL != nil && gitURL.Repo != "" {
 			if gitURL.Proto == "file" {
-				repo.Name = filepath.Base(gitURL.Repo)
-				p.Project.Name = repo.Name
+				p.Name = filepath.Base(gitURL.Repo)
 			} else {
-				repo.Name = gitURL.Repo
-				p.Project.Name = gitURL.Repo
+				p.Name = gitURL.Repo
 			}
 		}
 
 		// Set other missing fields
-		repo.RemoteURL = remoteURL
-		repo.RemoteName = remoteName
-		repo.Revision = remoteRevision
-		p.Project.RemoteName = remoteName
-		p.Project.Revision = remoteRevision
+		p.RemoteURL = remoteURL
+		p.RemoteName = remoteName
+		p.Revision = remoteRevision
 
 		// Install hooks if remote is Gerrit server
 		if allProjects[0].Remote.GetType() == config.RemoteTypeGerrit {

@@ -241,8 +241,8 @@ func (v *Project) SyncNetworkHalf(o *FetchOptions) error {
 		return v.CopyAndLinkFiles()
 	}
 
-	if v.WorkRepository == nil {
+	if !v.Repository.Exists() {
 		return fmt.Errorf("WorkRepository of project '%s' is nil, sync-network-half failed", v.Name)
 	}
-	return v.WorkRepository.Fetch(v.RemoteName, o)
+	return v.Repository.Fetch(v.RemoteName, o)
 }
