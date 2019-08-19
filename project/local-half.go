@@ -76,8 +76,12 @@ func IsClean(dir string) (bool, error) {
 
 // IsClean indicates git worktree is clean.
 // TODO: cannot use go-git, because it is incompatible with git new index format.
-func (v Project) IsClean() (bool, error) {
-	return IsClean(v.WorkDir)
+func (v Project) IsClean() bool {
+	ok, err := IsClean(v.WorkDir)
+	if err != nil {
+		log.Warnf("fail to run IsClean: %s", err)
+	}
+	return ok
 }
 
 // CheckoutRevision runs git checkout.
@@ -322,7 +326,7 @@ func (v Project) SyncLocalHalf(o *CheckoutOptions) error {
 	}
 
 	// Failed if worktree is dirty.
-	if ok, _ := v.IsClean(); !ok {
+	if !v.IsClean() {
 		return fmt.Errorf("worktree of %s is dirty, checkout failed", v.Name)
 	}
 

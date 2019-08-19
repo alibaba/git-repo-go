@@ -696,12 +696,8 @@ func (v *uploadCommand) UploadAndReport(branches []project.ReviewableBranch) err
 		people[0] = append(people[0], origPeople[0]...)
 		people[1] = append(people[1], origPeople[1]...)
 		branch.AppendReviewers(people)
-		isClean, err := branch.Project.IsClean()
-		if err != nil {
-			log.Error(err)
-		}
 		cfg := branch.Project.ConfigWithDefault()
-		if !isClean {
+		if !branch.Project.IsClean() {
 			key := fmt.Sprintf("review.%s.autoupload", branch.Project.Remote.GetRemote().Review)
 			if !cfg.HasKey(key) {
 				fmt.Printf("Uncommitted changes in " + branch.Project.Name)
