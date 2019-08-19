@@ -34,7 +34,7 @@ func (v *Repository) Fetch(remote string, o *FetchOptions) error {
 	if v.isUnborn() && v.Reference != "" && path.IsGitDir(v.Reference) {
 		hasAlternates = true
 
-		altFile := filepath.Join(v.Path, "objects", "info", "alternates")
+		altFile := filepath.Join(v.RepoDir, "objects", "info", "alternates")
 		os.MkdirAll(filepath.Dir(altFile), 0755)
 
 		var f *os.File
@@ -42,7 +42,7 @@ func (v *Repository) Fetch(remote string, o *FetchOptions) error {
 		defer f.Close()
 		if err == nil {
 			target := filepath.Join(v.Reference, "objects")
-			target, err = filepath.Rel(filepath.Join(v.Path, "objects"), target)
+			target, err = filepath.Rel(filepath.Join(v.RepoDir, "objects"), target)
 			if err != nil {
 				target = filepath.Join(v.Reference, "objects")
 			}
@@ -100,7 +100,7 @@ func (v *Repository) Fetch(remote string, o *FetchOptions) error {
 
 	if o.Depth > 0 {
 		cmdArgs = append(cmdArgs, fmt.Sprintf("--depth=%d", o.Depth))
-	} else if path.Exist(filepath.Join(v.Path, "shallow")) {
+	} else if path.Exist(filepath.Join(v.RepoDir, "shallow")) {
 		cmdArgs = append(cmdArgs, "--unshallow")
 	}
 
@@ -149,7 +149,7 @@ func (v *Repository) Fetch(remote string, o *FetchOptions) error {
 	}
 	log.Debugf("fetching using command: %s", strings.Join(cmdArgs, " "))
 
-	err = executeCommandIn(v.Path, cmdArgs)
+	err = executeCommandIn(v.RepoDir, cmdArgs)
 	if err != nil {
 		return fmt.Errorf("fail to fetch project '%s': %s", v.Name, err)
 	}
@@ -163,7 +163,7 @@ func (v *Repository) Fetch(remote string, o *FetchOptions) error {
 		}
 		log.Debugf("repacking using command: %s", strings.Join(cmdArgs, " "))
 
-		err = executeCommandIn(v.Path, cmdArgs)
+		err = executeCommandIn(v.RepoDir, cmdArgs)
 		if err != nil {
 			return fmt.Errorf("fail to repack '%s': %s", v.Name, err)
 		}

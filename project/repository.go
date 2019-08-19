@@ -23,7 +23,7 @@ const (
 // Repository has repository related operations.
 type Repository struct {
 	Name       string // Project name
-	Path       string // Repository real path
+	RepoDir    string // Repository real path
 	IsBare     bool
 	RemoteURL  string
 	Reference  string // Alternate repository
@@ -35,7 +35,7 @@ type Repository struct {
 
 // Exists checks repository layout.
 func (v Repository) Exists() bool {
-	return path.IsGitDir(v.Path)
+	return path.IsGitDir(v.RepoDir)
 }
 
 func (v *Repository) setRemote(remoteName, remoteURL string) error {
@@ -67,19 +67,19 @@ func (v Repository) setAlternates(reference string) {
 
 	if reference != "" {
 		// create file: objects/info/alternates
-		altFile := filepath.Join(v.Path, "objects", "info", "alternates")
+		altFile := filepath.Join(v.RepoDir, "objects", "info", "alternates")
 		os.MkdirAll(filepath.Dir(altFile), 0755)
 		var f *os.File
 		f, err = os.OpenFile(altFile, os.O_CREATE|os.O_RDWR, 0644)
 		defer f.Close()
 		if err == nil {
 			relPath := filepath.Join(reference, "objects")
-			relPath, err = filepath.Rel(filepath.Join(v.Path, "objects"), relPath)
+			relPath, err = filepath.Rel(filepath.Join(v.RepoDir, "objects"), relPath)
 			if err == nil {
 				_, err = f.WriteString(relPath + "\n")
 			}
 			if err != nil {
-				log.Errorf("fail to set info/alternates on %s: %s", v.Path, err)
+				log.Errorf("fail to set info/alternates on %s: %s", v.RepoDir, err)
 			}
 		}
 	}
@@ -101,7 +101,7 @@ func (v Repository) isUnborn() bool {
 
 // HasAlternates checks if repository has defined alternates.
 func (v Repository) HasAlternates() bool {
-	altFile := filepath.Join(v.Path, "objects", "info", "alternates")
+	altFile := filepath.Join(v.RepoDir, "objects", "info", "alternates")
 	finfo, err := os.Stat(altFile)
 	if err != nil {
 		return false
@@ -138,9 +138,9 @@ func (v Repository) GetHead() string {
 
 // IsRebaseInProgress checks whether is in middle of a rebase.
 func (v Repository) IsRebaseInProgress() bool {
-	return path.Exist(filepath.Join(v.Path, "rebase-apply")) ||
-		path.Exist(filepath.Join(v.Path, "rebase-merge")) ||
-		path.Exist(filepath.Join(v.Path, ".dotest"))
+	return path.Exist(filepath.Join(v.RepoDir, "rebase-apply")) ||
+		path.Exist(filepath.Join(v.RepoDir, "rebase-merge")) ||
+		path.Exist(filepath.Join(v.RepoDir, ".dotest"))
 }
 
 // RevisionIsValid returns true if revision can be resolved
@@ -168,7 +168,7 @@ func (v Repository) Revlist(args ...string) ([]string, error) {
 	cmdArgs = append(cmdArgs, args...)
 
 	cmd := exec.Command(cmdArgs[0], cmdArgs[1:]...)
-	cmd.Dir = v.Path
+	cmd.Dir = v.RepoDir
 	cmd.Stdin = nil
 	cmd.Stderr = nil
 	out, err := cmd.StdoutPipe()
@@ -205,16 +205,16 @@ func (v Repository) Raw() *git.Repository {
 		return v.raw
 	}
 
-	v.raw, err = git.PlainOpen(v.Path)
+	v.raw, err = git.PlainOpen(v.RepoDir)
 	if err != nil {
-		log.Errorf("cannot open git repo '%s': %s", v.Path, err)
+		log.Errorf("cannot open git repo '%s': %s", v.RepoDir, err)
 		return nil
 	}
 	return v.raw
 }
 
 func (v Repository) configFile() string {
-	return filepath.Join(v.Path, "config")
+	return filepath.Join(v.RepoDir, "config")
 }
 
 // Config returns git config file parser.

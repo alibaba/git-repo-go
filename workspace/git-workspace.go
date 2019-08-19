@@ -142,9 +142,9 @@ func (v GitWorkSpace) newProject(worktree, gitdir string) (*project.Project, err
 	}
 
 	repo := project.Repository{
-		Name:   name,
-		Path:   gitdir,
-		IsBare: false,
+		Name:    name,
+		RepoDir: gitdir,
+		IsBare:  false,
 	}
 
 	p := project.Project{

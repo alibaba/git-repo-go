@@ -172,12 +172,12 @@ func (v *Project) PrepareWorkdir() error {
 	gitdir := filepath.Join(v.WorkDir, ".git")
 	if _, err = os.Stat(gitdir); err != nil {
 		// Remove index file for fresh checkout
-		idxfile := filepath.Join(v.WorkRepository.Path, "index")
+		idxfile := filepath.Join(v.WorkRepository.RepoDir, "index")
 		err = os.Remove(idxfile)
 
-		relDir, err := filepath.Rel(v.WorkDir, v.WorkRepository.Path)
+		relDir, err := filepath.Rel(v.WorkDir, v.WorkRepository.RepoDir)
 		if err != nil {
-			relDir = v.WorkRepository.Path
+			relDir = v.WorkRepository.RepoDir
 		}
 		err = ioutil.WriteFile(gitdir,
 			[]byte("gitdir: "+relDir+"\n"),
@@ -463,7 +463,7 @@ func NewProject(project *manifest.Project, s *RepoSettings) *Project {
 		)
 		p.ObjectRepository = &Repository{
 			Name:     p.Name,
-			Path:     objectRepoPath,
+			RepoDir:  objectRepoPath,
 			IsBare:   true,
 			Settings: s,
 		}
@@ -486,7 +486,7 @@ func NewProject(project *manifest.Project, s *RepoSettings) *Project {
 
 	p.WorkRepository = &Repository{
 		Name:       p.Name,
-		Path:       workRepoPath,
+		RepoDir:    workRepoPath,
 		RemoteName: p.RemoteName,
 		Revision:   p.Revision,
 		IsBare:     false,
@@ -530,7 +530,7 @@ func NewMirrorProject(project *manifest.Project, s *RepoSettings) *Project {
 
 	p.WorkRepository = &Repository{
 		Name:       p.Name,
-		Path:       repoPath,
+		RepoDir:    repoPath,
 		RemoteName: p.RemoteName,
 		Revision:   p.Revision,
 		IsBare:     true,
