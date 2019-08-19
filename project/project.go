@@ -284,6 +284,32 @@ func (v *Project) Head() string {
 	return headName
 }
 
+// HeadBranch returns current branch (name and oid) of project's workdir.
+func (v *Project) HeadBranch() Branch {
+	r, err := v.GitRepository()
+	if err != nil {
+		return Branch{}
+	}
+
+	// Not checkout yet
+	head, _ := r.Head()
+	if head == nil {
+		return Branch{}
+	}
+
+	headName := head.Name().String()
+	if headName == "HEAD" {
+		return Branch{
+			Name: "",
+			Hash: head.Hash().String(),
+		}
+	}
+	return Branch{
+		Name: head.Name().String(),
+		Hash: head.Hash().String(),
+	}
+}
+
 // SetManifestURL sets manifestURL and change remote url if is MetaProject.
 func (v *Project) SetManifestURL(manifestURL string) error {
 	if manifestURL != "" && !strings.HasSuffix(manifestURL, ".git") {
@@ -619,6 +645,7 @@ func (v Project) DetachHead() error {
 	cmdArgs := []string{
 		GIT,
 		"checkout",
+		"-q",
 		"HEAD^0",
 		"--",
 	}
