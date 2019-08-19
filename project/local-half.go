@@ -160,6 +160,7 @@ func (v Project) SyncLocalHalf(o *CheckoutOptions) error {
 	}
 
 	if v.Revision == "" {
+		log.Debug("Revision is empty, do nothing")
 		return nil
 	}
 
@@ -173,7 +174,7 @@ func (v Project) SyncLocalHalf(o *CheckoutOptions) error {
 			v.Revision,
 			err)
 	}
-	log.Debugf("remote tracking ref: %s", revid)
+	log.Debugf("remote tracking ref for %s: %s", v.Revision, revid)
 
 	// Read current branch to 'branch' and parsed revision to 'headid'
 	// If repository is in detached head mode, or has invalid HEAD, branch is empty.
@@ -285,6 +286,7 @@ func (v Project) SyncLocalHalf(o *CheckoutOptions) error {
 		return PostUpdate(true)
 	}
 
+	log.Debugf("checking rev-list: %s..%s", headid, revid)
 	remoteChanges, err := v.Revlist(revid, "--not", headid)
 	if err != nil {
 		log.Errorf("rev-list failed: %s", err)
