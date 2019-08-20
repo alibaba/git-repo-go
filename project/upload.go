@@ -174,22 +174,17 @@ func (v *Project) GetUploadableBranch(branch, remote, remoteBranch string) *Revi
 		remoteBranch = v.Config().Get("branch." + branch + ".merge")
 	}
 
-	if v.Remote == nil || v.Remote.GetType() == config.RemoteTypeUnknown {
-		log.Warnf("cannot upload, unknown type of remote '%s' for project '%s'",
-			remote,
-			v.Path)
-		return nil
-	}
-
-	manifestRemote := v.Remote.GetRemote().Name
-
-	if remote != manifestRemote && !config.IsSingleMode() {
-		log.Warnf("cannot upload, unmatch remote for '%s': %s != %s",
-			branch,
-			remote,
-			manifestRemote,
-		)
-		return nil
+	manifestRemote := ""
+	if v.Remote != nil {
+		manifestRemote = v.Remote.GetRemote().Name
+		if remote != manifestRemote && !config.IsSingleMode() {
+			log.Warnf("cannot upload, unmatch remote for '%s': %s != %s",
+				branch,
+				remote,
+				manifestRemote,
+			)
+			return nil
+		}
 	}
 
 	branchID, err := v.ResolveRevision(branch)
