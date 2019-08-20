@@ -156,6 +156,25 @@ func (v Repository) RevisionIsValid(revision string) bool {
 	return false
 }
 
+// LastModified gets last modified time of a revision
+func (v Repository) LastModified(revision string) string {
+	raw := v.Raw()
+
+	if raw == nil {
+		return ""
+	}
+	obj, err := raw.ResolveRevision(plumbing.Revision(revision))
+	if err != nil {
+		return ""
+	}
+	commit, err := raw.CommitObject(*obj)
+	if err != nil {
+		return ""
+	}
+
+	return commit.Committer.When.Format("Mon Jan 2 15:04:05 -0700 2006")
+}
+
 // Revlist works like rev-list.
 // TODO: Hack go-git plumbing/revlist package to replace git exec
 func (v Repository) Revlist(args ...string) ([]string, error) {
