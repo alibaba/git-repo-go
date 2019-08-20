@@ -16,6 +16,8 @@
 package color
 
 import (
+	"fmt"
+
 	"code.alibaba-inc.com/force/git-repo/cap"
 )
 
@@ -139,4 +141,46 @@ func Reset() string {
 		return colorReset
 	}
 	return ""
+}
+
+func Hilight(msg string) {
+	fmt.Printf("%s%s%s",
+		Color("", "", "bold"),
+		msg,
+		Reset(),
+	)
+}
+
+func Hilightln(msg string) {
+	fmt.Printf("%s%s%s\n",
+		Color("", "", "bold"),
+		msg,
+		Reset(),
+	)
+}
+
+func Hilightf(f string, args ...interface{}) {
+	msg := fmt.Sprintf(f, args...)
+	Hilight(msg)
+}
+
+func Dim(msg string) {
+	fmt.Printf("%s%s%s",
+		Color("", "", "dim"),
+		msg,
+		Reset(),
+	)
+}
+
+func Dimln(msg string) {
+	fmt.Printf("%s%s%s\n",
+		Color("", "", "dim"),
+		msg,
+		Reset(),
+	)
+}
+
+func Dimf(f string, args ...interface{}) {
+	msg := fmt.Sprintf(f, args...)
+	Dim(msg)
 }
