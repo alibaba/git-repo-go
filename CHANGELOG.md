@@ -2,6 +2,32 @@
 
 Changes of git-repo.
 
+## 0.5.0 (2019-08-20)
+
+New features:
+
++ New cmd: git repo abandon
++ New cmd: git repo prune
++ New command: git repo manifest
++ cmd/manifest: freeze manifest revision if provided -r option
+
+Refactors, Enhancements and bugfixes:
+
++ color: add Hilight and Dim methods
++ refactor: donot check Remote type to get reviewable branch
++ repository: get last modified of a revision
++ bugfix: not change Revision during network-half
++ refactor: make WorkRepository as embedding struction for Project
++ go.mod: update goconfig, check cache against file size
++ refactor: rename Path field name of Repository to RepoDir
++ refactor: remove ObjectRepository from project
++ refactor: IsClean only returns one boolean
++ test: add test cases for cmd/manifest
++ test: update test cases for manifest
++ refactor: rename command executable entrance name
++ test: remove pipes, which suppress errors being report
+
+
 ## 0.4.2 (2019-08-08)
 
 + Compress binaries using UPX
