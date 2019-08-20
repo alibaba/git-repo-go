@@ -65,29 +65,29 @@ func (v *pruneCommand) WorkSpace() workspace.WorkSpace {
 	return v.ws
 }
 
-type ProjectBranch struct {
+type projectBranch struct {
 	project.Branch
 
 	Project   *project.Project
 	IsCurrent bool
 }
 
-type ByBranch []ProjectBranch
+type pbByBranch []projectBranch
 
-func (v ByBranch) Len() int      { return len(v) }
-func (v ByBranch) Swap(i, j int) { v[i], v[j] = v[j], v[i] }
-func (v ByBranch) Less(i, j int) bool {
+func (v pbByBranch) Len() int      { return len(v) }
+func (v pbByBranch) Swap(i, j int) { v[i], v[j] = v[j], v[i] }
+func (v pbByBranch) Less(i, j int) bool {
 	if v[i].Name == v[j].Name {
 		return v[i].Project.Path < v[j].Project.Path
 	}
 	return v[i].Name < v[j].Name
 }
 
-type ByProject []ProjectBranch
+type pbByPath []projectBranch
 
-func (v ByProject) Len() int      { return len(v) }
-func (v ByProject) Swap(i, j int) { v[i], v[j] = v[j], v[i] }
-func (v ByProject) Less(i, j int) bool {
+func (v pbByPath) Len() int      { return len(v) }
+func (v pbByPath) Swap(i, j int) { v[i], v[j] = v[j], v[i] }
+func (v pbByPath) Less(i, j int) bool {
 	if v[i].Project.Path == v[j].Project.Path {
 		return v[i].Name < v[j].Name
 	}
@@ -97,8 +97,8 @@ func (v ByProject) Less(i, j int) bool {
 func (v pruneCommand) Execute(args []string) error {
 	var (
 		err     error
-		success = []ProjectBranch{}
-		failure = []ProjectBranch{}
+		success = []projectBranch{}
+		failure = []projectBranch{}
 	)
 
 	ws := v.WorkSpace()
@@ -174,7 +174,7 @@ func (v pruneCommand) Execute(args []string) error {
 							branches = append(branches, cb)
 						}
 					} else {
-						failure = append(failure, ProjectBranch{
+						failure = append(failure, projectBranch{
 							Branch:    cb,
 							Project:   p,
 							IsCurrent: true,
@@ -207,7 +207,7 @@ func (v pruneCommand) Execute(args []string) error {
 			if result.Error == nil {
 				needToClean = true
 				for _, b := range branches {
-					success = append(success, ProjectBranch{
+					success = append(success, projectBranch{
 						Branch:    b,
 						Project:   p,
 						IsCurrent: b.Name == cb.Name,
@@ -220,14 +220,14 @@ func (v pruneCommand) Execute(args []string) error {
 				}
 				for _, b := range branches {
 					if _, ok := left[b.Name]; ok {
-						failure = append(failure, ProjectBranch{
+						failure = append(failure, projectBranch{
 							Branch:    b,
 							Project:   p,
 							IsCurrent: b.Name == cb.Name,
 						})
 					} else {
 						needToClean = true
-						success = append(success, ProjectBranch{
+						success = append(success, projectBranch{
 							Branch:  b,
 							Project: p,
 						})
@@ -250,7 +250,7 @@ func (v pruneCommand) Execute(args []string) error {
 			color.Hilightln("Pruned branches (already merged)")
 		}
 		color.Dimln(strings.Repeat("-", 78))
-		sort.Sort(ByBranch(success))
+		sort.Sort(pbByBranch(success))
 		maxBranchWidth := 25
 		for _, b := range success {
 			w := len(b.Name) - 11
@@ -278,7 +278,7 @@ func (v pruneCommand) Execute(args []string) error {
 	if len(failure) > 0 {
 		color.Hilightln("Pending branches (which have unmerged commits, leave it as is)")
 		color.Dimln(strings.Repeat("-", 78))
-		sort.Sort(ByProject(failure))
+		sort.Sort(pbByPath(failure))
 		projectPath := ""
 		for _, b := range failure {
 			p := b.Project

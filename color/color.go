@@ -143,6 +143,7 @@ func Reset() string {
 	return ""
 }
 
+// Hilight shows hightlight message
 func Hilight(msg string) {
 	fmt.Printf("%s%s%s",
 		Color("", "", "bold"),
@@ -151,6 +152,7 @@ func Hilight(msg string) {
 	)
 }
 
+// Hilightln shows hightlight message with LF
 func Hilightln(msg string) {
 	fmt.Printf("%s%s%s\n",
 		Color("", "", "bold"),
@@ -159,11 +161,13 @@ func Hilightln(msg string) {
 	)
 }
 
+// Hilightf is sprintf version of Hilight
 func Hilightf(f string, args ...interface{}) {
 	msg := fmt.Sprintf(f, args...)
 	Hilight(msg)
 }
 
+// Dim shows message in dim style
 func Dim(msg string) {
 	fmt.Printf("%s%s%s",
 		Color("", "", "dim"),
@@ -172,6 +176,7 @@ func Dim(msg string) {
 	)
 }
 
+// Dimln shows message in dim style with LF
 func Dimln(msg string) {
 	fmt.Printf("%s%s%s\n",
 		Color("", "", "dim"),
@@ -180,6 +185,7 @@ func Dimln(msg string) {
 	)
 }
 
+// Dimf is sprintf version of Dim
 func Dimf(f string, args ...interface{}) {
 	msg := fmt.Sprintf(f, args...)
 	Dim(msg)
