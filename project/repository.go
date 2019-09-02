@@ -25,7 +25,10 @@ const (
 type Repository struct {
 	manifest.Project
 
-	RepoDir   string // Repository real path
+	DotGit       string // Path to worktree/.git
+	GitDir       string // Project's bare repository inside .repo
+	SharedGitDir string // Several projects may share the same repository
+
 	IsBare    bool
 	RemoteURL string
 	Reference string // Alternate repository
@@ -33,9 +36,36 @@ type Repository struct {
 	raw       *git.Repository
 }
 
+// RepoDir returns git dir of the repository
+func (v Repository) RepoDir() string {
+	if path.IsDir(v.DotGit) {
+		return v.DotGit
+	}
+	return v.GitDir
+}
+
+// SharedRepository returns repository which SharedGitDir points to
+func (v Repository) SharedRepository() *Repository {
+	if v.SharedGitDir == "" {
+		return nil
+	}
+
+	return &Repository{
+		Project: v.Project,
+
+		DotGit:       "",
+		GitDir:       v.SharedGitDir,
+		SharedGitDir: "",
+
+		IsBare:    true,
+		RemoteURL: v.RemoteURL,
+		Settings:  v.Settings,
+	}
+}
+
 // Exists checks repository layout.
 func (v Repository) Exists() bool {
-	return path.IsGitDir(v.RepoDir)
+	return path.IsGitDir(v.GitDir)
 }
 
 func (v *Repository) setRemote(remoteName, remoteURL string) error {
@@ -67,19 +97,19 @@ func (v Repository) setAlternates(reference string) {
 
 	if reference != "" {
 		// create file: objects/info/alternates
-		altFile := filepath.Join(v.RepoDir, "objects", "info", "alternates")
+		altFile := filepath.Join(v.GitDir, "objects", "info", "alternates")
 		os.MkdirAll(filepath.Dir(altFile), 0755)
 		var f *os.File
 		f, err = os.OpenFile(altFile, os.O_CREATE|os.O_RDWR, 0644)
 		defer f.Close()
 		if err == nil {
 			relPath := filepath.Join(reference, "objects")
-			relPath, err = filepath.Rel(filepath.Join(v.RepoDir, "objects"), relPath)
+			relPath, err = filepath.Rel(filepath.Join(v.GitDir, "objects"), relPath)
 			if err == nil {
 				_, err = f.WriteString(relPath + "\n")
 			}
 			if err != nil {
-				log.Errorf("fail to set info/alternates on %s: %s", v.RepoDir, err)
+				log.Errorf("fail to set info/alternates on %s: %s", v.GitDir, err)
 			}
 		}
 	}
@@ -101,7 +131,7 @@ func (v Repository) isUnborn() bool {
 
 // HasAlternates checks if repository has defined alternates.
 func (v Repository) HasAlternates() bool {
-	altFile := filepath.Join(v.RepoDir, "objects", "info", "alternates")
+	altFile := filepath.Join(v.GitDir, "objects", "info", "alternates")
 	finfo, err := os.Stat(altFile)
 	if err != nil {
 		return false
@@ -138,9 +168,10 @@ func (v Repository) GetHead() string {
 
 // IsRebaseInProgress checks whether is in middle of a rebase.
 func (v Repository) IsRebaseInProgress() bool {
-	return path.Exist(filepath.Join(v.RepoDir, "rebase-apply")) ||
-		path.Exist(filepath.Join(v.RepoDir, "rebase-merge")) ||
-		path.Exist(filepath.Join(v.RepoDir, ".dotest"))
+	gitDir := v.RepoDir()
+	return path.Exist(filepath.Join(gitDir, "rebase-apply")) ||
+		path.Exist(filepath.Join(gitDir, "rebase-merge")) ||
+		path.Exist(filepath.Join(gitDir, ".dotest"))
 }
 
 // RevisionIsValid returns true if revision can be resolved
@@ -187,7 +218,7 @@ func (v Repository) Revlist(args ...string) ([]string, error) {
 	cmdArgs = append(cmdArgs, args...)
 
 	cmd := exec.Command(cmdArgs[0], cmdArgs[1:]...)
-	cmd.Dir = v.RepoDir
+	cmd.Dir = v.RepoDir()
 	cmd.Stdin = nil
 	cmd.Stderr = nil
 	out, err := cmd.StdoutPipe()
@@ -218,22 +249,24 @@ func (v Repository) Revlist(args ...string) ([]string, error) {
 
 // Raw returns go-git repository object.
 func (v Repository) Raw() *git.Repository {
-	var err error
+	var (
+		err error
+	)
 
 	if v.raw != nil {
 		return v.raw
 	}
 
-	v.raw, err = git.PlainOpen(v.RepoDir)
+	v.raw, err = git.PlainOpen(v.RepoDir())
 	if err != nil {
-		log.Errorf("cannot open git repo '%s': %s", v.RepoDir, err)
+		log.Errorf("cannot open git repo '%s': %s", v.RepoDir(), err)
 		return nil
 	}
 	return v.raw
 }
 
 func (v Repository) configFile() string {
-	return filepath.Join(v.RepoDir, "config")
+	return filepath.Join(v.RepoDir(), "config")
 }
 
 // Config returns git config file parser.

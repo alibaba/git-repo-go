@@ -65,7 +65,11 @@ func (v Project) ExecuteCommand(args ...string) *CmdExecResult {
 		Project: &v,
 	}
 	cmd := exec.Command(args[0], args[1:]...)
-	cmd.Dir = v.WorkDir
+	if v.IsMirror() {
+		cmd.Dir = v.GitDir
+	} else {
+		cmd.Dir = v.WorkDir
+	}
 	cmd.Stdin = nil
 	result.Out, result.Error = cmd.Output()
 	return &result

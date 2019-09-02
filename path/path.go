@@ -293,3 +293,12 @@ func Exist(name string) bool {
 	}
 	return false
 }
+
+// IsDir returns true if path is exist and is a directory.
+func IsDir(name string) bool {
+	fi, err := os.Stat(name)
+	if err != nil || !fi.IsDir() {
+		return false
+	}
+	return true
+}

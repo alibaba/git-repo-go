@@ -31,8 +31,8 @@ func TestRepositoryInit(t *testing.T) {
 	// Initial bare.git
 	repoPath := filepath.Join(tmpdir, "bare.git")
 	repo := Repository{
-		RepoDir: repoPath,
-		IsBare:  true,
+		GitDir: repoPath,
+		IsBare: true,
 	}
 	remoteURL = ""
 	err = repo.Init(remote, remoteURL, "")
@@ -55,8 +55,8 @@ func TestRepositoryInit(t *testing.T) {
 	// Initial repo.git, not bare
 	repoPath = filepath.Join(tmpdir, "repo.git")
 	repo = Repository{
-		RepoDir: repoPath,
-		IsBare:  false,
+		GitDir: repoPath,
+		IsBare: false,
 	}
 	remoteURL = ""
 	err = repo.Init(remote, remoteURL, "")
@@ -95,8 +95,8 @@ func TestRepositoryIsUnborn(t *testing.T) {
 	// Initial bare.git
 	repoPath := filepath.Join(tmpdir, "bare.git")
 	repo := Repository{
-		RepoDir: repoPath,
-		IsBare:  true,
+		GitDir: repoPath,
+		IsBare: true,
 	}
 	err = repo.Init(remote, remoteURL, "")
 	assert.Nil(err)
@@ -157,7 +157,7 @@ func TestRepositoryFetch(t *testing.T) {
 			RemoteName: "origin",
 			Revision:   "master",
 		},
-		RepoDir:  refRepoPath,
+		GitDir:   refRepoPath,
 		IsBare:   true,
 		Settings: &RepoSettings{},
 	}
@@ -197,7 +197,7 @@ func TestRepositoryFetch(t *testing.T) {
 			Name:       "repo",
 			RemoteName: "origin",
 		},
-		RepoDir:   newRepoPath,
+		GitDir:    newRepoPath,
 		Reference: refRepoPath,
 		IsBare:    false,
 		Settings:  &RepoSettings{},

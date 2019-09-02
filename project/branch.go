@@ -114,7 +114,7 @@ func (v Repository) DeleteBranch(branch string) error {
 		branch,
 		"--",
 	}
-	return executeCommandIn(v.RepoDir, cmdArgs)
+	return executeCommandIn(v.GitDir, cmdArgs)
 }
 
 // UpdateRef creates new reference.

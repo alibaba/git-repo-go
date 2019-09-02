@@ -6,17 +6,18 @@ import (
 	"path/filepath"
 	"strings"
 
+	"code.alibaba-inc.com/force/git-repo/path"
 	"gopkg.in/src-d/go-git.v4"
 )
 
 // IsRepoInitialized indicates repository is initialized or not.
 func (v Project) IsRepoInitialized() bool {
-	if v.ObjectRepository != nil {
-		if !v.ObjectRepository.Exists() {
+	if v.SharedGitDir != "" {
+		if !path.IsGitDir(v.SharedGitDir) {
 			return false
 		}
 	}
-	if !v.Repository.Exists() {
+	if !path.IsGitDir(v.GitDir) {
 		return false
 	}
 	return true
@@ -35,14 +36,12 @@ func (v *Project) GitInit() error {
 		return err
 	}
 
-	if v.ObjectRepository != nil {
-		v.ObjectRepository.Init("", "", referenceGitDir)
-	}
-
-	if v.ObjectRepository == nil {
-		v.Repository.Init(v.RemoteName, remoteURL, referenceGitDir)
+	sharedRepo := v.SharedRepository()
+	if sharedRepo != nil {
+		sharedRepo.Init("", "", "")
+		v.Repository.InitByLink(v.RemoteName, remoteURL, sharedRepo)
 	} else {
-		v.Repository.InitByLink(v.RemoteName, remoteURL, v.ObjectRepository)
+		v.Repository.Init(v.RemoteName, remoteURL, referenceGitDir)
 	}
 
 	// TODO: install hooks
@@ -52,7 +51,7 @@ func (v *Project) GitInit() error {
 func (v *Repository) initMissing() error {
 	var err error
 
-	if _, err = os.Stat(v.RepoDir); err != nil {
+	if _, err = os.Stat(v.GitDir); err != nil {
 		return err
 	}
 
@@ -64,13 +63,13 @@ func (v *Repository) initMissing() error {
 		"refs",
 	}
 	files := map[string]string{
-		"description": fmt.Sprintf("Repository: %s, path: %s\n", v.Name, v.RepoDir),
+		"description": fmt.Sprintf("Repository: %s, path: %s\n", v.Name, v.GitDir),
 		"config":      "[core]\n\trepositoryformatversion = 0\n",
 		"HEAD":        "ref: refs/heads/master\n",
 	}
 
 	for _, dir := range dirs {
-		dir = filepath.Join(v.RepoDir, dir)
+		dir = filepath.Join(v.GitDir, dir)
 		if _, err = os.Stat(dir); err == nil {
 			continue
 		}
@@ -80,7 +79,7 @@ func (v *Repository) initMissing() error {
 	}
 
 	for file, content := range files {
-		file = filepath.Join(v.RepoDir, file)
+		file = filepath.Join(v.GitDir, file)
 		if _, err = os.Stat(file); err == nil {
 			continue
 		}
@@ -107,7 +106,7 @@ func (v *Repository) Init(remoteName, remoteURL, referenceGitDir string) error {
 	var err error
 
 	if !v.Exists() {
-		_, err = git.PlainInit(v.RepoDir, true)
+		_, err = git.PlainInit(v.GitDir, true)
 		if err != nil {
 			return err
 		}
@@ -142,11 +141,11 @@ func (v *Repository) InitByLink(remoteName, remoteURL string, repo *Repository) 
 	var err error
 
 	if !repo.Exists() {
-		return fmt.Errorf("attach a non-exist repo: %s", repo.RepoDir)
+		return fmt.Errorf("attach a non-exist repo: %s", repo.GitDir)
 	}
 	repo.initMissing()
 
-	err = os.MkdirAll(v.RepoDir, 0755)
+	err = os.MkdirAll(v.GitDir, 0755)
 	if err != nil {
 		return err
 	}
@@ -160,12 +159,12 @@ func (v *Repository) InitByLink(remoteName, remoteURL string, repo *Repository) 
 		"rr-cache",
 	}
 	for _, item := range items {
-		source := filepath.Join(repo.RepoDir, item)
-		target := filepath.Join(v.RepoDir, item)
+		source := filepath.Join(repo.GitDir, item)
+		target := filepath.Join(v.GitDir, item)
 		if _, err = os.Stat(source); err != nil {
 			continue
 		}
-		relpath, err := filepath.Rel(v.RepoDir, source)
+		relpath, err := filepath.Rel(v.GitDir, source)
 		if err != nil {
 			relpath = source
 		}

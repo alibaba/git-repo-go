@@ -147,7 +147,10 @@ func (v GitWorkSpace) newProject(worktree, gitdir string) (*project.Project, err
 			Path: ".",
 		},
 
-		RepoDir:  gitdir,
+		DotGit:       gitdir,
+		GitDir:       gitdir,
+		SharedGitDir: "",
+
 		IsBare:   false,
 		Settings: &s,
 	}
