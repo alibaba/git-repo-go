@@ -19,16 +19,15 @@ import (
 	"os"
 
 	"code.alibaba-inc.com/force/git-repo/manifest"
-	"code.alibaba-inc.com/force/git-repo/workspace"
 	log "github.com/jiangxin/multi-log"
 	"github.com/spf13/cobra"
 )
 
 type manifestCommand struct {
-	cmd *cobra.Command
-	ws  *workspace.RepoWorkSpace
+	WorkSpaceCommand
 
-	O struct {
+	cmd *cobra.Command
+	O   struct {
 		PegRev           bool
 		PegRevNoUpstream bool
 		OutputFile       string
@@ -66,17 +65,6 @@ func (v *manifestCommand) Command() *cobra.Command {
 		"File to save the manifest to")
 
 	return v.cmd
-}
-
-func (v *manifestCommand) RepoWorkSpace() *workspace.RepoWorkSpace {
-	var err error
-	if v.ws == nil {
-		v.ws, err = workspace.NewRepoWorkSpace("")
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
-	return v.ws
 }
 
 func (v manifestCommand) WriteManifest(writer io.Writer) error {
@@ -128,7 +116,12 @@ func (v manifestCommand) Execute(args []string) error {
 	return v.WriteManifest(writer)
 }
 
-var manifestCmd = manifestCommand{}
+var manifestCmd = manifestCommand{
+	WorkSpaceCommand: WorkSpaceCommand{
+		MirrorOK: true,
+		SingleOK: false,
+	},
+}
 
 func init() {
 	rootCmd.AddCommand(manifestCmd.Command())

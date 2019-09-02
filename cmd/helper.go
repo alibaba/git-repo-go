@@ -10,7 +10,65 @@ import (
 	"strings"
 
 	"code.alibaba-inc.com/force/git-repo/config"
+	"code.alibaba-inc.com/force/git-repo/workspace"
+	log "github.com/jiangxin/multi-log"
 )
+
+// WorkSpaceCommand implements load of workspace
+type WorkSpaceCommand struct {
+	ws  workspace.WorkSpace
+	rws *workspace.RepoWorkSpace
+
+	MirrorOK bool
+	SingleOK bool
+}
+
+// WorkSpace loads workspace and return WorkSpace object
+func (v *WorkSpaceCommand) WorkSpace() workspace.WorkSpace {
+	var err error
+	if v.ws == nil {
+		v.ws, err = workspace.NewWorkSpace("")
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+	if !v.SingleOK && config.IsSingleMode() {
+		log.Fatal("cannot run in single mode")
+	}
+	if v.ws != nil {
+		if !v.MirrorOK && v.ws.IsMirror() {
+			log.Fatal("cannot run in a mirror")
+		}
+	}
+	return v.ws
+}
+
+// RepoWorkSpace loads workspace and return RepoWorkSpace object
+func (v *WorkSpaceCommand) RepoWorkSpace() *workspace.RepoWorkSpace {
+	var err error
+	if v.rws == nil {
+		v.rws, err = workspace.NewRepoWorkSpace("")
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+	if !v.SingleOK && config.IsSingleMode() {
+		log.Fatal("cannot run in single mode")
+	}
+	if v.rws != nil {
+		if !v.MirrorOK && v.rws.IsMirror() {
+			log.Fatal("cannot run in a mirror")
+		}
+	}
+	return v.rws
+}
+
+// ReloadRepoWorkSpace will reload workspace
+func (v *WorkSpaceCommand) ReloadRepoWorkSpace() *workspace.RepoWorkSpace {
+	v.ws = nil
+	v.rws = nil
+	return v.RepoWorkSpace()
+}
 
 // commandError is an error used to signal different error situations in command handling.
 type commandError struct {

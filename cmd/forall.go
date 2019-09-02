@@ -29,10 +29,10 @@ import (
 )
 
 type forallCommand struct {
-	cmd *cobra.Command
-	ws  *workspace.RepoWorkSpace
+	WorkSpaceCommand
 
-	O struct {
+	cmd *cobra.Command
+	O   struct {
 		AbortOnErrors bool
 		InverseRegex  []string
 		Regex         []string
@@ -93,21 +93,6 @@ func (v *forallCommand) Command() *cobra.Command {
 		"number of commands to execute simultaneously")
 
 	return v.cmd
-}
-
-func (v *forallCommand) RepoWorkSpace() *workspace.RepoWorkSpace {
-	if v.ws == nil {
-		v.reloadRepoWorkSpace()
-	}
-	return v.ws
-}
-
-func (v *forallCommand) reloadRepoWorkSpace() {
-	var err error
-	v.ws, err = workspace.NewRepoWorkSpace("")
-	if err != nil {
-		log.Fatal(err)
-	}
 }
 
 func (v forallCommand) Execute(args []string) error {
@@ -286,7 +271,11 @@ func (v forallCommand) showResult(result *project.CmdExecResult, i, count int) {
 }
 
 func (v forallCommand) executeCommand(p *project.Project, cmds []string) *project.CmdExecResult {
-	if !path.Exist(p.WorkDir) {
+	workdir := p.WorkDir
+	if p.IsMirror() {
+		workdir = p.GitDir
+	}
+	if !path.Exist(workdir) {
 		log.Infof("skipping %s/", p.Path)
 		return nil
 	}
@@ -298,7 +287,12 @@ func (v forallCommand) executeCommand(p *project.Project, cmds []string) *projec
 	return p.ExecuteCommand(cmds...)
 }
 
-var forallCmd = forallCommand{}
+var forallCmd = forallCommand{
+	WorkSpaceCommand: WorkSpaceCommand{
+		MirrorOK: true,
+		SingleOK: false,
+	},
+}
 
 func init() {
 	rootCmd.AddCommand(forallCmd.Command())

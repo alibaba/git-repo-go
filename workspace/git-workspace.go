@@ -42,6 +42,11 @@ func (v GitWorkSpace) IsSingle() bool {
 	return true
 }
 
+// IsMirror is false for git workspace.
+func (v GitWorkSpace) IsMirror() bool {
+	return false
+}
+
 // LoadRemotes implements LoadRemotes interface.
 func (v *GitWorkSpace) LoadRemotes(noCache bool) error {
 	if len(v.Projects) != 1 {

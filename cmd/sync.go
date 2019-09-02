@@ -38,8 +38,9 @@ const (
 )
 
 type syncCommand struct {
+	WorkSpaceCommand
+
 	cmd          *cobra.Command
-	ws           *workspace.RepoWorkSpace
 	FetchOptions project.FetchOptions
 
 	O struct {
@@ -164,21 +165,6 @@ func (v *syncCommand) Command() *cobra.Command {
 	return v.cmd
 }
 
-func (v *syncCommand) RepoWorkSpace() *workspace.RepoWorkSpace {
-	if v.ws == nil {
-		v.reloadRepoWorkSpace()
-	}
-	return v.ws
-}
-
-func (v *syncCommand) reloadRepoWorkSpace() {
-	var err error
-	v.ws, err = workspace.NewRepoWorkSpace("")
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
 func (v *syncCommand) defaultJobs() int {
 	var (
 		nJobs int = config.MaxJobs
@@ -191,14 +177,12 @@ func (v *syncCommand) defaultJobs() int {
 
 	// When running test cases in cmd/, function `nJobs` will be evaluated.
 	// Do not call `v.RepoWorkSpace()` function, which will fail if not in a workspace.
-	if v.ws == nil {
-		v.ws, _ = workspace.NewRepoWorkSpace("")
-	}
-	if v.ws != nil &&
-		v.ws.Manifest != nil &&
-		v.ws.Manifest.Default != nil &&
-		v.ws.Manifest.Default.SyncJ > 0 {
-		nJobs = min(nJobs, v.ws.Manifest.Default.SyncJ)
+	rws := v.RepoWorkSpace()
+	if rws != nil &&
+		rws.Manifest != nil &&
+		rws.Manifest.Default != nil &&
+		rws.Manifest.Default.SyncJ > 0 {
+		nJobs = min(nJobs, rws.Manifest.Default.SyncJ)
 	}
 
 	return nJobs
@@ -261,7 +245,7 @@ func (v *syncCommand) updateManifestProject() error {
 	}
 
 	// : Reload Manifest
-	v.reloadRepoWorkSpace()
+	v.ReloadRepoWorkSpace()
 
 	return nil
 }
@@ -454,12 +438,12 @@ func (v syncCommand) findGitWorktree(dir string) []string {
 
 func (v syncCommand) removeEmptyDirs(dir string) {
 	var (
-		root   = v.ws.RootDir
 		oldDir = dir
+		rws    = v.RepoWorkSpace()
 	)
 
 	for {
-		if !strings.HasPrefix(dir, root) {
+		if !strings.HasPrefix(dir, rws.RootDir) {
 			break
 		}
 		os.Remove(dir)
@@ -645,7 +629,7 @@ func (v syncCommand) Execute(args []string) error {
 		err error
 	)
 
-	ws := v.RepoWorkSpace()
+	rws := v.RepoWorkSpace()
 
 	if v.O.Jobs > 0 {
 		v.O.Jobs = min(v.O.Jobs, v.defaultJobs())
@@ -672,11 +656,11 @@ func (v syncCommand) Execute(args []string) error {
 	}
 
 	if v.O.ManifestName != "" {
-		ws.Override(v.O.ManifestName)
+		rws.Override(v.O.ManifestName)
 	}
 
 	v.FetchOptions = project.FetchOptions{
-		RepoSettings: *(ws.Settings()),
+		RepoSettings: *(rws.Settings()),
 
 		Quiet:             config.GetQuiet(),
 		CloneBundle:       !v.O.NoCloneBundle,
@@ -688,7 +672,7 @@ func (v syncCommand) Execute(args []string) error {
 	}
 
 	smartSyncManifestName := "smart_sync_override.xml"
-	smartSyncManifestPath := filepath.Join(ws.ManifestProject.WorkDir, smartSyncManifestName)
+	smartSyncManifestPath := filepath.Join(rws.ManifestProject.WorkDir, smartSyncManifestName)
 
 	if v.O.SmartSync || v.O.SmartTag != "" {
 		v.CallManifestServerRPC()
@@ -705,10 +689,10 @@ func (v syncCommand) Execute(args []string) error {
 	if err != nil {
 		return err
 	}
-	ws = v.RepoWorkSpace()
+	rws = v.RepoWorkSpace()
 
-	allProjects, err := ws.GetProjects(&workspace.GetProjectsOptions{
-		Groups:       ws.Settings().Groups,
+	allProjects, err := rws.GetProjects(&workspace.GetProjectsOptions{
+		Groups:       rws.Settings().Groups,
 		MissingOK:    true,
 		SubmodulesOK: v.O.FetchSubmodules,
 	}, args...)
@@ -721,13 +705,13 @@ func (v syncCommand) Execute(args []string) error {
 	}
 
 	if v.O.NetworkOnly ||
-		ws.ManifestProject.MirrorEnabled() ||
-		ws.ManifestProject.ArchiveEnabled() {
+		rws.ManifestProject.MirrorEnabled() ||
+		rws.ManifestProject.ArchiveEnabled() {
 		return nil
 	}
 
 	// Call ssh_info API to detect types of remote servers
-	err = ws.LoadRemotes(v.O.NoCache)
+	err = rws.LoadRemotes(v.O.NoCache)
 	if err != nil {
 		log.Notef("fail to check remote server, you may need to install gerrit hooks by hands")
 		log.Error(err)
@@ -745,14 +729,19 @@ func (v syncCommand) Execute(args []string) error {
 
 	// If there's a notice that's supposed to print at the end of the sync,
 	// print it now...
-	if ws.Manifest != nil && ws.Manifest.Notice != "" {
-		log.Note(ws.Manifest.Notice)
+	if rws.Manifest != nil && rws.Manifest.Notice != "" {
+		log.Note(rws.Manifest.Notice)
 	}
 
 	return nil
 }
 
-var syncCmd = syncCommand{}
+var syncCmd = syncCommand{
+	WorkSpaceCommand: WorkSpaceCommand{
+		MirrorOK: true,
+		SingleOK: false,
+	},
+}
 
 func init() {
 	rootCmd.AddCommand(syncCmd.Command())

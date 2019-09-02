@@ -192,6 +192,10 @@ func (v initCommand) Execute(args []string) error {
 		log.Fatal("--mirror and --archive cannot be used together")
 	}
 
+	if config.IsSingleMode() {
+		log.Fatal("cannot run in single mode")
+	}
+
 	if v.O.ManifestURL != "" {
 		if strings.HasSuffix(v.O.ManifestURL, "/") {
 			v.O.ManifestURL = strings.TrimRight(v.O.ManifestURL, "/")

@@ -23,16 +23,15 @@ import (
 	"code.alibaba-inc.com/force/git-repo/config"
 	"code.alibaba-inc.com/force/git-repo/path"
 	"code.alibaba-inc.com/force/git-repo/project"
-	"code.alibaba-inc.com/force/git-repo/workspace"
 	log "github.com/jiangxin/multi-log"
 	"github.com/spf13/cobra"
 )
 
 type statusCommand struct {
-	cmd *cobra.Command
-	ws  *workspace.RepoWorkSpace
+	WorkSpaceCommand
 
-	O struct {
+	cmd *cobra.Command
+	O   struct {
 		Jobs    int
 		Orphans bool
 	}
@@ -62,21 +61,6 @@ func (v *statusCommand) Command() *cobra.Command {
 		"number of projects to check simultaneously")
 
 	return v.cmd
-}
-
-func (v *statusCommand) RepoWorkSpace() *workspace.RepoWorkSpace {
-	if v.ws == nil {
-		v.reloadRepoWorkSpace()
-	}
-	return v.ws
-}
-
-func (v *statusCommand) reloadRepoWorkSpace() {
-	var err error
-	v.ws, err = workspace.NewRepoWorkSpace("")
-	if err != nil {
-		log.Fatal(err)
-	}
 }
 
 func (v statusCommand) Execute(args []string) error {
@@ -221,7 +205,12 @@ func (v statusCommand) executeCommand(p *project.Project) *project.CmdExecResult
 	return p.Status()
 }
 
-var statusCmd = statusCommand{}
+var statusCmd = statusCommand{
+	WorkSpaceCommand: WorkSpaceCommand{
+		MirrorOK: false,
+		SingleOK: false,
+	},
+}
 
 func init() {
 	rootCmd.AddCommand(statusCmd.Command())

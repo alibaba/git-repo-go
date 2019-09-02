@@ -22,16 +22,15 @@ import (
 	"code.alibaba-inc.com/force/git-repo/color"
 	"code.alibaba-inc.com/force/git-repo/config"
 	"code.alibaba-inc.com/force/git-repo/project"
-	"code.alibaba-inc.com/force/git-repo/workspace"
 	log "github.com/jiangxin/multi-log"
 	"github.com/spf13/cobra"
 )
 
 type pruneCommand struct {
-	cmd *cobra.Command
-	ws  workspace.WorkSpace
+	WorkSpaceCommand
 
-	O struct {
+	cmd *cobra.Command
+	O   struct {
 		All    bool
 		Branch string
 		Force  bool
@@ -52,17 +51,6 @@ func (v *pruneCommand) Command() *cobra.Command {
 	}
 
 	return v.cmd
-}
-
-func (v *pruneCommand) WorkSpace() workspace.WorkSpace {
-	var err error
-	if v.ws == nil {
-		v.ws, err = workspace.NewWorkSpace("")
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
-	return v.ws
 }
 
 type projectBranch struct {
@@ -321,7 +309,12 @@ func (v pruneCommand) Execute(args []string) error {
 	return nil
 }
 
-var pruneCmd = pruneCommand{}
+var pruneCmd = pruneCommand{
+	WorkSpaceCommand: WorkSpaceCommand{
+		MirrorOK: false,
+		SingleOK: true,
+	},
+}
 
 func init() {
 	pruneCmd.O.All = true

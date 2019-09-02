@@ -58,6 +58,11 @@ func (v RepoWorkSpace) IsSingle() bool {
 	return false
 }
 
+// IsMirror indicates whether repo is in mirror mode
+func (v RepoWorkSpace) IsMirror() bool {
+	return v.Settings().Mirror
+}
+
 // ManifestURL returns URL of manifest project.
 func (v *RepoWorkSpace) ManifestURL() string {
 	return v.Settings().ManifestURL

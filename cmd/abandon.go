@@ -17,15 +17,14 @@ package cmd
 import (
 	"errors"
 
-	"code.alibaba-inc.com/force/git-repo/workspace"
 	"github.com/spf13/cobra"
 )
 
 type abandonCommand struct {
-	cmd *cobra.Command
-	ws  *workspace.RepoWorkSpace
+	WorkSpaceCommand
 
-	O struct {
+	cmd *cobra.Command
+	O   struct {
 		All    bool
 		Branch string
 		Force  bool
@@ -74,13 +73,23 @@ like command "git repo prune".`,
 }
 
 func (v abandonCommand) Execute(args []string) error {
-	cmd := pruneCommand{}
+	cmd := pruneCommand{
+		WorkSpaceCommand: WorkSpaceCommand{
+			MirrorOK: false,
+			SingleOK: true,
+		},
+	}
 	cmd.O = v.O
 
 	return cmd.Execute(args)
 }
 
-var abandonCmd = abandonCommand{}
+var abandonCmd = abandonCommand{
+	WorkSpaceCommand: WorkSpaceCommand{
+		MirrorOK: false,
+		SingleOK: true,
+	},
+}
 
 func init() {
 	rootCmd.AddCommand(abandonCmd.Command())

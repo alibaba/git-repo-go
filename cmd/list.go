@@ -26,10 +26,10 @@ import (
 )
 
 type listCommand struct {
-	cmd *cobra.Command
-	ws  *workspace.RepoWorkSpace
+	WorkSpaceCommand
 
-	O struct {
+	cmd *cobra.Command
+	O   struct {
 		Regex    []string
 		Groups   string
 		FullPath bool
@@ -80,21 +80,6 @@ func (v *listCommand) Command() *cobra.Command {
 		"Display only the path of the repository")
 
 	return v.cmd
-}
-
-func (v *listCommand) RepoWorkSpace() *workspace.RepoWorkSpace {
-	if v.ws == nil {
-		v.reloadRepoWorkSpace()
-	}
-	return v.ws
-}
-
-func (v *listCommand) reloadRepoWorkSpace() {
-	var err error
-	v.ws, err = workspace.NewRepoWorkSpace("")
-	if err != nil {
-		log.Fatal(err)
-	}
 }
 
 func (v listCommand) Execute(args []string) error {
@@ -176,7 +161,12 @@ func (v listCommand) getPath(project *project.Project) string {
 	return project.Path
 }
 
-var listCmd = listCommand{}
+var listCmd = listCommand{
+	WorkSpaceCommand: WorkSpaceCommand{
+		MirrorOK: true,
+		SingleOK: false,
+	},
+}
 
 func init() {
 	rootCmd.AddCommand(listCmd.Command())

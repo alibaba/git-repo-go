@@ -21,16 +21,15 @@ import (
 
 	"code.alibaba-inc.com/force/git-repo/config"
 	"code.alibaba-inc.com/force/git-repo/project"
-	"code.alibaba-inc.com/force/git-repo/workspace"
 	log "github.com/jiangxin/multi-log"
 	"github.com/spf13/cobra"
 )
 
 type downloadCommand struct {
-	cmd *cobra.Command
-	ws  workspace.WorkSpace
+	WorkSpaceCommand
 
-	O struct {
+	cmd *cobra.Command
+	O   struct {
 		CherryPick bool
 		Revert     bool
 		FFOnly     bool
@@ -123,21 +122,6 @@ func (v *downloadCommand) parseChanges(args ...string) ([]projectChange, error) 
 		changes = append(changes, pr)
 	}
 	return changes, nil
-}
-
-func (v *downloadCommand) WorkSpace() workspace.WorkSpace {
-	if v.ws == nil {
-		v.reloadWorkSpace()
-	}
-	return v.ws
-}
-
-func (v *downloadCommand) reloadWorkSpace() {
-	var err error
-	v.ws, err = workspace.NewWorkSpace("")
-	if err != nil {
-		log.Fatal(err)
-	}
 }
 
 func (v *downloadCommand) Execute(args []string) error {
@@ -268,7 +252,12 @@ func (v *downloadCommand) Execute(args []string) error {
 	return nil
 }
 
-var downloadCmd = downloadCommand{}
+var downloadCmd = downloadCommand{
+	WorkSpaceCommand: WorkSpaceCommand{
+		MirrorOK: false,
+		SingleOK: true,
+	},
+}
 
 func init() {
 	rootCmd.AddCommand(downloadCmd.Command())

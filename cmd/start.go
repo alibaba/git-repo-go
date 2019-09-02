@@ -16,16 +16,15 @@ package cmd
 
 import (
 	"code.alibaba-inc.com/force/git-repo/project"
-	"code.alibaba-inc.com/force/git-repo/workspace"
 	log "github.com/jiangxin/multi-log"
 	"github.com/spf13/cobra"
 )
 
 type startCommand struct {
-	cmd *cobra.Command
-	ws  *workspace.RepoWorkSpace
+	WorkSpaceCommand
 
-	O struct {
+	cmd *cobra.Command
+	O   struct {
 		All bool
 	}
 }
@@ -51,28 +50,13 @@ func (v *startCommand) Command() *cobra.Command {
 	return v.cmd
 }
 
-func (v *startCommand) RepoWorkSpace() *workspace.RepoWorkSpace {
-	if v.ws == nil {
-		v.reloadRepoWorkSpace()
-	}
-	return v.ws
-}
-
-func (v *startCommand) reloadRepoWorkSpace() {
-	var err error
-	v.ws, err = workspace.NewRepoWorkSpace("")
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
 func (v startCommand) Execute(args []string) error {
 	var (
 		failed    = []string{}
 		execError error
 	)
 
-	ws := v.RepoWorkSpace()
+	rws := v.RepoWorkSpace()
 
 	if len(args) == 0 {
 		return newUserError("no args")
@@ -90,7 +74,7 @@ func (v startCommand) Execute(args []string) error {
 		}
 	}
 
-	allProjects, err := ws.GetProjects(nil, names...)
+	allProjects, err := rws.GetProjects(nil, names...)
 	if err != nil {
 		return err
 	}
@@ -101,9 +85,9 @@ func (v startCommand) Execute(args []string) error {
 			if p.DestBranch != "" {
 				merge = p.DestBranch
 			} else {
-				if ws.Manifest != nil &&
-					ws.Manifest.Default != nil {
-					merge = ws.Manifest.Default.Revision
+				if rws.Manifest != nil &&
+					rws.Manifest.Default != nil {
+					merge = rws.Manifest.Default.Revision
 				}
 			}
 		}
@@ -123,7 +107,12 @@ func (v startCommand) Execute(args []string) error {
 	return nil
 }
 
-var startCmd = startCommand{}
+var startCmd = startCommand{
+	WorkSpaceCommand: WorkSpaceCommand{
+		MirrorOK: false,
+		SingleOK: false,
+	},
+}
 
 func init() {
 	rootCmd.AddCommand(startCmd.Command())

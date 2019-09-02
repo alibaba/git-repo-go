@@ -42,6 +42,7 @@ type WorkSpace interface {
 	GetRemoteMap() RemoteMap
 	LoadRemotes(bool) error
 	IsSingle() bool
+	IsMirror() bool
 	GetProjects(*GetProjectsOptions, ...string) ([]*project.Project, error)
 }
 

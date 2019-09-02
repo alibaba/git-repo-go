@@ -27,7 +27,6 @@ import (
 	"code.alibaba-inc.com/force/git-repo/config"
 	"code.alibaba-inc.com/force/git-repo/editor"
 	"code.alibaba-inc.com/force/git-repo/project"
-	"code.alibaba-inc.com/force/git-repo/workspace"
 	log "github.com/jiangxin/multi-log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -71,8 +70,9 @@ type uploadOptions struct {
 }
 
 type uploadCommand struct {
+	WorkSpaceCommand
+
 	cmd *cobra.Command
-	ws  workspace.WorkSpace
 	O   uploadOptions
 }
 
@@ -205,21 +205,6 @@ func (v *uploadCommand) Command() *cobra.Command {
 	v.cmd.Flags().MarkHidden("mock-edit-script")
 
 	return v.cmd
-}
-
-func (v *uploadCommand) WorkSpace() workspace.WorkSpace {
-	if v.ws == nil {
-		v.reloadWorkSpace()
-	}
-	return v.ws
-}
-
-func (v *uploadCommand) reloadWorkSpace() {
-	var err error
-	v.ws, err = workspace.NewWorkSpace("")
-	if err != nil {
-		log.Fatal(err)
-	}
 }
 
 func (v *uploadCommand) getDestBranch(branch *project.ReviewableBranch) (string, error) {
@@ -978,7 +963,12 @@ func (v uploadCommand) Execute(args []string) error {
 	return err
 }
 
-var uploadCmd = uploadCommand{}
+var uploadCmd = uploadCommand{
+	WorkSpaceCommand: WorkSpaceCommand{
+		MirrorOK: false,
+		SingleOK: true,
+	},
+}
 
 func init() {
 	rootCmd.AddCommand(uploadCmd.Command())
