@@ -207,22 +207,22 @@ func (v initCommand) Execute(args []string) error {
 	if err != nil {
 		return err
 	}
-	repoRoot, err := path.FindRepoRoot(cwd)
+	topDir, err := path.FindTopDir(cwd)
 	if err != nil {
 		if err == errors.ErrRepoDirNotFound {
-			repoRoot = cwd
+			topDir = cwd
 		} else {
 			return fmt.Errorf("fail to find .repo: %s", err)
 		}
 	}
 
 	// Check initialized or not
-	if !workspace.Exists(repoRoot) {
+	if !workspace.Exists(topDir) {
 		isNew = true
 		if v.O.ManifestURL == "" {
 			log.Fatal("option --manifest-url (-u) is required")
 		}
-		ws, err = workspace.NewEmptyRepoWorkSpace(repoRoot, v.O.ManifestURL)
+		ws, err = workspace.NewEmptyRepoWorkSpace(topDir, v.O.ManifestURL)
 		v.ws = ws
 		if err != nil {
 			return err
@@ -231,7 +231,7 @@ func (v initCommand) Execute(args []string) error {
 		// Reload settings
 		ws.ManifestProject.ReadSettings()
 	} else {
-		ws, err = workspace.NewRepoWorkSpace(repoRoot)
+		ws, err = workspace.NewRepoWorkSpace(topDir)
 		v.ws = ws
 		if err != nil {
 			return err

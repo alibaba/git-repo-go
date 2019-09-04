@@ -392,12 +392,12 @@ func NewRepoWorkSpace(dir string) (*RepoWorkSpace, error) {
 		err error
 	)
 
-	repoRoot, err := path.FindRepoRoot(dir)
+	topDir, err := path.FindTopDir(dir)
 	if err != nil {
 		return nil, err
 	}
 
-	return newRepoWorkSpace(repoRoot, "")
+	return newRepoWorkSpace(topDir, "")
 }
 
 // NewEmptyRepoWorkSpace returns empty workspace for new created workspace.

@@ -401,14 +401,14 @@ func (v Project) InstallGerritHooks() error {
 // CopyFile copy files from src to dest.
 func (v Project) CopyFile(src, dest string) error {
 	srcAbs := filepath.Clean(filepath.Join(v.WorkDir, src))
-	destAbs := filepath.Clean(filepath.Join(v.RepoRoot(), dest))
+	destAbs := filepath.Clean(filepath.Join(v.TopDir(), dest))
 
-	if !strings.HasPrefix(srcAbs, v.RepoRoot()) {
-		return fmt.Errorf("fail to copy file, src file '%s' beyond repo root '%s'", src, v.RepoRoot())
+	if !strings.HasPrefix(srcAbs, v.TopDir()) {
+		return fmt.Errorf("fail to copy file, src file '%s' beyond repo root '%s'", src, v.TopDir())
 	}
 
-	if !strings.HasPrefix(destAbs, v.RepoRoot()) {
-		return fmt.Errorf("fail to copy file, dest file '%s' beyond repo root '%s'", dest, v.RepoRoot())
+	if !strings.HasPrefix(destAbs, v.TopDir()) {
+		return fmt.Errorf("fail to copy file, dest file '%s' beyond repo root '%s'", dest, v.TopDir())
 	}
 
 	finfo, err := os.Stat(srcAbs)
@@ -442,14 +442,14 @@ func (v Project) CopyFile(src, dest string) error {
 // LinkFile copy files from src to dest.
 func (v Project) LinkFile(src, dest string) error {
 	srcAbs := filepath.Clean(filepath.Join(v.WorkDir, src))
-	destAbs := filepath.Clean(filepath.Join(v.RepoRoot(), dest))
+	destAbs := filepath.Clean(filepath.Join(v.TopDir(), dest))
 
-	if !strings.HasPrefix(srcAbs, v.RepoRoot()) {
-		return fmt.Errorf("fail to copy file, src file '%s' beyond repo root '%s'", src, v.RepoRoot())
+	if !strings.HasPrefix(srcAbs, v.TopDir()) {
+		return fmt.Errorf("fail to copy file, src file '%s' beyond repo root '%s'", src, v.TopDir())
 	}
 
-	if !strings.HasPrefix(destAbs, v.RepoRoot()) {
-		return fmt.Errorf("fail to copy file, dest file '%s' beyond repo root '%s'", dest, v.RepoRoot())
+	if !strings.HasPrefix(destAbs, v.TopDir()) {
+		return fmt.Errorf("fail to copy file, dest file '%s' beyond repo root '%s'", dest, v.TopDir())
 	}
 
 	_, err := os.Stat(srcAbs)

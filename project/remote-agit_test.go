@@ -48,7 +48,7 @@ func TestUploadCommandsWithPushOptions(t *testing.T) {
 	xmlProject.ManifestRemote = &xmlRemote
 
 	p := NewProject(&xmlProject, &RepoSettings{
-		RepoRoot:    "/dev/null",
+		TopDir:      "/dev/null",
 		ManifestURL: mURL,
 	})
 
@@ -152,7 +152,7 @@ func TestUploadCommandsWithoutPushOptions(t *testing.T) {
 	xmlProject.ManifestRemote = &xmlRemote
 
 	p := NewProject(&xmlProject, &RepoSettings{
-		RepoRoot:    "/dev/null",
+		TopDir:      "/dev/null",
 		ManifestURL: mURL,
 	})
 

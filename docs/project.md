@@ -9,7 +9,7 @@ Project structure "inherit" manifest.Project, and is defined as:
 
 Extra fieds for project are:
 
-* RepoRoot         : root directory of repo workspace (wich has a `.repo` subdir)
+* TopDir           : root directory of repo workspace (wich has a `.repo` subdir)
 * WorkDir          : working directory of the project.
 * ObjectRepository : bare repository in `.repo/project-objects/<project-name>.git`, several project may share the same ObjectRepository.  And for manifest project, the ObjectRepository is nil.
 * WorkRepository   : working repository in `.repo/projects/<project-path>.git`. One project has a unique WorkRepository.

@@ -12,8 +12,8 @@ import (
 
 // IsRepoInitialized indicates repository is initialized or not.
 func (v Project) IsRepoInitialized() bool {
-	if v.SharedGitDir != "" {
-		if !path.IsGitDir(v.SharedGitDir) {
+	if v.ObjectsGitDir != "" {
+		if !path.IsGitDir(v.ObjectsGitDir) {
 			return false
 		}
 	}
@@ -36,10 +36,10 @@ func (v *Project) GitInit() error {
 		return err
 	}
 
-	sharedRepo := v.SharedRepository()
-	if sharedRepo != nil {
-		sharedRepo.Init("", "", "")
-		v.Repository.InitByLink(v.RemoteName, remoteURL, sharedRepo)
+	objectsRepo := v.ObjectsRepository()
+	if objectsRepo != nil {
+		objectsRepo.Init("", "", "")
+		v.Repository.InitByLink(v.RemoteName, remoteURL, objectsRepo)
 	} else {
 		v.Repository.Init(v.RemoteName, remoteURL, referenceGitDir)
 	}

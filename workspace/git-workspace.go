@@ -143,7 +143,7 @@ func (v *GitWorkSpace) loadRemote(r *manifest.Remote) (project.Remote, error) {
 func (v GitWorkSpace) newProject(worktree, gitdir string) (*project.Project, error) {
 	name := filepath.Base(worktree)
 	s := project.RepoSettings{
-		RepoRoot: worktree,
+		TopDir: worktree,
 	}
 
 	repo := project.Repository{
@@ -152,9 +152,9 @@ func (v GitWorkSpace) newProject(worktree, gitdir string) (*project.Project, err
 			Path: ".",
 		},
 
-		DotGit:       gitdir,
-		GitDir:       gitdir,
-		SharedGitDir: "",
+		DotGit:        gitdir,
+		GitDir:        gitdir,
+		ObjectsGitDir: "",
 
 		IsBare:   false,
 		Settings: &s,

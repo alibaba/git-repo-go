@@ -16,13 +16,13 @@ import (
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
 )
 
-func testCreateManifests(repoRoot, manifestURL string) error {
+func testCreateManifests(topDir, manifestURL string) error {
 	var (
 		err error
 	)
 
 	// Create manifests.git repository
-	mProject := project.NewManifestProject(repoRoot, manifestURL)
+	mProject := project.NewManifestProject(topDir, manifestURL)
 	err = mProject.GitInit()
 	if err != nil {
 		return fmt.Errorf("GitInit error: %s", err)

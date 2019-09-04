@@ -347,7 +347,7 @@ func TestFindGitWorkSpace(t *testing.T) {
 	os.Setenv("HOME", home)
 }
 
-func TestFindRepoRoot(t *testing.T) {
+func TestFindTopDir(t *testing.T) {
 	var (
 		assert = assert.New(t)
 		dir    string
@@ -371,26 +371,26 @@ func TestFindRepoRoot(t *testing.T) {
 	assert.Nil(err)
 
 	assert.Nil(os.MkdirAll(workdir, 0755))
-	dir, err = FindRepoRoot(workdir)
+	dir, err = FindTopDir(workdir)
 	assert.Equal(errors.ErrRepoDirNotFound, err)
 	assert.Equal("", dir)
 
 	os.Chdir(workdir)
-	dir, err = FindRepoRoot("")
+	dir, err = FindTopDir("")
 	assert.Equal(errors.ErrRepoDirNotFound, err)
 	assert.Equal("", dir)
 
 	assert.Nil(os.MkdirAll(filepath.Join(repodir, ".repo"), 0755))
-	dir, err = FindRepoRoot("")
+	dir, err = FindTopDir("")
 	assert.Nil(err)
 	assert.Equal(repodir, dir)
 
 	os.Chdir(tmpdir)
-	dir, err = FindRepoRoot(tmpdir)
+	dir, err = FindTopDir(tmpdir)
 	assert.Equal(errors.ErrRepoDirNotFound, err)
 	assert.Equal("", dir)
 
-	dir, err = FindRepoRoot(workdir)
+	dir, err = FindTopDir(workdir)
 	assert.Nil(err)
 	assert.Equal(repodir, dir)
 }

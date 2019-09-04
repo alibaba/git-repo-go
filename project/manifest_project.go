@@ -8,7 +8,7 @@ import (
 
 // RepoSettings holds settings in manifest project.
 type RepoSettings struct {
-	RepoRoot     string
+	TopDir       string
 	ManifestURL  string
 	ManifestName string
 	Groups       string
@@ -129,11 +129,11 @@ func (v *ManifestProject) SetRevision(rev string) {
 }
 
 // NewManifestProject returns a manifest project: a worktree with a seperate repository.
-func NewManifestProject(repoRoot, mURL string) *ManifestProject {
+func NewManifestProject(topDir, mURL string) *ManifestProject {
 	p := ManifestProject{
 		Project: *(NewProject(manifest.ManifestsProject,
 			&RepoSettings{
-				RepoRoot:    repoRoot,
+				TopDir:      topDir,
 				ManifestURL: mURL,
 			})),
 	}

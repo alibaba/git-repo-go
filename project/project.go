@@ -68,9 +68,9 @@ func (v ConfigWithDefault) GetBool(key string, defaultVal bool) bool {
 	return defaultVal
 }
 
-// RepoRoot returns root dir of repo workspace.
-func (v Project) RepoRoot() string {
-	return v.Settings.RepoRoot
+// TopDir returns root dir of repo workspace.
+func (v Project) TopDir() string {
+	return v.Settings.TopDir
 }
 
 // ManifestURL returns manifest URL.
@@ -147,7 +147,7 @@ func (v Project) IsMirror() bool {
 
 // Exists indicates whether project exists or not.
 func (v Project) Exists() bool {
-	if path.IsDir(v.GitDir) && path.IsDir(v.SharedGitDir) {
+	if path.IsDir(v.GitDir) && path.IsDir(v.ObjectsGitDir) {
 		return true
 	}
 	return false
@@ -421,10 +421,10 @@ func (v Project) UserEmail() string {
 // NewProject returns a project: project worktree with a bared repo and a seperate repository.
 func NewProject(mp *manifest.Project, s *RepoSettings) *Project {
 	var (
-		workDir      string
-		dotGit       string
-		gitDir       string
-		sharedGitDir string
+		workDir       string
+		dotGit        string
+		gitDir        string
+		objectsGitDir string
 	)
 
 	if !mp.IsMetaProject() && s.ManifestURL == "" {
@@ -436,23 +436,23 @@ func NewProject(mp *manifest.Project, s *RepoSettings) *Project {
 	}
 
 	if mp.IsMetaProject() {
-		workDir = filepath.Join(s.RepoRoot, config.DotRepo, mp.Path)
+		workDir = filepath.Join(s.TopDir, config.DotRepo, mp.Path)
 		gitDir = filepath.Join(
-			s.RepoRoot,
+			s.TopDir,
 			config.DotRepo,
 			mp.Path+".git",
 		)
-		sharedGitDir = ""
+		objectsGitDir = ""
 	} else {
-		workDir = filepath.Join(s.RepoRoot, mp.Path)
+		workDir = filepath.Join(s.TopDir, mp.Path)
 		gitDir = filepath.Join(
-			s.RepoRoot,
+			s.TopDir,
 			config.DotRepo,
 			config.Projects,
 			mp.Path+".git",
 		)
-		sharedGitDir = filepath.Join(
-			s.RepoRoot,
+		objectsGitDir = filepath.Join(
+			s.TopDir,
 			config.DotRepo,
 			config.ProjectObjects,
 			mp.Name+".git",
@@ -463,9 +463,9 @@ func NewProject(mp *manifest.Project, s *RepoSettings) *Project {
 	repo := Repository{
 		Project: *mp,
 
-		DotGit:       dotGit,
-		GitDir:       gitDir,
-		SharedGitDir: sharedGitDir,
+		DotGit:        dotGit,
+		GitDir:        gitDir,
+		ObjectsGitDir: objectsGitDir,
 
 		IsBare:    false,
 		Settings:  s,
@@ -497,16 +497,16 @@ func NewMirrorProject(mp *manifest.Project, s *RepoSettings) *Project {
 	}
 
 	gitDir = filepath.Join(
-		s.RepoRoot,
+		s.TopDir,
 		mp.Name+".git",
 	)
 
 	repo := Repository{
 		Project: *mp,
 
-		DotGit:       "",
-		GitDir:       gitDir,
-		SharedGitDir: gitDir,
+		DotGit:        "",
+		GitDir:        gitDir,
+		ObjectsGitDir: gitDir,
 
 		IsBare:    true,
 		Settings:  s,

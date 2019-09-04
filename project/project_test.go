@@ -40,7 +40,7 @@ func TestProjectGitInit(t *testing.T) {
 		Fetch: "..",
 	}
 	p := NewProject(&xmlProject, &RepoSettings{
-		RepoRoot:    workdir,
+		TopDir:      workdir,
 		ManifestURL: mURL,
 	})
 	u, err := p.GetRemoteURL()
@@ -100,7 +100,7 @@ func TestProjectMatchGroups(t *testing.T) {
 		Fetch: "..",
 	}
 	p := NewProject(&xmlProject, &RepoSettings{
-		RepoRoot:    workdir,
+		TopDir:      workdir,
 		ManifestURL: mURL,
 	})
 

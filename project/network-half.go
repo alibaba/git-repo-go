@@ -187,9 +187,9 @@ func (v *Project) fetchArchive(tarpath string) error {
 		"--prefix=" + v.Path,
 		v.Revision,
 	}
-	log.Debugf("fetching archive in %s: %s", v.RepoRoot(), strings.Join(cmdArgs, " "))
+	log.Debugf("fetching archive in %s: %s", v.TopDir(), strings.Join(cmdArgs, " "))
 
-	return executeCommandIn(v.RepoRoot(), cmdArgs)
+	return executeCommandIn(v.TopDir(), cmdArgs)
 }
 
 func (v *Project) extractArchive(tarpath string) error {
@@ -199,9 +199,9 @@ func (v *Project) extractArchive(tarpath string) error {
 		"-f",
 		tarpath,
 	}
-	log.Debugf("extracting archive in %s: %s", v.RepoRoot(), strings.Join(cmdArgs, " "))
+	log.Debugf("extracting archive in %s: %s", v.TopDir(), strings.Join(cmdArgs, " "))
 
-	return executeCommandIn(v.RepoRoot(), cmdArgs)
+	return executeCommandIn(v.TopDir(), cmdArgs)
 }
 
 // SyncNetworkHalf starts to fetch from remote repository.
@@ -235,7 +235,7 @@ func (v *Project) SyncNetworkHalf(o *FetchOptions) error {
 		if err != nil {
 			return fmt.Errorf("fail to extract tarball %s: %s", tarpath, err)
 		}
-		err = os.Remove(filepath.Join(v.RepoRoot(), tarpath))
+		err = os.Remove(filepath.Join(v.TopDir(), tarpath))
 		if err != nil {
 			return fmt.Errorf("cannot remove tarball %s: %s", tarpath, err)
 		}

@@ -153,8 +153,8 @@ func IsGitDir(dir string) bool {
 	return true
 }
 
-// FindRepoRoot finds repo root path, where has a '.repo' subdir.
-func FindRepoRoot(dir string) (string, error) {
+// FindTopDir finds repo root path, where has a '.repo' subdir.
+func FindTopDir(dir string) (string, error) {
 	var (
 		p   string
 		err error

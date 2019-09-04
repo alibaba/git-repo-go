@@ -25,9 +25,9 @@ const (
 type Repository struct {
 	manifest.Project
 
-	DotGit       string // Path to worktree/.git
-	GitDir       string // Project's bare repository inside .repo
-	SharedGitDir string // Several projects may share the same repository
+	DotGit        string // Path to worktree/.git
+	GitDir        string // Project's bare repository inside .repo
+	ObjectsGitDir string // Several projects may share the same repository
 
 	IsBare    bool
 	RemoteURL string
@@ -44,18 +44,18 @@ func (v Repository) RepoDir() string {
 	return v.GitDir
 }
 
-// SharedRepository returns repository which SharedGitDir points to
-func (v Repository) SharedRepository() *Repository {
-	if v.SharedGitDir == "" {
+// ObjectsRepository returns repository which ObjectsGitDir points to
+func (v Repository) ObjectsRepository() *Repository {
+	if v.ObjectsGitDir == "" {
 		return nil
 	}
 
 	return &Repository{
 		Project: v.Project,
 
-		DotGit:       "",
-		GitDir:       v.SharedGitDir,
-		SharedGitDir: "",
+		DotGit:        "",
+		GitDir:        v.ObjectsGitDir,
+		ObjectsGitDir: "",
 
 		IsBare:    true,
 		RemoteURL: v.RemoteURL,
