@@ -43,6 +43,24 @@ type ReviewableBranch struct {
 	RemoteTrack RemoteTrack
 	Uploaded    bool
 	Error       error
+
+	isPublished int
+}
+
+// IsPublished indicates a branch has been published.
+func (v *ReviewableBranch) IsPublished() bool {
+	if v.isPublished == 0 {
+		ref := v.Published()
+		if ref != nil {
+			v.isPublished = 1
+		} else {
+			v.isPublished = -1
+		}
+	}
+	if v.isPublished == 1 {
+		return true
+	}
+	return false
 }
 
 // AppendReviewers adds reviewers to people.
@@ -70,14 +88,16 @@ func (v ReviewableBranch) AppendReviewers(people [][]string) {
 }
 
 // Published returns published reference.
-func (v ReviewableBranch) Published() *Reference {
+func (v *ReviewableBranch) Published() *Reference {
 	pub := Reference{}
 	pub.Name = config.RefsPub + v.Branch.ShortName()
 	revid, err := v.Project.ResolveRevision(pub.Name)
 	if err != nil {
+		v.isPublished = -1
 		return nil
 	}
 
+	v.isPublished = 1
 	pub.Hash = revid
 	return &pub
 }

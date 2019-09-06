@@ -41,7 +41,7 @@ const (
 )
 
 var (
-	reEditSection = regexp.MustCompile(`^#\s+\[(\S+)\](\s+:.*)?$`)
+	reEditSection = regexp.MustCompile(`^#\s+\[(\S+?)\](\s*:.*)?$`)
 )
 
 type uploadOptions struct {
@@ -67,6 +67,101 @@ type uploadOptions struct {
 	Remote         string
 	Title          string
 	WIP            bool
+}
+
+// LoadFromFile reads content from file and parses into push options.
+func (v *uploadOptions) LoadFromFile(file string) {
+	data, err := ioutil.ReadFile(file)
+	if err != nil {
+		return
+	}
+
+	v.LoadFromText(string(data))
+}
+
+// LoadFromText parses content into upload options.
+func (v *uploadOptions) LoadFromText(data string) {
+	var (
+		section string
+		text    string
+	)
+
+	setUploadOption := func(section, text string) {
+		text = strings.TrimSpace(text)
+		if text == "" {
+			return
+		}
+		switch section {
+		case "title":
+			text = strings.Split(text, "\n")[0]
+			v.Title = text
+		case "description":
+			v.Description = text
+		case "issue":
+			v.Issue = strings.Join(strings.Split(text, "\n"), ",")
+		case "reviewer":
+			v.Reviewers = strings.Split(text, "\n")
+		case "cc":
+			v.Cc = strings.Split(text, "\n")
+		case "draft", "private":
+			switch text {
+			case "y", "yes", "on", "t", "true", "1":
+				if section == "draft" {
+					v.Draft = true
+				} else if section == "private" {
+					v.Private = true
+				}
+			case "n", "no", "off", "f", "false", "0":
+				if section == "draft" {
+					v.Draft = false
+				} else if section == "private" {
+					v.Private = false
+				}
+			default:
+				log.Warnf("cannot turn '%s' to boolean", text)
+			}
+		default:
+			log.Warnf("unknown section name: %s", section)
+		}
+	}
+
+	for _, line := range strings.Split(data, "\n") {
+		line = strings.TrimRight(line, " \t")
+		if m := reEditSection.FindStringSubmatch(line); m != nil {
+			name := strings.ToLower(m[1])
+			switch name {
+			case
+				"title",
+				"description",
+				"issue",
+				"reviewer",
+				"cc",
+				"draft",
+				"private":
+
+				if section != "" {
+					setUploadOption(section, text)
+				}
+				section = name
+				text = ""
+				continue
+			default:
+				log.Warnf("unknown section '%s' in script", name)
+			}
+		}
+
+		if strings.HasPrefix(line, "#") {
+			continue
+		}
+
+		if section != "" {
+			text += line + "\n"
+		}
+	}
+
+	if section != "" {
+		setUploadOption(section, text)
+	}
 }
 
 type uploadCommand struct {
@@ -321,12 +416,9 @@ func (v uploadCommand) UploadForReviewWithEditor(branchesMap map[string][]projec
 		branchComment = "#"
 	}
 
-	// Script for upload options customization
-	script := v.fmtUploadOptionsScript()
-
 	// Script for branches selection
 	markbranchSelection := "# Step 2: Select project and branches for upload"
-	script = append(script,
+	script := []string{
 		"",
 		"##############################################################################",
 		markbranchSelection,
@@ -334,7 +426,8 @@ func (v uploadCommand) UploadForReviewWithEditor(branchesMap map[string][]projec
 		"# Note: Uncomment the branches to upload, and not touch the project lines",
 		"##############################################################################",
 		"",
-	)
+	}
+	published := true
 	for _, key := range keys {
 		branches := branchesMap[key]
 		p := branches[0].Project
@@ -368,14 +461,20 @@ func (v uploadCommand) UploadForReviewWithEditor(branchesMap map[string][]projec
 					script = append(script, "#         ... ...")
 				}
 			}
+			if !branch.IsPublished() {
+				published = false
+			}
 			b[name] = branch
 		}
 
 		projectsIdx[p.Path] = *p
 		branchesIdx[p.Name] = b
 	}
-
 	script = append(script, "")
+
+	// Script for upload options customization
+	script = append(v.fmtUploadOptionsScript(published), script...)
+
 	editString := editor.EditString(strings.Join(script, "\n"))
 
 	if v.O.MockEditScript != "" {
@@ -390,7 +489,7 @@ func (v uploadCommand) UploadForReviewWithEditor(branchesMap map[string][]projec
 
 	// Load upload options
 	optsInEditString := strings.Split(editString, markbranchSelection)[0]
-	v.loadUploadOptions(&(v.O), optsInEditString)
+	v.O.LoadFromText(optsInEditString)
 
 	// Save editString to UPLOAD_OPTIONS file
 	err = v.saveUploadOptions(optsInEditString)
@@ -453,108 +552,38 @@ func (v uploadCommand) saveUploadOptions(content string) error {
 	return os.Rename(lockFile, file)
 }
 
-func (v uploadCommand) loadUploadOptions(o *uploadOptions, data string) {
-	var (
-		section string
-		text    string
-	)
-
-	setUploadOption := func(section, text string) {
-		text = strings.TrimSpace(text)
-		if text == "" {
-			return
-		}
-		switch section {
-		case "title":
-			text = strings.Split(text, "\n")[0]
-			o.Title = text
-		case "description":
-			o.Description = text
-		case "issue":
-			o.Issue = strings.Join(strings.Split(text, "\n"), ",")
-		case "reviewer":
-			o.Reviewers = strings.Split(text, "\n")
-		case "cc":
-			o.Cc = strings.Split(text, "\n")
-		case "draft", "private":
-			switch text {
-			case "y", "yes", "on", "t", "true", "1":
-				if section == "draft" {
-					o.Draft = true
-				} else if section == "private" {
-					o.Private = true
-				}
-			case "n", "no", "off", "f", "false", "0":
-				if section == "draft" {
-					o.Draft = false
-				} else if section == "private" {
-					o.Private = false
-				}
-			default:
-				log.Warnf("cannot turn '%s' to boolean", text)
-			}
-		default:
-			log.Warnf("unknown section name: %s", section)
-		}
-	}
-
-	for _, line := range strings.Split(data, "\n") {
-		line = strings.TrimRight(line, " \t")
-		if m := reEditSection.FindStringSubmatch(line); m != nil {
-			name := strings.ToLower(m[1])
-			switch name {
-			case
-				"title",
-				"description",
-				"issue",
-				"reviewer",
-				"cc",
-				"draft",
-				"private":
-
-				if section != "" {
-					setUploadOption(section, text)
-				}
-				section = name
-				text = ""
-				continue
-			default:
-				log.Warnf("unknown section '%s' in script", name)
-			}
-		}
-
-		if strings.HasPrefix(line, "#") {
-			continue
-		}
-
-		if section != "" {
-			text += line + "\n"
-		}
-	}
-
-	if section != "" {
-		setUploadOption(section, text)
-	}
-}
-
-func (v uploadCommand) fmtUploadOptionsScript() []string {
+func (v uploadCommand) fmtUploadOptionsScript(published bool) []string {
 	var (
 		o = uploadOptions{}
 
-		script = []string{
+		script = []string{}
+	)
+
+	if published {
+		script = append(script,
+			"##############################################################################",
+			"# Step 1: Input your options for code review",
+			"#",
+			"# Note: Input your options below the comments and keep the comments unchanged,",
+			"#       and options which work only for new created code review are hidden.",
+			"##############################################################################",
+			"",
+		)
+	} else {
+		script = append(script,
 			"##############################################################################",
 			"# Step 1: Input your options for code review",
 			"#",
 			"# Note: Input your options below the comments and keep the comments unchanged",
 			"##############################################################################",
 			"",
-		}
-	)
+		)
+	}
 
 	// Load upload options file created by last upload
 	buf, err := ioutil.ReadFile(filepath.Join(v.ws.AdminDir(), uploadOptionsFile))
 	if err == nil {
-		v.loadUploadOptions(&o, string(buf))
+		o.LoadFromText(string(buf))
 
 		if v.O.Title == "" {
 			v.O.Title = o.Title
@@ -583,24 +612,26 @@ func (v uploadCommand) fmtUploadOptionsScript() []string {
 	}
 
 	w := 13
-	script = append(script, fmt.Sprintf("# %-*s : %s", w,
-		"[Title]",
-		"one line message below as the title of code review"),
-	)
-	if v.O.Title != "" {
-		script = append(script, "", v.O.Title)
-	}
-	script = append(script, "")
-
-	script = append(script, fmt.Sprintf("# %-*s : %s", w,
-		"[Description]",
-		"multiple lines of text as the description of code review"),
-	)
-	if v.O.Description != "" {
+	if !published {
+		script = append(script, fmt.Sprintf("# %-*s : %s", w,
+			"[Title]",
+			"one line message below as the title of code review"),
+		)
+		if v.O.Title != "" {
+			script = append(script, "", v.O.Title)
+		}
 		script = append(script, "")
-		script = append(script, strings.Split(v.O.Description, "\n")...)
+
+		script = append(script, fmt.Sprintf("# %-*s : %s", w,
+			"[Description]",
+			"multiple lines of text as the description of code review"),
+		)
+		if v.O.Description != "" {
+			script = append(script, "")
+			script = append(script, strings.Split(v.O.Description, "\n")...)
+		}
+		script = append(script, "")
 	}
-	script = append(script, "")
 
 	script = append(script, fmt.Sprintf("# %-*s : %s", w,
 		"[Issue]",

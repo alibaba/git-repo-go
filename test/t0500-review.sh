@@ -415,11 +415,39 @@ test_expect_success "upload to a ssh review url" '
 	(
 		cd work &&
 		cat >expect<<-EOF &&
-		Upload project (jiangxin/main) to remote branch master:
-		  branch my/topic-test ( 1 commit(s)):
-		         <hash>
-		to ssh://git@example.com:10022 (y/N)? Yes
-		NOTE: will execute command: git push --receive-pack=agit-receive-pack ssh://git@example.com:10022/jiangxin/main.git refs/heads/my/topic-test:refs/for/master/my/topic-test
+		NOTE: no editor, input data unchanged
+		##############################################################################
+		# Step 1: Input your options for code review
+		#
+		# Note: Input your options below the comments and keep the comments unchanged,
+		#       and options which work only for new created code review are hidden.
+		##############################################################################
+		
+		# [Issue]       : multiple lines of issue IDs for cross references
+		
+		# [Reviewer]    : multiple lines of user names as the reviewers for code review
+		
+		# [Cc]          : multiple lines of user names as the watchers for code review
+		
+		# [Draft]       : a boolean (yes/no, or true/false) to turn on/off draft mode
+		
+		yes
+		
+		# [Private]     : a boolean (yes/no, or true/false) to turn on/off private mode
+		
+		
+		##############################################################################
+		# Step 2: Select project and branches for upload
+		#
+		# Note: Uncomment the branches to upload, and not touch the project lines
+		##############################################################################
+		
+		#
+		# project ./:
+		   branch my/topic-test ( 1 commit(s)) to remote branch master:
+		#         <hash>
+		
+		NOTE: will execute command: git push --receive-pack=agit-receive-pack ssh://git@example.com:10022/jiangxin/main.git refs/heads/my/topic-test:refs/drafts/master/my/topic-test
 		NOTE: will update-ref refs/published/my/topic-test on refs/heads/my/topic-test, reason: review from my/topic-test to master on ssh://git@example.com:10022
 
 		----------------------------------------------------------------------
@@ -429,8 +457,10 @@ test_expect_success "upload to a ssh review url" '
 			git peer-review \
 				--no-cache \
 				--assume-yes \
-				--no-edit \
-				--dryrun
+				--dryrun \
+				--mock-ssh-info-status 200 \
+				--mock-ssh-info-response \
+				"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}"
 		) >out 2>&1 &&
 		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
 		test_cmp expect actual
