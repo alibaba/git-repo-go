@@ -26,6 +26,7 @@ import (
 
 	"code.alibaba-inc.com/force/git-repo/config"
 	"code.alibaba-inc.com/force/git-repo/editor"
+	"code.alibaba-inc.com/force/git-repo/path"
 	"code.alibaba-inc.com/force/git-repo/project"
 	log "github.com/jiangxin/multi-log"
 	"github.com/spf13/cobra"
@@ -38,6 +39,7 @@ const (
 
 	// uploadOptionsFile stores upload options to file
 	uploadOptionsFile = "UPLOAD_OPTIONS"
+	uploadOptionsDir  = "UPLOAD_OPTIONS.d"
 )
 
 var (
@@ -428,6 +430,7 @@ func (v uploadCommand) UploadForReviewWithEditor(branchesMap map[string][]projec
 		"",
 	}
 	published := true
+	optionsFile := ""
 	for _, key := range keys {
 		branches := branchesMap[key]
 		p := branches[0].Project
@@ -444,6 +447,9 @@ func (v uploadCommand) UploadForReviewWithEditor(branchesMap map[string][]projec
 				script = append(script, "#")
 			}
 			destBranch, err := v.getDestBranch(&branch)
+			if optionsFile == "" {
+				optionsFile = destBranch
+			}
 			if err != nil {
 				return err
 			}
@@ -472,8 +478,13 @@ func (v uploadCommand) UploadForReviewWithEditor(branchesMap map[string][]projec
 	}
 	script = append(script, "")
 
-	// Script for upload options customization
-	script = append(v.fmtUploadOptionsScript(published), script...)
+	if strings.HasPrefix(optionsFile, config.RefsHeads) {
+		optionsFile = strings.TrimPrefix(optionsFile, config.RefsHeads)
+	}
+	optionsFile = strings.ReplaceAll(optionsFile, "/", ".")
+	optionsFile = filepath.Join(v.ws.AdminDir(), uploadOptionsDir, optionsFile)
+
+	script = append(v.fmtUploadOptionsScript(optionsFile, published), script...)
 
 	editString := editor.EditString(strings.Join(script, "\n"))
 
@@ -492,7 +503,7 @@ func (v uploadCommand) UploadForReviewWithEditor(branchesMap map[string][]projec
 	v.O.LoadFromText(optsInEditString)
 
 	// Save editString to UPLOAD_OPTIONS file
-	err = v.saveUploadOptions(optsInEditString)
+	err = v.saveUploadOptions(optionsFile, optsInEditString)
 	if err != nil {
 		log.Error(err)
 	}
@@ -542,20 +553,22 @@ func (v uploadCommand) UploadForReviewWithEditor(branchesMap map[string][]projec
 	return v.UploadAndReport(todo)
 }
 
-func (v uploadCommand) saveUploadOptions(content string) error {
-	file := filepath.Join(v.ws.AdminDir(), uploadOptionsFile)
-	lockFile := file + ".lock"
+func (v uploadCommand) saveUploadOptions(optionsFile, content string) error {
+	dir := filepath.Dir(optionsFile)
+	if !path.Exist(dir) {
+		os.Mkdir(dir, 0755)
+	}
+	lockFile := optionsFile + ".lock"
 	err := ioutil.WriteFile(lockFile, []byte(content), 0644)
 	if err != nil {
 		return err
 	}
-	return os.Rename(lockFile, file)
+	return os.Rename(lockFile, optionsFile)
 }
 
-func (v uploadCommand) fmtUploadOptionsScript(published bool) []string {
+func (v uploadCommand) fmtUploadOptionsScript(optionsFile string, published bool) []string {
 	var (
-		o = uploadOptions{}
-
+		o      = uploadOptions{}
 		script = []string{}
 	)
 
@@ -581,7 +594,31 @@ func (v uploadCommand) fmtUploadOptionsScript(published bool) []string {
 	}
 
 	// Load upload options file created by last upload
-	buf, err := ioutil.ReadFile(filepath.Join(v.ws.AdminDir(), uploadOptionsFile))
+	if !path.Exist(optionsFile) {
+		optionsFile = filepath.Join(v.ws.AdminDir(), uploadOptionsFile)
+		if !path.Exist(optionsFile) {
+			// fist file in uploadOptionsDir
+			filepath.Walk(filepath.Join(v.ws.AdminDir(),
+				uploadOptionsDir),
+				func(path string, info os.FileInfo, err error) error {
+					if err != nil {
+						return err
+					}
+					if info != nil && info.IsDir() {
+						if filepath.Base(path) == uploadOptionsDir {
+							return nil
+						}
+						return filepath.SkipDir
+					}
+					// return the first file in uploadOptionsDir
+					optionsFile = path
+					return filepath.SkipDir
+				},
+			)
+		}
+	}
+
+	buf, err := ioutil.ReadFile(optionsFile)
 	if err == nil {
 		o.LoadFromText(string(buf))
 
