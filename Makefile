@@ -23,7 +23,8 @@ GPGSIGN=gpg -sba -u Alibaba
 # Returns a list of all non-vendored (local packages)
 LOCAL_PACKAGES = $(shell go list ./... | grep -v -e '^$(PKG)/vendor/')
 LOCAL_GO_FILES = $(shell find -L $BUILD_DIR  -name "*.go" -not -path "$(PKG_BUILD_DIR)/vendor/*" -not -path "$(PKG_BUILD_DIR)/_build/*")
-UPX = upx
+#UPX = upx
+UPX = echo Disabled upx
 
 define message
 	@echo "### $(1)"
