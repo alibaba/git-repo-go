@@ -166,6 +166,81 @@ func (v *uploadOptions) LoadFromText(data string) {
 	}
 }
 
+// Export will export uploadOptions for edit.
+func (v *uploadOptions) Export(published bool) []string {
+	script := []string{}
+	w := 13
+	if !published {
+		script = append(script, fmt.Sprintf("# %-*s : %s", w,
+			"[Title]",
+			"one line message below as the title of code review"),
+		)
+		if v.Title != "" {
+			script = append(script, "", v.Title)
+		}
+		script = append(script, "")
+
+		script = append(script, fmt.Sprintf("# %-*s : %s", w,
+			"[Description]",
+			"multiple lines of text as the description of code review"),
+		)
+		if v.Description != "" {
+			script = append(script, "")
+			script = append(script, strings.Split(v.Description, "\n")...)
+		}
+		script = append(script, "")
+	}
+
+	script = append(script, fmt.Sprintf("# %-*s : %s", w,
+		"[Issue]",
+		"multiple lines of issue IDs for cross references"),
+	)
+	if v.Issue != "" {
+		script = append(script, "", v.Issue)
+	}
+	script = append(script, "")
+
+	script = append(script, fmt.Sprintf("# %-*s : %s", w,
+		"[Reviewer]",
+		"multiple lines of user names as the reviewers for code review"),
+	)
+	if len(v.Reviewers) > 0 {
+		script = append(script, "")
+		script = append(script, v.Reviewers...)
+	}
+	script = append(script, "")
+
+	script = append(script, fmt.Sprintf("# %-*s : %s", w,
+		"[Cc]",
+		"multiple lines of user names as the watchers for code review"),
+	)
+	if len(v.Cc) > 0 {
+		script = append(script, "")
+		script = append(script, v.Cc...)
+	}
+	script = append(script, "")
+
+	script = append(script, fmt.Sprintf("# %-*s : %s", w,
+		"[Draft]",
+		"a boolean (yes/no, or true/false) to turn on/off draft mode"),
+	)
+	if v.Draft {
+		script = append(script, "", "yes")
+	}
+	script = append(script, "")
+
+	script = append(script, fmt.Sprintf("# %-*s : %s", w,
+		"[Private]",
+		"a boolean (yes/no, or true/false) to turn on/off private mode"),
+	)
+	if v.Private {
+		script = append(script, "", "yes")
+	}
+	script = append(script, "")
+
+	return script
+}
+
 type uploadCommand struct {
 	WorkSpaceCommand
 
@@ -503,7 +578,7 @@ func (v uploadCommand) UploadForReviewWithEditor(branchesMap map[string][]projec
 	v.O.LoadFromText(optsInEditString)
 
 	// Save editString to UPLOAD_OPTIONS file
-	err = v.saveUploadOptions(optionsFile, optsInEditString)
+	err = v.saveUploadOptions(optionsFile, v.O)
 	if err != nil {
 		log.Error(err)
 	}
@@ -553,13 +628,29 @@ func (v uploadCommand) UploadForReviewWithEditor(branchesMap map[string][]projec
 	return v.UploadAndReport(todo)
 }
 
-func (v uploadCommand) saveUploadOptions(optionsFile, content string) error {
-	dir := filepath.Dir(optionsFile)
-	if !path.Exist(dir) {
-		os.Mkdir(dir, 0755)
+func (v uploadCommand) saveUploadOptions(optionsFile string, o uploadOptions) error {
+	var (
+		oldOptions uploadOptions
+	)
+
+	if path.Exist(optionsFile) {
+		oldOptions.LoadFromFile(optionsFile)
+		if oldOptions.Title != "" {
+			o.Title = oldOptions.Title
+		}
+		if oldOptions.Description != "" {
+			o.Description = oldOptions.Description
+		}
+	} else {
+		dir := filepath.Dir(optionsFile)
+		if !path.Exist(dir) {
+			os.Mkdir(dir, 0755)
+		}
 	}
+
 	lockFile := optionsFile + ".lock"
-	err := ioutil.WriteFile(lockFile, []byte(content), 0644)
+	data := strings.Join(o.Export(false), "\n")
+	err := ioutil.WriteFile(lockFile, []byte(data), 0644)
 	if err != nil {
 		return err
 	}
@@ -648,75 +739,7 @@ func (v uploadCommand) fmtUploadOptionsScript(optionsFile string, published bool
 		}
 	}
 
-	w := 13
-	if !published {
-		script = append(script, fmt.Sprintf("# %-*s : %s", w,
-			"[Title]",
-			"one line message below as the title of code review"),
-		)
-		if v.O.Title != "" {
-			script = append(script, "", v.O.Title)
-		}
-		script = append(script, "")
-
-		script = append(script, fmt.Sprintf("# %-*s : %s", w,
-			"[Description]",
-			"multiple lines of text as the description of code review"),
-		)
-		if v.O.Description != "" {
-			script = append(script, "")
-			script = append(script, strings.Split(v.O.Description, "\n")...)
-		}
-		script = append(script, "")
-	}
-
-	script = append(script, fmt.Sprintf("# %-*s : %s", w,
-		"[Issue]",
-		"multiple lines of issue IDs for cross references"),
-	)
-	if v.O.Issue != "" {
-		script = append(script, "", v.O.Issue)
-	}
-	script = append(script, "")
-
-	script = append(script, fmt.Sprintf("# %-*s : %s", w,
-		"[Reviewer]",
-		"multiple lines of user names as the reviewers for code review"),
-	)
-	if len(v.O.Reviewers) > 0 {
-		script = append(script, "")
-		script = append(script, v.O.Reviewers...)
-	}
-	script = append(script, "")
-
-	script = append(script, fmt.Sprintf("# %-*s : %s", w,
-		"[Cc]",
-		"multiple lines of user names as the watchers for code review"),
-	)
-	if len(v.O.Cc) > 0 {
-		script = append(script, "")
-		script = append(script, v.O.Cc...)
-	}
-	script = append(script, "")
-
-	script = append(script, fmt.Sprintf("# %-*s : %s", w,
-		"[Draft]",
-		"a boolean (yes/no, or true/false) to turn on/off draft mode"),
-	)
-	if v.O.Draft {
-		script = append(script, "", "yes")
-	}
-	script = append(script, "")
-
-	script = append(script, fmt.Sprintf("# %-*s : %s", w,
-		"[Private]",
-		"a boolean (yes/no, or true/false) to turn on/off private mode"),
-	)
-	if v.O.Private {
-		script = append(script, "", "yes")
-	}
-	script = append(script, "")
-
+	script = append(script, v.O.Export(published)...)
 	return script
 }
 
