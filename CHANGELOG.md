@@ -2,6 +2,20 @@
 
 Changes of git-repo.
 
+## 0.5.1 (2019-09-09)
+
+New features:
+
++ upload: cache different upload options settings for different target branch
++ upload: only show title and description in editor for upload for the 1st time
++ Some commands work for repo in mirror mode
+
+Refactors, Enhancements and bugfixes:
+
++ Disable upx, because some Mac users report errors
++ refactor: rename variables name, such as RepoRoot
++ refactor: Add DotGit, SharedGitDir in repository
+
 ## 0.5.0 (2019-08-20)
 
 New features:
