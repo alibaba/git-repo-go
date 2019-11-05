@@ -198,7 +198,7 @@ func (v statusCommand) executeCommand(p *project.Project) *project.CmdExecResult
 	if !path.Exist(p.WorkDir) {
 		result := project.CmdExecResult{}
 		result.Project = p
-		result.Error = errors.New(`missing (run "repo sync")`)
+		result.Error = errors.New(`missing (run "git repo sync")`)
 		return &result
 	}
 

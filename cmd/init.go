@@ -456,7 +456,7 @@ func (v initCommand) shouldConfigUser() bool {
 	}
 
 	log.Notef("Your identity is: %s <%s>", cfg.Get(userName), cfg.Get(userEmail))
-	log.Note("If you want to change this, please re-run 'repo init' with --config-name")
+	log.Note("If you want to change this, please re-run 'git repo init' with --config-name")
 
 	return false
 }
@@ -508,7 +508,7 @@ func (v initCommand) configureColor() {
 	}
 
 	fmt.Println("")
-	fmt.Printf("Testing colorized output (for 'repo diff', 'repo status'):\n")
+	fmt.Printf("Testing colorized output (for 'git repo diff', 'git repo status'):\n")
 
 	for _, c := range []string{"black", "red", "green", "yellow", "blue", "magenta", "cyan"} {
 		fmt.Print(" ")
