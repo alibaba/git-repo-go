@@ -174,4 +174,17 @@ test_expect_success "copy and link files" '
 	)
 '
 
+test_expect_success "disable git-repo" '
+	(
+		cd work/.repo/manifests.git &&
+		git config app.git.repo.disabled true &&
+		cd ../.. &&
+		test_must_fail git repo init >actual 2>&1 &&
+		cat >expect<<-EOF &&
+		Error: git-repo is disabled for this workspace, use repo instead
+		EOF
+		test_cmp expect actual
+	)
+'
+
 test_done

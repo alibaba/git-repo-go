@@ -192,6 +192,11 @@ func (v *RepoWorkSpace) loadProjects(manifestURL string) error {
 	v.ManifestProject = project.NewManifestProject(v.RootDir, manifestURL)
 	s := v.ManifestProject.Settings
 
+	// Check whether git-repo is disabled.
+	if v.ManifestProject.Config().GetBool(config.CfgAppGitRepoDisabled, false) {
+		return fmt.Errorf("git-repo is disabled for this workspace, use repo instead")
+	}
+
 	// Set RemoteMap
 	v.RemoteMap = make(map[string]project.RemoteWithError)
 

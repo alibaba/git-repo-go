@@ -58,6 +58,7 @@ const (
 	CfgBranchDefaultMerge    = "branch.default.merge"
 	CfgManifestRemoteType    = "manifest.remote.%s.type"
 	CfgManifestRemoteSSHInfo = "manifest.remote.%s.sshinfo"
+	CfgAppGitRepoDisabled    = "app.git.repo.disabled"
 
 	ManifestsDotGit  = "manifests.git"
 	Manifests        = "manifests"
