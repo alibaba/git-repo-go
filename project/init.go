@@ -3,11 +3,11 @@ package project
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
 	"code.alibaba-inc.com/force/git-repo/path"
-	"gopkg.in/src-d/go-git.v4"
 )
 
 // IsRepoInitialized indicates repository is initialized or not.
@@ -105,12 +105,26 @@ func (v *Repository) initMissing() error {
 func (v *Repository) Init(remoteName, remoteURL, referenceGitDir string) error {
 	var err error
 
-	if !v.Exists() {
-		_, err = git.PlainInit(v.GitDir, true)
-		if err != nil {
-			return err
-		}
-		v.initMissing()
+	cmdArgs := []string{
+		GIT,
+		"init",
+		"-q",
+		"--bare",
+		v.GitDir,
+	}
+
+	cmd := exec.Command(cmdArgs[0], cmdArgs[1:]...)
+	cmd.Stdin = nil
+	err = cmd.Run()
+	if err != nil {
+		return err
+	}
+
+	if !v.IsBare {
+		cfg := v.Config()
+		cfg.Unset("core.bare")
+		cfg.Set("core.logAllRefUpdates", "true")
+		v.SaveConfig(cfg)
 	}
 
 	if remoteName != "" && remoteURL != "" {
@@ -173,20 +187,9 @@ func (v *Repository) InitByLink(remoteName, remoteURL string, repo *Repository) 
 			break
 		}
 	}
-	v.initMissing()
 
-	if remoteName != "" && remoteURL != "" {
-		if !strings.HasSuffix(remoteURL, ".git") {
-			remoteURL += ".git"
-		}
-		u := v.GitConfigRemoteURL(remoteName)
-		if u != remoteURL {
-			err = v.setRemote(remoteName, remoteURL)
-			if err != nil {
-				return err
-			}
-		}
-	}
+	// Create config file
+	v.Init(remoteName, remoteURL, "")
 
 	return nil
 }
