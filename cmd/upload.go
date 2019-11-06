@@ -556,7 +556,7 @@ func (v uploadCommand) UploadForReviewWithEditor(branchesMap map[string][]projec
 	if strings.HasPrefix(optionsFile, config.RefsHeads) {
 		optionsFile = strings.TrimPrefix(optionsFile, config.RefsHeads)
 	}
-	optionsFile = strings.ReplaceAll(optionsFile, "/", ".")
+	optionsFile = strings.Replace(optionsFile, "/", ".", -1)
 	optionsFile = filepath.Join(v.ws.AdminDir(), uploadOptionsDir, optionsFile)
 
 	script = append(v.fmtUploadOptionsScript(optionsFile, published), script...)
