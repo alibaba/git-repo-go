@@ -212,9 +212,6 @@ func (v *Project) SyncNetworkHalf(o *FetchOptions) error {
 		o = &FetchOptions{}
 	}
 
-	// Initial repository
-	v.GitInit()
-
 	remoteURL, err := v.GetRemoteURL()
 	if err != nil {
 		return err
@@ -243,7 +240,8 @@ func (v *Project) SyncNetworkHalf(o *FetchOptions) error {
 	}
 
 	if !v.Repository.Exists() {
-		return fmt.Errorf("WorkRepository of project '%s' is nil, sync-network-half failed", v.Name)
+		// Initial repository
+		v.GitInit()
 	}
 	return v.Repository.Fetch(v.RemoteName, o)
 }

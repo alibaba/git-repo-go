@@ -189,7 +189,7 @@ func (v *syncCommand) defaultJobs() int {
 }
 
 func (v syncCommand) CallManifestServerRPC() {
-	// TODO
+	// TODO: implement `_SmartSyncSetup`
 	log.Panic("not implement CallManifestServerRPC")
 }
 
@@ -202,29 +202,29 @@ func (v *syncCommand) updateManifestProject() error {
 	track := mp.TrackBranch("")
 
 	if track == "" {
+		log.Notef("manifest project is not updated, for there is no tracking branch")
 		return nil
+	}
+
+	if !v.O.LocalOnly {
+		// Fetch repositories
+		fetchOptions := project.FetchOptions{
+			RepoSettings: *s,
+
+			CurrentBranchOnly: v.O.CurrentBranchOnly,
+			NoTags:            v.O.NoTags,
+			OptimizedFetch:    v.O.OptimizedFetch,
+			Quiet:             config.GetQuiet(),
+		}
+
+		err = mp.SyncNetworkHalf(&fetchOptions)
+		if err != nil {
+			return err
+		}
 	}
 
 	// Get current manifest version
 	oldrev, _ := mp.ResolveRevision("HEAD")
-
-	// Fetch repositories
-	fetchOptions := project.FetchOptions{
-		RepoSettings: *s,
-
-		CloneBundle:       !v.O.NoCloneBundle,
-		CurrentBranchOnly: v.O.CurrentBranchOnly,
-		ForceSync:         false,
-		NoTags:            v.O.NoTags,
-		OptimizedFetch:    false,
-		Prune:             false,
-		Quiet:             config.GetQuiet(),
-	}
-
-	err = mp.SyncNetworkHalf(&fetchOptions)
-	if err != nil {
-		return err
-	}
 
 	// No update found in manifest project
 	newrev, _ := mp.ResolveRemoteTracking(track)
@@ -232,20 +232,33 @@ func (v *syncCommand) updateManifestProject() error {
 		return nil
 	}
 
+	// Has commit not yet checkout?
+	revlist, err := mp.Revlist(newrev, "--not", oldrev)
+	if err != nil {
+		return err
+	}
+	if len(revlist) == 0 {
+		return nil
+	}
+
 	// Checkout
 	checkoutOptions := project.CheckoutOptions{
 		RepoSettings: *s,
 
-		Quiet:      config.GetQuiet(),
-		DetachHead: v.O.DetachHead,
+		Quiet: config.GetQuiet(),
 	}
 	err = mp.SyncLocalHalf(&checkoutOptions)
 	if err != nil {
 		return err
 	}
 
-	// : Reload Manifest
+	// Reload Manifest
 	v.ReloadRepoWorkSpace()
+
+	// Load different manifest file
+	if v.O.ManifestName != "" {
+		v.RepoWorkSpace().Override(v.O.ManifestName)
+	}
 
 	return nil
 }
@@ -332,9 +345,8 @@ func (v syncCommand) LocalHalf(allProjects []*project.Project) error {
 	jobTasks := make(chan *project.Tree, jobs)
 
 	checkoutOptions := project.CheckoutOptions{
-		Quiet: config.GetQuiet(),
-		// TODO: why fixed detached head mode?
-		DetachHead: false,
+		Quiet:      config.GetQuiet(),
+		DetachHead: v.O.DetachHead,
 	}
 
 	wg.Add(len(allProjects))
@@ -689,6 +701,8 @@ func (v syncCommand) Execute(args []string) error {
 	if err != nil {
 		return err
 	}
+
+	// Use reloaded WorkSpace after calling `updateManifestProject()`.
 	rws = v.RepoWorkSpace()
 
 	allProjects, err := rws.GetProjects(&workspace.GetProjectsOptions{
