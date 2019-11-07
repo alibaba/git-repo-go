@@ -179,15 +179,24 @@ test_expect_success "switch branch: Maint, file: default.xml" '
 	)
 '
 
-test_expect_success "manifest.name => default.xml" '
+test_expect_success "check default branch and tracking branch" '
 	(
 		cd work &&
-		# git config variable manifest.name is set to default.xml
-		echo default.xml >expect &&
 		(
 			cd .repo/manifests &&
+			git branch &&
+			echo "----" &&
+			git config branch.default.remote &&
+			git config branch.default.merge &&
 			git config manifest.name
 		) >actual &&
+		cat >expect <<-EOF &&
+		* default
+		----
+		origin
+		refs/heads/Maint
+		default.xml
+		EOF
 		test_cmp expect actual
 	)
 '
@@ -200,6 +209,37 @@ test_expect_success "branch: Maint, no next.xml" '
 		.repo/manifests/default.xml
 		EOF
 		ls .repo/manifests/*.xml >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success "detached manifest, drop default branch" '
+	(
+		cd work/.repo/manifests &&
+		git checkout HEAD^0 &&
+		git branch -D default
+	)
+'
+
+test_expect_success "switch to tag: v0.1" '
+	(
+		cd work &&
+		git-repo init -u $manifest_url -b refs/tags/v0.1 &&
+		(
+			cd .repo/manifests &&
+			git branch &&
+			echo "----" &&
+			test_must_fail git config branch.default.remote &&
+			test_must_fail git config branch.default.merge &&
+			git config manifest.name &&
+			git describe
+		) >actual &&
+		cat >expect <<-EOF &&
+		* default
+		----
+		default.xml
+		v0.1
+		EOF
 		test_cmp expect actual
 	)
 '
@@ -218,16 +258,24 @@ test_expect_success "switch branch: master, next.xml is back" '
 	)
 '
 
-test_expect_success "again, remote track: master" '
+test_expect_success "check default branch and tracking branch" '
 	(
 		cd work &&
-		cat >expect <<-EOF &&
-		refs/heads/master
-		EOF
 		(
 			cd .repo/manifests &&
-			git config branch.default.merge
+			git branch &&
+			echo "----" &&
+			git config branch.default.remote &&
+			git config branch.default.merge &&
+			git config manifest.name
 		) >actual &&
+		cat >expect <<-EOF &&
+		* default
+		----
+		origin
+		refs/heads/master
+		default.xml
+		EOF
 		test_cmp expect actual
 	)
 '
