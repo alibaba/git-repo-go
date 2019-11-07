@@ -501,8 +501,9 @@ func (v initCommand) configureUser() {
 
 func (v initCommand) configureColor() {
 	cfg := v.ws.Config()
+	defaultCfg := goconfig.DefaultConfig()
 	for _, k := range []string{"color.ui", "color.diff", "color.status"} {
-		if cfg.Get(k) != "" {
+		if cfg.Get(k) != "" || defaultCfg.Get(k) != "" {
 			return
 		}
 	}
