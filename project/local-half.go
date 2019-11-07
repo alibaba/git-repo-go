@@ -277,11 +277,7 @@ func (v Project) SyncLocalHalf(o *CheckoutOptions) error {
 	// No track, no loose.
 	if track == "" {
 		log.Notef("leaving %s; does not track upstream", branch)
-		if branch != "" {
-			err = v.HardReset(revid)
-		} else {
-			err = v.CheckoutRevision("--force", revid)
-		}
+		err = v.CheckoutRevision(revid)
 		if err != nil {
 			return err
 		}
