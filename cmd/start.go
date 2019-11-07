@@ -91,7 +91,7 @@ func (v startCommand) Execute(args []string) error {
 				}
 			}
 		}
-		err := p.StartBranch(branch, merge)
+		err := p.StartBranch(branch, merge, false)
 		if err != nil {
 			failed = append(failed, p.Path)
 			execError = err

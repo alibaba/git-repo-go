@@ -389,7 +389,8 @@ Either delete the .repo folder in this workspace, or initialize in another locat
 			}
 		}
 	} else if isNew || v.ws.ManifestProject.GetHead() == "" {
-		err := v.ws.ManifestProject.StartBranch("default", "")
+		// Recreate default branch.
+		err := v.ws.ManifestProject.StartBranch("default", "", true)
 		if err != nil {
 			return fmt.Errorf("cannot create default in manifest: %s", err)
 		}

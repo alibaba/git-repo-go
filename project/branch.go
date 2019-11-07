@@ -221,7 +221,7 @@ func (v Project) ResolveRemoteTracking(rev string) (string, error) {
 }
 
 // StartBranch creates new branch.
-func (v Project) StartBranch(branch, track string) error {
+func (v Project) StartBranch(branch, track string, force bool) error {
 	var err error
 
 	if track == "" {
@@ -238,7 +238,7 @@ func (v Project) StartBranch(branch, track string) error {
 	}
 
 	// Checkout if branch is already exist in repository
-	if v.RevisionIsValid(config.RefsHeads + branch) {
+	if !force && v.RevisionIsValid(config.RefsHeads+branch) {
 		cmdArgs := []string{
 			GIT,
 			"checkout",
@@ -248,22 +248,21 @@ func (v Project) StartBranch(branch, track string) error {
 		return executeCommandIn(v.WorkDir, cmdArgs)
 	}
 
-	// Get revid from already fetched tracking for v.Revision
-	revid, err := v.ResolveRemoteTracking(v.Revision)
-	remote := v.RemoteName
-	if remote == "" {
-		remote = "origin"
-	}
-
 	// Create a new branch
 	cmdArgs := []string{
 		GIT,
 		"checkout",
-		"-b",
-		branch,
 	}
-	if revid != "" {
-		cmdArgs = append(cmdArgs, revid)
+	if force {
+		cmdArgs = append(cmdArgs, "-B", branch)
+	} else {
+		cmdArgs = append(cmdArgs, "-b")
+		cmdArgs = append(cmdArgs, branch)
+		// Get revid from already fetched tracking for v.Revision
+		revid, _ := v.ResolveRemoteTracking(v.Revision)
+		if revid != "" {
+			cmdArgs = append(cmdArgs, revid)
+		}
 	}
 	cmdArgs = append(cmdArgs, "--")
 	err = executeCommandIn(v.WorkDir, cmdArgs)
@@ -272,6 +271,10 @@ func (v Project) StartBranch(branch, track string) error {
 	}
 
 	// Create remote tracking
+	remote := v.RemoteName
+	if remote == "" {
+		remote = "origin"
+	}
 	v.UpdateBranchTracking(branch, remote, track)
 	return nil
 }
