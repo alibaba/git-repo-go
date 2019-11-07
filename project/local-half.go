@@ -245,7 +245,9 @@ func (v Project) SyncLocalHalf(o *CheckoutOptions) error {
 		}
 
 		if headid == revid {
-			return PostUpdate(false)
+			if !o.DetachHead {
+				return PostUpdate(false)
+			}
 		}
 
 		if headid != "" {
@@ -259,7 +261,7 @@ func (v Project) SyncLocalHalf(o *CheckoutOptions) error {
 		}
 
 		log.Debugf("detached head, force checkout: %s", revid)
-		err = v.CheckoutRevision("--force", revid)
+		err = v.CheckoutRevision(revid)
 		if err != nil {
 			return err
 		}
