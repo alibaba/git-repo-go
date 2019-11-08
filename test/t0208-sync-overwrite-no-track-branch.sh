@@ -52,18 +52,18 @@ test_expect_success "edit files in workdir" '
 	)
 '
 
-test_expect_success "current branch which not has a remote track branch, will be overwritten" '
+test_expect_success "changes are preserved even switch from untracking branch" '
 	(
 		cd work &&
 		git-repo init -u $manifest_url -b master &&
-		git-repo sync \
+		test_must_fail git-repo sync \
 			--mock-ssh-info-status 200 \
 			--mock-ssh-info-response \
 			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" &&
 		cat >expect <<-EOF &&
-		drivers/driver-1/VERSION: v2.0.0-dev
-		projects/app1/VERSION: v2.0.0-dev
-		projects/app2/VERSION: v2.0.0-dev
+		drivers/driver-1/VERSION: hacked
+		projects/app1/VERSION: hacked
+		projects/app2/VERSION: hacked
 		EOF
 		echo "drivers/driver-1/VERSION: $(cat drivers/driver-1/VERSION)" >actual &&
 		echo "projects/app1/VERSION: $(cat projects/app1/VERSION)" >>actual &&

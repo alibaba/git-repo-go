@@ -13,7 +13,7 @@ test_expect_success "setup" '
 	mkdir work
 '
 
-test_expect_success "git-repo sync to maint branch" '
+test_expect_success "git-repo sync" '
 	(
 		cd work &&
 		git-repo init -u $manifest_url -b master &&
@@ -63,14 +63,14 @@ test_expect_success "nothing changed in manifests" '
 	)
 '
 
-test_expect_success "but projects in detached HEAD will be overwritten (changes are lost)" '
+test_expect_success "changes are preserved, even projects are in detached HEAD" '
 	(
 		cd work &&
 		cat >expect<<-EOF &&
-		driver-1: v2.0.0-dev
-		app-1: v2.0.0-dev
-		app-1.module1: v1.0.0
-		app-2: v2.0.0-dev
+		driver-1: hacked
+		app-1: hacked
+		app-1.module1: hacked
+		app-2: hacked
 		EOF
 		echo "driver-1: $(cat drivers/driver-1/VERSION)" >actual &&
 		echo "app-1: $(cat projects/app1/VERSION)" >>actual &&

@@ -68,17 +68,28 @@ test_expect_success "detached by hand" '
 	)
 '
 
-test_expect_success "switch and ignore dirty" '
+test_expect_success "do not overwrite dirty file" '
 	(
 		cd work &&
-		git-repo init -u $manifest_url -b master &&
+		test_must_fail git-repo init -u $manifest_url -b master 2>&1 |head -2 >actual &&
 		cat >expect <<-EOF &&
-		refs/heads/master
+		error: Your local changes to the following files would be overwritten by checkout:
 		EOF
+		printf "\tdefault.xml\n" >>expect &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success "clean dirty manifest repo" '
+	(
+		cd work &&
 		(
 			cd .repo/manifests &&
-			git config branch.default.merge
+			git checkout -- . &&
+			git status --porcelain
 		) >actual &&
+		cat >expect <<-EOF &&
+		EOF
 		test_cmp expect actual
 	)
 '
@@ -138,17 +149,15 @@ test_expect_success "edit default.xml" '
 	)
 '
 
-test_expect_success "switch from tag and ignore dirty" '
+test_expect_success "fail to switch, because of dirty manifest" '
 	(
 		cd work &&
-		git-repo init -u $manifest_url -b Maint &&
+		test_must_fail git-repo init -u $manifest_url -b Maint 2>&1 |head -3 >actual &&
 		cat >expect <<-EOF &&
-		refs/heads/Maint
+		NOTE: leaving default; does not track upstream
+		error: Your local changes to the following files would be overwritten by checkout:
 		EOF
-		(
-			cd .repo/manifests &&
-			git config branch.default.merge 
-		) >actual &&
+		printf "\tdefault.xml\n" >>expect &&
 		test_cmp expect actual
 	)
 '
