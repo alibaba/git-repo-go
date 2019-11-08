@@ -43,7 +43,7 @@ test_expect_success "setup repositories: manifests" '
 		git add default.xml &&
 		test_tick &&
 		git commit -m "initial" &&
-		git push
+		git push -u origin HEAD
 	)
 '
 
@@ -56,7 +56,7 @@ test_expect_success "setup repositories: app1" '
 		git add VERSION &&
 		test_tick &&
 		git commit -m "initial" &&
-		git push
+		git push -u origin HEAD
 	)
 '
 
@@ -69,7 +69,7 @@ test_expect_success "setup repositories: app2" '
 		git add VERSION &&
 		test_tick &&
 		git commit -m "initial" &&
-		git push
+		git push -u origin HEAD
 	)
 '
 
@@ -89,13 +89,13 @@ test_expect_success "projects are in detached mode" '
 		cd work &&
 		(
 			cd app1 &&
-			git branch &&
+			test_must_fail git symbolic-ref HEAD &&
 			cd ../app2 &&
-			git branch
-		) >actual &&
+			test_must_fail git symbolic-ref HEAD
+		) >actual 2>&1 &&
 		cat >expect <<-EOF &&
-		* (HEAD detached at 9419d63)
-		* (HEAD detached at 0b3b7c6)
+		fatal: ref HEAD is not a symbolic ref
+		fatal: ref HEAD is not a symbolic ref
 		EOF
 		test_cmp expect actual
 	)
@@ -107,13 +107,13 @@ test_expect_success "start to create new branch" '
 		git repo start --all jx/topic &&
 		(
 			cd app1 &&
-			git branch &&
+			git symbolic-ref HEAD &&
 			cd ../app2 &&
-			git branch
+			git symbolic-ref HEAD
 		) >actual &&
 		cat >expect <<-EOF &&
-		* jx/topic
-		* jx/topic
+		refs/heads/jx/topic
+		refs/heads/jx/topic
 		EOF
 		test_cmp expect actual
 	)
@@ -128,13 +128,13 @@ test_expect_success "sync --detached" '
 			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" &&
 		(
 			cd app1 &&
-			git branch | head -1 &&
+			test_must_fail git symbolic-ref HEAD &&
 			cd ../app2 &&
-			git branch | head -1
-		) >actual &&
+			test_must_fail git symbolic-ref HEAD
+		) >actual 2>&1 &&
 		cat >expect <<-EOF &&
-		* (HEAD detached at 9419d63)
-		* (HEAD detached at 0b3b7c6)
+		fatal: ref HEAD is not a symbolic ref
+		fatal: ref HEAD is not a symbolic ref
 		EOF
 		test_cmp expect actual
 	)
@@ -146,13 +146,13 @@ test_expect_success "switch branch" '
 		git repo start --all jx/topic &&
 		(
 			cd app1 &&
-			git branch &&
+			git symbolic-ref HEAD &&
 			cd ../app2 &&
-			git branch
+			git symbolic-ref HEAD
 		) >actual &&
 		cat >expect <<-EOF &&
-		* jx/topic
-		* jx/topic
+		refs/heads/jx/topic
+		refs/heads/jx/topic
 		EOF
 		test_cmp expect actual
 	)
@@ -216,13 +216,13 @@ test_expect_success "sync --detached" '
 			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" &&
 		(
 			cd app1 &&
-			git branch | head -1 &&
+			test_must_fail git symbolic-ref HEAD &&
 			cd ../app2 &&
-			git branch | head -1
-		) >actual &&
+			test_must_fail git symbolic-ref HEAD
+		) >actual 2>&1 &&
 		cat >expect <<-EOF &&
-		* (HEAD detached at 9419d63)
-		* (HEAD detached at 0b3b7c6)
+		fatal: ref HEAD is not a symbolic ref
+		fatal: ref HEAD is not a symbolic ref
 		EOF
 		test_cmp expect actual
 	)
@@ -294,13 +294,13 @@ test_expect_success "sync --detached again" '
 			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" &&
 		(
 			cd app1 &&
-			git branch | head -1 &&
+			test_must_fail git symbolic-ref HEAD &&
 			cd ../app2 &&
-			git branch | head -1
-		) >actual &&
+			test_must_fail git symbolic-ref HEAD
+		) >actual 2>&1 &&
 		cat >expect <<-EOF &&
-		* (HEAD detached at 9419d63)
-		* (HEAD detached at 0b3b7c6)
+		fatal: ref HEAD is not a symbolic ref
+		fatal: ref HEAD is not a symbolic ref
 		EOF
 		test_cmp expect actual
 	)

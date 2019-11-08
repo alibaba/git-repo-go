@@ -25,7 +25,7 @@ and write git config.
     cfg := repo.Config()
     name := cfg.Get("user.name")
 
-Save config back to manifest proejct, using:
+Save config back to manifest project, using:
 
     cfg := repo.Config()
 

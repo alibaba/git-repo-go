@@ -288,3 +288,11 @@ func (v *Repository) SaveConfig(cfg goconfig.GitConfig) error {
 	}
 	return cfg.Save(v.configFile())
 }
+
+// Prompt will show project path as prompt.
+func (v Repository) Prompt() string {
+	if v.Path == "." {
+		return ""
+	}
+	return v.Path + "> "
+}

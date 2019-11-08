@@ -125,7 +125,7 @@ func (v Repository) UpdateRef(refname, base, reason string) error {
 	)
 
 	if config.IsDryRun() {
-		log.Notef("will update-ref %s on %s, reason: %s", refname, base, reason)
+		log.Notef("%swill update-ref %s on %s, reason: %s", v.Prompt(), refname, base, reason)
 		return nil
 	}
 
@@ -182,7 +182,7 @@ func (v Project) ResolveRevision(rev string) (string, error) {
 	}
 
 	if rev == "" {
-		log.Errorf("empty revision to resolve for proejct '%s'", v.Name)
+		log.Errorf("empty revision to resolve for project '%s'", v.Name)
 	}
 
 	revid, err := raw.ResolveRevision(plumbing.Revision(rev))
@@ -200,7 +200,7 @@ func (v Project) ResolveRemoteTracking(rev string) (string, error) {
 	}
 
 	if rev == "" {
-		log.Errorf("empty Revision for proejct '%s'", v.Name)
+		log.Errorf("empty Revision for project '%s'", v.Name)
 	}
 	if !IsSha(rev) {
 		if IsHead(rev) {

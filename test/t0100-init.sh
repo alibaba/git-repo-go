@@ -184,14 +184,14 @@ test_expect_success "check default branch and tracking branch" '
 		cd work &&
 		(
 			cd .repo/manifests &&
-			git branch &&
+			git symbolic-ref HEAD &&
 			echo "----" &&
 			git config branch.default.remote &&
 			git config branch.default.merge &&
 			git config manifest.name
 		) >actual &&
 		cat >expect <<-EOF &&
-		* default
+		refs/heads/default
 		----
 		origin
 		refs/heads/Maint
@@ -227,7 +227,7 @@ test_expect_success "switch to tag: v0.1" '
 		git-repo init -u $manifest_url -b refs/tags/v0.1 &&
 		(
 			cd .repo/manifests &&
-			git branch &&
+			git symbolic-ref HEAD &&
 			echo "----" &&
 			test_must_fail git config branch.default.remote &&
 			test_must_fail git config branch.default.merge &&
@@ -235,7 +235,7 @@ test_expect_success "switch to tag: v0.1" '
 			git describe
 		) >actual &&
 		cat >expect <<-EOF &&
-		* default
+		refs/heads/default
 		----
 		default.xml
 		v0.1
@@ -263,14 +263,14 @@ test_expect_success "check default branch and tracking branch" '
 		cd work &&
 		(
 			cd .repo/manifests &&
-			git branch &&
+			git symbolic-ref HEAD &&
 			echo "----" &&
 			git config branch.default.remote &&
 			git config branch.default.merge &&
 			git config manifest.name
 		) >actual &&
 		cat >expect <<-EOF &&
-		* default
+		refs/heads/default
 		----
 		origin
 		refs/heads/master

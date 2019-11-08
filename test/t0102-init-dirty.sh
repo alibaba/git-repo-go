@@ -154,7 +154,7 @@ test_expect_success "fail to switch, because of dirty manifest" '
 		cd work &&
 		test_must_fail git-repo init -u $manifest_url -b Maint 2>&1 |head -3 >actual &&
 		cat >expect <<-EOF &&
-		NOTE: leaving default; does not track upstream
+		NOTE: manifests> leaving default; does not track upstream
 		error: Your local changes to the following files would be overwritten by checkout:
 		EOF
 		printf "\tdefault.xml\n" >>expect &&

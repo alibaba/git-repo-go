@@ -35,7 +35,7 @@ and write git config.
     cfg := p.Config()
     name := cfg.Get("user.name")
 
-To save config back to manifest proejct, using:
+To save config back to manifest project, using:
 
     cfg := p.Config()
 

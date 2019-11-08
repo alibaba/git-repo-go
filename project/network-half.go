@@ -48,10 +48,10 @@ func (v *Repository) Fetch(remote string, o *FetchOptions) error {
 				target = filepath.Join(v.Reference, "objects")
 			}
 			_, err = f.WriteString(target + "\n")
-			log.Debugf("linked with reference repo: %s", target)
+			log.Debugf("%slinked with reference repo: %s", v.Prompt(), target)
 		}
 		if err != nil {
-			log.Warnf("fail to link with reference repo: %s", err)
+			log.Warnf("%sfail to link with reference repo: %s", v.Prompt(), err)
 		}
 	} else if v.HasAlternates() {
 		hasAlternates = true
@@ -148,7 +148,7 @@ func (v *Repository) Fetch(remote string, o *FetchOptions) error {
 			cmdArgs = append(cmdArgs, fmt.Sprintf("+refs/heads/*:refs/remotes/%s/*", v.RemoteName))
 		}
 	}
-	log.Debugf("fetching using command: %s", strings.Join(cmdArgs, " "))
+	log.Debugf("%sfetching using command: %s", v.Prompt(), strings.Join(cmdArgs, " "))
 
 	err = executeCommandIn(v.RepoDir(), cmdArgs)
 	if err != nil {
@@ -162,7 +162,7 @@ func (v *Repository) Fetch(remote string, o *FetchOptions) error {
 			"-a",
 			"-d",
 		}
-		log.Debugf("repacking using command: %s", strings.Join(cmdArgs, " "))
+		log.Debugf("%srepacking using command: %s", v.Prompt(), strings.Join(cmdArgs, " "))
 
 		err = executeCommandIn(v.RepoDir(), cmdArgs)
 		if err != nil {
@@ -187,7 +187,7 @@ func (v *Project) fetchArchive(tarpath string) error {
 		"--prefix=" + v.Path,
 		v.Revision,
 	}
-	log.Debugf("fetching archive in %s: %s", v.TopDir(), strings.Join(cmdArgs, " "))
+	log.Debugf("%sfetching archive in %s: %s", v.Prompt(), v.TopDir(), strings.Join(cmdArgs, " "))
 
 	return executeCommandIn(v.TopDir(), cmdArgs)
 }
@@ -199,7 +199,7 @@ func (v *Project) extractArchive(tarpath string) error {
 		"-f",
 		tarpath,
 	}
-	log.Debugf("extracting archive in %s: %s", v.TopDir(), strings.Join(cmdArgs, " "))
+	log.Debugf("%sextracting archive in %s: %s", v.Prompt(), v.TopDir(), strings.Join(cmdArgs, " "))
 
 	return executeCommandIn(v.TopDir(), cmdArgs)
 }

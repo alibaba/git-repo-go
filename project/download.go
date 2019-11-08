@@ -18,7 +18,8 @@ type PatchSet struct {
 func (v Project) DownloadPatchSet(reviewID, patchID int) (*PatchSet, error) {
 	reviewRef := ""
 	if v.Remote == nil {
-		log.Fatal("not remote tracking defined, and do not know where to download")
+		log.Fatalf("%snot remote tracking defined, and do not know where to download",
+			v.Prompt())
 	}
 	if v.Remote != nil {
 		reviewRef = v.Remote.GetCodeReviewRef(reviewID, patchID)
@@ -39,7 +40,7 @@ func (v Project) DownloadPatchSet(reviewID, patchID int) (*PatchSet, error) {
 		"+" + reviewRef + ":" + reviewRef,
 		"--",
 	}
-	log.Debugf("will execute: %s", strings.Join(cmdArgs, " "))
+	log.Debugf("%swill execute: %s", v.Prompt(), strings.Join(cmdArgs, " "))
 	err := executeCommandIn(v.WorkDir, cmdArgs)
 	if err != nil {
 		return nil, err
@@ -78,7 +79,7 @@ func (v Project) CherryPick(commits ...string) error {
 			c,
 			"--",
 		}
-		log.Debugf("will execute: %s", strings.Join(cmdArgs, " "))
+		log.Debugf("%swill execute: %s", v.Prompt(), strings.Join(cmdArgs, " "))
 		err := executeCommandIn(v.WorkDir, cmdArgs)
 		if err != nil {
 			return err
@@ -95,6 +96,6 @@ func (v Project) Revert(commit string) error {
 		commit,
 		"--",
 	}
-	log.Debugf("will execute: %s", strings.Join(cmdArgs, " "))
+	log.Debugf("%swill execute: %s", v.Prompt(), strings.Join(cmdArgs, " "))
 	return executeCommandIn(v.WorkDir, cmdArgs)
 }

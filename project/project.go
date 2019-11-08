@@ -205,12 +205,12 @@ func (v Project) CleanPublishedCache() error {
 	for name := range pubMap {
 		branch := config.RefsHeads + strings.TrimPrefix(name, config.RefsPub)
 		if _, ok := headsMap[branch]; !ok {
-			log.Infof("will delete obsolete ref: %s", name)
+			log.Infof("%swill delete obsolete ref: %s", v.Prompt(), name)
 			err = raw.Storer.RemoveReference(plumbing.ReferenceName(name))
 			if err != nil {
-				log.Errorf("fail to remove reference '%s'", name)
+				log.Errorf("%sfail to remove reference '%s'", v.Prompt(), name)
 			} else {
-				log.Infof("removed reference '%s'", name)
+				log.Infof("%sremoved reference '%s'", v.Prompt(), name)
 			}
 		}
 	}
@@ -339,7 +339,7 @@ func (v *Project) SetGitRemoteURL(remoteURL string) error {
 func (v *Project) DisableDefaultPush() error {
 	cfg := v.Config()
 	if cfg.Get("push.default") == "" {
-		log.Debug("disable default push by setting push.default to noting")
+		log.Debugf("%sdisable default push by setting push.default to noting", v.Prompt())
 		cfg.Set("push.default", "nothing")
 		return v.SaveConfig(cfg)
 	}
@@ -395,7 +395,7 @@ func (v Project) MatchGroups(expect string) bool {
 // GetSubmoduleProjects returns submodule projects.
 func (v Project) GetSubmoduleProjects() []*Project {
 	// TODO: return submodule projects
-	log.Panic("not implement GitSubmodules")
+	log.Fatal("not implement GitSubmodules")
 	return nil
 }
 

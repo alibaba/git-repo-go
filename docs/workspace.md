@@ -41,7 +41,7 @@ Read config using:
     cfg := ws.Config()
     name := cfg.Get("manifest.name")
 
-Save config back to manifest proejct, using:
+Save config back to manifest project, using:
 
     cfg := ws.Config()
 

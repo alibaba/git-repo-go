@@ -79,7 +79,7 @@ func IsClean(dir string) (bool, error) {
 func (v Project) IsClean() bool {
 	ok, err := IsClean(v.WorkDir)
 	if err != nil {
-		log.Warnf("fail to run IsClean: %s", err)
+		log.Warnf("%sfail to run IsClean: %s", v.Prompt(), err)
 	}
 	return ok
 }
@@ -92,7 +92,7 @@ func (v Project) CheckoutRevision(args ...string) error {
 	}
 	cmdArgs = append(cmdArgs, args...)
 	cmdArgs = append(cmdArgs, "--")
-	log.Debugf("checking out using command: %s", strings.Join(cmdArgs, " "))
+	log.Debugf("%schecking out using command: %s", v.Prompt(), strings.Join(cmdArgs, " "))
 	return executeCommandIn(v.WorkDir, cmdArgs)
 }
 
@@ -105,7 +105,7 @@ func (v Project) HardReset(args ...string) error {
 	}
 	cmdArgs = append(cmdArgs, args...)
 	cmdArgs = append(cmdArgs, "--")
-	log.Debugf("hard reset using command: %s", strings.Join(cmdArgs, " "))
+	log.Debugf("%shard reset using command: %s", v.Prompt(), strings.Join(cmdArgs, " "))
 	return executeCommandIn(v.WorkDir, cmdArgs)
 }
 
@@ -117,7 +117,7 @@ func (v Project) Rebase(args ...string) error {
 	}
 	cmdArgs = append(cmdArgs, args...)
 	cmdArgs = append(cmdArgs, "--")
-	log.Debugf("rebasing using command: %s", strings.Join(cmdArgs, " "))
+	log.Debugf("%srebasing using command: %s", v.Prompt(), strings.Join(cmdArgs, " "))
 	return executeCommandIn(v.WorkDir, cmdArgs)
 }
 
@@ -129,7 +129,7 @@ func (v Project) FastForward(args ...string) error {
 	}
 	cmdArgs = append(cmdArgs, args...)
 	cmdArgs = append(cmdArgs, "--")
-	log.Debugf("fastforward using command: %s", strings.Join(cmdArgs, " "))
+	log.Debugf("%sfastforward using command: %s", v.Prompt(), strings.Join(cmdArgs, " "))
 	return executeCommandIn(v.WorkDir, cmdArgs)
 }
 
@@ -144,7 +144,7 @@ func (v Project) SubmoduleUpdate(args ...string) error {
 	}
 	cmdArgs = append(cmdArgs, args...)
 	cmdArgs = append(cmdArgs, "--")
-	log.Debugf("submodule update using command: %s", strings.Join(cmdArgs, " "))
+	log.Debugf("%ssubmodule update using command: %s", v.Prompt(), strings.Join(cmdArgs, " "))
 	return executeCommandIn(v.WorkDir, cmdArgs)
 }
 
@@ -160,7 +160,7 @@ func (v Project) SyncLocalHalf(o *CheckoutOptions) error {
 	}
 
 	if v.Revision == "" {
-		log.Debug("Revision is empty, do nothing")
+		log.Debugf("%sRevision is empty, do nothing", v.Prompt())
 		return nil
 	}
 
@@ -174,7 +174,7 @@ func (v Project) SyncLocalHalf(o *CheckoutOptions) error {
 			v.Revision,
 			err)
 	}
-	log.Debugf("remote tracking ref for %s: %s", v.Revision, revid)
+	log.Debugf("%sremote tracking ref for %s: %s", v.Prompt(), v.Revision, revid)
 
 	// Read current branch to 'branch' and parsed revision to 'headid'
 	// If repository is in detached head mode, or has invalid HEAD, branch is empty.
@@ -193,8 +193,8 @@ func (v Project) SyncLocalHalf(o *CheckoutOptions) error {
 		track = v.TrackBranch(branch)
 	}
 
-	log.Debugf("fetching project %s (head: %s, branch: %s, track: %s, headid: %s, revid: %s, revision: %s)",
-		v.Name, head, branch, track, headid, revid, v.Revision)
+	log.Debugf("%sfetching (head: %s, branch: %s, track: %s, headid: %s, revid: %s, revision: %s)",
+		v.Prompt(), head, branch, track, headid, revid, v.Revision)
 
 	PostUpdate := func(update bool) error {
 		var err error
@@ -202,15 +202,15 @@ func (v Project) SyncLocalHalf(o *CheckoutOptions) error {
 		if branch != "" && track != v.Revision {
 			if v.Revision != "" {
 				if track == "" {
-					log.Notef("manifest switched to %s", v.Revision)
+					log.Notef("%smanifest switched to %s", v.Prompt(), v.Revision)
 				} else {
-					log.Notef("manifest switched %s...%s", track, v.Revision)
+					log.Notef("%smanifest switched %s...%s", v.Prompt(), track, v.Revision)
 				}
 			} else {
-				log.Notef("manifest no longer tracks %s", track)
+				log.Notef("%smanifest no longer tracks %s", v.Prompt(), track)
 			}
 
-			log.Debugf("updating tracking of %s to %s/%s", branch, v.RemoteName, v.Revision)
+			log.Debugf("%supdating tracking of %s to %s/%s", v.Prompt(), branch, v.RemoteName, v.Revision)
 			// Update remote tracking, or delete tracking if v.Revision is empty
 			v.UpdateBranchTracking(branch, v.RemoteName, v.Revision)
 		}
@@ -253,14 +253,14 @@ func (v Project) SyncLocalHalf(o *CheckoutOptions) error {
 		if headid != "" {
 			localChanges, err := v.Revlist(headid, "--not", revid)
 			if err != nil {
-				log.Warnf("rev-list failed: %s", err)
+				log.Warnf("%srev-list failed: %s", v.Prompt(), err)
 			}
 			if len(localChanges) > 0 {
-				log.Notef("discarding %d commits", len(localChanges))
+				log.Notef("%sdiscarding %d commits", v.Prompt(), len(localChanges))
 			}
 		}
 
-		log.Debugf("detached head, force checkout: %s", revid)
+		log.Debugf("%sdetached head, force checkout: %s", v.Prompt(), revid)
 		err = v.CheckoutRevision(revid)
 		if err != nil {
 			return err
@@ -276,7 +276,7 @@ func (v Project) SyncLocalHalf(o *CheckoutOptions) error {
 
 	// No track, no loose.
 	if track == "" {
-		log.Notef("leaving %s; does not track upstream", branch)
+		log.Notef("%sleaving %s; does not track upstream", v.Prompt(), branch)
 		err = v.CheckoutRevision(revid)
 		if err != nil {
 			return err
@@ -284,15 +284,15 @@ func (v Project) SyncLocalHalf(o *CheckoutOptions) error {
 		return PostUpdate(true)
 	}
 
-	log.Debugf("checking rev-list: %s..%s", headid, revid)
+	log.Debugf("%schecking rev-list: %s..%s", v.Prompt(), headid, revid)
 	remoteChanges, err := v.Revlist(revid, "--not", headid)
 	if err != nil {
-		log.Errorf("rev-list failed: %s", err)
+		log.Errorf("%srev-list failed: %s", v.Prompt(), err)
 	}
 
 	// No remote changes, no update.
 	if len(remoteChanges) == 0 {
-		log.Debugf("no remote changes found for project %s", v.Name)
+		log.Debugf("%sno remote changes found for project %s", v.Prompt(), v.Name)
 		return PostUpdate(false)
 	}
 
@@ -307,16 +307,22 @@ func (v Project) SyncLocalHalf(o *CheckoutOptions) error {
 		}
 		// Has unpublished changes, fail to update.
 		if len(notMerged) > 0 {
-			log.Debugf("has %d unpublished commit(s) for project %s", len(notMerged), v.Name)
+			log.Debugf("%shas %d unpublished commit(s) for project %s",
+				v.Prompt(),
+				len(notMerged),
+				v.Name)
 			if len(remoteChanges) > 0 {
-				log.Errorf("branch %s is published (but not merged) and is now "+
-					"%d commits behind", branch, len(remoteChanges))
+				log.Errorf("%sbranch %s is published (but not merged) and is now "+
+					"%d commits behind",
+					v.Prompt(),
+					branch,
+					len(remoteChanges))
 			}
 			return fmt.Errorf("branch %s is published (but not merged)", branch)
 		}
 		// Since last published, no other local changes.
 		if pubid == headid {
-			log.Debugf("all local commits are published for project %s", v.Name)
+			log.Debugf("%sall local commits are published", v.Prompt())
 			err = v.FastForward(revid)
 			if err != nil {
 				return err
@@ -332,7 +338,7 @@ func (v Project) SyncLocalHalf(o *CheckoutOptions) error {
 
 	localChanges, err := v.Revlist(headid, "--not", revid)
 	if err != nil {
-		log.Warnf("rev-list for local changes failed: %s", err)
+		log.Warnf("%srev-list for local changes failed: %s", v.Prompt(), err)
 	}
 
 	if v.IsRebase() {
@@ -382,7 +388,9 @@ func (v Project) InstallGerritHooks() error {
 		if path.Exist(target) {
 			linkedSrc, err := os.Readlink(target)
 			if err != nil || filepath.Base(linkedSrc) != name {
-				log.Debugf("will remove %s before recreate link", target)
+				log.Debugf("%swill remove %s before recreate link",
+					v.Prompt(),
+					target)
 				os.Remove(target)
 			} else {
 				continue

@@ -106,7 +106,10 @@ func (v *ReviewableBranch) Published() *Reference {
 func (v ReviewableBranch) Commits() []string {
 	commits, err := v.Project.Revlist(v.Branch.Hash, "--not", v.RemoteTrack.Track.Hash)
 	if err != nil {
-		log.Errorf("fail to get commits of ReviewableBranch %s: %s", v.Branch, err)
+		log.Errorf("%sfail to get commits of ReviewableBranch %s: %s",
+			v.Project.Prompt(),
+			v.Branch,
+			err)
 		return nil
 	}
 	return commits
@@ -142,9 +145,13 @@ func (v ReviewableBranch) UploadForReview(o *UploadOptions, people [][]string) e
 	}
 
 	if config.IsDryRun() || o.MockGitPush {
-		log.Notef("will execute command: %s", strings.Join(cmdArgs, " "))
+		log.Notef("%swill execute command: %s",
+			v.Project.Prompt(),
+			strings.Join(cmdArgs, " "))
 	} else {
-		log.Debugf("review by command: %s", strings.Join(cmdArgs, " "))
+		log.Debugf("%sreview by command: %s",
+			v.Project.Prompt(),
+			strings.Join(cmdArgs, " "))
 		cmd := exec.Command(cmdArgs[0], cmdArgs[1:]...)
 		cmd.Dir = p.WorkDir
 		cmd.Stdin = os.Stdin
@@ -165,7 +172,10 @@ func (v ReviewableBranch) UploadForReview(o *UploadOptions, people [][]string) e
 		o.DestBranch,
 		manifestRemote.Review)
 
-	log.Debugf("Update reference '%s': %s", config.RefsPub+branchName, msg)
+	log.Debugf("%sUpdate reference '%s': %s",
+		v.Project.Prompt(),
+		config.RefsPub+branchName,
+		msg)
 	err = p.UpdateRef(config.RefsPub+branchName,
 		config.RefsHeads+branchName,
 		msg)
@@ -198,7 +208,8 @@ func (v *Project) GetUploadableBranch(branch, remote, remoteBranch string) *Revi
 	if v.Remote != nil {
 		manifestRemote = v.Remote.GetRemote().Name
 		if remote != manifestRemote && !config.IsSingleMode() {
-			log.Warnf("cannot upload, unmatch remote for '%s': %s != %s",
+			log.Warnf("%scannot upload, unmatch remote for '%s': %s != %s",
+				v.Prompt(),
 				branch,
 				remote,
 				manifestRemote,

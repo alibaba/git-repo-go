@@ -43,7 +43,7 @@ test_expect_success "setup repositories: manifests" '
 		git add default.xml &&
 		test_tick &&
 		git commit -m "initial" &&
-		git push
+		git push -u origin HEAD
 	)
 '
 
@@ -56,7 +56,7 @@ test_expect_success "setup repositories: app1" '
 		git add VERSION &&
 		test_tick &&
 		git commit -m "initial" &&
-		git push
+		git push -u origin HEAD
 	)
 '
 
@@ -69,7 +69,7 @@ test_expect_success "setup repositories: app2" '
 		git add VERSION &&
 		test_tick &&
 		git commit -m "initial" &&
-		git push
+		git push -u origin HEAD
 	)
 '
 
@@ -79,12 +79,12 @@ test_expect_success "git repo init" '
 		git repo init -u "$manifest_url" &&
 		(
 			cd .repo/manifests &&
-			git branch &&
+			git symbolic-ref HEAD &&
 			git config branch.default.remote &&
 			git config branch.default.merge
 		) >actual &&
 		cat >expect <<-EOF &&
-		* default
+		refs/heads/default
 		origin
 		refs/heads/master
 		EOF
@@ -101,12 +101,12 @@ test_expect_success "git repo sync -d, manifests not detached" '
 			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" &&
 		(
 			cd .repo/manifests &&
-			git branch &&
+			git symbolic-ref HEAD &&
 			git config branch.default.remote &&
 			git config branch.default.merge
 		) >actual &&
 		cat >expect <<-EOF &&
-		* default
+		refs/heads/default
 		origin
 		refs/heads/master
 		EOF
@@ -123,7 +123,7 @@ test_expect_success "new commit in remote manifests" '
 		git add remote.txt &&
 		test_tick &&
 		git commit -m "remote hack" &&
-		git push
+		git push -u origin HEAD
 	)
 '
 test_expect_success "new commit in local manifests" '
@@ -148,12 +148,12 @@ test_expect_success "git repo sync -d, manifests not detached" '
 			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" &&
 		(
 			cd .repo/manifests &&
-			git branch &&
+			git symbolic-ref HEAD &&
 			git config branch.default.remote &&
 			git config branch.default.merge
 		) >actual &&
 		cat >expect <<-EOF &&
-		* default
+		refs/heads/default
 		origin
 		refs/heads/master
 		EOF
