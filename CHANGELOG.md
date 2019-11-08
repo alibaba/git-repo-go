@@ -2,6 +2,20 @@
 
 Changes of git-repo.
 
+## 0.6.0 (2019-11-08)
+
+NOTE: All users are suggested to upgrade to this version. Local changed files
+      will not be overwrited.
+
++ Show project path in log message as prompt
++ init: force create default branch for manifest project
++ sync: donot overwrite local changed files
++ sync: sync -d: always detach even if nothing changed
++ sync: should not make manifest project detached
++ init: no need to set color if color.ui defined in git global/system config
++ by setting app.git.repo.disabled can git-repo for certain workspace
++ init: use git-init command to create repository
+
 ## 0.5.1 (2019-09-09)
 
 New features:
