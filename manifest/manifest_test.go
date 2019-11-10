@@ -30,7 +30,7 @@ func TestMarshal(t *testing.T) {
 			},
 		},
 		Default: &Default{
-			RemoteName: "origin",
+			RemoteName: "aone",
 			Revision:   "master",
 		},
 		Projects: []Project{
@@ -79,7 +79,7 @@ func TestMarshal(t *testing.T) {
 
 	expected := `<manifest>
   <remote name="aone" alias="origin" fetch="https://code.aone.alibaba-inc.com" review="https://code.aone.alibaba-inc.com" revision="default"></remote>
-  <default remote="origin" revision="master"></default>
+  <default remote="aone" revision="master"></default>
   <project name="platform/drivers" path="platform-drivers">
     <project name="nic" path="nic"></project>
     <copyfile src="Makefile" dest="../Makefile"></copyfile>
@@ -358,6 +358,154 @@ func TestCircularInclude(t *testing.T) {
 	assert.Equal(true, nil == m)
 }
 
+func TestManifestRevision1(t *testing.T) {
+	assert := assert.New(t)
+
+	buf := []byte(`
+<manifest>
+  <remote name="aone" alias="origin"
+    fetch="https://code.aone.alibaba-inc.com"
+    pushurl="https://code.aone.alibaba-inc.com/push"
+    review="https://code.aone.alibaba-inc.com"
+    revision="aone-master"
+    type="agit" />
+  <remote name="gerrit"
+    fetch="https://gerrit.alibaba-inc.com"
+    pushurl="https://gerrit.alibaba-inc.com/push"
+    review="https://gerrit.alibaba-inc.com"
+    revision="gerrit-master"
+    type="gerrit" />
+  <default remote="aone"
+    revision="default-master"
+    dest-branch="default-dest"
+    upstream="default-upstream"
+    sync-c="false"
+    sync-s="yes"
+    sync-tags="on"
+    sync-j="5" />
+  <project name="platform/app1" path="app1" />
+</manifest>`)
+
+	m, err := Unmarshal(buf)
+	assert.Nil(err)
+	assert.NotNil(m)
+	assert.Equal(
+		&Default{
+			RemoteName: "aone",
+			Revision:   "default-master",
+			DestBranch: "default-dest",
+			Upstream:   "default-upstream",
+			SyncJ:      5,
+			SyncC:      "false",
+			SyncS:      "yes",
+			SyncTags:   "on",
+		}, m.Default)
+
+	p := m.AllProjects()[0]
+	assert.Equal("aone", p.RemoteName)
+	// Use remote revision
+	assert.Equal("aone-master", p.Revision)
+	assert.Equal("default-dest", p.DestBranch)
+	assert.Equal("default-upstream", p.Upstream)
+	assert.False(p.IsSyncC())
+	assert.True(p.IsSyncS())
+	assert.True(p.IsSyncTags())
+}
+
+func TestManifestRevision2(t *testing.T) {
+	assert := assert.New(t)
+
+	buf := []byte(`
+<manifest>
+  <remote name="aone" alias="origin"
+    fetch="https://code.aone.alibaba-inc.com"
+    pushurl="https://code.aone.alibaba-inc.com/push"
+    review="https://code.aone.alibaba-inc.com"
+    type="agit" />
+  <remote name="gerrit"
+    fetch="https://gerrit.alibaba-inc.com"
+    pushurl="https://gerrit.alibaba-inc.com/push"
+    review="https://gerrit.alibaba-inc.com"
+    type="gerrit" />
+  <default remote="aone"
+    revision="default-master"
+    dest-branch="default-dest"
+    upstream="default-upstream"
+    sync-c="false"
+    sync-s="yes"
+    sync-tags="on"
+    sync-j="5" />
+  <project name="platform/app1" path="app1" />
+</manifest>`)
+
+	m, err := Unmarshal(buf)
+	assert.Nil(err)
+	assert.NotNil(m)
+	assert.Equal(
+		&Default{
+			RemoteName: "aone",
+			Revision:   "default-master",
+			DestBranch: "default-dest",
+			Upstream:   "default-upstream",
+			SyncJ:      5,
+			SyncC:      "false",
+			SyncS:      "yes",
+			SyncTags:   "on",
+		}, m.Default)
+
+	p := m.AllProjects()[0]
+	assert.Equal("aone", p.RemoteName)
+	// No remote revision, use default revision.
+	assert.Equal("default-master", p.Revision)
+	assert.Equal("default-dest", p.DestBranch)
+	assert.Equal("default-upstream", p.Upstream)
+	assert.False(p.IsSyncC())
+	assert.True(p.IsSyncS())
+	assert.True(p.IsSyncTags())
+}
+
+func TestManifestRevision3(t *testing.T) {
+	assert := assert.New(t)
+
+	buf := []byte(`
+<manifest>
+  <remote name="aone" alias="origin"
+    fetch="https://code.aone.alibaba-inc.com"
+    pushurl="https://code.aone.alibaba-inc.com/push"
+    review="https://code.aone.alibaba-inc.com"
+    revision="aone-master"
+    type="agit" />
+  <remote name="gerrit"
+    fetch="https://gerrit.alibaba-inc.com"
+    pushurl="https://gerrit.alibaba-inc.com/push"
+    review="https://gerrit.alibaba-inc.com"
+    type="gerrit" />
+  <default remote="aone"
+    revision="default-master"
+    dest-branch="default-dest"
+    upstream="default-upstream"
+    sync-c="false"
+    sync-s="yes"
+    sync-tags="on"
+    sync-j="5" />
+  <project name="platform/app1" path="app1" revision="master" />
+</manifest>`)
+
+	m, err := Unmarshal(buf)
+	assert.Nil(err)
+	assert.NotNil(m)
+
+	p := m.AllProjects()[0]
+	assert.Equal("aone", p.RemoteName)
+	// No remote revision, use default revision.
+	assert.Equal("master", p.Revision)
+	assert.Equal("default-dest", p.DestBranch)
+	assert.Equal("default-upstream", p.Upstream)
+	assert.False(p.IsSyncC())
+	assert.True(p.IsSyncS())
+	assert.True(p.IsSyncTags())
+}
+
 func ExampleMarshal() {
 	m := Manifest{
 		Remotes: []Remote{
@@ -370,7 +518,7 @@ func ExampleMarshal() {
 			},
 		},
 		Default: &Default{
-			RemoteName: "origin",
+			RemoteName: "aone",
 			Revision:   "master",
 		},
 		Projects: []Project{
@@ -407,7 +555,7 @@ func ExampleMarshal() {
 	// Output:
 	// <manifest>
 	//   <remote name="aone" alias="origin" fetch="https://code.aone.alibaba-inc.com" review="https://code.aone.alibaba-inc.com" revision="default"></remote>
-	//   <default remote="origin" revision="master"></default>
+	//   <default remote="aone" revision="master"></default>
 	//   <project name="platform/drivers" path="platform-drivers">
 	//     <project name="platform/nic" path="nic"></project>
 	//     <copyfile src="Makefile" dest="../Makefile"></copyfile>
@@ -420,7 +568,7 @@ func ExampleUnmarshal() {
 	buf := []byte(`
 <manifest>
   <remote name="aone" alias="origin" fetch="https://code.aone.alibaba-inc.com" review="https://code.aone.alibaba-inc.com" revision="default"></remote>
-  <default remote="origin" revision="master"></default>
+  <default remote="aone" revision="master"></default>
   <project name="platform/drivers" path="platform-drivers">
     <project name="platform/nic" path="nic"></project>
     <copyfile src="Makefile" dest="../Makefile"></copyfile>
@@ -447,7 +595,7 @@ func ExampleUnmarshal() {
 
 	// Output:
 	// remote> name: aone, alias: origin
-	// default> name: origin, revision: master
+	// default> name: aone, revision: master
 	// project #1> name: platform/drivers, path: platform-drivers
 	//   copyfile> src: Makefile, dest: ../Makefile
 	// project #2> name: platform/drivers/platform/nic, path: platform-drivers/nic

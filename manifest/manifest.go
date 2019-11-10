@@ -239,23 +239,42 @@ func (v Project) IsMetaProject() bool {
 	return v.isMetaProject
 }
 
-// AllProjects returns all projects defined by current manifest.
-func (v *Manifest) AllProjects() []Project {
+func (v *Manifest) allProjects() []Project {
 	projects := []Project{}
 	for _, p := range v.Projects {
 		projects = append(projects, p.AllProjects(nil)...)
 	}
+	return projects
+}
 
+// AllProjects returns all projects and fill missing fields
+func (v *Manifest) AllProjects() []Project {
+	projects := v.allProjects()
 	remotes := make(map[string]*Remote)
 	for i := range v.Remotes {
 		remotes[v.Remotes[i].Name] = &v.Remotes[i]
 	}
 
 	for i := range projects {
-		if v.Default != nil {
-			if projects[i].RemoteName == "" {
-				projects[i].RemoteName = v.Default.RemoteName
+		if projects[i].RemoteName == "" {
+			if v.Default == nil || v.Default.RemoteName == "" {
+				log.Fatalf("no remote defined for for project '%s'",
+					projects[i].Name)
 			}
+			projects[i].RemoteName = v.Default.RemoteName
+		}
+		projects[i].ManifestRemote = remotes[projects[i].RemoteName]
+		if projects[i].ManifestRemote == nil {
+			log.Fatalf("cannot find remote '%s' for project '%s'",
+				projects[i].RemoteName,
+				projects[i].Name)
+		}
+
+		if projects[i].Revision == "" {
+			projects[i].Revision = projects[i].ManifestRemote.Revision
+		}
+
+		if v.Default != nil {
 			if projects[i].Revision == "" {
 				projects[i].Revision = v.Default.Revision
 			}
@@ -276,9 +295,8 @@ func (v *Manifest) AllProjects() []Project {
 			}
 		}
 
-		// Set remote field of project
-		if projects[i].RemoteName != "" {
-			projects[i].ManifestRemote = remotes[projects[i].RemoteName]
+		if projects[i].Revision == "" {
+			log.Fatalf("no revision for project '%s'", projects[i].Name)
 		}
 	}
 	return projects
@@ -331,7 +349,7 @@ func (v *Manifest) Merge(m *Manifest) error {
 	}
 
 	realPath := make(map[string]bool)
-	for _, p := range v.AllProjects() {
+	for _, p := range v.allProjects() {
 		if realPath[p.Path] {
 			return fmt.Errorf("duplicate path for project '%s' in '%s'",
 				p.Path,
@@ -339,7 +357,7 @@ func (v *Manifest) Merge(m *Manifest) error {
 		}
 		realPath[p.Path] = true
 	}
-	for _, p := range m.AllProjects() {
+	for _, p := range m.allProjects() {
 		p.Name = cleanPath(p.Name)
 		p.Path = cleanPath(p.Path)
 		if realPath[p.Path] {
@@ -357,7 +375,7 @@ func (v *Manifest) Merge(m *Manifest) error {
 		rmPath[r.Name] = true
 	}
 	ps := []Project{}
-	for _, p := range v.AllProjects() {
+	for _, p := range v.allProjects() {
 		if rmPath[p.Name] {
 			realPath[p.Path] = false
 		} else {

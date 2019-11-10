@@ -92,7 +92,7 @@ test_expect_success "git-repo abandon a single branch" '
 	cat >expect<<-EOF &&
 	Pruned branches (already merged)
 	------------------------------------------------------------------------------
-	jx/topic1                 | drivers/driver-2      (was 5ef3e8b)
+	jx/topic1                 | drivers/driver-2      (was 4f58351)
 	                          | main                  (was 152dee6)
 	                          | projects/app1         (was eac322d)
 	                          | projects/app1/module1 (was 2be33cb)
@@ -128,7 +128,7 @@ test_expect_success "git-repo abandon a single branch, force" '
 	cat >expect<<-EOF &&
 	Abandoned branches
 	------------------------------------------------------------------------------
-	jx/topic1                 | drivers/driver-1      (was 15e2e28)
+	jx/topic1                 | drivers/driver-1      (was 9ea948a)
 	
 	EOF
 	test_cmp expect actual
@@ -163,18 +163,18 @@ test_expect_success "git-repo abandon all projects" '
 	cat >expect<<-EOF &&
 	Abandoned branches
 	------------------------------------------------------------------------------
-	jx/topic2                 | drivers/driver-1      (was 5c3e172)
-	                          | drivers/driver-2      (was 2f9979e)
+	jx/topic2                 | drivers/driver-1      (was 355b986)
+	                          | drivers/driver-2      (was 7a48050)
 	                          | projects/app1         (was eac322d)
 	                          | projects/app1/module1 (was be6d870)
 	
-	jx/topic3                 | drivers/driver-1      (was f97e137)
-	                          | drivers/driver-2      (was 5ef3e8b)
+	jx/topic3                 | drivers/driver-1      (was 69d4c01)
+	                          | drivers/driver-2      (was 4f58351)
 	                          | projects/app1         (was eac322d)
 	                          | projects/app1/module1 (was 2be33cb)
 	
-	jx/topic4                 | drivers/driver-1      (was f97e137)
-	                          | drivers/driver-2      (was 5ef3e8b)
+	jx/topic4                 | drivers/driver-1      (was 69d4c01)
+	                          | drivers/driver-2      (was 4f58351)
 	                          | projects/app1         (was eac322d)
 	                          | projects/app1/module1 (was 452fe84)
 	

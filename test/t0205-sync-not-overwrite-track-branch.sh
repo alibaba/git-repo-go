@@ -77,26 +77,20 @@ test_expect_success "manifests version: 2.0" '
 	)
 '
 
-test_expect_success "fail to sync drivers/driver-1, workspace is dirty (not staged)" '
+test_expect_success "drivers/driver-1 not switch branch, workspace dirty is ok" '
 	(
 		cd work &&
-		cat >expect<<-EOF &&
-		 M VERSION
-		EOF
+		git-repo sync -l \
+			--mock-ssh-info-status 200 \
+			--mock-ssh-info-response \
+			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
+			-- drivers/driver-1 &&
 		(
 			cd drivers/driver-1 &&
 			git status -uno --porcelain
 		) >actual &&
-		test_cmp expect actual &&
-		test_must_fail git-repo sync -l \
-			--mock-ssh-info-status 200 \
-			--mock-ssh-info-response \
-			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
-			-- drivers/driver-1 \
-			>out 2>&1 &&
-		grep "^Error:" out >actual &&
-		cat >expect <<-EOF &&
-		Error: worktree of drivers/driver1 is dirty, checkout failed
+		cat >expect<<-EOF &&
+		 M VERSION
 		EOF
 		test_cmp expect actual
 

@@ -120,7 +120,7 @@ test_expect_success "verify checkout commits of master" '
 	(
 		cd work &&
 		cat >expect<<-EOF &&
-		drivers/dirver1: Version 2.0.0-dev
+		drivers/dirver1: Version 1.0.0
 		main: Version 2.0.0-dev
 		projects/app1: Version 2.0.0-dev
 		projects/app1/module1: Version 1.0.0
