@@ -2,6 +2,10 @@
 
 Changes of git-repo.
 
+## 0.6.1 (2019-11-10)
+
++ manifest: repo compatible parsing for project revision
+
 ## 0.6.0 (2019-11-08)
 
 NOTE: All users are suggested to upgrade to this version. Local changed files
