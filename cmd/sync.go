@@ -111,7 +111,7 @@ func (v *syncCommand) Command() *cobra.Command {
 	v.cmd.Flags().IntVarP(&v.O.Jobs,
 		"jobs",
 		"j",
-		syncDefaultJobs,
+		v.manifestsDefaultJobs(),
 		fmt.Sprintf("projects to fetch simultaneously"))
 	v.cmd.Flags().StringVarP(&v.O.ManifestName,
 		"manifest-name",
@@ -165,7 +165,27 @@ func (v *syncCommand) Command() *cobra.Command {
 	return v.cmd
 }
 
-func (v *syncCommand) defaultJobs() int {
+// Value of manifestsDefaultJobs() is used as command arg's default value.
+// Do not fail if run git-repo command out of a workspace.
+func (v *syncCommand) manifestsDefaultJobs() int {
+	var nJobs int
+
+	rws, _ := workspace.NewRepoWorkSpace("")
+	if rws != nil &&
+		rws.Manifest != nil &&
+		rws.Manifest.Default != nil &&
+		rws.Manifest.Default.SyncJ > 0 {
+		nJobs = rws.Manifest.Default.SyncJ
+	}
+
+	if nJobs <= 0 {
+		nJobs = syncDefaultJobs
+	}
+
+	return nJobs
+}
+
+func (v *syncCommand) maxSyncJobs() int {
 	var (
 		nJobs int = config.MaxJobs
 	)
@@ -175,14 +195,8 @@ func (v *syncCommand) defaultJobs() int {
 		nJobs = min(int((noFile-5)/3), config.MaxJobs)
 	}
 
-	// When running test cases in cmd/, function `nJobs` will be evaluated.
-	// Do not call `v.RepoWorkSpace()` function, which will fail if not in a workspace.
-	rws := v.RepoWorkSpace()
-	if rws != nil &&
-		rws.Manifest != nil &&
-		rws.Manifest.Default != nil &&
-		rws.Manifest.Default.SyncJ > 0 {
-		nJobs = min(nJobs, rws.Manifest.Default.SyncJ)
+	if nJobs <= 0 {
+		nJobs = 1
 	}
 
 	return nJobs
@@ -644,7 +658,9 @@ func (v syncCommand) Execute(args []string) error {
 	rws := v.RepoWorkSpace()
 
 	if v.O.Jobs > 0 {
-		v.O.Jobs = min(v.O.Jobs, v.defaultJobs())
+		v.O.Jobs = min(v.O.Jobs, v.maxSyncJobs())
+	} else {
+		v.O.Jobs = 1
 	}
 	if v.O.NetworkOnly && v.O.DetachHead {
 		return newUserError("cannot combine -n and -d")
