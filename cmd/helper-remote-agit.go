@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strings"
 
 	"code.alibaba-inc.com/force/git-repo/helper"
 	"github.com/spf13/cobra"
@@ -72,7 +73,7 @@ func (v *helperRemoteAGitCommand) Execute(arts []string) error {
 		if err != nil {
 			return err
 		}
-		ref, err := agit.GetDownloadRef(string(buf), "")
+		ref, err := agit.GetDownloadRef(strings.TrimSpace(string(buf)), "")
 		if err != nil {
 			return err
 		}

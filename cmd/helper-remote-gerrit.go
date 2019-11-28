@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strings"
 
 	"code.alibaba-inc.com/force/git-repo/helper"
 	"github.com/spf13/cobra"
@@ -61,6 +62,7 @@ func (v *helperRemoteGerritCommand) Execute(arts []string) error {
 		buf    []byte
 		err    error
 		gerrit = helper.GerritHelper{}
+		ref    string
 	)
 
 	if v.O.Download && v.O.Upload {
@@ -72,7 +74,12 @@ func (v *helperRemoteGerritCommand) Execute(arts []string) error {
 		if err != nil {
 			return err
 		}
-		ref, err := gerrit.GetDownloadRef(string(buf), "")
+		slices := strings.SplitN(strings.TrimSpace(string(buf)), " ", 2)
+		if len(slices) == 2 {
+			ref, err = gerrit.GetDownloadRef(slices[0], slices[1])
+		} else {
+			ref, err = gerrit.GetDownloadRef(slices[0], "")
+		}
 		if err != nil {
 			return err
 		}
