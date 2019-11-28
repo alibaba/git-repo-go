@@ -831,7 +831,9 @@ func (v *uploadCommand) UploadAndReport(branches []project.ReviewableBranch) err
 			Private:      v.O.Private,
 			PushOptions:  v.O.PushOptions,
 			Title:        v.O.Title,
+			UserEmail:    branch.Project.UserEmail(),
 			WIP:          v.O.WIP,
+			Version:      1,
 		}
 
 		err = branch.UploadForReview(&o, people)

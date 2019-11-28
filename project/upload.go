@@ -14,17 +14,22 @@ import (
 type UploadOptions struct {
 	AutoTopic    bool
 	Description  string
-	DestBranch   string
+	DestBranch   string // Target branch for code review
 	Draft        bool
 	Issue        string
+	LocalBranch  string // New
 	MockGitPush  bool
 	NoCertChecks bool
 	NoEmails     bool
+	OldOid       string // New
 	People       [][]string
 	Private      bool
 	PushOptions  []string
+	ProjectName  string // New
+	ReviewURL    string // New
 	Title        string
-	UserEmail    string
+	UserEmail    string // New
+	Version      int    // version: 1
 	WIP          bool
 }
 
