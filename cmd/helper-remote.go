@@ -24,45 +24,56 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type helperRemoteAGitCommand struct {
+type helperRemoteCommand struct {
 	cmd *cobra.Command
 	O   struct {
 		Upload   bool
 		Download bool
+		Type     string
 	}
 }
 
-func (v *helperRemoteAGitCommand) Command() *cobra.Command {
+func (v *helperRemoteCommand) Command() *cobra.Command {
 	if v.cmd != nil {
 		return v.cmd
 	}
 
 	v.cmd = &cobra.Command{
-		Use:   "remote-agit",
-		Short: "remote helper for agit",
+		Use:   "remote",
+		Short: "execute remote helper",
 
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return v.Execute(args)
 		},
 	}
+	v.cmd.Flags().StringVar(&v.O.Type,
+		"type",
+		"",
+		"type of remote")
 	v.cmd.Flags().BoolVar(&v.O.Upload,
 		"upload",
 		false,
-		"output JSON for git commands for upload")
+		"output JSON for git upload commands")
 	v.cmd.Flags().BoolVar(&v.O.Download,
 		"download",
 		false,
-		"output JSON for download reference")
+		"output JSON for download git reference")
 
 	return v.cmd
 }
 
-func (v *helperRemoteAGitCommand) Execute(arts []string) error {
+func (v *helperRemoteCommand) Execute(arts []string) error {
 	var (
-		buf  []byte
-		err  error
-		agit = helper.AGitHelper{}
+		buf          []byte
+		err          error
+		ref          string
+		remoteHelper helper.RemoteHelper
 	)
+
+	if v.O.Type == "" {
+		return fmt.Errorf("must provide type of remote")
+	}
+	remoteHelper = helper.NewRemoteHelper(v.O.Type)
 
 	if v.O.Download && v.O.Upload {
 		return fmt.Errorf("cannot use --download and --upload together")
@@ -73,7 +84,12 @@ func (v *helperRemoteAGitCommand) Execute(arts []string) error {
 		if err != nil {
 			return err
 		}
-		ref, err := agit.GetDownloadRef(strings.TrimSpace(string(buf)), "")
+		slices := strings.SplitN(strings.TrimSpace(string(buf)), " ", 2)
+		if len(slices) == 2 {
+			ref, err = remoteHelper.GetDownloadRef(slices[0], slices[1])
+		} else {
+			ref, err = remoteHelper.GetDownloadRef(slices[0], "")
+		}
 		if err != nil {
 			return err
 		}
@@ -81,7 +97,7 @@ func (v *helperRemoteAGitCommand) Execute(arts []string) error {
 		return nil
 	}
 
-	buf, err = agit.GetGitPushCommand(os.Stdin)
+	buf, err = remoteHelper.GetGitPushCommandPipe(os.Stdin)
 	if err != nil {
 		return err
 	}
@@ -89,8 +105,8 @@ func (v *helperRemoteAGitCommand) Execute(arts []string) error {
 	return nil
 }
 
-var helperRemoteAGitCmd = helperRemoteAGitCommand{}
+var helperRemoteCmd = helperRemoteCommand{}
 
 func init() {
-	helperCmd.Command().AddCommand(helperRemoteAGitCmd.Command())
+	helperCmd.Command().AddCommand(helperRemoteCmd.Command())
 }

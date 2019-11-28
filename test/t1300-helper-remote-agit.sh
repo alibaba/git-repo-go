@@ -1,13 +1,13 @@
 #!/bin/sh
 
-test_description="git-repo helper remote-agit"
+test_description="git-repo helper remote --type agit"
 
 . ./lib/sharness.sh
 
 cat >expect <<EOF
 {
-  "Cmd": "git",
-  "Args": [
+  "cmd": "git",
+  "args": [
     "push",
     "--receive-pack=agit-receive-pack",
     "-o",
@@ -23,10 +23,9 @@ cat >expect <<EOF
     "ssh://git@example.com/test/repo.git",
     "refs/heads/my/topic:refs/for/master/my/topic"
   ],
-  "Env": [
+  "env": [
     "AGIT_FLOW=1"
-  ],
-  "GitConfig": null
+  ]
 }
 EOF
 
@@ -49,15 +48,15 @@ test_expect_success "upload command (SSH protocol)" '
 	  "Version": 1
   	}	
 	EOF
-	git-repo helper remote-agit --upload >out 2>&1 &&
+	git-repo helper remote --type agit --upload >out 2>&1 &&
 	cat out | jq . >actual &&
 	test_cmp expect actual
 '
 
 cat >expect <<EOF
 {
-  "Cmd": "git",
-  "Args": [
+  "cmd": "git",
+  "args": [
     "push",
     "--receive-pack=agit-receive-pack",
     "-o",
@@ -73,10 +72,9 @@ cat >expect <<EOF
     "ssh://git@example.com/test/repo.git",
     "refs/heads/my/topic:refs/drafts/master/my/topic"
   ],
-  "Env": [
+  "env": [
     "AGIT_FLOW=1"
-  ],
-  "GitConfig": null
+  ]
 }
 EOF
 
@@ -99,15 +97,15 @@ test_expect_success "upload command (SSH protocol, draft)" '
 	  "Version": 1
   	}	
 	EOF
-	git-repo helper remote-agit --upload >out 2>&1 &&
+	git-repo helper remote --type agit --upload >out 2>&1 &&
 	cat out | jq . >actual &&
 	test_cmp expect actual
 '
 
 cat >expect <<EOF
 {
-  "Cmd": "git",
-  "Args": [
+  "cmd": "git",
+  "args": [
     "push",
     "-o",
     "title=title of code review",
@@ -122,8 +120,7 @@ cat >expect <<EOF
     "https://example.com/test/repo.git",
     "refs/heads/my/topic:refs/for/master/my/topic"
   ],
-  "Env": null,
-  "GitConfig": [
+  "gitconfig": [
     "http.extraHeader=\"AGIT-FLOW: 1\""
   ]
 }
@@ -148,7 +145,7 @@ test_expect_success "upload command (HTTP protocol)" '
 	  "Version": 1
   	}	
 	EOF
-	git-repo helper remote-agit --upload >out 2>&1 &&
+	git-repo helper remote --type agit --upload >out 2>&1 &&
 	cat out | jq . >actual &&
 	test_cmp expect actual
 '
@@ -159,7 +156,7 @@ EOF
 
 test_expect_success "download ref" '
 	printf "12345\n" | \
-	git-repo helper remote-agit --download >actual 2>&1 &&
+	git-repo helper remote --type agit --download >actual 2>&1 &&
 	test_cmp expect actual
 '
 

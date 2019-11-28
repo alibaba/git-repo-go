@@ -15,7 +15,6 @@
 package helper
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"strconv"
@@ -32,20 +31,22 @@ import (
 type AGitHelper struct {
 }
 
-// GetGitPushCommand reads JSON from reader, and format it into proper JSON
+// GetType returns remote server type.
+func (v AGitHelper) GetType() string {
+	return "agit"
+}
+
+// GetGitPushCommandPipe reads JSON from reader, and format it into proper JSON
 // contains git push command.
-func (v AGitHelper) GetGitPushCommand(reader io.Reader) ([]byte, error) {
+func (v AGitHelper) GetGitPushCommandPipe(reader io.Reader) ([]byte, error) {
+	return getGitPushCommandPipe(&v, reader)
+}
+
+// GetGitPushCommand reads upload options and returns git push command.
+func (v AGitHelper) GetGitPushCommand(o *project.UploadOptions) (*GitPushCommand, error) {
 	var (
 		gitPushCmd = GitPushCommand{}
-		o          = project.UploadOptions{}
-		err        error
 	)
-
-	decoder := json.NewDecoder(reader)
-	err = decoder.Decode(&o)
-	if err != nil {
-		return nil, err
-	}
 
 	cmds := []string{"git", "push"}
 
@@ -166,7 +167,7 @@ func (v AGitHelper) GetGitPushCommand(reader io.Reader) ([]byte, error) {
 
 	gitPushCmd.Cmd = cmds[0]
 	gitPushCmd.Args = cmds[1:]
-	return json.Marshal(&gitPushCmd)
+	return &gitPushCmd, nil
 }
 
 // GetDownloadRef returns reference name of the specific code review.

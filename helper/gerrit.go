@@ -15,7 +15,6 @@
 package helper
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"strconv"
@@ -30,16 +29,19 @@ import (
 type GerritHelper struct {
 }
 
-// GetGitPushCommand reads JSON from reader, and format it into proper JSON
-// contains git push command.
-func (v GerritHelper) GetGitPushCommand(reader io.Reader) ([]byte, error) {
-	o := project.UploadOptions{}
-	decoder := json.NewDecoder(reader)
-	err := decoder.Decode(&o)
-	if err != nil {
-		return nil, err
-	}
+// GetType returns remote server type.
+func (v GerritHelper) GetType() string {
+	return "gerrit"
+}
 
+// GetGitPushCommandPipe reads JSON from reader, and format it into proper JSON
+// contains git push command.
+func (v GerritHelper) GetGitPushCommandPipe(reader io.Reader) ([]byte, error) {
+	return getGitPushCommandPipe(&v, reader)
+}
+
+// GetGitPushCommand reads upload options and returns git push command.
+func (v GerritHelper) GetGitPushCommand(o *project.UploadOptions) (*GitPushCommand, error) {
 	cmds := []string{"git", "push"}
 
 	if o.ReviewURL == "" {
@@ -124,7 +126,7 @@ func (v GerritHelper) GetGitPushCommand(reader io.Reader) ([]byte, error) {
 	cmd := GitPushCommand{}
 	cmd.Cmd = cmds[0]
 	cmd.Args = cmds[1:]
-	return json.Marshal(&cmd)
+	return &cmd, nil
 }
 
 // GetDownloadRef returns reference name of the specific code review.

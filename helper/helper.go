@@ -14,10 +14,57 @@
 
 package helper
 
+import (
+	"encoding/json"
+	"io"
+	"strings"
+
+	"code.alibaba-inc.com/force/git-repo/project"
+)
+
 // GitPushCommand holds command and args for git command.
 type GitPushCommand struct {
-	Cmd       string
-	Args      []string
-	Env       []string
-	GitConfig []string
+	Cmd       string   `json:"cmd,omitempty"`
+	Args      []string `json:"args,omitempty"`
+	Env       []string `json:"env,omitempty"`
+	GitConfig []string `json:"gitconfig,omitempty"`
+}
+
+// RemoteHelper defines interface for remote helper.
+type RemoteHelper interface {
+	GetType() string
+	GetGitPushCommandPipe(io.Reader) ([]byte, error)
+	GetGitPushCommand(*project.UploadOptions) (*GitPushCommand, error)
+	GetDownloadRef(string, string) (string, error)
+}
+
+// NewRemoteHelper returns remote helper for specific remote type.
+func NewRemoteHelper(remoteType string) RemoteHelper {
+	remoteType = strings.ToLower(remoteType)
+	switch remoteType {
+	case "agit":
+		return &AGitHelper{}
+	case "gerrit":
+		return &GerritHelper{}
+	}
+	return &UnknownHelper{RemoteType: remoteType}
+}
+
+func getGitPushCommandPipe(remote RemoteHelper, reader io.Reader) ([]byte, error) {
+	var (
+		o   = project.UploadOptions{}
+		err error
+	)
+
+	decoder := json.NewDecoder(reader)
+	err = decoder.Decode(&o)
+	if err != nil {
+		return nil, err
+	}
+
+	cmd, err := remote.GetGitPushCommand(&o)
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(&cmd)
 }

@@ -1,20 +1,18 @@
 #!/bin/sh
 
-test_description="git-repo helper remote-gerrit"
+test_description="git-repo helper remote --type gerrit"
 
 . ./lib/sharness.sh
 
 cat >expect <<EOF
 {
-  "Cmd": "git",
-  "Args": [
+  "cmd": "git",
+  "args": [
     "push",
     "--receive-pack=gerrit receive-pack",
     "ssh://git@example.com:29418/test/repo.git",
     "refs/heads/my/topic:refs/for/master%r=u1,r=u2,cc=u3,cc=u4"
-  ],
-  "Env": null,
-  "GitConfig": null
+  ]
 }
 EOF
 
@@ -37,22 +35,20 @@ test_expect_success "upload command (SSH protocol)" '
 	  "Version": 1
   	}	
 	EOF
-	git-repo helper remote-gerrit --upload >out 2>&1 &&
+	git-repo helper remote --type gerrit --upload >out 2>&1 &&
 	cat out | jq . >actual &&
 	test_cmp expect actual
 '
 
 cat >expect <<EOF
 {
-  "Cmd": "git",
-  "Args": [
+  "cmd": "git",
+  "args": [
     "push",
     "--receive-pack=gerrit receive-pack",
     "ssh://git@example.com/test/repo.git",
     "refs/heads/my/topic:refs/drafts/master%r=u1,r=u2,cc=u3,cc=u4"
-  ],
-  "Env": null,
-  "GitConfig": null
+  ]
 }
 EOF
 
@@ -75,21 +71,19 @@ test_expect_success "upload command (SSH protocol, draft)" '
 	  "Version": 1
   	}	
 	EOF
-	git-repo helper remote-gerrit --upload >out 2>&1 &&
+	git-repo helper remote --type gerrit --upload >out 2>&1 &&
 	cat out | jq . >actual &&
 	test_cmp expect actual
 '
 
 cat >expect <<EOF
 {
-  "Cmd": "git",
-  "Args": [
+  "cmd": "git",
+  "args": [
     "push",
     "https://example.com/test/repo.git",
     "refs/heads/my/topic:refs/for/master%r=u1,r=u2,cc=u3,cc=u4"
-  ],
-  "Env": null,
-  "GitConfig": null
+  ]
 }
 EOF
 
@@ -112,7 +106,7 @@ test_expect_success "upload command (HTTP protocol)" '
 	  "Version": 1
   	}	
 	EOF
-	git-repo helper remote-gerrit --upload >out 2>&1 &&
+	git-repo helper remote --type gerrit --upload >out 2>&1 &&
 	cat out | jq . >actual &&
 	test_cmp expect actual
 '
@@ -122,9 +116,9 @@ WARNING: Patch ID should not be 0, set it to 1
 refs/changes/45/12345/1
 EOF
 
-test_expect_success "download ref" '
+test_expect_success "download ref (no patch)" '
 	printf "12345\n" | \
-	git-repo helper remote-gerrit --download >actual 2>&1 &&
+	git-repo helper remote --type gerrit --download >actual 2>&1 &&
 	test_cmp expect actual
 '
 
@@ -132,9 +126,9 @@ cat >expect <<EOF
 refs/changes/45/12345/2
 EOF
 
-test_expect_success "download ref" '
+test_expect_success "download ref (with patch)" '
 	printf "12345 2\n" | \
-	git-repo helper remote-gerrit --download >actual 2>&1 &&
+	git-repo helper remote --type gerrit --download >actual 2>&1 &&
 	test_cmp expect actual
 '
 
