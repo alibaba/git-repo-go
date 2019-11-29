@@ -32,10 +32,10 @@ type RemoteWithError struct {
 
 // SSHInfo wraps host and port which ssh_info returned.
 type SSHInfo struct {
-	Host   string `json:"host,omitempty"`
-	Port   int    `json:"port,omitempty"`
-	Type   string `json:"type,omitempty"`
-	Expire int64  `json:"expire,omitempty"`
+	Host    string `json:"host,omitempty"`
+	Port    int    `json:"port,omitempty"`
+	Type    string `json:"type,omitempty"`
+	Version int    `json:"version,omitempty"`
 }
 
 // Strings returns "<Host><SP><Port>".
