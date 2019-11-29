@@ -149,3 +149,61 @@ func TestGitURL(t *testing.T) {
 		assert.Nil(u)
 	}
 }
+
+func TestGitURLWithoutRepo(t *testing.T) {
+	var (
+		u      *GitURL
+		assert = assert.New(t)
+	)
+
+	u = ParseGitURL("http://example.com")
+	if assert.NotNil(u) {
+		assert.Equal("http", u.Proto)
+		assert.Equal("example.com", u.Host)
+		assert.Equal(0, u.Port)
+		assert.Equal("", u.User)
+	}
+
+	u = ParseGitURL("https://example.com/")
+	if assert.NotNil(u) {
+		assert.Equal("https", u.Proto)
+		assert.Equal("example.com", u.Host)
+		assert.Equal(0, u.Port)
+		assert.Equal("", u.User)
+	}
+
+	u = ParseGitURL("http://example.com:8080/")
+	if assert.NotNil(u) {
+		assert.Equal("http", u.Proto)
+		assert.Equal("example.com", u.Host)
+		assert.Equal(8080, u.Port)
+		assert.Equal("", u.User)
+	}
+
+	u = ParseGitURL("https://user:pass@example.com:1234/")
+	if assert.NotNil(u) {
+		assert.Equal("https", u.Proto)
+		assert.Equal("example.com", u.Host)
+		assert.Equal(1234, u.Port)
+		assert.Equal("user:pass", u.User)
+	}
+
+	u = ParseGitURL("ssh://example.com")
+	if assert.NotNil(u) {
+		assert.Equal("ssh", u.Proto)
+		assert.Equal("example.com", u.Host)
+		assert.Equal(0, u.Port)
+		assert.Equal("", u.User)
+	}
+
+	u = ParseGitURL("ssh://user@example.com:29418/")
+	if assert.NotNil(u) {
+		assert.Equal("ssh", u.Proto)
+		assert.Equal("example.com", u.Host)
+		assert.Equal(29418, u.Port)
+		assert.Equal("user", u.User)
+	}
+
+	u = ParseGitURL("user@example.com")
+	assert.Nil(u)
+}

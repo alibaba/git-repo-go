@@ -18,14 +18,24 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// testCmd represents the test command
-var testCmd = &cobra.Command{
-	Use:    "test",
-	Short:  "verious tests on git-repo",
-	Long:   `Small test programs on git-repo`,
-	Hidden: true,
+type testCommand struct {
+	cmd *cobra.Command
 }
 
+func (v *testCommand) Command() *cobra.Command {
+	if v.cmd != nil {
+		return v.cmd
+	}
+	v.cmd = &cobra.Command{
+		Use:    "test",
+		Short:  "verious tests on git-repo",
+		Hidden: true,
+	}
+	return v.cmd
+}
+
+var testCmd = testCommand{}
+
 func init() {
-	rootCmd.AddCommand(testCmd)
+	rootCmd.AddCommand(testCmd.Command())
 }

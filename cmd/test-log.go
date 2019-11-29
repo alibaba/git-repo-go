@@ -19,18 +19,27 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// testCmd represents the test command
-var testLogCmd = &cobra.Command{
-	Use:   "log",
-	Short: "test log",
-	Long:  `test log`,
-
-	Run: func(cmd *cobra.Command, args []string) {
-		testLogRun()
-	},
+type testLogCommand struct {
+	cmd *cobra.Command
 }
 
-func testLogRun() {
+func (v *testLogCommand) Command() *cobra.Command {
+	if v.cmd != nil {
+		return v.cmd
+	}
+
+	v.cmd = &cobra.Command{
+		Use:   "log",
+		Short: "test log",
+
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return v.Execute(args)
+		},
+	}
+	return v.cmd
+}
+
+func (v *testLogCommand) Execute(arts []string) error {
 	log.WithField("my-key", "my-value").Trace("trace message, with fields...")
 	log.WithFields(map[string]interface{}{"key1": "value1", "key2": "value2"}).Tracef("tracef message, with fields...")
 	log.WithField("my-key", "my-value").Traceln("traceln message, with fields...")
@@ -43,8 +52,11 @@ func testLogRun() {
 	log.Error("error message...")
 	log.Notef("note message...")
 	log.Printf("hello, %s.", "world")
+	return nil
 }
 
+var testLogCmd = testLogCommand{}
+
 func init() {
-	testCmd.AddCommand(testLogCmd)
+	testCmd.Command().AddCommand(testLogCmd.Command())
 }

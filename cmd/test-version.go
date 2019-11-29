@@ -97,5 +97,5 @@ func (v testVersionCommand) Execute(args []string) error {
 var testVersionCmd = testVersionCommand{}
 
 func init() {
-	testCmd.AddCommand(testVersionCmd.Command())
+	testCmd.Command().AddCommand(testVersionCmd.Command())
 }
