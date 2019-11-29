@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description="git-repo helper remote --type agit"
+test_description="git-repo helper proto --type agit"
 
 . ./lib/sharness.sh
 
@@ -9,18 +9,18 @@ export PATH="$HOME/bin":$PATH
 test_expect_success "setup" '
 	(
 		mkdir bin && cd bin &&
-		cat >git-repo-helper-remote-unknown1 <<-EOF &&
+		cat >git-repo-helper-proto-unknown1 <<-EOF &&
 		#!/bin/sh
 
-		git-repo helper remote --type agit "\$@"
+		git-repo helper proto --type agit "\$@"
 		EOF
-		chmod a+x git-repo-helper-remote-unknown1 &&
-		cat >git-repo-helper-remote-unknown2 <<-EOF &&
+		chmod a+x git-repo-helper-proto-unknown1 &&
+		cat >git-repo-helper-proto-unknown2 <<-EOF &&
 		#!/bin/sh
 
-		git-repo helper remote --type gerrit "\$@"
+		git-repo helper proto --type gerrit "\$@"
 		EOF
-		chmod a+x git-repo-helper-remote-unknown2
+		chmod a+x git-repo-helper-proto-unknown2
 	)
 '
 
@@ -68,7 +68,7 @@ test_expect_success "upload command (SSH protocol)" '
 	  "Version": 1
   	}	
 	EOF
-	git-repo helper remote --type unknown1 --upload >out 2>&1 &&
+	git-repo helper proto --type unknown1 --upload >out 2>&1 &&
 	cat out | jq . >actual &&
 	test_cmp expect actual
 '
@@ -79,17 +79,17 @@ EOF
 
 test_expect_success "download ref" '
 	printf "12345\n" | \
-	git-repo helper remote --type unknown2 --download >actual 2>&1 &&
+	git-repo helper proto --type unknown2 --download >actual 2>&1 &&
 	test_cmp expect actual
 '
 
 cat >expect <<EOF
-Error: cannot find helper 'git-repo-helper-remote-unknown3'
+Error: cannot find helper 'git-repo-helper-proto-unknown3'
 EOF
 
 test_expect_success "cannot find helper program" '
 	printf "12345\n" | \
-	test_must_fail git-repo helper remote --type unknown3 --download >actual 2>&1 &&
+	test_must_fail git-repo helper proto --type unknown3 --download >actual 2>&1 &&
 	test_cmp expect actual
 '
 

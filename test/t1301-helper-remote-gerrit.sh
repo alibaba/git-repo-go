@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description="git-repo helper remote --type gerrit"
+test_description="git-repo helper proto --type gerrit"
 
 . ./lib/sharness.sh
 
@@ -35,7 +35,7 @@ test_expect_success "upload command (SSH protocol)" '
 	  "Version": 1
   	}	
 	EOF
-	git-repo helper remote --type gerrit --upload >out 2>&1 &&
+	git-repo helper proto --type gerrit --upload >out 2>&1 &&
 	cat out | jq . >actual &&
 	test_cmp expect actual
 '
@@ -71,7 +71,7 @@ test_expect_success "upload command (SSH protocol, draft)" '
 	  "Version": 1
   	}	
 	EOF
-	git-repo helper remote --type gerrit --upload >out 2>&1 &&
+	git-repo helper proto --type gerrit --upload >out 2>&1 &&
 	cat out | jq . >actual &&
 	test_cmp expect actual
 '
@@ -106,7 +106,7 @@ test_expect_success "upload command (HTTP protocol)" '
 	  "Version": 1
   	}	
 	EOF
-	git-repo helper remote --type gerrit --upload >out 2>&1 &&
+	git-repo helper proto --type gerrit --upload >out 2>&1 &&
 	cat out | jq . >actual &&
 	test_cmp expect actual
 '
@@ -118,7 +118,7 @@ EOF
 
 test_expect_success "download ref (no patch)" '
 	printf "12345\n" | \
-	git-repo helper remote --type gerrit --download >actual 2>&1 &&
+	git-repo helper proto --type gerrit --download >actual 2>&1 &&
 	test_cmp expect actual
 '
 
@@ -128,7 +128,7 @@ EOF
 
 test_expect_success "download ref (with patch)" '
 	printf "12345 2\n" | \
-	git-repo helper remote --type gerrit --download >actual 2>&1 &&
+	git-repo helper proto --type gerrit --download >actual 2>&1 &&
 	test_cmp expect actual
 '
 

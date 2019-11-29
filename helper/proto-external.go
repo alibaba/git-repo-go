@@ -25,27 +25,27 @@ import (
 	"code.alibaba-inc.com/force/git-repo/project"
 )
 
-// UnknownHelper implements helper for unknown remote service.
-type UnknownHelper struct {
-	RemoteType string
-	program    string
+// ExternalHelper implements helper for unknown remote service.
+type ExternalHelper struct {
+	ProtoType string
+	program   string
 }
 
 // GetType returns remote server type.
-func (v UnknownHelper) GetType() string {
-	return v.RemoteType
+func (v ExternalHelper) GetType() string {
+	return v.ProtoType
 }
 
 // Program is program name of remote helper.
-func (v *UnknownHelper) Program() string {
+func (v *ExternalHelper) Program() string {
 	if v.program == "" {
-		v.program = "git-repo-helper-remote-" + strings.ToLower(v.RemoteType)
+		v.program = "git-repo-helper-proto-" + strings.ToLower(v.ProtoType)
 	}
 	return v.program
 }
 
 // GetGitPushCommand reads upload options and returns git push command.
-func (v UnknownHelper) GetGitPushCommand(o *project.UploadOptions) (*GitPushCommand, error) {
+func (v ExternalHelper) GetGitPushCommand(o *project.UploadOptions) (*GitPushCommand, error) {
 	data, err := json.Marshal(o)
 	if err != nil {
 		return nil, err
@@ -67,7 +67,7 @@ func (v UnknownHelper) GetGitPushCommand(o *project.UploadOptions) (*GitPushComm
 
 // GetGitPushCommand reads JSON from reader, and format it into proper JSON
 // contains git push command.
-func (v UnknownHelper) GetGitPushCommandPipe(reader io.Reader) ([]byte, error) {
+func (v ExternalHelper) GetGitPushCommandPipe(reader io.Reader) ([]byte, error) {
 	program, err := exec.LookPath(v.Program())
 	if err != nil {
 		return nil, fmt.Errorf("cannot find helper '%s'", v.Program())
@@ -85,7 +85,7 @@ func (v UnknownHelper) GetGitPushCommandPipe(reader io.Reader) ([]byte, error) {
 }
 
 // GetDownloadRef returns reference name of the specific code review.
-func (v UnknownHelper) GetDownloadRef(cr, patch string) (string, error) {
+func (v ExternalHelper) GetDownloadRef(cr, patch string) (string, error) {
 	program, err := exec.LookPath(v.Program())
 	if err != nil {
 		return "", fmt.Errorf("cannot find helper '%s'", v.Program())

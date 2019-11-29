@@ -36,6 +36,7 @@ type SSHInfo struct {
 	Port    int    `json:"port,omitempty"`
 	Type    string `json:"type,omitempty"`
 	Version int    `json:"version,omitempty"`
+	Expire  int64  `json:"expire,omitempty"`
 }
 
 // Strings returns "<Host><SP><Port>".

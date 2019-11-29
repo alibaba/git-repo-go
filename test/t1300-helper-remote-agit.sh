@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description="git-repo helper remote --type agit"
+test_description="git-repo helper proto --type agit"
 
 . ./lib/sharness.sh
 
@@ -48,7 +48,7 @@ test_expect_success "upload command (SSH protocol)" '
 	  "Version": 1
   	}	
 	EOF
-	git-repo helper remote --type agit --upload >out 2>&1 &&
+	git-repo helper proto --type agit --upload >out 2>&1 &&
 	cat out | jq . >actual &&
 	test_cmp expect actual
 '
@@ -97,7 +97,7 @@ test_expect_success "upload command (SSH protocol, draft)" '
 	  "Version": 1
   	}	
 	EOF
-	git-repo helper remote --type agit --upload >out 2>&1 &&
+	git-repo helper proto --type agit --upload >out 2>&1 &&
 	cat out | jq . >actual &&
 	test_cmp expect actual
 '
@@ -145,7 +145,7 @@ test_expect_success "upload command (HTTP protocol)" '
 	  "Version": 1
   	}	
 	EOF
-	git-repo helper remote --type agit --upload >out 2>&1 &&
+	git-repo helper proto --type agit --upload >out 2>&1 &&
 	cat out | jq . >actual &&
 	test_cmp expect actual
 '
@@ -156,7 +156,7 @@ EOF
 
 test_expect_success "download ref" '
 	printf "12345\n" | \
-	git-repo helper remote --type agit --download >actual 2>&1 &&
+	git-repo helper proto --type agit --download >actual 2>&1 &&
 	test_cmp expect actual
 '
 

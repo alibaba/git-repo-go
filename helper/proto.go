@@ -30,27 +30,27 @@ type GitPushCommand struct {
 	GitConfig []string `json:"gitconfig,omitempty"`
 }
 
-// RemoteHelper defines interface for remote helper.
-type RemoteHelper interface {
+// ProtoHelper defines interface for proto helper.
+type ProtoHelper interface {
 	GetType() string
 	GetGitPushCommandPipe(io.Reader) ([]byte, error)
 	GetGitPushCommand(*project.UploadOptions) (*GitPushCommand, error)
 	GetDownloadRef(string, string) (string, error)
 }
 
-// NewRemoteHelper returns remote helper for specific remote type.
-func NewRemoteHelper(remoteType string) RemoteHelper {
-	remoteType = strings.ToLower(remoteType)
-	switch remoteType {
+// NewProtoHelper returns proto helper for specific proto type.
+func NewProtoHelper(protoType string) ProtoHelper {
+	protoType = strings.ToLower(protoType)
+	switch protoType {
 	case "agit":
 		return &AGitHelper{}
 	case "gerrit":
 		return &GerritHelper{}
 	}
-	return &UnknownHelper{RemoteType: remoteType}
+	return &ExternalHelper{ProtoType: protoType}
 }
 
-func getGitPushCommandPipe(remote RemoteHelper, reader io.Reader) ([]byte, error) {
+func getGitPushCommandPipe(proto ProtoHelper, reader io.Reader) ([]byte, error) {
 	var (
 		o   = project.UploadOptions{}
 		err error
@@ -62,7 +62,7 @@ func getGitPushCommandPipe(remote RemoteHelper, reader io.Reader) ([]byte, error
 		return nil, err
 	}
 
-	cmd, err := remote.GetGitPushCommand(&o)
+	cmd, err := proto.GetGitPushCommand(&o)
 	if err != nil {
 		return nil, err
 	}

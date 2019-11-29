@@ -24,7 +24,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type helperRemoteCommand struct {
+type helperProtoCommand struct {
 	cmd *cobra.Command
 	O   struct {
 		Upload   bool
@@ -33,14 +33,14 @@ type helperRemoteCommand struct {
 	}
 }
 
-func (v *helperRemoteCommand) Command() *cobra.Command {
+func (v *helperProtoCommand) Command() *cobra.Command {
 	if v.cmd != nil {
 		return v.cmd
 	}
 
 	v.cmd = &cobra.Command{
-		Use:   "remote",
-		Short: "execute remote helper",
+		Use:   "proto",
+		Short: "execute proto helper",
 
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return v.Execute(args)
@@ -49,7 +49,7 @@ func (v *helperRemoteCommand) Command() *cobra.Command {
 	v.cmd.Flags().StringVar(&v.O.Type,
 		"type",
 		"",
-		"type of remote")
+		"type of protocol")
 	v.cmd.Flags().BoolVar(&v.O.Upload,
 		"upload",
 		false,
@@ -62,18 +62,18 @@ func (v *helperRemoteCommand) Command() *cobra.Command {
 	return v.cmd
 }
 
-func (v *helperRemoteCommand) Execute(arts []string) error {
+func (v *helperProtoCommand) Execute(arts []string) error {
 	var (
-		buf          []byte
-		err          error
-		ref          string
-		remoteHelper helper.RemoteHelper
+		buf         []byte
+		err         error
+		ref         string
+		protoHelper helper.ProtoHelper
 	)
 
 	if v.O.Type == "" {
-		return fmt.Errorf("must provide type of remote")
+		return fmt.Errorf("must provide type of proto")
 	}
-	remoteHelper = helper.NewRemoteHelper(v.O.Type)
+	protoHelper = helper.NewProtoHelper(v.O.Type)
 
 	if v.O.Download && v.O.Upload {
 		return fmt.Errorf("cannot use --download and --upload together")
@@ -86,9 +86,9 @@ func (v *helperRemoteCommand) Execute(arts []string) error {
 		}
 		slices := strings.SplitN(strings.TrimSpace(string(buf)), " ", 2)
 		if len(slices) == 2 {
-			ref, err = remoteHelper.GetDownloadRef(slices[0], slices[1])
+			ref, err = protoHelper.GetDownloadRef(slices[0], slices[1])
 		} else {
-			ref, err = remoteHelper.GetDownloadRef(slices[0], "")
+			ref, err = protoHelper.GetDownloadRef(slices[0], "")
 		}
 		if err != nil {
 			return err
@@ -97,7 +97,7 @@ func (v *helperRemoteCommand) Execute(arts []string) error {
 		return nil
 	}
 
-	buf, err = remoteHelper.GetGitPushCommandPipe(os.Stdin)
+	buf, err = protoHelper.GetGitPushCommandPipe(os.Stdin)
 	if err != nil {
 		return err
 	}
@@ -105,8 +105,8 @@ func (v *helperRemoteCommand) Execute(arts []string) error {
 	return nil
 }
 
-var helperRemoteCmd = helperRemoteCommand{}
+var helperProtoCmd = helperProtoCommand{}
 
 func init() {
-	helperCmd.Command().AddCommand(helperRemoteCmd.Command())
+	helperCmd.Command().AddCommand(helperProtoCmd.Command())
 }
