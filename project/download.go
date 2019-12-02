@@ -2,6 +2,7 @@ package project
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	log "github.com/jiangxin/multi-log"
@@ -16,32 +17,27 @@ type PatchSet struct {
 
 // DownloadPatchSet fetches code review and return the downloaded PatchSet.
 func (v Project) DownloadPatchSet(reviewID, patchID int) (*PatchSet, error) {
-	reviewRef := ""
-	if v.Remote == nil {
+	if !v.Remote.Initialized() {
 		log.Fatalf("%snot remote tracking defined, and do not know where to download",
 			v.Prompt())
 	}
-	if v.Remote != nil {
-		reviewRef = v.Remote.GetCodeReviewRef(reviewID, patchID)
+	reviewRef, err := v.Remote.GetDownloadRef(strconv.Itoa(reviewID), strconv.Itoa(patchID))
+	if err != nil {
+		return nil, err
 	}
 	if reviewRef == "" {
 		return nil, fmt.Errorf("cannot find review reference for %s", v.Name)
 	}
 
-	remote := v.Remote.GetRemote()
-	if remote == nil {
-		return nil, fmt.Errorf("unknown remote defined for %s", v.Name)
-	}
-
 	cmdArgs := []string{
 		GIT,
 		"fetch",
-		remote.Name,
+		v.Remote.Name,
 		"+" + reviewRef + ":" + reviewRef,
 		"--",
 	}
 	log.Debugf("%swill execute: %s", v.Prompt(), strings.Join(cmdArgs, " "))
-	err := executeCommandIn(v.WorkDir, cmdArgs)
+	err = executeCommandIn(v.WorkDir, cmdArgs)
 	if err != nil {
 		return nil, err
 	}

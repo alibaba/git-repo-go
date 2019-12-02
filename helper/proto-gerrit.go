@@ -20,28 +20,42 @@ import (
 	"strconv"
 	"strings"
 
+	"code.alibaba-inc.com/force/git-repo/common"
 	"code.alibaba-inc.com/force/git-repo/config"
-	"code.alibaba-inc.com/force/git-repo/project"
 	log "github.com/jiangxin/multi-log"
 )
 
-// GerritHelper wraps helper for gerrit server.
-type GerritHelper struct {
+// GerritProtoHelper wraps helper for gerrit server.
+type GerritProtoHelper struct {
+	sshInfo *SSHInfo
+}
+
+// NewGerritProtoHelper returns GerritProtoHelper object.
+func NewGerritProtoHelper(sshInfo *SSHInfo) *GerritProtoHelper {
+	if sshInfo.User == "" {
+		sshInfo.User = "<email>"
+	}
+	return &GerritProtoHelper{sshInfo: sshInfo}
 }
 
 // GetType returns remote server type.
-func (v GerritHelper) GetType() string {
+func (v GerritProtoHelper) GetType() string {
 	return "gerrit"
+}
+
+// GetSSHInfo returns SSHInfo object.
+func (v GerritProtoHelper) GetSSHInfo() *SSHInfo {
+	return v.sshInfo
 }
 
 // GetGitPushCommandPipe reads JSON from reader, and format it into proper JSON
 // contains git push command.
-func (v GerritHelper) GetGitPushCommandPipe(reader io.Reader) ([]byte, error) {
+func (v GerritProtoHelper) GetGitPushCommandPipe(reader io.Reader) ([]byte, error) {
 	return getGitPushCommandPipe(&v, reader)
 }
 
 // GetGitPushCommand reads upload options and returns git push command.
-func (v GerritHelper) GetGitPushCommand(o *project.UploadOptions) (*GitPushCommand, error) {
+func (v GerritProtoHelper) GetGitPushCommand(o *common.UploadOptions) (*GitPushCommand, error) {
 	cmds := []string{"git", "push"}
 
 	if o.ReviewURL == "" {
@@ -130,7 +144,7 @@ func (v GerritHelper) GetGitPushCommand(o *project.UploadOptions) (*GitPushComma
 }
 
 // GetDownloadRef returns reference name of the specific code review.
-func (v GerritHelper) GetDownloadRef(cr, patch string) (string, error) {
+func (v GerritProtoHelper) GetDownloadRef(cr, patch string) (string, error) {
 	var (
 		reviewID int
 		patchID  int

@@ -320,11 +320,12 @@ test_expect_success "upload to a ssh review url" '
 	(
 		cd work &&
 		cat >expect<<-EOF &&
+		NOTE: mock executing: ssh -l git -p 10022 example.com ssh_info
 		Upload project (jiangxin/main) to remote branch Maint:
 		  branch jx/topic ( 1 commit(s)):
 		         <hash>
 		to ssh://git@example.com:10022 (y/N)? Yes
-		NOTE: will execute command: git push --receive-pack=agit-receive-pack ssh://git@example.com:10022/jiangxin/main.git refs/heads/jx/topic:refs/for/Maint/jx/topic
+		NOTE: will execute command: git push --receive-pack=agit-receive-pack ssh://git@ssh.example.com:10022/jiangxin/main.git refs/heads/jx/topic:refs/for/Maint/jx/topic
 		NOTE: will update-ref refs/published/jx/topic on refs/heads/jx/topic, reason: review from jx/topic to Maint on ssh://git@example.com:10022
 
 		----------------------------------------------------------------------
@@ -335,7 +336,10 @@ test_expect_success "upload to a ssh review url" '
 				--no-cache \
 				--assume-yes \
 				--no-edit \
-				--dryrun
+				--dryrun \
+				--mock-ssh-info-status 200 \
+				--mock-ssh-info-response \
+				"{\"host\":\"ssh.example.com\", \"port\":10022, \"type\":\"agit\"}"
 		) >out 2>&1 &&
 		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
 		test_cmp expect actual
@@ -357,11 +361,12 @@ test_expect_success "upload to gerrit ssh review url (assume-no, dryrun, use ssh
 	(
 		cd work &&
 		cat >expect<<-EOF &&
+		NOTE: mock executing: ssh -l git -p 29418 example.com ssh_info
 		Upload project (jiangxin/main) to remote branch Maint:
 		  branch jx/topic ( 1 commit(s)):
 		         <hash>
 		to ssh://git@example.com:29418 (y/N)? Yes
-		NOTE: will execute command: git push --receive-pack=agit-receive-pack ssh://git@ssh.example.com/jiangxin/main.git refs/heads/jx/topic:refs/for/Maint/jx/topic
+		NOTE: will execute command: git push --receive-pack=agit-receive-pack ssh://git@ssh.example.com:10022/jiangxin/main.git refs/heads/jx/topic:refs/for/Maint/jx/topic
 		NOTE: will update-ref refs/published/jx/topic on refs/heads/jx/topic, reason: review from jx/topic to Maint on ssh://git@example.com:29418
 
 		----------------------------------------------------------------------
@@ -371,7 +376,11 @@ test_expect_success "upload to gerrit ssh review url (assume-no, dryrun, use ssh
 			git peer-review \
 				--assume-yes \
 				--no-edit \
-				--dryrun
+				--dryrun \
+				--no-cache \
+				--mock-ssh-info-status 200 \
+				--mock-ssh-info-response \
+				"{\"host\":\"ssh.example.com\", \"port\":10022, \"type\":\"agit\"}"
 		) >out 2>&1 &&
 		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
 		test_cmp expect actual
@@ -382,15 +391,16 @@ test_expect_success "gerrit hooks not installed" '
 	test ! -e work/main/.git/hooks/commit-msg
 '
 
-test_expect_success "upload to gerrit ssh review url (assume-no, dryrun, no-cache)" '
+test_expect_success "upload to gerrit ssh review url (assume-no, dryrun, no-cache, 29418 is gerrit)" '
 	(
 		cd work &&
 		cat >expect<<-EOF &&
+		NOTE: mock executing: ssh -l git -p 29418 example.com ssh_info
 		Upload project (jiangxin/main) to remote branch Maint:
 		  branch jx/topic ( 1 commit(s)):
 		         <hash>
 		to ssh://git@example.com:29418 (y/N)? Yes
-		NOTE: will execute command: git push --receive-pack=gerrit receive-pack ssh://git@example.com:29418/jiangxin/main.git refs/heads/jx/topic:refs/for/Maint
+		NOTE: will execute command: git push --receive-pack=gerrit receive-pack ssh://committer@example.com:29418/jiangxin/main.git refs/heads/jx/topic:refs/for/Maint
 		NOTE: will update-ref refs/published/jx/topic on refs/heads/jx/topic, reason: review from jx/topic to Maint on ssh://git@example.com:29418
 
 		----------------------------------------------------------------------
@@ -401,7 +411,9 @@ test_expect_success "upload to gerrit ssh review url (assume-no, dryrun, no-cach
 				--no-cache \
 				--assume-yes \
 				--no-edit \
-				--dryrun
+				--dryrun \
+				--mock-ssh-info-status 500 \
+				--mock-ssh-info-response ""
 		) >out 2>&1 &&
 		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
 		test_cmp expect actual
@@ -416,11 +428,12 @@ test_expect_success "upload to gerrit ssh review url" '
 	(
 		cd work &&
 		cat >expect<<-EOF &&
+		NOTE: mock executing: ssh -l git -p 29418 example.com ssh_info
 		Upload project (jiangxin/main) to remote branch Maint:
 		  branch jx/topic ( 1 commit(s)):
 		         <hash>
 		to ssh://git@example.com:29418 (y/N)? Yes
-		NOTE: will execute command: git push --receive-pack=gerrit receive-pack ssh://git@example.com:29418/jiangxin/main.git refs/heads/jx/topic:refs/for/Maint
+		NOTE: will execute command: git push --receive-pack=agit-receive-pack ssh://git@ssh.example.com:10022/jiangxin/main.git refs/heads/jx/topic:refs/for/Maint/jx/topic
 		NOTE: will update-ref refs/published/jx/topic on refs/heads/jx/topic, reason: review from jx/topic to Maint on ssh://git@example.com:29418
 
 		----------------------------------------------------------------------
@@ -431,7 +444,10 @@ test_expect_success "upload to gerrit ssh review url" '
 				--no-cache \
 				--assume-yes \
 				--no-edit \
-				--dryrun
+				--dryrun \
+				--mock-ssh-info-status 200 \
+				--mock-ssh-info-response \
+				"{\"host\":\"ssh.example.com\", \"port\":10022, \"type\":\"agit\"}"
 		) >out 2>&1 &&
 		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
 		test_cmp expect actual
@@ -449,11 +465,12 @@ test_expect_success "upload to a ssh review using rcp style URL" '
 	(
 		cd work &&
 		cat >expect<<-EOF &&
+		NOTE: mock executing: ssh -l git example.com ssh_info
 		Upload project (jiangxin/main) to remote branch Maint:
 		  branch jx/topic ( 1 commit(s)):
 		         <hash>
 		to ssh://git@example.com (y/N)? Yes
-		NOTE: will execute command: git push --receive-pack=agit-receive-pack ssh://git@example.com/jiangxin/main.git refs/heads/jx/topic:refs/for/Maint/jx/topic
+		NOTE: will execute command: git push --receive-pack=agit-receive-pack ssh://git@ssh.example.com/jiangxin/main.git refs/heads/jx/topic:refs/for/Maint/jx/topic
 		NOTE: will update-ref refs/published/jx/topic on refs/heads/jx/topic, reason: review from jx/topic to Maint on ssh://git@example.com
 
 		----------------------------------------------------------------------
@@ -464,7 +481,10 @@ test_expect_success "upload to a ssh review using rcp style URL" '
 				--no-cache \
 				--assume-yes \
 				--no-edit \
-				--dryrun
+				--dryrun \
+				--mock-ssh-info-status 200 \
+				--mock-ssh-info-response \
+				"{\"host\":\"ssh.example.com\", \"type\":\"agit\"}"
 		) >out 2>&1 &&
 		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
 		test_cmp expect actual

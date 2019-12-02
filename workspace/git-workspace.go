@@ -2,12 +2,12 @@ package workspace
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 	"path/filepath"
 	"strings"
 
 	"code.alibaba-inc.com/force/git-repo/config"
+	"code.alibaba-inc.com/force/git-repo/helper"
 	"code.alibaba-inc.com/force/git-repo/manifest"
 	"code.alibaba-inc.com/force/git-repo/path"
 	"code.alibaba-inc.com/force/git-repo/project"
@@ -23,7 +23,7 @@ type GitWorkSpace struct {
 	Projects        []*project.Project
 	projectByName   map[string][]*project.Project
 	projectByPath   map[string]*project.Project
-	RemoteMap       map[string]project.RemoteWithError
+	RemoteMap       map[string]project.Remote
 	httpClient      *http.Client
 }
 
@@ -49,6 +49,9 @@ func (v GitWorkSpace) IsMirror() bool {
 
 // LoadRemotes implements LoadRemotes interface.
 func (v *GitWorkSpace) LoadRemotes(noCache bool) error {
+	var (
+		query *helper.SSHInfoQuery
+	)
 	if len(v.Projects) != 1 {
 		return errors.New("git workspace should contain only one project")
 	}
@@ -88,56 +91,24 @@ func (v *GitWorkSpace) LoadRemotes(noCache bool) error {
 		}
 		log.Debugf("review of remote %s is: %s", name, reviewURL)
 
-		changed := false
-		if !noCache && config.GetMockSSHInfoResponse() == "" {
-			t := cfg.Get(fmt.Sprintf(config.CfgManifestRemoteType, mr.Name))
-			if t != "" {
-				sshInfo := cfg.Get(fmt.Sprintf(config.CfgManifestRemoteSSHInfo, mr.Name))
-				remote, err := project.NewRemote(&mr, t, sshInfo)
-				v.RemoteMap[mr.Name] = project.RemoteWithError{Remote: remote, Error: err}
-				log.Debugf("loaded remote from cache: %s, error: %s", remote, err)
-				continue
-			}
-		}
-
-		remote, err := v.loadRemote(&mr)
-		log.Debugf("loaded remote: %s, error: %s", remote, err)
-		v.RemoteMap[mr.Name] = project.RemoteWithError{Remote: remote, Error: err}
+		query = helper.NewSSHInfoQuery(p.ProtoCacheFile())
+		sshInfo, err := query.GetSSHInfo(mr.Review, !noCache)
 		if err != nil {
-			continue
+			return err
 		}
-
-		// Write back to git config
-		if remote != nil && remote.GetType() != "" && remote.GetSSHInfo() != nil {
-			cfg.Set(fmt.Sprintf(config.CfgManifestRemoteType, mr.Name),
-				remote.GetType())
-			cfg.Set(fmt.Sprintf(config.CfgManifestRemoteSSHInfo, mr.Name),
-				remote.GetSSHInfo().String())
-			changed = true
-		}
-		if changed {
-			p.SaveConfig(cfg)
-		}
+		protoHelper := helper.NewProtoHelper(sshInfo)
+		remote := project.NewRemote(&mr, protoHelper)
+		log.Debugf("loaded remote: %#v, error: %s", remote, err)
+		v.RemoteMap[mr.Name] = *remote
 	}
 
 	if len(v.RemoteMap) == 1 {
 		for name := range v.RemoteMap {
-			if v.RemoteMap[name].Error != nil {
-				return v.RemoteMap[name].Error
-			}
-			v.Projects[0].Remote = v.RemoteMap[name].Remote
+			v.Projects[0].Remote = v.RemoteMap[name]
 		}
 	}
 
 	return nil
-}
-
-func (v *GitWorkSpace) loadRemote(r *manifest.Remote) (project.Remote, error) {
-	if _, ok := v.RemoteMap[r.Name]; ok {
-		return v.RemoteMap[r.Name].Remote, v.RemoteMap[r.Name].Error
-	}
-
-	return loadRemote(r)
 }
 
 func (v GitWorkSpace) newProject(worktree, gitdir string) (*project.Project, error) {
@@ -190,7 +161,7 @@ func (v *GitWorkSpace) load() error {
 
 	v.projectByName = make(map[string][]*project.Project)
 	v.projectByPath = make(map[string]*project.Project)
-	v.RemoteMap = make(map[string]project.RemoteWithError)
+	v.RemoteMap = make(map[string]project.Remote)
 	v.projectByName[p.Name] = []*project.Project{p}
 	v.projectByPath[p.Path] = p
 	v.Manifest = nil

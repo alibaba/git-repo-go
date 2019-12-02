@@ -1,21 +1,11 @@
 package workspace
 
 import (
-	"bufio"
-	"crypto/tls"
-	"fmt"
-	"io"
-	"net"
 	"net/http"
-	"os"
-	"strings"
-	"time"
 
-	"code.alibaba-inc.com/force/git-repo/config"
-	"code.alibaba-inc.com/force/git-repo/manifest"
+	"code.alibaba-inc.com/force/git-repo/helper"
 	"code.alibaba-inc.com/force/git-repo/project"
 	log "github.com/jiangxin/multi-log"
-	"gopkg.in/h2non/gock.v1"
 )
 
 const (
@@ -28,39 +18,23 @@ var (
 
 // LoadRemotes calls remote API to get server type and other info.
 func (v *RepoWorkSpace) LoadRemotes(noCache bool) error {
+	var (
+		query *helper.SSHInfoQuery
+	)
+
 	if v.Manifest == nil || v.Manifest.Remotes == nil {
 		return nil
 	}
 
-	cfg := v.ManifestProject.Config()
-	changed := false
+	query = helper.NewSSHInfoQuery(v.ManifestProject.ProtoCacheFile())
 	for _, r := range v.Manifest.Remotes {
-		if !noCache && config.GetMockSSHInfoResponse() == "" {
-			t := cfg.Get(fmt.Sprintf(config.CfgManifestRemoteType, r.Name))
-			if t != "" {
-				sshInfo := cfg.Get(fmt.Sprintf(config.CfgManifestRemoteSSHInfo, r.Name))
-				remote, err := project.NewRemote(&r, t, sshInfo)
-				v.RemoteMap[r.Name] = project.RemoteWithError{Remote: remote, Error: err}
-				log.Debugf("loaded remote from cache: %s, error: %s", remote, err)
-				continue
-			}
+		sshInfo, err := query.GetSSHInfo(r.Review, !noCache)
+		if err != nil {
+			return err
 		}
-
-		remote, err := v.loadRemote(&r)
-		log.Debugf("loaded remote: %s, error: %s", remote, err)
-		v.RemoteMap[r.Name] = project.RemoteWithError{Remote: remote, Error: err}
-
-		// Write back to git config
-		if remote != nil && remote.GetType() != "" && remote.GetSSHInfo() != nil {
-			cfg.Set(fmt.Sprintf(config.CfgManifestRemoteType, r.Name),
-				remote.GetType())
-			cfg.Set(fmt.Sprintf(config.CfgManifestRemoteSSHInfo, r.Name),
-				remote.GetSSHInfo().String())
-			changed = true
-		}
-	}
-	if changed {
-		v.ManifestProject.SaveConfig(cfg)
+		protoHelper := helper.NewProtoHelper(sshInfo)
+		remote := project.NewRemote(&r, protoHelper)
+		v.RemoteMap[r.Name] = *remote
 	}
 
 	for i := range v.Projects {
@@ -71,234 +45,9 @@ func (v *RepoWorkSpace) LoadRemotes(noCache bool) error {
 			continue
 		}
 		if _, ok := v.RemoteMap[name]; ok {
-			if v.RemoteMap[name].Error != nil {
-				return v.RemoteMap[name].Error
-			}
-			v.Projects[i].Remote = v.RemoteMap[name].Remote
+			v.Projects[i].Remote = v.RemoteMap[name]
 		}
 	}
 
 	return nil
-}
-
-func getHTTPClient() *http.Client {
-	if httpClient != nil {
-		return httpClient
-	}
-
-	skipSSLVerify := config.NoCertChecks()
-
-	tr := &http.Transport{
-		DialContext: (&net.Dialer{
-			Timeout:   remoteCallTimeout * time.Second,
-			KeepAlive: remoteCallTimeout * time.Second,
-		}).DialContext,
-		TLSClientConfig:       &tls.Config{InsecureSkipVerify: skipSSLVerify},
-		TLSHandshakeTimeout:   remoteCallTimeout * time.Second,
-		ResponseHeaderTimeout: remoteCallTimeout * time.Second,
-		ExpectContinueTimeout: 1 * time.Second,
-		MaxIdleConns:          10,
-		IdleConnTimeout:       remoteCallTimeout * time.Second,
-		DisableCompression:    true,
-	}
-
-	httpClient = &http.Client{Transport: tr}
-
-	// Mock ssh_info API
-	if config.GetMockSSHInfoResponse() != "" || config.GetMockSSHInfoStatus() != 0 {
-		gock.InterceptClient(httpClient)
-	}
-
-	return httpClient
-}
-
-func (v RepoWorkSpace) loadRemote(r *manifest.Remote) (project.Remote, error) {
-	if _, ok := v.RemoteMap[r.Name]; ok {
-		return v.RemoteMap[r.Name].Remote, v.RemoteMap[r.Name].Error
-	}
-
-	return loadRemote(r)
-}
-
-// Checks Review URL in Remote of manifest.  Review URL can be:
-//   1. Empty: code review by pushing is not available.
-//   2. HTTP web url: will call /ssh_info API, and get server type
-//      (Gerrit or AGit), ssh host and port.
-//   3. SSH protocol (host and port only), like:
-//      `ssh://user@hostname:port` or `git@hostname:`
-func loadRemote(r *manifest.Remote) (project.Remote, error) {
-	var (
-		err        error
-		resp       *http.Response
-		remoteType = r.Type
-	)
-
-	u := r.Review
-	if strings.HasSuffix(u, "/") {
-		u = strings.TrimSuffix(u, "/")
-	}
-
-	// No review URL, returns UnknownRemote (code review is not supported)
-	if u == "" {
-		return &project.UnknownRemote{
-			Remote: *r,
-		}, nil
-	}
-
-	if strings.HasPrefix(u, "persistent-") {
-		u = u[len("persistent-"):]
-	}
-	if strings.HasSuffix(strings.ToLower(u), "/gerrit") {
-		u = u[0 : len(u)-len("/Gerrit")]
-		remoteType = config.RemoteTypeGerrit
-	}
-	if strings.HasSuffix(strings.ToLower(u), "/agit") {
-		u = u[0 : len(u)-len("/AGit")]
-		remoteType = config.RemoteTypeAGit
-	}
-	if strings.HasSuffix(u, "/ssh_info") {
-		u = strings.TrimSuffix(u, "/ssh_info")
-	}
-
-	sshInfo := os.Getenv("REPO_HOST_PORT_INFO")
-	if sshInfo != "" {
-		if remoteType == "" {
-			remoteType = config.RemoteTypeGerrit
-		}
-		return project.NewRemote(r, remoteType, sshInfo)
-	}
-
-	if strings.HasPrefix(u, "sso:") {
-		if remoteType == "" {
-			remoteType = config.RemoteTypeAGit
-		}
-		return project.NewRemote(r, remoteType, "")
-	}
-
-	gitURL := config.ParseGitURL(u)
-	if gitURL != nil && gitURL.Proto == "ssh" {
-		// TODO: create ssh connection and execute review-info command
-		// TODO: parse review-info cmd output, and set proper remoteType
-		if remoteType == "" {
-			if gitURL.Port == 29418 {
-				remoteType = config.RemoteTypeGerrit
-			} else {
-				remoteType = config.RemoteTypeAGit
-			}
-		}
-		return project.NewRemote(r, remoteType, "")
-	}
-
-	if os.Getenv("REPO_IGNORE_SSH_INFO") != "" {
-		if remoteType == "" {
-			remoteType = config.RemoteTypeGerrit
-		}
-		return project.NewRemote(r, remoteType, "")
-	}
-
-	infoURL := ""
-	if gitURL != nil && gitURL.Proto != "http" && gitURL.Proto != "https" {
-		if gitURL.Host != "" {
-			infoURL = gitURL.Host + "/ssh_info"
-		} else {
-			return nil, fmt.Errorf("bad review URL: %s", u)
-		}
-	} else {
-		infoURL = u + "/ssh_info"
-	}
-
-	// Mock ssh_info API
-	if config.GetMockSSHInfoResponse() != "" || config.GetMockSSHInfoStatus() != 0 {
-		mockStatus := config.GetMockSSHInfoStatus()
-		if mockStatus == 0 {
-			mockStatus = 200
-		}
-		mockResponse := config.GetMockSSHInfoResponse()
-		if gitURL != nil && (gitURL.Proto == "http" || gitURL.Proto == "https") {
-			gock.New(infoURL).
-				Reply(mockStatus).
-				BodyString(mockResponse)
-		} else {
-			gock.New("http://" + infoURL).
-				Reply(mockStatus).
-				BodyString(mockResponse)
-			gock.New("https://" + infoURL).
-				Reply(mockStatus).
-				BodyString(mockResponse)
-		}
-	}
-
-	// Call /ssh_info API
-	if gitURL != nil && (gitURL.Proto == "http" || gitURL.Proto == "https") {
-		log.Debugf("start checking ssh_info from %s", infoURL)
-		resp, err = callSSHInfoAPI(infoURL)
-	} else {
-		log.Debugf("start checking ssh_info from https://%s", infoURL)
-		resp, err = callSSHInfoAPI("https://" + infoURL)
-		if err != nil {
-			log.Debugf("start checking ssh_info from http://%s", infoURL)
-			resp, err = callSSHInfoAPI("http://" + infoURL)
-		}
-	}
-
-	if err != nil {
-		return nil, err
-	}
-
-	defer resp.Body.Close()
-
-	// Successful status code maybe 200, 201.
-	if resp.StatusCode >= 300 {
-		log.Errorf("bad ssh_info respose, status: %d", resp.StatusCode)
-		if remoteType == "" {
-			remoteType = config.RemoteTypeUnknown
-		}
-		return project.NewRemote(r, remoteType, "")
-	}
-
-	reader := bufio.NewReader(resp.Body)
-	line, err := reader.ReadString('\n')
-
-	if err != nil && err != io.EOF {
-		return nil, err
-	}
-
-	// If `info` contains '<', we assume the server gave us some sort
-	// of HTML response back, like maybe a login page.
-	//
-	// Assume HTTP if SSH is not enabled or ssh_info doesn't look right.
-	if line == "NOT_AVAILABLE" || strings.HasPrefix(line, "<") {
-		if remoteType == "" {
-			if line == "NOT_AVAILABLE" {
-				remoteType = config.RemoteTypeGerrit
-			} else {
-				remoteType = config.RemoteTypeUnknown
-			}
-		}
-		return project.NewRemote(r, remoteType, "")
-	}
-
-	buf := line
-	n := 0
-	for {
-		line, err = reader.ReadString('\n')
-		buf += line
-		n++
-		if err != nil || n > 10 {
-			break
-		}
-	}
-
-	return project.NewRemote(r, remoteType, buf)
-}
-
-func callSSHInfoAPI(infoURL string) (*http.Response, error) {
-	req, err := http.NewRequest("GET", infoURL, nil)
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Set("Accept", "application/json")
-
-	client := getHTTPClient()
-	return client.Do(req)
 }

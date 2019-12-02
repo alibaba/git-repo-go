@@ -57,7 +57,10 @@ const (
 	CfgRemoteOriginURL       = "remote.origin.url"
 	CfgBranchDefaultMerge    = "branch.default.merge"
 	CfgManifestRemoteType    = "manifest.remote.%s.type"
+	CfgManifestRemoteVersion = "manifest.remote.%s.version"
+	CfgManifestRemoteUser    = "manifest.remote.%s.user"
 	CfgManifestRemoteSSHInfo = "manifest.remote.%s.sshinfo"
+	CfgManifestRemoteExpire  = "manifest.remote.%s.expire"
 	CfgAppGitRepoDisabled    = "app.git.repo.disabled"
 
 	ManifestsDotGit  = "manifests.git"
@@ -69,6 +72,9 @@ const (
 	ProjectObjects   = "project-objects"
 	Projects         = "projects"
 
+	ProtoTypeGerrit = "gerrit"
+	ProtoTypeAGit   = "agit"
+
 	RefsChanges = "refs/changes/"
 	RefsMr      = "refs/merge-requests/"
 	RefsHeads   = "refs/heads/"
@@ -77,10 +83,6 @@ const (
 	RefsM       = "refs/remotes/m/"
 	Refs        = "refs/"
 	RefsRemotes = "refs/remotes/"
-
-	RemoteTypeGerrit  = "gerrit"
-	RemoteTypeAGit    = "agit"
-	RemoteTypeUnknown = "unknown"
 
 	MaxJobs = 32
 

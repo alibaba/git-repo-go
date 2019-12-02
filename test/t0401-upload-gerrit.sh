@@ -74,15 +74,39 @@ test_expect_success "new commit: ready for upload" '
 		test_must_fail git-repo upload \
 			--assume-no \
 			--no-edit \
-			--mock-ssh-info-status 200 \
-			--mock-ssh-info-response "ssh.example.com 29418" \
 			>out 2>&1 &&
 		sed -e "s/[0-9a-f]\{40\}/<hash>/g" out >actual &&
 		test_cmp expect actual
 	)
 '
 
-test_expect_success "upload --dryrun --drafts" '
+test_expect_success "upload --dryrun --drafts (with cache)" '
+	(
+		cd work &&
+		git repo start --all my/topic2 &&
+		cat >expect<<-EOF &&
+		Upload project main/ to remote branch Maint (draft):
+		  branch my/topic1 ( 1 commit(s)):
+		         <hash>
+		to https://example.com (y/N)? Yes
+		NOTE: main> will execute command: git push --receive-pack=gerrit receive-pack ssh://committer@ssh.example.com/main.git refs/heads/my/topic1:refs/drafts/Maint
+		NOTE: main> will update-ref refs/published/my/topic1 on refs/heads/my/topic1, reason: review from my/topic1 to Maint on https://example.com
+		
+		----------------------------------------------------------------------
+		EOF
+		git-repo upload \
+			--assume-yes \
+			--no-edit \
+			--draft \
+			--dryrun \
+			--mock-git-push \
+			>out 2>&1 &&
+		sed -e "s/[0-9a-f]\{40\}/<hash>/g" out >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success "upload --dryrun --drafts (no cache)" '
 	(
 		cd work &&
 		git repo start --all my/topic2 &&
@@ -101,6 +125,7 @@ test_expect_success "upload --dryrun --drafts" '
 			--no-edit \
 			--draft \
 			--dryrun \
+			--no-cache \
 			--mock-git-push \
 			--mock-ssh-info-status 200 \
 			--mock-ssh-info-response "ssh.example.com 29418" \
@@ -129,8 +154,6 @@ test_expect_success "upload --dryrun with reviewers" '
 			--no-edit \
 			--dryrun \
 			--mock-git-push \
-			--mock-ssh-info-status 200 \
-			--mock-ssh-info-response "ssh.example.com 29418" \
 			--reviewers user1,user2 \
 			--re user3,user4 \
 			--cc user5,user6 \

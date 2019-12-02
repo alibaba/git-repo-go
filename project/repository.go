@@ -269,6 +269,11 @@ func (v Repository) configFile() string {
 	return filepath.Join(v.RepoDir(), "config")
 }
 
+// ProtoCacheFile is filename used to cache proto settings.
+func (v Repository) ProtoCacheFile() string {
+	return filepath.Join(v.RepoDir(), "info", "proto.cache")
+}
+
 // Config returns git config file parser.
 func (v Repository) Config() goconfig.GitConfig {
 	cfg, err := goconfig.Load(v.configFile())

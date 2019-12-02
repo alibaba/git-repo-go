@@ -73,7 +73,8 @@ func (v *helperProtoCommand) Execute(arts []string) error {
 	if v.O.Type == "" {
 		return fmt.Errorf("must provide type of proto")
 	}
-	protoHelper = helper.NewProtoHelper(v.O.Type)
+	sshInfo := helper.SSHInfo{ProtoType: v.O.Type}
+	protoHelper = helper.NewProtoHelper(&sshInfo)
 
 	if v.O.Download && v.O.Upload {
 		return fmt.Errorf("cannot use --download and --upload together")

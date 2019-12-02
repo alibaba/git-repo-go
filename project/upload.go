@@ -4,34 +4,15 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"os/user"
+	"strconv"
 	"strings"
 
+	"code.alibaba-inc.com/force/git-repo/common"
 	"code.alibaba-inc.com/force/git-repo/config"
+	"code.alibaba-inc.com/force/git-repo/helper"
 	log "github.com/jiangxin/multi-log"
 )
-
-// UploadOptions is options for upload related methods.
-type UploadOptions struct {
-	AutoTopic    bool
-	Description  string
-	DestBranch   string // Target branch for code review
-	Draft        bool
-	Issue        string
-	LocalBranch  string // New
-	MockGitPush  bool
-	NoCertChecks bool
-	NoEmails     bool
-	OldOid       string // New
-	People       [][]string
-	Private      bool
-	PushOptions  []string
-	ProjectName  string // New
-	ReviewURL    string // New
-	Title        string
-	UserEmail    string // New
-	Version      int    // version: 1
-	WIP          bool
-}
 
 // RemoteTrack holds info of remote tracking branch
 type RemoteTrack struct {
@@ -71,7 +52,7 @@ func (v *ReviewableBranch) IsPublished() bool {
 // AppendReviewers adds reviewers to people.
 func (v ReviewableBranch) AppendReviewers(people [][]string) {
 	cfg := v.Project.ConfigWithDefault()
-	review := v.Project.Remote.GetRemote().Review
+	review := v.Project.Remote.Review
 
 	key := fmt.Sprintf("review.%s.autoreviewer", review)
 	reviewers := cfg.Get(key)
@@ -121,18 +102,17 @@ func (v ReviewableBranch) Commits() []string {
 }
 
 // UploadForReview sends review for branch.
-func (v ReviewableBranch) UploadForReview(o *UploadOptions, people [][]string) error {
+func (v ReviewableBranch) UploadForReview(o *common.UploadOptions, people [][]string) error {
 	var err error
 
 	p := v.Project
 	if p == nil {
 		return fmt.Errorf("no project for reviewable branch")
 	}
-	if p.Remote == nil {
+	if !p.Remote.Initialized() {
 		return fmt.Errorf("no remote for project '%s' for review", p.Name)
 	}
-	manifestRemote := p.Remote.GetRemote()
-	if manifestRemote.Review == "" {
+	if p.Remote.Review == "" {
 		return fmt.Errorf("project '%s' has no review url", p.Name)
 	}
 
@@ -144,10 +124,22 @@ func (v ReviewableBranch) UploadForReview(o *UploadOptions, people [][]string) e
 	}
 	o.People = people
 
-	cmdArgs, err := p.Remote.UploadCommands(o, &v)
+	o.LocalBranch = v.Branch.Name
+	o.ProjectName = v.Project.Name
+	o.ReviewURL = v.getReviewURL(o)
+
+	pushCmd, err := p.Remote.GetGitPushCommand(o)
 	if err != nil {
 		return err
 	}
+
+	cmdArgs := []string{pushCmd.Cmd}
+	if len(pushCmd.GitConfig) > 0 {
+		for _, c := range pushCmd.GitConfig {
+			cmdArgs = append(cmdArgs, "-c", c)
+		}
+	}
+	cmdArgs = append(cmdArgs, pushCmd.Args...)
 
 	if config.IsDryRun() || o.MockGitPush {
 		log.Notef("%swill execute command: %s",
@@ -157,11 +149,15 @@ func (v ReviewableBranch) UploadForReview(o *UploadOptions, people [][]string) e
 		log.Debugf("%sreview by command: %s",
 			v.Project.Prompt(),
 			strings.Join(cmdArgs, " "))
+		// TODO: use custom SSH_COMMAND to push ENV to remote server.
 		cmd := exec.Command(cmdArgs[0], cmdArgs[1:]...)
 		cmd.Dir = p.WorkDir
 		cmd.Stdin = os.Stdin
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
+		if len(pushCmd.Env) > 0 {
+			cmd.Env = pushCmd.Env
+		}
 		err = cmd.Run()
 		if err != nil {
 			return fmt.Errorf("upload failed: %s", err)
@@ -175,7 +171,7 @@ func (v ReviewableBranch) UploadForReview(o *UploadOptions, people [][]string) e
 	msg := fmt.Sprintf("review from %s to %s on %s",
 		branchName,
 		o.DestBranch,
-		manifestRemote.Review)
+		p.Remote.Review)
 
 	log.Debugf("%sUpdate reference '%s': %s",
 		v.Project.Prompt(),
@@ -191,6 +187,36 @@ func (v ReviewableBranch) UploadForReview(o *UploadOptions, people [][]string) e
 			err)
 	}
 	return nil
+}
+
+func (v ReviewableBranch) getReviewURL(o *common.UploadOptions) string {
+	p := v.Project
+	r := p.Remote
+	sshInfo := r.GetSSHInfo()
+
+	if sshInfo.Host == "" {
+		// TODO: Return push url of current remote
+		return ""
+	}
+
+	login := sshInfo.User
+	if login == "<email>" {
+		login = helper.GetLoginFromEmail(o.UserEmail)
+	} else if login == "<login>" {
+		u, err := user.Current()
+		if err == nil {
+			login = u.Username
+		}
+	}
+	if login == "" {
+		login = "git"
+	}
+
+	url := fmt.Sprintf("ssh://%s@%s", login, sshInfo.Host)
+	if sshInfo.Port > 0 && sshInfo.Port != 22 {
+		url += ":" + strconv.Itoa(sshInfo.Port)
+	}
+	return url
 }
 
 // GetUploadableBranch returns branch which has commits ready for upload.
@@ -209,15 +235,13 @@ func (v *Project) GetUploadableBranch(branch, remote, remoteBranch string) *Revi
 		remoteBranch = v.Config().Get("branch." + branch + ".merge")
 	}
 
-	manifestRemote := ""
-	if v.Remote != nil {
-		manifestRemote = v.Remote.GetRemote().Name
-		if remote != manifestRemote && !config.IsSingleMode() {
+	if v.Remote.Initialized() {
+		if remote != v.Remote.Name && !config.IsSingleMode() {
 			log.Warnf("%scannot upload, unmatch remote for '%s': %s != %s",
 				v.Prompt(),
 				branch,
 				remote,
-				manifestRemote,
+				v.Remote.Name,
 			)
 			return nil
 		}

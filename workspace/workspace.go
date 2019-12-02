@@ -21,15 +21,7 @@ import (
 )
 
 // RemoteMap maps name to RemoteWithError
-type RemoteMap map[string]project.RemoteWithError
-
-// GetRemote returns remote and error from matching RemoteWithError
-func (v RemoteMap) GetRemote(name string) (project.Remote, error) {
-	if result, ok := v[name]; ok {
-		return result.Remote, result.Error
-	}
-	return nil, nil
-}
+type RemoteMap map[string]project.Remote
 
 // Size is size of map
 func (v RemoteMap) Size() int {

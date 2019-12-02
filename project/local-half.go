@@ -222,14 +222,14 @@ func (v Project) SyncLocalHalf(o *CheckoutOptions) error {
 			}
 		}
 
-		if v.Remote != nil {
-			// Install gerrit hooks
-			if v.Remote.GetType() == config.RemoteTypeGerrit {
+		// Install gerrit hooks
+		if v.Remote.Initialized() {
+			if v.Remote.GetType() == config.ProtoTypeGerrit {
 				v.InstallGerritHooks()
 			}
 
 			// Disable default push, push command must have specific refspec
-			if v.Remote.GetType() != config.RemoteTypeUnknown {
+			if v.Remote.GetType() != "" {
 				v.DisableDefaultPush()
 			}
 		}

@@ -24,6 +24,7 @@ import (
 	"sort"
 	"strings"
 
+	"code.alibaba-inc.com/force/git-repo/common"
 	"code.alibaba-inc.com/force/git-repo/config"
 	"code.alibaba-inc.com/force/git-repo/editor"
 	"code.alibaba-inc.com/force/git-repo/path"
@@ -407,7 +408,7 @@ func (v uploadCommand) UploadForReviewWithConfirm(branch *project.ReviewableBran
 	)
 
 	p := branch.Project
-	remote := p.Remote.GetRemote()
+	remote := p.Remote
 	key := fmt.Sprintf("review.%s.autoupload", remote.Review)
 	commitList := branch.Commits()
 	cfg := p.ConfigWithDefault()
@@ -774,7 +775,7 @@ func (v *uploadCommand) UploadAndReport(branches []project.ReviewableBranch) err
 		branch.AppendReviewers(people)
 		cfg := branch.Project.ConfigWithDefault()
 		if !branch.Project.IsClean() {
-			key := fmt.Sprintf("review.%s.autoupload", branch.Project.Remote.GetRemote().Review)
+			key := fmt.Sprintf("review.%s.autoupload", branch.Project.Remote.Review)
 			if !cfg.HasKey(key) {
 				fmt.Printf("Uncommitted changes in " + branch.Project.Name)
 				fmt.Printf(" (did you forget to amend?):\n")
@@ -790,7 +791,7 @@ func (v *uploadCommand) UploadAndReport(branches []project.ReviewableBranch) err
 			}
 		}
 		if !v.O.AutoTopic {
-			key := fmt.Sprintf("review.%s.uploadtopic", branch.Project.Remote.GetRemote().Review)
+			key := fmt.Sprintf("review.%s.uploadtopic", branch.Project.Remote.Review)
 			v.O.AutoTopic = cfg.GetBool(key, false)
 		}
 
@@ -819,7 +820,7 @@ func (v *uploadCommand) UploadAndReport(branches []project.ReviewableBranch) err
 			}
 		}
 
-		o := project.UploadOptions{
+		o := common.UploadOptions{
 			AutoTopic:    v.O.AutoTopic,
 			Description:  v.O.Description,
 			DestBranch:   destBranch,
@@ -946,29 +947,23 @@ func (v uploadCommand) Execute(args []string) error {
 		}
 
 		if remoteName != "" {
-			remote, err := remoteMap.GetRemote(remoteName)
-			if err != nil {
-				return fmt.Errorf("error found when get remote: %s", err)
-			} else if remote == nil {
-				return fmt.Errorf("cannot find remote %s", v.O.Remote)
-			} else {
+			if remote, ok := remoteMap[remoteName]; ok {
 				p.Remote = remote
+			} else {
+				return fmt.Errorf("cannot find remote %s", v.O.Remote)
 			}
 		} else {
 			for name, remote := range remoteMap {
 				if remoteMap.Size() > 1 && name != "origin" {
 					continue
 				}
-				if remote.Error != nil {
-					return fmt.Errorf("error found when get remote: %s", err)
-				}
 				if remoteMap.Size() != 1 {
 					log.Warning("no tracking remote defined, try to upload to origin")
 				}
 				remoteName = name
-				p.Remote = remote.Remote
+				p.Remote = remote
 			}
-			if p.Remote == nil {
+			if !p.Remote.Initialized() {
 				return errors.New("no tracking remote defined, and don't know where to upload.\n" +
 					"please try to use --remote option for upload")
 			}
@@ -983,8 +978,7 @@ func (v uploadCommand) Execute(args []string) error {
 		}
 
 		// Set Revision of manifest.Remote to tracking branch.
-		manifestRemote := p.Remote.GetRemote()
-		manifestRemote.Revision = remoteRevision
+		p.Remote.Revision = remoteRevision
 
 		// Set project and repository name
 		remoteURL = p.GitConfigRemoteURL(remoteName)
@@ -1003,7 +997,7 @@ func (v uploadCommand) Execute(args []string) error {
 		p.Revision = remoteRevision
 
 		// Install hooks if remote is Gerrit server
-		if allProjects[0].Remote.GetType() == config.RemoteTypeGerrit {
+		if allProjects[0].Remote.GetType() == config.ProtoTypeGerrit {
 			allProjects[0].InstallGerritHooks()
 		}
 	}

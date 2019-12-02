@@ -22,30 +22,44 @@ import (
 	"os/exec"
 	"strings"
 
-	"code.alibaba-inc.com/force/git-repo/project"
+	"code.alibaba-inc.com/force/git-repo/common"
 )
 
-// ExternalHelper implements helper for unknown remote service.
-type ExternalHelper struct {
-	ProtoType string
-	program   string
+// ExternalProtoHelper implements helper for unknown remote service.
+type ExternalProtoHelper struct {
+	sshInfo *SSHInfo
+
+	program string
+}
+
+// NewExternalProtoHelper returns ExternalProtoHelper object.
+func NewExternalProtoHelper(sshInfo *SSHInfo) *ExternalProtoHelper {
+	if sshInfo.User == "" {
+		sshInfo.User = "git"
+	}
+	return &ExternalProtoHelper{sshInfo: sshInfo}
 }
 
 // GetType returns remote server type.
-func (v ExternalHelper) GetType() string {
-	return v.ProtoType
+func (v ExternalProtoHelper) GetType() string {
+	return v.sshInfo.ProtoType
+}
+
+// GetSSHInfo returns SSHInfo object.
+func (v ExternalProtoHelper) GetSSHInfo() *SSHInfo {
+	return v.sshInfo
 }
 
 // Program is program name of remote helper.
-func (v *ExternalHelper) Program() string {
+func (v *ExternalProtoHelper) Program() string {
 	if v.program == "" {
-		v.program = "git-repo-helper-proto-" + strings.ToLower(v.ProtoType)
+		v.program = "git-repo-helper-proto-" + strings.ToLower(v.sshInfo.ProtoType)
 	}
 	return v.program
 }
 
 // GetGitPushCommand reads upload options and returns git push command.
-func (v ExternalHelper) GetGitPushCommand(o *project.UploadOptions) (*GitPushCommand, error) {
+func (v ExternalProtoHelper) GetGitPushCommand(o *common.UploadOptions) (*GitPushCommand, error) {
 	data, err := json.Marshal(o)
 	if err != nil {
 		return nil, err
@@ -65,9 +79,9 @@ func (v ExternalHelper) GetGitPushCommand(o *project.UploadOptions) (*GitPushCom
 	return &cmd, nil
 }
 
-// GetGitPushCommand reads JSON from reader, and format it into proper JSON
+// GetGitPushCommandPipe reads JSON from reader, and format it into proper JSON
 // contains git push command.
-func (v ExternalHelper) GetGitPushCommandPipe(reader io.Reader) ([]byte, error) {
+func (v ExternalProtoHelper) GetGitPushCommandPipe(reader io.Reader) ([]byte, error) {
 	program, err := exec.LookPath(v.Program())
 	if err != nil {
 		return nil, fmt.Errorf("cannot find helper '%s'", v.Program())
@@ -85,7 +99,7 @@ func (v ExternalHelper) GetGitPushCommandPipe(reader io.Reader) ([]byte, error) 
 }
 
 // GetDownloadRef returns reference name of the specific code review.
-func (v ExternalHelper) GetDownloadRef(cr, patch string) (string, error) {
+func (v ExternalProtoHelper) GetDownloadRef(cr, patch string) (string, error) {
 	program, err := exec.LookPath(v.Program())
 	if err != nil {
 		return "", fmt.Errorf("cannot find helper '%s'", v.Program())

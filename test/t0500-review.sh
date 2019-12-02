@@ -169,6 +169,21 @@ test_expect_success "No commit ready for upload" '
 	)
 '
 
+test_expect_success "No commit ready for upload (use cached ssh_info)" '
+	(
+		cd work &&
+		cat >expect<<-EOF &&
+		NOTE: no branches ready for upload
+		EOF
+		(
+			cd main &&
+			git peer-review \
+				--mock-git-push
+		) >actual 2>&1 &&
+		test_cmp expect actual
+	)
+'
+
 test_expect_success "New commit in main project" '
 	(
 		cd work/main &&
@@ -411,10 +426,11 @@ test_expect_success "update remote URL using ssh port 10022" '
 	)
 '
 
-test_expect_success "upload to a ssh review url" '
+test_expect_success "upload to a ssh review url (no ssh_info cache)" '
 	(
 		cd work &&
 		cat >expect<<-EOF &&
+		NOTE: mock executing: ssh -l git -p 10022 example.com ssh_info
 		NOTE: no editor, input data unchanged
 		##############################################################################
 		# Step 1: Input your options for code review
@@ -447,7 +463,7 @@ test_expect_success "upload to a ssh review url" '
 		   branch my/topic-test ( 1 commit(s)) to remote branch master:
 		#         <hash>
 		
-		NOTE: will execute command: git push --receive-pack=agit-receive-pack ssh://git@example.com:10022/jiangxin/main.git refs/heads/my/topic-test:refs/drafts/master/my/topic-test
+		NOTE: will execute command: git push --receive-pack=agit-receive-pack ssh://git@ssh.example.com/jiangxin/main.git refs/heads/my/topic-test:refs/drafts/master/my/topic-test
 		NOTE: will update-ref refs/published/my/topic-test on refs/heads/my/topic-test, reason: review from my/topic-test to master on ssh://git@example.com:10022
 
 		----------------------------------------------------------------------
@@ -482,6 +498,7 @@ test_expect_success "upload to gerrit ssh review url (assume-no, dryrun, use ssh
 	(
 		cd work &&
 		cat >expect<<-EOF &&
+		NOTE: mock executing: ssh -l git -p 29418 example.com ssh_info
 		Upload project (jiangxin/main) to remote branch master:
 		  branch my/topic-test ( 1 commit(s)):
 		         <hash>
@@ -496,7 +513,10 @@ test_expect_success "upload to gerrit ssh review url (assume-no, dryrun, use ssh
 			git peer-review \
 				--assume-yes \
 				--no-edit \
-				--dryrun
+				--dryrun \
+				--mock-ssh-info-status 200 \
+				--mock-ssh-info-response \
+				"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}"
 		) >out 2>&1 &&
 		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
 		test_cmp expect actual
@@ -511,11 +531,12 @@ test_expect_success "upload to gerrit ssh review url (assume-no, dryrun, no-cach
 	(
 		cd work &&
 		cat >expect<<-EOF &&
+		NOTE: mock executing: ssh -l git -p 29418 example.com ssh_info
 		Upload project (jiangxin/main) to remote branch master:
 		  branch my/topic-test ( 1 commit(s)):
 		         <hash>
 		to ssh://git@example.com:29418 (y/N)? Yes
-		NOTE: will execute command: git push --receive-pack=gerrit receive-pack ssh://git@example.com:29418/jiangxin/main.git refs/heads/my/topic-test:refs/for/master
+		NOTE: will execute command: git push --receive-pack=gerrit receive-pack ssh://committer@ssh.example.com:29418/jiangxin/main.git refs/heads/my/topic-test:refs/for/master
 		NOTE: will update-ref refs/published/my/topic-test on refs/heads/my/topic-test, reason: review from my/topic-test to master on ssh://git@example.com:29418
 
 		----------------------------------------------------------------------
@@ -526,7 +547,10 @@ test_expect_success "upload to gerrit ssh review url (assume-no, dryrun, no-cach
 				--no-cache \
 				--assume-yes \
 				--no-edit \
-				--dryrun
+				--dryrun \
+				--mock-ssh-info-status 200 \
+				--mock-ssh-info-response \
+				"ssh.example.com 29418"
 		) >out 2>&1 &&
 		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
 		test_cmp expect actual
@@ -537,7 +561,7 @@ test_expect_success "gerrit hooks installed" '
 	test -e work/main/.git/hooks/commit-msg
 '
 
-test_expect_success "upload to gerrit ssh review url" '
+test_expect_success "upload to gerrit ssh review url (use ssh_info cache)" '
 	(
 		cd work &&
 		cat >expect<<-EOF &&
@@ -545,7 +569,7 @@ test_expect_success "upload to gerrit ssh review url" '
 		  branch my/topic-test ( 1 commit(s)):
 		         <hash>
 		to ssh://git@example.com:29418 (y/N)? Yes
-		NOTE: will execute command: git push --receive-pack=gerrit receive-pack ssh://git@example.com:29418/jiangxin/main.git refs/heads/my/topic-test:refs/for/master
+		NOTE: will execute command: git push --receive-pack=gerrit receive-pack ssh://committer@ssh.example.com:29418/jiangxin/main.git refs/heads/my/topic-test:refs/for/master
 		NOTE: will update-ref refs/published/my/topic-test on refs/heads/my/topic-test, reason: review from my/topic-test to master on ssh://git@example.com:29418
 
 		----------------------------------------------------------------------
@@ -553,7 +577,6 @@ test_expect_success "upload to gerrit ssh review url" '
 		(
 			cd main &&
 			git peer-review \
-				--no-cache \
 				--assume-yes \
 				--no-edit \
 				--dryrun
@@ -574,11 +597,12 @@ test_expect_success "upload to a ssh review using rcp style URL" '
 	(
 		cd work &&
 		cat >expect<<-EOF &&
+		NOTE: mock executing: ssh -l git example.com ssh_info
 		Upload project (jiangxin/main) to remote branch master:
 		  branch my/topic-test ( 1 commit(s)):
 		         <hash>
 		to ssh://git@example.com (y/N)? Yes
-		NOTE: will execute command: git push --receive-pack=agit-receive-pack ssh://git@example.com/jiangxin/main.git refs/heads/my/topic-test:refs/for/master/my/topic-test
+		NOTE: will execute command: git push --receive-pack=agit-receive-pack ssh://git@ssh.example.com/jiangxin/main.git refs/heads/my/topic-test:refs/for/master/my/topic-test
 		NOTE: will update-ref refs/published/my/topic-test on refs/heads/my/topic-test, reason: review from my/topic-test to master on ssh://git@example.com
 
 		----------------------------------------------------------------------
@@ -589,7 +613,10 @@ test_expect_success "upload to a ssh review using rcp style URL" '
 				--no-cache \
 				--assume-yes \
 				--no-edit \
-				--dryrun
+				--dryrun \
+				--mock-ssh-info-status 200 \
+				--mock-ssh-info-response \
+				"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}"
 		) >out 2>&1 &&
 		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
 		test_cmp expect actual

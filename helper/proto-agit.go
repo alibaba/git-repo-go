@@ -21,29 +21,41 @@ import (
 	"strings"
 
 	"code.alibaba-inc.com/force/git-repo/cap"
+	"code.alibaba-inc.com/force/git-repo/common"
 	"code.alibaba-inc.com/force/git-repo/config"
 	"code.alibaba-inc.com/force/git-repo/encode"
-	"code.alibaba-inc.com/force/git-repo/project"
 	log "github.com/jiangxin/multi-log"
 )
 
-// AGitHelper implements helper for AGit server.
-type AGitHelper struct {
+// AGitProtoHelper implements helper for AGit server.
+type AGitProtoHelper struct {
+	sshInfo *SSHInfo
+}
+
+// NewAGitProtoHelper returns AGitProtoHelper object.
+func NewAGitProtoHelper(sshInfo *SSHInfo) *AGitProtoHelper {
+	sshInfo.User = "git"
+	return &AGitProtoHelper{sshInfo: sshInfo}
 }
 
 // GetType returns remote server type.
-func (v AGitHelper) GetType() string {
+func (v AGitProtoHelper) GetType() string {
 	return "agit"
+}
+
+// GetSSHInfo returns SSHInfo object.
+func (v AGitProtoHelper) GetSSHInfo() *SSHInfo {
+	return v.sshInfo
 }
 
 // GetGitPushCommandPipe reads JSON from reader, and format it into proper JSON
 // contains git push command.
-func (v AGitHelper) GetGitPushCommandPipe(reader io.Reader) ([]byte, error) {
+func (v AGitProtoHelper) GetGitPushCommandPipe(reader io.Reader) ([]byte, error) {
 	return getGitPushCommandPipe(&v, reader)
 }
 
 // GetGitPushCommand reads upload options and returns git push command.
-func (v AGitHelper) GetGitPushCommand(o *project.UploadOptions) (*GitPushCommand, error) {
+func (v AGitProtoHelper) GetGitPushCommand(o *common.UploadOptions) (*GitPushCommand, error) {
 	var (
 		gitPushCmd = GitPushCommand{}
 	)
@@ -171,7 +183,7 @@ func (v AGitHelper) GetGitPushCommand(o *project.UploadOptions) (*GitPushCommand
 }
 
 // GetDownloadRef returns reference name of the specific code review.
-func (v AGitHelper) GetDownloadRef(cr, patch string) (string, error) {
+func (v AGitProtoHelper) GetDownloadRef(cr, patch string) (string, error) {
 	_, err := strconv.Atoi(cr)
 	if err != nil {
 		return "", fmt.Errorf("bad review ID %s: %s", cr, err)

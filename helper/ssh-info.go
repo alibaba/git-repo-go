@@ -6,9 +6,9 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net"
 	"net/http"
+	"os"
 	"os/exec"
 	"regexp"
 	"strconv"
@@ -22,7 +22,9 @@ import (
 )
 
 const (
-	remoteCallTimeout = 10
+	remoteCallTimeout         = 10
+	sshInfoCacheDefaultExpire = 3600 * 12 // Seconds
+	expireTimeLayout          = "2006-01-02 15:04:05"
 )
 
 var (
@@ -36,26 +38,119 @@ type SSHInfo struct {
 	Port         int    `json:"port,omitempty"`
 	ProtoType    string `json:"type,omitempty"`
 	ProtoVersion int    `json:"version,omitempty"`
-	Expire       int64  `json:"-"`
+	User         string `json:"user,omitempty"`
+
+	Expire int64 `json:"-"`
 }
 
-// TODO: save ssh_info to cache.
-func SaveCache(sshInfo *SSHInfo, config goconfig.GitConfig, filename string) error {
-	return nil
+func (v SSHInfo) String() string {
+	if v.Host == "" {
+		return ""
+	}
+	return fmt.Sprintf("%s %d", v.Host, v.Port)
 }
 
-// TODO: save ssh_info to cache.
-func LoadCache(remoteName string) (goconfig.GitConfig, error) {
-	return nil, nil
+// SSHInfoQuery wraps cache to accelerate query of ssh_info API.
+type SSHInfoQuery struct {
+	CacheFile string
+
+	cfg     goconfig.GitConfig
+	Changed bool
+}
+
+// GetSSHInfo queries ssh_info for address.
+func (v SSHInfoQuery) GetSSHInfo(address string, useCache bool) (*SSHInfo, error) {
+	key := urlToKey(address)
+	if key == "" {
+		return nil, fmt.Errorf("bad address for review '%s'", address)
+	}
+
+	// Try cache
+	if v.CacheFile != "" && v.cfg != nil && useCache {
+		t := v.cfg.Get(fmt.Sprintf(config.CfgManifestRemoteType, key))
+		if t != "" {
+			expired := true
+			expireStr := v.cfg.Get(fmt.Sprintf(config.CfgManifestRemoteExpire, key))
+			if expireStr != "" {
+				expireTm, err := time.Parse(expireTimeLayout, expireStr)
+				if err == nil && expireTm.After(time.Now()) {
+					expired = false
+				}
+			}
+			if !expired {
+				data := v.cfg.Get(fmt.Sprintf(config.CfgManifestRemoteSSHInfo, key))
+				sshInfo, err := sshInfoFromString(data)
+				if err == nil {
+					log.Debug("load ssh_info from cache")
+					sshInfo.ProtoType = t
+					sshInfo.ProtoVersion = v.cfg.GetInt(
+						fmt.Sprintf(config.CfgManifestRemoteVersion, key),
+						0,
+					)
+					sshInfo.User = v.cfg.Get(fmt.Sprintf(config.CfgManifestRemoteUser, key))
+					return sshInfo, nil
+				}
+				log.Warnf("fail to parse ssh_info cache: '%s'", data)
+			} else {
+				log.Debug("ssh_info cache is expired")
+			}
+		}
+	}
+
+	// Call ssh_info API
+	sshInfo, err := v.QuerySSHInfo(address)
+	if err != nil {
+		return nil, err
+	}
+
+	// Update Cache
+	if v.CacheFile != "" && v.cfg != nil {
+		v.cfg.Set(fmt.Sprintf(config.CfgManifestRemoteType, key),
+			sshInfo.ProtoType)
+		v.cfg.Set(fmt.Sprintf(config.CfgManifestRemoteSSHInfo, key),
+			sshInfo.String())
+		if sshInfo.ProtoVersion != 0 {
+			v.cfg.Set(fmt.Sprintf(config.CfgManifestRemoteVersion, key),
+				sshInfo.ProtoVersion)
+		}
+		if sshInfo.User != "" {
+			v.cfg.Set(fmt.Sprintf(config.CfgManifestRemoteUser, key),
+				sshInfo.User)
+		}
+		v.cfg.Set(fmt.Sprintf(config.CfgManifestRemoteExpire, key),
+			time.Now().Add(time.Second*sshInfoCacheDefaultExpire).Format(expireTimeLayout))
+		v.cfg.Save(v.CacheFile)
+	}
+
+	return sshInfo, nil
 }
 
 // QuerySSHInfo queries ssh_info API and return SSHInfo object.
-func QuerySSHInfo(address string) (*SSHInfo, error) {
+func (v SSHInfoQuery) QuerySSHInfo(address string) (*SSHInfo, error) {
+	env := os.Getenv("REPO_HOST_PORT_INFO")
+	if env != "" {
+		return sshInfoFromString(env)
+	}
+
+	if strings.HasPrefix(address, "persistent-") {
+		address = address[len("persistent-"):]
+	}
+
+	if address == "" {
+		return &SSHInfo{}, nil
+	}
+
+	// Compatible with android repo.
+	if strings.HasPrefix(address, "sso:") ||
+		os.Getenv("REPO_IGNORE_SSH_INFO") != "" {
+		return &SSHInfo{ProtoType: config.ProtoTypeGerrit}, nil
+	}
+
 	url := config.ParseGitURL(address)
 	if url == nil {
-		sshInfo, err := QuerySSHInfo("https://" + address)
+		sshInfo, err := v.QuerySSHInfo("https://" + address)
 		if err != nil {
-			sshInfo, err = QuerySSHInfo("http://" + address)
+			sshInfo, err = v.QuerySSHInfo("http://" + address)
 		}
 		if err != nil {
 			return nil, err
@@ -76,11 +171,23 @@ func QuerySSHInfo(address string) (*SSHInfo, error) {
 	return sshInfo, nil
 }
 
+// NewSSHInfoQuery creates new query object. file is name of the cache.
+func NewSSHInfoQuery(cacheFile string) *SSHInfoQuery {
+	query := SSHInfoQuery{CacheFile: cacheFile}
+	if cacheFile != "" {
+		cfg, _ := goconfig.Load(cacheFile)
+		if cfg == nil {
+			cfg = goconfig.NewGitConfig()
+		}
+		query.cfg = cfg
+	}
+	return &query
+}
+
 // sshInfoFromAPI queries ssh_info API and return SSHInfo object.
 func sshInfoFromAPI(url *config.GitURL) (*SSHInfo, error) {
 	var (
-		sshInfo = SSHInfo{}
-		err     error
+		err error
 	)
 
 	infoURL := url.GetReviewURL() + "/ssh_info"
@@ -118,68 +225,32 @@ func sshInfoFromAPI(url *config.GitURL) (*SSHInfo, error) {
 	}
 
 	reader := bufio.NewReader(resp.Body)
-	line, err := reader.ReadString('\n')
-	if err != nil && err != io.EOF {
-		return nil, fmt.Errorf("fail to access ssh_info URL '%s': %s", infoURL, err)
-	}
-
-	if strings.HasPrefix(line, "NOT_AVAILABLE") {
-		sshInfo.ProtoType = config.RemoteTypeGerrit
-		return &sshInfo, nil
-	}
-
-	// If `info` contains '<', we assume the server gave us some sort
-	// of HTML response back, like maybe a login page.
-	//
-	// Assume HTTP if SSH is not enabled or ssh_info doesn't look right.
-	if strings.HasPrefix(line, "<") {
-		/*
-			log.Notef("get a normal html response, may be a bad config gerrit server?")
-			sshInfo.ProtoType = config.RemoteTypeGerrit
-			return &sshInfo, nil
-		*/
-		return nil, fmt.Errorf("ssh_info on '%s' has a normal HTML response", infoURL)
-	}
-
-	buf := bytes.NewBufferString(line)
-	n := 0
-	for {
-		line, err = reader.ReadString('\n')
+	var buf bytes.Buffer
+	for i := 0; i < 100; i++ {
+		line, err := reader.ReadString('\n')
 		buf.WriteString(line)
-		if err != nil || n > 100 {
+		if err != nil {
 			break
 		}
-		n++
 	}
-	data := buf.String()
-	data = strings.TrimSpace(data)
-	if len(data) == 0 {
-		return nil, fmt.Errorf("empty ssh_info on '%s'", infoURL)
-	}
-	if sshInfoPattern.MatchString(data) {
-		items := strings.SplitN(data, " ", 2)
-		if len(items) != 2 {
-			return nil, fmt.Errorf("bad ssh_info response on '%s': %s", infoURL, data)
-		}
 
-		port, err := strconv.Atoi(items[1])
-		if err != nil {
-			return nil, fmt.Errorf("bad port number (%s) in ssh_info on '%s': %s", items[1], infoURL, err)
-		}
-		sshInfo.Port = port
-		sshInfo.Host = items[0]
-		sshInfo.ProtoType = config.RemoteTypeGerrit
-	} else {
-		err = json.Unmarshal([]byte(data), &sshInfo)
-		if err != nil {
-			return nil, fmt.Errorf("fail to parse ssh_info response on '%s': %s", infoURL, data)
-		}
+	sshInfo, err := sshInfoFromString(buf.String())
+	if err != nil {
+		return nil, fmt.Errorf("fail to run ssh_info API on %s: %s",
+			url.GetReviewURL(),
+			err)
 	}
-	return &sshInfo, nil
+	return sshInfo, nil
 }
 
 // sshInfoFromCommand queries ssh_info ssh command and return the parsed SSHInfo object.
 func sshInfoFromCommand(url *config.GitURL) (*SSHInfo, error) {
+	var (
+		sshInfo *SSHInfo
+		err     error
+		out     []byte
+	)
+
 	if url == nil || !url.IsSSH() {
 		return nil, fmt.Errorf("bad protocol, ssh_info only apply for SSH")
 	}
@@ -193,23 +264,39 @@ func sshInfoFromCommand(url *config.GitURL) (*SSHInfo, error) {
 	}
 	cmdArgs = append(cmdArgs, url.Host, "ssh_info")
 
-	log.Debugf("will execute: %s", strings.Join(cmdArgs, " "))
-	cmd := exec.Command(cmdArgs[0], cmdArgs[1:]...)
-	out, err := cmd.StdoutPipe()
+	// Mock ssh_info API
+	if config.GetMockSSHInfoResponse() != "" || config.GetMockSSHInfoStatus() != 0 {
+		log.Notef("mock executing: %s", strings.Join(cmdArgs, " "))
+		mockStatus := config.GetMockSSHInfoStatus()
+		if mockStatus < 400 {
+			mockStatus = 0
+		}
+		mockResponse := config.GetMockSSHInfoResponse()
+		if mockStatus != 0 {
+			err = fmt.Errorf("exit %d", mockStatus)
+		} else {
+			sshInfo, err = sshInfoFromString(mockResponse)
+		}
+	} else {
+		log.Debugf("will execute: %s", strings.Join(cmdArgs, " "))
+		cmd := exec.Command(cmdArgs[0], cmdArgs[1:]...)
+		out, err = cmd.Output()
+		if err != nil {
+			err = fmt.Errorf("pipe ssh_info cmd failed: %s", err)
+		} else {
+			sshInfo, err = sshInfoFromString(string(out))
+		}
+	}
+
 	if err != nil {
-		return nil, fmt.Errorf("pipe ssh_info cmd failed: %s", err)
-	}
-	if err := cmd.Start(); err != nil {
-		return nil, fmt.Errorf("start ssh_info cmd failed: %s", err)
-	}
+		// Gerrit's well known port: 29418
+		if url.Port == 29418 {
+			return &SSHInfo{
+				Host:      url.Host,
+				Port:      url.Port,
+				ProtoType: config.ProtoTypeGerrit}, nil
+		}
 
-	sshInfo, err := sshInfoFromReader(out)
-
-	if err2 := cmd.Wait(); err2 != nil {
-		return nil, fmt.Errorf("execute ssh_info cmd failed: %s", err2)
-	}
-
-	if err != nil {
 		return nil, fmt.Errorf("fail to run ssh_info cmd on %s: %s",
 			url.GetReviewURL(),
 			err)
@@ -217,60 +304,50 @@ func sshInfoFromCommand(url *config.GitURL) (*SSHInfo, error) {
 	return sshInfo, nil
 }
 
-func sshInfoFromReader(r io.Reader) (*SSHInfo, error) {
-	sshInfo := SSHInfo{}
-	reader := bufio.NewReader(r)
-	line, err := reader.ReadString('\n')
-	if err != nil && err != io.EOF {
-		return nil, err
-	}
+func sshInfoFromString(data string) (*SSHInfo, error) {
+	var (
+		sshInfo = SSHInfo{}
+		err     error
+	)
 
-	if strings.HasPrefix(line, "NOT_AVAILABLE") {
-		sshInfo.ProtoType = config.RemoteTypeGerrit
-		return &sshInfo, nil
+	data = strings.TrimSpace(data)
+	if len(data) == 0 {
+		return nil, fmt.Errorf("empty ssh_info")
 	}
 
 	// If `info` contains '<', we assume the server gave us some sort
 	// of HTML response back, like maybe a login page.
 	//
 	// Assume HTTP if SSH is not enabled or ssh_info doesn't look right.
-	if strings.HasPrefix(line, "<") {
+	if strings.HasPrefix(data, "<") {
 		return nil, fmt.Errorf("ssh_info returns a normal HTML response")
 	}
 
-	buf := bytes.NewBufferString(line)
-	n := 0
-	for {
-		line, err = reader.ReadString('\n')
-		buf.WriteString(line)
-		if err != nil || n > 100 {
-			break
+	if !strings.ContainsAny(data, "\n") {
+		if data == "NOT_AVAILABLE" {
+			sshInfo.ProtoType = config.ProtoTypeGerrit
+			return &sshInfo, nil
 		}
-		n++
-	}
-	data := buf.String()
-	data = strings.TrimSpace(data)
-	if len(data) == 0 {
-		return nil, fmt.Errorf("empty ssh_info")
-	}
-	if sshInfoPattern.MatchString(data) {
-		items := strings.SplitN(data, " ", 2)
-		if len(items) != 2 {
-			return nil, fmt.Errorf("bad format: %s", data)
-		}
+		if sshInfoPattern.MatchString(data) {
+			items := strings.SplitN(data, " ", 2)
+			if len(items) != 2 {
+				return nil, fmt.Errorf("bad format: %s", data)
+			}
 
-		port, err := strconv.Atoi(items[1])
-		if err != nil {
-			return nil, fmt.Errorf("bad port number '%s': %s", items[1], err)
+			port, err := strconv.Atoi(items[1])
+			if err != nil {
+				return nil, fmt.Errorf("bad port number '%s': %s", items[1], err)
+			}
+			sshInfo.Port = port
+			sshInfo.Host = items[0]
+			sshInfo.ProtoType = config.ProtoTypeGerrit
+			return &sshInfo, nil
 		}
-		sshInfo.Port = port
-		sshInfo.Host = items[0]
-		sshInfo.ProtoType = config.RemoteTypeGerrit
-	} else {
-		err = json.Unmarshal([]byte(data), &sshInfo)
-		if err != nil {
-			return nil, err
-		}
+	}
+
+	err = json.Unmarshal([]byte(data), &sshInfo)
+	if err != nil {
+		return nil, err
 	}
 	return &sshInfo, nil
 }
@@ -304,4 +381,31 @@ func getHTTPClient() *http.Client {
 	}
 
 	return httpClient
+}
+
+func urlToKey(address string) string {
+	var (
+		u   = config.ParseGitURL(address)
+		key = ""
+	)
+
+	if u == nil {
+		log.Debugf("fail to parse url: %s", address)
+		return ""
+	}
+
+	if u.Proto == "http" || u.Proto == "https" {
+		key = u.Proto + "://"
+		key += u.Host
+		if u.Port > 0 && u.Port != 80 && u.Port != 443 {
+			key += fmt.Sprintf(":%d", u.Port)
+		}
+	} else if u.Proto == "ssh" {
+		key = u.Proto + "://"
+		key += u.Host
+		if u.Port > 0 && u.Port != 22 {
+			key += fmt.Sprintf(":%d", u.Port)
+		}
+	}
+	return key
 }

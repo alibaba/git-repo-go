@@ -19,7 +19,7 @@ import (
 	"io"
 	"strings"
 
-	"code.alibaba-inc.com/force/git-repo/project"
+	"code.alibaba-inc.com/force/git-repo/common"
 )
 
 // GitPushCommand holds command and args for git command.
@@ -33,26 +33,28 @@ type GitPushCommand struct {
 // ProtoHelper defines interface for proto helper.
 type ProtoHelper interface {
 	GetType() string
+	GetSSHInfo() *SSHInfo
 	GetGitPushCommandPipe(io.Reader) ([]byte, error)
-	GetGitPushCommand(*project.UploadOptions) (*GitPushCommand, error)
+	GetGitPushCommand(*common.UploadOptions) (*GitPushCommand, error)
 	GetDownloadRef(string, string) (string, error)
 }
 
 // NewProtoHelper returns proto helper for specific proto type.
-func NewProtoHelper(protoType string) ProtoHelper {
-	protoType = strings.ToLower(protoType)
-	switch protoType {
+func NewProtoHelper(sshInfo *SSHInfo) ProtoHelper {
+	switch strings.ToLower(sshInfo.ProtoType) {
 	case "agit":
-		return &AGitHelper{}
+		return NewAGitProtoHelper(sshInfo)
 	case "gerrit":
-		return &GerritHelper{}
+		return NewGerritProtoHelper(sshInfo)
+	case "":
+		return NewDefaultProtoHelper(sshInfo)
 	}
-	return &ExternalHelper{ProtoType: protoType}
+	return NewExternalProtoHelper(sshInfo)
 }
 
 func getGitPushCommandPipe(proto ProtoHelper, reader io.Reader) ([]byte, error) {
 	var (
-		o   = project.UploadOptions{}
+		o   = common.UploadOptions{}
 		err error
 	)
 

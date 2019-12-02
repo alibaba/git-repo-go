@@ -26,7 +26,7 @@ type RepoWorkSpace struct {
 	Projects        []*project.Project
 	projectByName   map[string][]*project.Project
 	projectByPath   map[string]*project.Project
-	RemoteMap       map[string]project.RemoteWithError
+	RemoteMap       map[string]project.Remote
 	httpClient      *http.Client
 }
 
@@ -198,7 +198,7 @@ func (v *RepoWorkSpace) loadProjects(manifestURL string) error {
 	}
 
 	// Set RemoteMap
-	v.RemoteMap = make(map[string]project.RemoteWithError)
+	v.RemoteMap = make(map[string]project.Remote)
 
 	// Set projects
 	v.Projects = []*project.Project{}
