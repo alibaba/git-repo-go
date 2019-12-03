@@ -56,6 +56,10 @@ func (v GerritProtoHelper) GetGitPushCommandPipe(reader io.Reader) ([]byte, erro
 
 // GetGitPushCommand reads upload options and returns git push command.
 func (v GerritProtoHelper) GetGitPushCommand(o *common.UploadOptions) (*GitPushCommand, error) {
+	if o.CodeReviewID != "" {
+		return nil, fmt.Errorf("Change code review by ID is not allowed in Gerrit")
+	}
+
 	cmds := []string{"git", "push"}
 
 	if o.ReviewURL == "" {

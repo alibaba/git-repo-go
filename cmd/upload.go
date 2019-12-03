@@ -53,6 +53,7 @@ type uploadOptions struct {
 	Branch         string
 	BypassHooks    bool
 	Cc             []string
+	CodeReviewID   string
 	CurrentBranch  bool
 	Description    string
 	DestBranch     string
@@ -294,6 +295,11 @@ func (v *uploadCommand) Command() *cobra.Command {
 		"br",
 		"",
 		"Branch to upload")
+	v.cmd.Flags().StringVarP(&v.O.CodeReviewID,
+		"change",
+		"c",
+		"",
+		"ID of the specific code review to change")
 	v.cmd.Flags().BoolVar(&v.O.CurrentBranch,
 		"cbr",
 		false,
@@ -822,6 +828,7 @@ func (v *uploadCommand) UploadAndReport(branches []project.ReviewableBranch) err
 
 		o := common.UploadOptions{
 			AutoTopic:    v.O.AutoTopic,
+			CodeReviewID: v.O.CodeReviewID,
 			Description:  v.O.Description,
 			DestBranch:   destBranch,
 			Draft:        v.O.Draft,

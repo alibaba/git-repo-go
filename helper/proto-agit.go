@@ -105,21 +105,28 @@ func (v AGitProtoHelper) GetGitPushCommand(o *common.UploadOptions) (*GitPushCom
 		refSpec = config.RefsHeads + localBranch
 	}
 
-	if o.Draft {
-		uploadType = "drafts"
+	if o.CodeReviewID != "" {
+		uploadType = "for-review"
+		refSpec += fmt.Sprintf(":refs/%s/%s",
+			uploadType,
+			o.CodeReviewID)
 	} else {
-		uploadType = "for"
-	}
+		if o.Draft {
+			uploadType = "drafts"
+		} else {
+			uploadType = "for"
+		}
 
-	destBranch := o.DestBranch
-	if strings.HasPrefix(destBranch, config.RefsHeads) {
-		destBranch = strings.TrimPrefix(destBranch, config.RefsHeads)
-	}
+		destBranch := o.DestBranch
+		if strings.HasPrefix(destBranch, config.RefsHeads) {
+			destBranch = strings.TrimPrefix(destBranch, config.RefsHeads)
+		}
 
-	refSpec += fmt.Sprintf(":refs/%s/%s/%s",
-		uploadType,
-		destBranch,
-		localBranch)
+		refSpec += fmt.Sprintf(":refs/%s/%s/%s",
+			uploadType,
+			destBranch,
+			localBranch)
+	}
 
 	if gitCanPushOptions {
 		if o.Title != "" {

@@ -52,13 +52,14 @@ EOF
 test_expect_success "upload command (SSH protocol)" '
 	cat <<-EOF |
 	{
+	  "CodeReviewID": "",
 	  "Description": "description of code review",
 	  "DestBranch": "master",
 	  "Draft": false,
 	  "Issue": "123",
 	  "LocalBranch": "my/topic",
 	  "People":[
-	  	["u1", "u2"],
+		["u1", "u2"],
 		["u3", "u4"]
 	  ],
 	  "ProjectName": "test/repo",
@@ -66,7 +67,7 @@ test_expect_success "upload command (SSH protocol)" '
 	  "Title": "title of code review",
 	  "UserEmail": "Jiang Xin <worldhello.net@gmail.com>",
 	  "Version": 1
-  	}	
+	}
 	EOF
 	git-repo helper proto --type unknown1 --upload >out 2>&1 &&
 	cat out | jq . >actual &&

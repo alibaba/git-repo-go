@@ -19,13 +19,14 @@ EOF
 test_expect_success "upload command (SSH protocol)" '
 	cat <<-EOF |
 	{
+	  "CodeReviewID": "",
 	  "Description": "description of code review",
 	  "DestBranch": "master",
 	  "Draft": false,
 	  "Issue": "123",
 	  "LocalBranch": "my/topic",
 	  "People":[
-	  	["u1", "u2"],
+		["u1", "u2"],
 		["u3", "u4"]
 	  ],
 	  "ProjectName": "test/repo",
@@ -33,7 +34,7 @@ test_expect_success "upload command (SSH protocol)" '
 	  "Title": "title of code review",
 	  "UserEmail": "Jiang Xin <worldhello.net@gmail.com>",
 	  "Version": 1
-  	}	
+	}
 	EOF
 	git-repo helper proto --type gerrit --upload >out 2>&1 &&
 	cat out | jq . >actual &&
@@ -55,13 +56,14 @@ EOF
 test_expect_success "upload command (SSH protocol, draft)" '
 	cat <<-EOF |
 	{
+	  "CodeReviewID": "",
 	  "Description": "description of code review",
 	  "DestBranch": "master",
 	  "Draft": true,
 	  "Issue": "123",
 	  "LocalBranch": "my/topic",
 	  "People":[
-	  	["u1", "u2"],
+		["u1", "u2"],
 		["u3", "u4"]
 	  ],
 	  "ProjectName": "test/repo",
@@ -69,7 +71,7 @@ test_expect_success "upload command (SSH protocol, draft)" '
 	  "Title": "title of code review",
 	  "UserEmail": "Jiang Xin <worldhello.net@gmail.com>",
 	  "Version": 1
-  	}	
+	}
 	EOF
 	git-repo helper proto --type gerrit --upload >out 2>&1 &&
 	cat out | jq . >actual &&
@@ -90,13 +92,14 @@ EOF
 test_expect_success "upload command (HTTP protocol)" '
 	cat <<-EOF |
 	{
+	  "CodeReviewID": "",
 	  "Description": "description of code review",
 	  "DestBranch": "master",
 	  "Draft": false,
 	  "Issue": "123",
 	  "LocalBranch": "my/topic",
 	  "People":[
-	  	["u1", "u2"],
+		["u1", "u2"],
 		["u3", "u4"]
 	  ],
 	  "ProjectName": "test/repo",
@@ -104,10 +107,66 @@ test_expect_success "upload command (HTTP protocol)" '
 	  "Title": "title of code review",
 	  "UserEmail": "Jiang Xin <worldhello.net@gmail.com>",
 	  "Version": 1
-  	}	
+	}
 	EOF
 	git-repo helper proto --type gerrit --upload >out 2>&1 &&
 	cat out | jq . >actual &&
+	test_cmp expect actual
+'
+
+cat >expect <<EOF
+Error: Change code review by ID is not allowed in Gerrit
+EOF
+
+test_expect_success "upload command (SSH protocol with code review ID)" '
+	cat <<-EOF |
+	{
+	  "CodeReviewID": "12345",
+	  "Description": "description of code review",
+	  "DestBranch": "master",
+	  "Draft": false,
+	  "Issue": "123",
+	  "LocalBranch": "my/topic",
+	  "People":[
+		["u1", "u2"],
+		["u3", "u4"]
+	  ],
+	  "ProjectName": "test/repo",
+	  "ReviewURL": "ssh://git@example.com:29418",
+	  "Title": "title of code review",
+	  "UserEmail": "Jiang Xin <worldhello.net@gmail.com>",
+	  "Version": 1
+	}
+	EOF
+	test_must_fail git-repo helper proto --type gerrit --upload >actual 2>&1 &&
+	test_cmp expect actual
+'
+
+cat >expect <<EOF
+Error: Change code review by ID is not allowed in Gerrit
+EOF
+
+test_expect_success "upload command (HTTP protocol with code review ID, draft)" '
+	cat <<-EOF |
+	{
+	  "CodeReviewID": "12345",
+	  "Description": "description of code review",
+	  "DestBranch": "master",
+	  "Draft": true,
+	  "Issue": "123",
+	  "LocalBranch": "my/topic",
+	  "People":[
+		["u1", "u2"],
+		["u3", "u4"]
+	  ],
+	  "ProjectName": "test/repo",
+	  "ReviewURL": "http://example.com",
+	  "Title": "title of code review",
+	  "UserEmail": "Jiang Xin <worldhello.net@gmail.com>",
+	  "Version": 1
+	}
+	EOF
+	test_must_fail git-repo helper proto --type gerrit --upload >actual 2>&1 &&
 	test_cmp expect actual
 '
 
