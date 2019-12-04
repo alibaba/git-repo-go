@@ -775,15 +775,16 @@ func (v *uploadCommand) UploadAndReport(branches []project.ReviewableBranch) err
 
 	haveErrors := false
 	for _, branch := range branches {
+		theProject := branch.Project
 		people := [][]string{[]string{}, []string{}}
 		people[0] = append(people[0], origPeople[0]...)
 		people[1] = append(people[1], origPeople[1]...)
 		branch.AppendReviewers(people)
-		cfg := branch.Project.ConfigWithDefault()
-		if !branch.Project.IsClean() {
-			key := fmt.Sprintf("review.%s.autoupload", branch.Project.Remote.Review)
+		cfg := theProject.ConfigWithDefault()
+		if !theProject.IsClean() {
+			key := fmt.Sprintf("review.%s.autoupload", theProject.Remote.Review)
 			if !cfg.HasKey(key) {
-				fmt.Printf("Uncommitted changes in " + branch.Project.Name)
+				fmt.Printf("Uncommitted changes in " + theProject.Name)
 				fmt.Printf(" (did you forget to amend?):\n")
 				input := userInput(
 					fmt.Sprintf("Continue uploading? (y/N) "),
@@ -797,7 +798,7 @@ func (v *uploadCommand) UploadAndReport(branches []project.ReviewableBranch) err
 			}
 		}
 		if !v.O.AutoTopic {
-			key := fmt.Sprintf("review.%s.uploadtopic", branch.Project.Remote.Review)
+			key := fmt.Sprintf("review.%s.uploadtopic", theProject.Remote.Review)
 			v.O.AutoTopic = cfg.GetBool(key, false)
 		}
 
@@ -833,18 +834,22 @@ func (v *uploadCommand) UploadAndReport(branches []project.ReviewableBranch) err
 			DestBranch:   destBranch,
 			Draft:        v.O.Draft,
 			Issue:        v.O.Issue,
+			LocalBranch:  branch.Branch.Name,
 			MockGitPush:  v.O.MockGitPush,
 			NoCertChecks: v.O.NoCertChecks || config.NoCertChecks(),
 			NoEmails:     v.O.NoEmails,
+			People:       people,
+			ProjectName:  theProject.Name,
 			Private:      v.O.Private,
 			PushOptions:  v.O.PushOptions,
+			ReviewURL:    theProject.GetPushURL(branch.Branch.Name),
 			Title:        v.O.Title,
-			UserEmail:    branch.Project.UserEmail(),
+			UserEmail:    theProject.UserEmail(),
 			WIP:          v.O.WIP,
 			Version:      1,
 		}
 
-		err = branch.UploadForReview(&o, people)
+		err = branch.UploadForReview(&o)
 
 		if err != nil {
 			branch.Uploaded = false
@@ -855,9 +860,9 @@ func (v *uploadCommand) UploadAndReport(branches []project.ReviewableBranch) err
 			// Disable default push for single repo workspace,
 			// because for multple repository, push.default has
 			// already been disabled in `git repo sync` process.
-			if v.ws.IsSingle() && branch.Project != nil {
+			if v.ws.IsSingle() && theProject != nil {
 				// push command must have specific refspec
-				branch.Project.DisableDefaultPush()
+				theProject.DisableDefaultPush()
 			}
 		}
 	}

@@ -2,9 +2,12 @@ package project
 
 import (
 	"fmt"
+	"os/user"
+	"strconv"
 	"strings"
 
 	"code.alibaba-inc.com/force/git-repo/config"
+	"code.alibaba-inc.com/force/git-repo/helper"
 	log "github.com/jiangxin/multi-log"
 	"gopkg.in/src-d/go-git.v4/plumbing"
 )
@@ -149,6 +152,39 @@ func (v Repository) UpdateRef(refname, base, reason string) error {
 	}
 
 	return nil
+}
+
+// GetPushURL returns push URL for review for branch.
+func (v Project) GetPushURL(branch string) string {
+	r := v.Remote
+	if !r.Initialized() {
+		return ""
+	}
+
+	sshInfo := r.GetSSHInfo()
+	if sshInfo.Host == "" {
+		// TODO: Return push url of current remote
+		return ""
+	}
+
+	login := sshInfo.User
+	if login == "<email>" {
+		login = helper.GetLoginFromEmail(v.UserEmail())
+	} else if login == "<login>" {
+		u, err := user.Current()
+		if err == nil {
+			login = u.Username
+		}
+	}
+	if login == "" {
+		login = "git"
+	}
+
+	url := fmt.Sprintf("ssh://%s@%s", login, sshInfo.Host)
+	if sshInfo.Port > 0 && sshInfo.Port != 22 {
+		url += ":" + strconv.Itoa(sshInfo.Port)
+	}
+	return url
 }
 
 // GetHead returns head branch.

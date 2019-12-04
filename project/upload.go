@@ -4,13 +4,10 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"os/user"
-	"strconv"
 	"strings"
 
 	"code.alibaba-inc.com/force/git-repo/common"
 	"code.alibaba-inc.com/force/git-repo/config"
-	"code.alibaba-inc.com/force/git-repo/helper"
 	log "github.com/jiangxin/multi-log"
 )
 
@@ -102,7 +99,7 @@ func (v ReviewableBranch) Commits() []string {
 }
 
 // UploadForReview sends review for branch.
-func (v ReviewableBranch) UploadForReview(o *common.UploadOptions, people [][]string) error {
+func (v ReviewableBranch) UploadForReview(o *common.UploadOptions) error {
 	var err error
 
 	p := v.Project
@@ -122,11 +119,6 @@ func (v ReviewableBranch) UploadForReview(o *common.UploadOptions, people [][]st
 			return fmt.Errorf("no destination for review")
 		}
 	}
-	o.People = people
-
-	o.LocalBranch = v.Branch.Name
-	o.ProjectName = v.Project.Name
-	o.ReviewURL = v.getReviewURL(o)
 
 	pushCmd, err := p.Remote.GetGitPushCommand(o)
 	if err != nil {
@@ -187,36 +179,6 @@ func (v ReviewableBranch) UploadForReview(o *common.UploadOptions, people [][]st
 			err)
 	}
 	return nil
-}
-
-func (v ReviewableBranch) getReviewURL(o *common.UploadOptions) string {
-	p := v.Project
-	r := p.Remote
-	sshInfo := r.GetSSHInfo()
-
-	if sshInfo.Host == "" {
-		// TODO: Return push url of current remote
-		return ""
-	}
-
-	login := sshInfo.User
-	if login == "<email>" {
-		login = helper.GetLoginFromEmail(o.UserEmail)
-	} else if login == "<login>" {
-		u, err := user.Current()
-		if err == nil {
-			login = u.Username
-		}
-	}
-	if login == "" {
-		login = "git"
-	}
-
-	url := fmt.Sprintf("ssh://%s@%s", login, sshInfo.Host)
-	if sshInfo.Port > 0 && sshInfo.Port != 22 {
-		url += ":" + strconv.Itoa(sshInfo.Port)
-	}
-	return url
 }
 
 // GetUploadableBranch returns branch which has commits ready for upload.
