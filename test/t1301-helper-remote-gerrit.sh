@@ -6,13 +6,13 @@ test_description="git-repo helper proto --type gerrit"
 
 cat >expect <<EOF
 {
-  "cmd": "git",
-  "args": [
-    "push",
-    "--receive-pack=gerrit receive-pack",
-    "ssh://git@example.com:29418/test/repo.git",
-    "refs/heads/my/topic:refs/for/master%r=u1,r=u2,cc=u3,cc=u4"
-  ]
+	"cmd": "git",
+	"args": [
+		"push",
+		"--receive-pack=gerrit receive-pack",
+		"ssh://git@example.com:29418/test/repo.git",
+		"refs/heads/my/topic:refs/for/master%r=u1,r=u2,cc=u3,cc=u4"
+	]
 }
 EOF
 
@@ -36,20 +36,19 @@ test_expect_success "upload command (SSH protocol)" '
 	  "Version": 1
 	}
 	EOF
-	git-repo helper proto --type gerrit --upload >out 2>&1 &&
-	cat out | jq . >actual &&
+	git-repo helper proto --type gerrit --upload >actual 2>&1 &&
 	test_cmp expect actual
 '
 
 cat >expect <<EOF
 {
-  "cmd": "git",
-  "args": [
-    "push",
-    "--receive-pack=gerrit receive-pack",
-    "ssh://git@example.com/test/repo.git",
-    "refs/heads/my/topic:refs/drafts/master%r=u1,r=u2,cc=u3,cc=u4"
-  ]
+	"cmd": "git",
+	"args": [
+		"push",
+		"--receive-pack=gerrit receive-pack",
+		"ssh://git@example.com/test/repo.git",
+		"refs/heads/my/topic:refs/drafts/master%r=u1,r=u2,cc=u3,cc=u4"
+	]
 }
 EOF
 
@@ -73,19 +72,18 @@ test_expect_success "upload command (SSH protocol, draft)" '
 	  "Version": 1
 	}
 	EOF
-	git-repo helper proto --type gerrit --upload >out 2>&1 &&
-	cat out | jq . >actual &&
+	git-repo helper proto --type gerrit --upload >actual 2>&1 &&
 	test_cmp expect actual
 '
 
 cat >expect <<EOF
 {
-  "cmd": "git",
-  "args": [
-    "push",
-    "https://example.com/test/repo.git",
-    "refs/heads/my/topic:refs/for/master%r=u1,r=u2,cc=u3,cc=u4"
-  ]
+	"cmd": "git",
+	"args": [
+		"push",
+		"https://example.com/test/repo.git",
+		"refs/heads/my/topic:refs/for/master%r=u1,r=u2,cc=u3,cc=u4"
+	]
 }
 EOF
 
@@ -109,8 +107,7 @@ test_expect_success "upload command (HTTP protocol)" '
 	  "Version": 1
 	}
 	EOF
-	git-repo helper proto --type gerrit --upload >out 2>&1 &&
-	cat out | jq . >actual &&
+	git-repo helper proto --type gerrit --upload >actual 2>&1 &&
 	test_cmp expect actual
 '
 

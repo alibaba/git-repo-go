@@ -68,5 +68,5 @@ func getGitPushCommandPipe(proto ProtoHelper, reader io.Reader) ([]byte, error) 
 	if err != nil {
 		return nil, err
 	}
-	return json.Marshal(&cmd)
+	return json.MarshalIndent(&cmd, "", "\t")
 }
