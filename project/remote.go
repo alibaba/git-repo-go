@@ -13,6 +13,7 @@ type Remote struct {
 	initialized bool
 }
 
+// Initialized indicates whether Remote is initialized.
 func (v *Remote) Initialized() bool {
 	return v.initialized
 }
