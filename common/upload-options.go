@@ -12,7 +12,7 @@ type UploadOptions struct {
 	MockGitPush  bool
 	NoCertChecks bool
 	NoEmails     bool
-	OldOid       string // New
+	OldOid       string
 	People       [][]string
 	Private      bool
 	PushOptions  []string

@@ -230,6 +230,9 @@ func (v Project) PublishedReference(branch string) string {
 // PublishedRevision resolves published reference to revision id.
 func (v Project) PublishedRevision(branch string) string {
 	raw := v.Raw()
+	if strings.HasPrefix(branch, config.RefsHeads) {
+		branch = strings.TrimPrefix(branch, config.RefsHeads)
+	}
 	pub := config.RefsPub + branch
 
 	if raw == nil {

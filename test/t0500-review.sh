@@ -463,7 +463,7 @@ test_expect_success "upload to a ssh review url (no ssh_info cache)" '
 		   branch my/topic-test ( 1 commit(s)) to remote branch master:
 		#         <hash>
 		
-		NOTE: will execute command: git push --receive-pack=agit-receive-pack ssh://git@ssh.example.com/jiangxin/main.git refs/heads/my/topic-test:refs/drafts/master/my/topic-test
+		NOTE: will execute command: git push --receive-pack=agit-receive-pack -o oldoid=<hash> ssh://git@ssh.example.com/jiangxin/main.git refs/heads/my/topic-test:refs/drafts/master/my/topic-test
 		NOTE: will update-ref refs/published/my/topic-test on refs/heads/my/topic-test, reason: review from my/topic-test to master on ssh://git@example.com:10022
 
 		----------------------------------------------------------------------
@@ -503,7 +503,7 @@ test_expect_success "upload to gerrit ssh review url (assume-no, dryrun, use ssh
 		  branch my/topic-test ( 1 commit(s)):
 		         <hash>
 		to ssh://git@example.com:29418 (y/N)? Yes
-		NOTE: will execute command: git push --receive-pack=agit-receive-pack ssh://git@ssh.example.com/jiangxin/main.git refs/heads/my/topic-test:refs/for/master/my/topic-test
+		NOTE: will execute command: git push --receive-pack=agit-receive-pack -o oldoid=<hash> ssh://git@ssh.example.com/jiangxin/main.git refs/heads/my/topic-test:refs/for/master/my/topic-test
 		NOTE: will update-ref refs/published/my/topic-test on refs/heads/my/topic-test, reason: review from my/topic-test to master on ssh://git@example.com:29418
 
 		----------------------------------------------------------------------
@@ -602,7 +602,7 @@ test_expect_success "upload to a ssh review using rcp style URL" '
 		  branch my/topic-test ( 1 commit(s)):
 		         <hash>
 		to ssh://git@example.com (y/N)? Yes
-		NOTE: will execute command: git push --receive-pack=agit-receive-pack ssh://git@ssh.example.com/jiangxin/main.git refs/heads/my/topic-test:refs/for/master/my/topic-test
+		NOTE: will execute command: git push --receive-pack=agit-receive-pack -o oldoid=<hash> ssh://git@ssh.example.com/jiangxin/main.git refs/heads/my/topic-test:refs/for/master/my/topic-test
 		NOTE: will update-ref refs/published/my/topic-test on refs/heads/my/topic-test, reason: review from my/topic-test to master on ssh://git@example.com
 
 		----------------------------------------------------------------------
@@ -662,7 +662,7 @@ test_expect_success "ATTENTION confirm if there are too many commits for review"
 		ATTENTION: You are uploading an unusually high number of commits.
 		YOU PROBABLY DO NOT MEAN TO DO THIS. (Did you rebase across branches?)
 		If you are sure you intend to do this, type '"'"'yes'"'"': Yes
-		NOTE: will execute command: git push --receive-pack=agit-receive-pack ssh://git@ssh.example.com/jiangxin/main.git refs/heads/my/topic-test:refs/for/master/my/topic-test
+		NOTE: will execute command: git push --receive-pack=agit-receive-pack -o oldoid=<hash> ssh://git@ssh.example.com/jiangxin/main.git refs/heads/my/topic-test:refs/for/master/my/topic-test
 
 		----------------------------------------------------------------------
 		EOF

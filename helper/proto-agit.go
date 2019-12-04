@@ -156,6 +156,9 @@ func (v AGitProtoHelper) GetGitPushCommand(o *common.UploadOptions) (*GitPushCom
 		if o.WIP {
 			cmds = append(cmds, "-o", "wip=yes")
 		}
+		if o.OldOid != "" {
+			cmds = append(cmds, "-o", "oldoid="+o.OldOid)
+		}
 	} else {
 		opts := []string{}
 		if o.People != nil && len(o.People) > 0 {
@@ -176,6 +179,9 @@ func (v AGitProtoHelper) GetGitPushCommand(o *common.UploadOptions) (*GitPushCom
 		}
 		if o.WIP {
 			opts = append(opts, "wip")
+		}
+		if o.OldOid != "" {
+			opts = append(opts, "oldoid="+o.OldOid)
 		}
 		if len(opts) > 0 {
 			refSpec = refSpec + "%" + strings.Join(opts, ",")

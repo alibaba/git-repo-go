@@ -751,7 +751,11 @@ func (v uploadCommand) fmtUploadOptionsScript(optionsFile string, published bool
 }
 
 func (v *uploadCommand) UploadAndReport(branches []project.ReviewableBranch) error {
-	origPeople := [][]string{[]string{}, []string{}}
+	var (
+		origPeople = [][]string{[]string{}, []string{}}
+		oldOid     = ""
+	)
+
 	if len(v.O.Reviewers) > 0 {
 		for _, reviewer := range strings.Split(
 			strings.Join(v.O.Reviewers, ","),
@@ -827,6 +831,20 @@ func (v *uploadCommand) UploadAndReport(branches []project.ReviewableBranch) err
 			}
 		}
 
+		if v.O.CodeReviewID == "" {
+			oldOid = theProject.PublishedRevision(branch.Branch.Name)
+		} else {
+			ref, err := theProject.Remote.GetDownloadRef(v.O.CodeReviewID, "")
+			if err != nil {
+				log.Errorf("cannot get code review ref for %s: %s", v.O.CodeReviewID, err)
+			} else {
+				oldOid, err = theProject.ResolveRevision(ref)
+				if err != nil {
+					return fmt.Errorf("fail to find ref '%s', not downloaded yet?", ref)
+				}
+			}
+		}
+
 		o := common.UploadOptions{
 			AutoTopic:    v.O.AutoTopic,
 			CodeReviewID: v.O.CodeReviewID,
@@ -838,6 +856,7 @@ func (v *uploadCommand) UploadAndReport(branches []project.ReviewableBranch) err
 			MockGitPush:  v.O.MockGitPush,
 			NoCertChecks: v.O.NoCertChecks || config.NoCertChecks(),
 			NoEmails:     v.O.NoEmails,
+			OldOid:       oldOid,
 			People:       people,
 			ProjectName:  theProject.Name,
 			Private:      v.O.Private,
