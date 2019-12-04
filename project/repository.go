@@ -31,6 +31,7 @@ type Repository struct {
 
 	IsBare    bool
 	RemoteURL string
+	Remote    Remote
 	Reference string // Alternate repository
 	Settings  *RepoSettings
 	raw       *git.Repository

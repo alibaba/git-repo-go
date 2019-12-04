@@ -24,7 +24,6 @@ type Project struct {
 	Repository
 
 	WorkDir string
-	Remote  Remote
 }
 
 // ConfigWithDefault checks git config from both project and manifest project.
