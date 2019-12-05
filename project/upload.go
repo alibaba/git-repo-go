@@ -8,6 +8,7 @@ import (
 
 	"code.alibaba-inc.com/force/git-repo/common"
 	"code.alibaba-inc.com/force/git-repo/config"
+	"code.alibaba-inc.com/force/git-repo/helper"
 	log "github.com/jiangxin/multi-log"
 )
 
@@ -120,6 +121,18 @@ func (v ReviewableBranch) UploadForReview(o *common.UploadOptions) error {
 		}
 	}
 
+	if o.ReviewURL == "" {
+		return fmt.Errorf("review url not configured for '%s'", o.ProjectName)
+	}
+	if !strings.HasSuffix(o.ReviewURL, "/") {
+		o.ReviewURL += "/"
+	}
+	url := o.ReviewURL + o.ProjectName + ".git"
+	gitURL := config.ParseGitURL(url)
+	if gitURL == nil {
+		return fmt.Errorf("bad review URL: %s", url)
+	}
+
 	pushCmd, err := p.Remote.GetGitPushCommand(o)
 	if err != nil {
 		return err
@@ -132,23 +145,41 @@ func (v ReviewableBranch) UploadForReview(o *common.UploadOptions) error {
 		}
 	}
 	cmdArgs = append(cmdArgs, pushCmd.Args...)
+	envs := []string{}
+	if len(pushCmd.Env) > 0 {
+		envs = append(envs, pushCmd.Env...)
+		if gitURL.IsSSH() {
+			var sshCmdArgs []string
+			sshCmd := helper.NewSSHCmd()
+			sshCmdArgs, envs = sshCmd.Command("", 0, envs)
+			shellCmd := helper.NewShellCmdFromArgs(sshCmdArgs...)
+			envs = append(envs, "GIT_SSH_COMMAND="+shellCmd.QuoteCommand())
+		}
+	}
 
 	if config.IsDryRun() || o.MockGitPush {
 		log.Notef("%swill execute command: %s",
 			v.Project.Prompt(),
 			strings.Join(cmdArgs, " "))
+		for _, env := range envs {
+			log.Notef("%swith extra environment: %s", v.Project.Prompt(), env)
+		}
 	} else {
 		log.Debugf("%sreview by command: %s",
 			v.Project.Prompt(),
 			strings.Join(cmdArgs, " "))
-		// TODO: use custom SSH_COMMAND to push ENV to remote server.
 		cmd := exec.Command(cmdArgs[0], cmdArgs[1:]...)
 		cmd.Dir = p.WorkDir
 		cmd.Stdin = os.Stdin
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
-		if len(pushCmd.Env) > 0 {
-			cmd.Env = pushCmd.Env
+		if len(envs) > 0 {
+			cmd.Env = []string{}
+			cmd.Env = append(cmd.Env, os.Environ()...)
+			cmd.Env = append(cmd.Env, envs...)
+			for _, env := range envs {
+				log.Debugf("%swith extra environment: %s", v.Project.Prompt(), env)
+			}
 		}
 		err = cmd.Run()
 		if err != nil {

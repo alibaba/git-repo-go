@@ -373,6 +373,8 @@ test_expect_success "if has many commits, must confirm before upload" '
 		YOU PROBABLY DO NOT MEAN TO DO THIS. (Did you rebase across branches?)
 		If you are sure you intend to do this, type '"'"'yes'"'"': Yes
 		NOTE: projects/app1> will execute command: git push --receive-pack=agit-receive-pack ssh://git@ssh.example.com/project1.git refs/heads/my/topic1:refs/for/Maint/my/topic1
+		NOTE: projects/app1> with extra environment: AGIT_FLOW=1
+		NOTE: projects/app1> with extra environment: GIT_SSH_COMMAND=ssh -o SendEnv=AGIT_FLOW
 		
 		----------------------------------------------------------------------
 		EOF

@@ -84,6 +84,8 @@ test_expect_success "upload --dest <branch>" '
 		         <hash>
 		to https://example.com (y/N)? Yes
 		NOTE: will execute command: git push --receive-pack=agit-receive-pack ssh://git@ssh.example.com/jiangxin/main.git refs/heads/jx/topic1:refs/for/master/jx/topic1
+		NOTE: with extra environment: AGIT_FLOW=1
+		NOTE: with extra environment: GIT_SSH_COMMAND=ssh -o SendEnv=AGIT_FLOW
 		NOTE: will update-ref refs/published/jx/topic1 on refs/heads/jx/topic1, reason: review from jx/topic1 to master on https://example.com
 		
 		----------------------------------------------------------------------
@@ -120,6 +122,8 @@ test_expect_success "upload --br <branch> --dest <branch>" '
 		         <hash>
 		to https://example.com (y/N)? Yes
 		NOTE: will execute command: git push --receive-pack=agit-receive-pack ssh://git@ssh.example.com/jiangxin/main.git refs/heads/jx/topic1:refs/for/master/jx/topic1
+		NOTE: with extra environment: AGIT_FLOW=1
+		NOTE: with extra environment: GIT_SSH_COMMAND=ssh -o SendEnv=AGIT_FLOW
 		NOTE: will update-ref refs/published/jx/topic1 on refs/heads/jx/topic1, reason: review from jx/topic1 to master on https://example.com
 		
 		----------------------------------------------------------------------

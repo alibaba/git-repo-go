@@ -58,6 +58,8 @@ test_expect_success "confirm if has local edit" '
 		Uncommitted changes in jiangxin/main (did you forget to amend?):
 		Continue uploading? (y/N) Yes
 		NOTE: will execute command: git push --receive-pack=agit-receive-pack ssh://git@ssh.example.com/jiangxin/main.git refs/heads/my/topic-test:refs/for/master/my/topic-test
+		NOTE: with extra environment: AGIT_FLOW=1
+		NOTE: with extra environment: GIT_SSH_COMMAND=ssh -o SendEnv=AGIT_FLOW
 		
 		----------------------------------------------------------------------
 		EOF

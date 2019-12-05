@@ -16,6 +16,7 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 
 	"code.alibaba-inc.com/force/git-repo/version"
 	"github.com/spf13/cobra"
@@ -91,7 +92,10 @@ func (v testVersionCommand) Execute(args []string) error {
 			err = fmt.Errorf("%s and %s are not equal", actualVersion, args[1])
 		}
 	}
-	return err
+	if err != nil {
+		os.Exit(1)
+	}
+	return nil
 }
 
 var testVersionCmd = testVersionCommand{}

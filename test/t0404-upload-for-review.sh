@@ -91,6 +91,8 @@ NOTE: no editor, input data unchanged
 #         <hash>
 
 NOTE: will execute command: git push --receive-pack=agit-receive-pack -o oldoid=<hash> ssh://git@ssh.example.com/repository/main.git refs/heads/review:refs/for-review/12345
+NOTE: with extra environment: AGIT_FLOW=1
+NOTE: with extra environment: GIT_SSH_COMMAND=ssh -o SendEnv=AGIT_FLOW
 NOTE: will update-ref refs/published/review on refs/heads/review, reason: review from review to master on http://example.com
 
 ----------------------------------------------------------------------

@@ -30,6 +30,14 @@ type GitURL struct {
 	Repo  string
 }
 
+// UserHost returns user@hostname.
+func (v GitURL) UserHost() string {
+	if v.User == "" {
+		return v.Host
+	}
+	return v.User + "@" + v.Host
+}
+
 // GetReviewURL returns review URL.
 func (v GitURL) GetReviewURL() string {
 	var u string

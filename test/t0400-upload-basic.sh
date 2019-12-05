@@ -138,6 +138,8 @@ test_expect_success "with new commit, ready for upload (edit push options)" '
 		#         <hash>
 		
 		NOTE: main> will execute command: git push --receive-pack=agit-receive-pack ssh://git@ssh.example.com/main.git refs/heads/my/topic1:refs/for/Maint/my/topic1
+		NOTE: main> with extra environment: AGIT_FLOW=1
+		NOTE: main> with extra environment: GIT_SSH_COMMAND=ssh -o SendEnv=AGIT_FLOW
 		NOTE: main> will update-ref refs/published/my/topic1 on refs/heads/my/topic1, reason: review from my/topic1 to Maint on https://example.com
 		
 		----------------------------------------------------------------------
@@ -204,6 +206,8 @@ test_expect_success "upload --dryrun --drafts" '
 		         <hash>
 		to https://example.com (y/N)? Yes
 		NOTE: main> will execute command: git push --receive-pack=agit-receive-pack ssh://git@ssh.example.com/main.git refs/heads/my/topic1:refs/drafts/Maint/my/topic1
+		NOTE: main> with extra environment: AGIT_FLOW=1
+		NOTE: main> with extra environment: GIT_SSH_COMMAND=ssh -o SendEnv=AGIT_FLOW
 		NOTE: main> will update-ref refs/published/my/topic1 on refs/heads/my/topic1, reason: review from my/topic1 to Maint on https://example.com
 		
 		----------------------------------------------------------------------
@@ -243,6 +247,8 @@ test_expect_success "upload --dryrun" '
 			EOF
 		fi &&
 		cat >>expect<<-EOF &&
+		NOTE: main> with extra environment: AGIT_FLOW=1
+		NOTE: main> with extra environment: GIT_SSH_COMMAND=ssh -o SendEnv=AGIT_FLOW
 		NOTE: main> will update-ref refs/published/my/topic1 on refs/heads/my/topic1, reason: review from my/topic1 to Maint on https://example.com
 		
 		----------------------------------------------------------------------
@@ -280,6 +286,8 @@ test_expect_success "mock-git-push, but do update-ref for upload" '
 		         <hash>
 		to https://example.com (y/N)? Yes
 		NOTE: main> will execute command: git push --receive-pack=agit-receive-pack ssh://git@ssh.example.com/main.git refs/heads/my/topic1:refs/for/Maint/my/topic1
+		NOTE: main> with extra environment: AGIT_FLOW=1
+		NOTE: main> with extra environment: GIT_SSH_COMMAND=ssh -o SendEnv=AGIT_FLOW
 		
 		----------------------------------------------------------------------
 		EOF

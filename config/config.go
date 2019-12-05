@@ -36,6 +36,9 @@ var (
 
 	// CommitIDPattern indicates raw commit ID
 	CommitIDPattern = regexp.MustCompile(`^[0-9a-f]{40}([0-9a-f]{24})?$`)
+
+	// GitDefaultConfig is git global and system config.
+	GitDefaultConfig goconfig.GitConfig
 )
 
 // Exported macros
@@ -169,11 +172,7 @@ func GetLogRotateSize() int64 {
 
 // NoCertChecks indicates whether ignore ssl cert.
 func NoCertChecks() bool {
-	cfg, err := goconfig.LoadAll("")
-	if err != nil {
-		return false
-	}
-	return !cfg.GetBool("http.sslverify", true)
+	return !GitDefaultConfig.GetBool("http.sslverify", true)
 }
 
 // GetMockSSHInfoStatus gets --mock-ssh-info-status option.
@@ -212,4 +211,6 @@ func init() {
 
 	viper.SetEnvPrefix(ViperEnvPrefix)
 	viper.AutomaticEnv()
+
+	GitDefaultConfig = goconfig.DefaultConfig()
 }
