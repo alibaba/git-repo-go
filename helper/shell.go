@@ -8,14 +8,17 @@ import (
 )
 
 var (
+	// NormalArgsPattern matches args which do not need to be quoted.
 	NormalArgsPattern = regexp.MustCompile(`^[0-9a-zA-Z:/%,.@+=_-]+$`)
 )
 
+// ShellCmd is used to parse shell command.
 type ShellCmd struct {
 	Cmd  string
 	Args []string
 }
 
+// QuoteCommand quotes command args which has space.
 func (v ShellCmd) QuoteCommand() string {
 	cmd := bytes.NewBuffer([]byte{})
 	cmd.WriteString(v.quoteString(v.Cmd))
@@ -62,6 +65,7 @@ func (v ShellCmd) quoteString(s string) string {
 	return buf.String()
 }
 
+// NewShellCmdFromArgs creates ShellCmd from command args.
 func NewShellCmdFromArgs(args ...string) *ShellCmd {
 	shellCmd := ShellCmd{}
 	shellCmd.Cmd = args[0]
@@ -71,6 +75,7 @@ func NewShellCmdFromArgs(args ...string) *ShellCmd {
 	return &shellCmd
 }
 
+// NewShellCmd creates ShellCmd object from command line.
 func NewShellCmd(cmd string, withArgs bool) *ShellCmd {
 	shellCmd := ShellCmd{}
 	cmd = strings.TrimSpace(cmd)

@@ -13,25 +13,28 @@ import (
 	log "github.com/jiangxin/multi-log"
 )
 
+// Define constants for SSH variant types.
 const (
-	SSH_VARIANT_AUTO = iota
-	SSH_VARIANT_SIMPLE
-	SSH_VARIANT_SSH
-	SSH_VARIANT_PLINK
-	SSH_VARIANT_PUTTY
-	SSH_VARIANT_TORTOISEPLINK
+	SSHVariantAuto = iota
+	SSHVariantSimple
+	SSHVariantSSH
+	SSHVariantPlink
+	SSHVariantPutty
+	SSHVariantTortoisePlink
 )
 
 const (
 	sshVariantDetectTimeout = 2
 )
 
+// SSHCmd is composor for SSH command.
 type SSHCmd struct {
 	ssh     string
 	args    []string
 	variant int
 }
 
+// NewSSHCmd returns SSHCmd by inspecting environments like `GIT_SSH_COMMAND`.
 func NewSSHCmd() *SSHCmd {
 	var (
 		ssh  string
@@ -76,65 +79,65 @@ func (v *SSHCmd) Variant() int {
 	if setting != "" {
 		switch strings.ToLower(setting) {
 		case "auto":
-			v.variant = SSH_VARIANT_AUTO
+			v.variant = SSHVariantAuto
 		case "plink":
-			v.variant = SSH_VARIANT_PLINK
+			v.variant = SSHVariantPlink
 		case "putty":
-			v.variant = SSH_VARIANT_PUTTY
+			v.variant = SSHVariantPutty
 		case "tortoiseplink":
-			v.variant = SSH_VARIANT_TORTOISEPLINK
+			v.variant = SSHVariantTortoisePlink
 		case "simple":
-			v.variant = SSH_VARIANT_SIMPLE
+			v.variant = SSHVariantSimple
 		default:
-			v.variant = SSH_VARIANT_SSH
+			v.variant = SSHVariantSSH
 		}
 	} else {
 		switch strings.ToLower(path.Base(v.SSH())) {
 		case "ssh", "ssh.exe":
-			v.variant = SSH_VARIANT_SSH
+			v.variant = SSHVariantSSH
 		case "plink", "plink.exe":
-			v.variant = SSH_VARIANT_PLINK
+			v.variant = SSHVariantPlink
 		case "tortoiseplink", "tortoiseplink.exe":
-			v.variant = SSH_VARIANT_TORTOISEPLINK
+			v.variant = SSHVariantTortoisePlink
 		default:
-			v.variant = SSH_VARIANT_AUTO
+			v.variant = SSHVariantAuto
 		}
 	}
 
-	if v.variant == SSH_VARIANT_AUTO {
+	if v.variant == SSHVariantAuto {
 		ctx, cancel := context.WithTimeout(
 			context.Background(),
 			sshVariantDetectTimeout*time.Second,
 		)
 		defer cancel()
 		if err := exec.CommandContext(ctx, v.SSH(), "-G", "127.0.0.1").Run(); err != nil {
-			v.variant = SSH_VARIANT_SIMPLE
+			v.variant = SSHVariantSimple
 		} else {
-			v.variant = SSH_VARIANT_SSH
+			v.variant = SSHVariantSSH
 		}
 	}
 	return v.variant
 }
 
-// Commands returns command and environments.
+// Command returns command and environments used for ssh connection.
 func (v *SSHCmd) Command(host string, port int, envs []string) ([]string, []string) {
 	cmdArgs := []string{v.SSH()}
 	cmdArgs = append(cmdArgs, v.Args()...)
-	if v.Variant() == SSH_VARIANT_SSH {
+	if v.Variant() == SSHVariantSSH {
 		for _, env := range envs {
 			cmdArgs = append(cmdArgs, "-o", "SendEnv="+strings.Split(env, "=")[0])
 		}
 	}
-	if v.Variant() == SSH_VARIANT_TORTOISEPLINK {
+	if v.Variant() == SSHVariantTortoisePlink {
 		cmdArgs = append(cmdArgs, "-batch")
 	}
 	if port > 0 && port != 22 {
 		switch v.Variant() {
-		case SSH_VARIANT_SSH:
+		case SSHVariantSSH:
 			cmdArgs = append(cmdArgs, "-p", strconv.Itoa(port))
-		case SSH_VARIANT_PUTTY, SSH_VARIANT_PLINK, SSH_VARIANT_TORTOISEPLINK:
+		case SSHVariantPutty, SSHVariantPlink, SSHVariantTortoisePlink:
 			cmdArgs = append(cmdArgs, "-P", strconv.Itoa(port))
-		case SSH_VARIANT_SIMPLE:
+		case SSHVariantSimple:
 			log.Fatal("ssh variant 'simple' does not support setting port")
 		}
 	}

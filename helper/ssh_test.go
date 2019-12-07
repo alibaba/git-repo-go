@@ -15,11 +15,11 @@ func TestGitSSHCmdEnv(t *testing.T) {
 	os.Unsetenv("GIT_SSH_VARIANT")
 
 	m := map[string]int{
-		`"C:/Program Files/TortoiseGit/TortoisePlink.exe" arg1 arg2`: SSH_VARIANT_TORTOISEPLINK,
-		"ssh":                         SSH_VARIANT_SSH,
-		"ssh.exe -p 22 -o setenv=a=b": SSH_VARIANT_SSH,
-		`"C:/Program Files/Plink/Plink.exe" arg1 arg2`: SSH_VARIANT_PLINK,
-		"unknown program": SSH_VARIANT_SIMPLE,
+		`"C:/Program Files/TortoiseGit/TortoisePlink.exe" arg1 arg2`: SSHVariantTortoisePlink,
+		"ssh":                         SSHVariantSSH,
+		"ssh.exe -p 22 -o setenv=a=b": SSHVariantSSH,
+		`"C:/Program Files/Plink/Plink.exe" arg1 arg2`: SSHVariantPlink,
+		"unknown program": SSHVariantSimple,
 	}
 
 	for env, variant := range m {
@@ -36,11 +36,11 @@ func TestGitSSHEnv(t *testing.T) {
 	os.Unsetenv("GIT_SSH_VARIANT")
 
 	m := map[string]int{
-		"ssh":                             SSH_VARIANT_SSH,
-		"ssh.exe":                         SSH_VARIANT_SSH,
-		"C:/ProgramFiles/Plink/Plink.exe": SSH_VARIANT_PLINK,
-		"C:/Program Files/TortoiseGit/TortoisePlink.exe": SSH_VARIANT_TORTOISEPLINK,
-		"unknown program": SSH_VARIANT_SIMPLE,
+		"ssh":                             SSHVariantSSH,
+		"ssh.exe":                         SSHVariantSSH,
+		"C:/ProgramFiles/Plink/Plink.exe": SSHVariantPlink,
+		"C:/Program Files/TortoiseGit/TortoisePlink.exe": SSHVariantTortoisePlink,
+		"unknown program": SSHVariantSimple,
 	}
 
 	for env, variant := range m {
@@ -57,13 +57,13 @@ func TestGitSSHVariantEnv(t *testing.T) {
 	os.Unsetenv("GIT_SSH_VARIANT")
 
 	m := map[string]int{
-		"auto":          SSH_VARIANT_SSH,
-		"putty":         SSH_VARIANT_PUTTY,
-		"plink":         SSH_VARIANT_PLINK,
-		"tortoisePlink": SSH_VARIANT_TORTOISEPLINK,
-		"simple":        SSH_VARIANT_SIMPLE,
-		"ssh":           SSH_VARIANT_SSH,
-		"unknown":       SSH_VARIANT_SSH,
+		"auto":          SSHVariantSSH,
+		"putty":         SSHVariantPutty,
+		"plink":         SSHVariantPlink,
+		"tortoiseplink": SSHVariantTortoisePlink,
+		"simple":        SSHVariantSimple,
+		"ssh":           SSHVariantSSH,
+		"unknown":       SSHVariantSSH,
 	}
 
 	for env, variant := range m {
