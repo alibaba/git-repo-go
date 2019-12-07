@@ -3,6 +3,7 @@ package helper
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
@@ -22,6 +23,7 @@ import (
 )
 
 const (
+	sshInfoCmdTimeout         = 3
 	remoteCallTimeout         = 10
 	sshInfoCacheDefaultExpire = 3600 * 12 // Seconds
 	expireTimeLayout          = "2006-01-02 15:04:05"
@@ -98,7 +100,7 @@ func (v SSHInfoQuery) GetSSHInfo(address string, useCache bool) (*SSHInfo, error
 	}
 
 	// Call ssh_info API
-	sshInfo, err := v.QuerySSHInfo(address)
+	sshInfo, err := querySSHInfo(address)
 	if err != nil {
 		return nil, err
 	}
@@ -125,8 +127,21 @@ func (v SSHInfoQuery) GetSSHInfo(address string, useCache bool) (*SSHInfo, error
 	return sshInfo, nil
 }
 
-// QuerySSHInfo queries ssh_info API and return SSHInfo object.
-func (v SSHInfoQuery) QuerySSHInfo(address string) (*SSHInfo, error) {
+// NewSSHInfoQuery creates new query object. file is name of the cache.
+func NewSSHInfoQuery(cacheFile string) *SSHInfoQuery {
+	query := SSHInfoQuery{CacheFile: cacheFile}
+	if cacheFile != "" {
+		cfg, _ := goconfig.Load(cacheFile)
+		if cfg == nil {
+			cfg = goconfig.NewGitConfig()
+		}
+		query.cfg = cfg
+	}
+	return &query
+}
+
+// querySSHInfo queries ssh_info API and return SSHInfo object.
+func querySSHInfo(address string) (*SSHInfo, error) {
 	env := os.Getenv("REPO_HOST_PORT_INFO")
 	if env != "" {
 		return sshInfoFromString(env)
@@ -148,9 +163,9 @@ func (v SSHInfoQuery) QuerySSHInfo(address string) (*SSHInfo, error) {
 
 	url := config.ParseGitURL(address)
 	if url == nil {
-		sshInfo, err := v.QuerySSHInfo("https://" + address)
+		sshInfo, err := querySSHInfo("https://" + address)
 		if err != nil {
-			sshInfo, err = v.QuerySSHInfo("http://" + address)
+			sshInfo, err = querySSHInfo("http://" + address)
 		}
 		if err != nil {
 			return nil, err
@@ -169,19 +184,6 @@ func (v SSHInfoQuery) QuerySSHInfo(address string) (*SSHInfo, error) {
 		return nil, err
 	}
 	return sshInfo, nil
-}
-
-// NewSSHInfoQuery creates new query object. file is name of the cache.
-func NewSSHInfoQuery(cacheFile string) *SSHInfoQuery {
-	query := SSHInfoQuery{CacheFile: cacheFile}
-	if cacheFile != "" {
-		cfg, _ := goconfig.Load(cacheFile)
-		if cfg == nil {
-			cfg = goconfig.NewGitConfig()
-		}
-		query.cfg = cfg
-	}
-	return &query
 }
 
 // sshInfoFromAPI queries ssh_info API and return SSHInfo object.
@@ -255,14 +257,8 @@ func sshInfoFromCommand(url *config.GitURL) (*SSHInfo, error) {
 		return nil, fmt.Errorf("bad protocol, ssh_info only apply for SSH")
 	}
 
-	cmdArgs := []string{"ssh"}
-	if url.User != "" {
-		cmdArgs = append(cmdArgs, "-l", url.User)
-	}
-	if url.Port > 0 && url.Port != 22 {
-		cmdArgs = append(cmdArgs, "-p", strconv.Itoa(url.Port))
-	}
-	cmdArgs = append(cmdArgs, url.Host, "ssh_info")
+	cmdArgs, _ := NewSSHCmd().Command(url.UserHost(), url.Port, nil)
+	cmdArgs = append(cmdArgs, "ssh_info")
 
 	// Mock ssh_info API
 	if config.GetMockSSHInfoResponse() != "" || config.GetMockSSHInfoStatus() != 0 {
@@ -278,9 +274,13 @@ func sshInfoFromCommand(url *config.GitURL) (*SSHInfo, error) {
 			sshInfo, err = sshInfoFromString(mockResponse)
 		}
 	} else {
+		ctx, cancel := context.WithTimeout(
+			context.Background(),
+			sshInfoCmdTimeout*time.Second,
+		)
+		defer cancel()
 		log.Debugf("will execute: %s", strings.Join(cmdArgs, " "))
-		cmd := exec.Command(cmdArgs[0], cmdArgs[1:]...)
-		out, err = cmd.Output()
+		out, err = exec.CommandContext(ctx, cmdArgs[0], cmdArgs[1:]...).Output()
 		if err != nil {
 			err = fmt.Errorf("pipe ssh_info cmd failed: %s", err)
 		} else {
@@ -297,9 +297,8 @@ func sshInfoFromCommand(url *config.GitURL) (*SSHInfo, error) {
 				ProtoType: config.ProtoTypeGerrit}, nil
 		}
 
-		return nil, fmt.Errorf("fail to run ssh_info cmd on %s: %s",
-			url.GetReviewURL(),
-			err)
+		log.Notef("fail to check ssh_info for SSH protocol, will check HTTP instead")
+		return querySSHInfo(url.Host)
 	}
 	return sshInfo, nil
 }

@@ -52,7 +52,7 @@ func (v testSSHInfoCommand) Execute(args []string) error {
 	}
 
 	query := helper.NewSSHInfoQuery("")
-	sshInfo, err := query.QuerySSHInfo(args[0])
+	sshInfo, err := query.GetSSHInfo(args[0], false)
 	if err != nil {
 		return err
 	}

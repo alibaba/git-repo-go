@@ -22,6 +22,10 @@ const (
 	SSH_VARIANT_TORTOISEPLINK
 )
 
+const (
+	sshVariantDetectTimeout = 2
+)
+
 type SSHCmd struct {
 	ssh     string
 	args    []string
@@ -98,7 +102,10 @@ func (v *SSHCmd) Variant() int {
 	}
 
 	if v.variant == SSH_VARIANT_AUTO {
-		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+		ctx, cancel := context.WithTimeout(
+			context.Background(),
+			sshVariantDetectTimeout*time.Second,
+		)
 		defer cancel()
 		if err := exec.CommandContext(ctx, v.SSH(), "-G", "127.0.0.1").Run(); err != nil {
 			v.variant = SSH_VARIANT_SIMPLE

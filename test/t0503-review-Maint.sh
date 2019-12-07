@@ -328,7 +328,7 @@ test_expect_success "upload to a ssh review url" '
 	(
 		cd work &&
 		cat >expect<<-EOF &&
-		NOTE: mock executing: ssh -l git -p 10022 example.com ssh_info
+		NOTE: mock executing: ssh -p 10022 git@example.com ssh_info
 		Upload project (jiangxin/main) to remote branch Maint:
 		  branch jx/topic ( 1 commit(s)):
 		         <hash>
@@ -371,7 +371,7 @@ test_expect_success "upload to gerrit ssh review url (assume-no, dryrun, use ssh
 	(
 		cd work &&
 		cat >expect<<-EOF &&
-		NOTE: mock executing: ssh -l git -p 29418 example.com ssh_info
+		NOTE: mock executing: ssh -p 29418 git@example.com ssh_info
 		Upload project (jiangxin/main) to remote branch Maint:
 		  branch jx/topic ( 1 commit(s)):
 		         <hash>
@@ -407,7 +407,7 @@ test_expect_success "upload to gerrit ssh review url (assume-no, dryrun, no-cach
 	(
 		cd work &&
 		cat >expect<<-EOF &&
-		NOTE: mock executing: ssh -l git -p 29418 example.com ssh_info
+		NOTE: mock executing: ssh -p 29418 git@example.com ssh_info
 		Upload project (jiangxin/main) to remote branch Maint:
 		  branch jx/topic ( 1 commit(s)):
 		         <hash>
@@ -440,7 +440,7 @@ test_expect_success "upload to gerrit ssh review url" '
 	(
 		cd work &&
 		cat >expect<<-EOF &&
-		NOTE: mock executing: ssh -l git -p 29418 example.com ssh_info
+		NOTE: mock executing: ssh -p 29418 git@example.com ssh_info
 		Upload project (jiangxin/main) to remote branch Maint:
 		  branch jx/topic ( 1 commit(s)):
 		         <hash>
@@ -479,7 +479,7 @@ test_expect_success "upload to a ssh review using rcp style URL" '
 	(
 		cd work &&
 		cat >expect<<-EOF &&
-		NOTE: mock executing: ssh -l git example.com ssh_info
+		NOTE: mock executing: ssh git@example.com ssh_info
 		Upload project (jiangxin/main) to remote branch Maint:
 		  branch jx/topic ( 1 commit(s)):
 		         <hash>
