@@ -20,7 +20,7 @@ cat >expect <<EOF
 		"reviewers=u1,u2",
 		"-o",
 		"cc=u3,u4",
-		"ssh://git@example.com/test/repo.git",
+		"origin",
 		"refs/heads/my/topic:refs/for/master/my/topic"
 	],
 	"env": [
@@ -32,7 +32,7 @@ EOF
 test_expect_success "upload command (SSH protocol)" '
 	cat <<-EOF |
 	{
-	  "CodeReviewID": "",
+	  "CodeReview": {"ID": "", "Ref": ""},
 	  "Description": "description of code review",
 	  "DestBranch": "master",
 	  "Draft": false,
@@ -43,7 +43,8 @@ test_expect_success "upload command (SSH protocol)" '
 		["u3", "u4"]
 	  ],
 	  "ProjectName": "test/repo",
-	  "ReviewURL": "ssh://git@example.com",
+	  "RemoteName": "origin",
+	  "RemoteURL": "ssh://git@example.com/test/repo.git",
 	  "Title": "title of code review",
 	  "UserEmail": "Jiang Xin <worldhello.net@gmail.com>",
 	  "Version": 1
@@ -69,7 +70,7 @@ cat >expect <<EOF
 		"reviewers=u1,u2",
 		"-o",
 		"cc=u3,u4",
-		"ssh://git@example.com/test/repo.git",
+		"origin",
 		"refs/heads/my/topic:refs/drafts/master/my/topic"
 	],
 	"env": [
@@ -81,7 +82,7 @@ EOF
 test_expect_success "upload command (SSH protocol, draft)" '
 	cat <<-EOF |
 	{
-	  "CodeReviewID": "",
+	  "CodeReview": {"ID": "", "Ref": ""},
 	  "Description": "description of code review",
 	  "DestBranch": "master",
 	  "Draft": true,
@@ -92,7 +93,8 @@ test_expect_success "upload command (SSH protocol, draft)" '
 		["u3", "u4"]
 	  ],
 	  "ProjectName": "test/repo",
-	  "ReviewURL": "ssh://git@example.com",
+	  "RemoteName": "origin",
+	  "RemoteURL": "ssh://git@example.com/test/repo.git",
 	  "Title": "title of code review",
 	  "UserEmail": "Jiang Xin <worldhello.net@gmail.com>",
 	  "Version": 1
@@ -117,7 +119,7 @@ cat >expect <<EOF
 		"reviewers=u1,u2",
 		"-o",
 		"cc=u3,u4",
-		"https://example.com/test/repo.git",
+		"example",
 		"refs/heads/my/topic:refs/for/master/my/topic"
 	],
 	"gitconfig": [
@@ -129,7 +131,7 @@ EOF
 test_expect_success "upload command (HTTP protocol)" '
 	cat <<-EOF |
 	{
-	  "CodeReviewID": "",
+	  "CodeReview": {"ID": "", "Ref": ""},
 	  "Description": "description of code review",
 	  "DestBranch": "master",
 	  "Draft": false,
@@ -140,7 +142,8 @@ test_expect_success "upload command (HTTP protocol)" '
 		["u3", "u4"]
 	  ],
 	  "ProjectName": "test/repo",
-	  "ReviewURL": "https://example.com",
+	  "RemoteName": "example",
+	  "RemoteURL": "https://example.com/test/repo.git",
 	  "Title": "title of code review",
 	  "UserEmail": "Jiang Xin <worldhello.net@gmail.com>",
 	  "Version": 1
@@ -178,7 +181,7 @@ EOF
 test_expect_success "upload command (SSH protocol with code review ID)" '
 	cat <<-EOF |
 	{
-	  "CodeReviewID": "12345",
+	  "CodeReview": {"ID": "12345", "Ref": "refs/merge-requests/12345"},
 	  "Description": "description of code review",
 	  "DestBranch": "master",
 	  "Draft": false,
@@ -189,7 +192,8 @@ test_expect_success "upload command (SSH protocol with code review ID)" '
 		["u3", "u4"]
 	  ],
 	  "ProjectName": "test/repo",
-	  "ReviewURL": "ssh://git@example.com:29418",
+	  "RemoteName": "",
+	  "RemoteURL": "ssh://git@example.com:29418/test/repo.git",
 	  "Title": "title of code review",
 	  "UserEmail": "Jiang Xin <worldhello.net@gmail.com>",
 	  "Version": 1
@@ -214,7 +218,7 @@ cat >expect <<EOF
 		"reviewers=u1,u2",
 		"-o",
 		"cc=u3,u4",
-		"http://example.com/test/repo.git",
+		"origin",
 		"refs/heads/my/topic:refs/for-review/12345"
 	],
 	"gitconfig": [
@@ -226,7 +230,7 @@ EOF
 test_expect_success "upload command (HTTP protocol with code review ID, draft)" '
 	cat <<-EOF |
 	{
-	  "CodeReviewID": "12345",
+	  "CodeReview": {"ID": "12345", "Ref": "refs/merge-requests/12345"},
 	  "Description": "description of code review",
 	  "DestBranch": "master",
 	  "Draft": true,
@@ -237,7 +241,8 @@ test_expect_success "upload command (HTTP protocol with code review ID, draft)" 
 		["u3", "u4"]
 	  ],
 	  "ProjectName": "test/repo",
-	  "ReviewURL": "http://example.com",
+	  "RemoteName": "origin",
+	  "RemoteURL": "http://example.com/test/repo.git",
 	  "Title": "title of code review",
 	  "UserEmail": "Jiang Xin <worldhello.net@gmail.com>",
 	  "Version": 1

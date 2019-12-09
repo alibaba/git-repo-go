@@ -90,6 +90,10 @@ func (v pruneCommand) Execute(args []string) error {
 	)
 
 	ws := v.WorkSpace()
+	err = ws.LoadRemotes(false)
+	if err != nil {
+		return err
+	}
 
 	projects, err := ws.GetProjects(nil, args...)
 	if err != nil {
@@ -284,7 +288,11 @@ func (v pruneCommand) Execute(args []string) error {
 				fmt.Print("  ")
 			}
 			branchName := strings.TrimPrefix(b.Name, config.RefsHeads)
-			rb := p.GetUploadableBranch(b.Name, "", "")
+			remote := p.GetBranchRemote(branchName, false)
+			if remote == nil {
+				fmt.Printf("%s (no remote)\n", branchName)
+			}
+			rb := p.GetUploadableBranch(b.Name, remote, "")
 			if rb != nil {
 				commits := rb.Commits()
 				if len(commits) > 1 {

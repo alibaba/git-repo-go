@@ -16,12 +16,21 @@ type PatchSet struct {
 }
 
 // DownloadPatchSet fetches code review and return the downloaded PatchSet.
-func (v Project) DownloadPatchSet(reviewID, patchID int) (*PatchSet, error) {
-	if !v.Remote.Initialized() {
+func (v Project) DownloadPatchSet(remoteName string, reviewID, patchID int) (*PatchSet, error) {
+	var (
+		remote *Remote
+	)
+
+	if remoteName != "" {
+		remote = v.Remotes.Get(remoteName)
+	} else {
+		remote = v.GetDefaultRemote(true)
+	}
+	if remote == nil || !remote.ProtoHelperReady() {
 		log.Fatalf("%snot remote tracking defined, and do not know where to download",
 			v.Prompt())
 	}
-	reviewRef, err := v.Remote.GetDownloadRef(strconv.Itoa(reviewID), strconv.Itoa(patchID))
+	reviewRef, err := remote.GetDownloadRef(strconv.Itoa(reviewID), strconv.Itoa(patchID))
 	if err != nil {
 		return nil, err
 	}
@@ -32,7 +41,7 @@ func (v Project) DownloadPatchSet(reviewID, patchID int) (*PatchSet, error) {
 	cmdArgs := []string{
 		GIT,
 		"fetch",
-		v.Remote.Name,
+		remote.Name,
 		"+" + reviewRef + ":" + reviewRef,
 		"--",
 	}

@@ -10,7 +10,7 @@ cat >expect <<EOF
 	"args": [
 		"push",
 		"--receive-pack=gerrit receive-pack",
-		"ssh://git@example.com:29418/test/repo.git",
+		"origin",
 		"refs/heads/my/topic:refs/for/master%r=u1,r=u2,cc=u3,cc=u4"
 	]
 }
@@ -19,7 +19,7 @@ EOF
 test_expect_success "upload command (SSH protocol)" '
 	cat <<-EOF |
 	{
-	  "CodeReviewID": "",
+	  "CodeReview": {"ID": "", "Ref": ""},
 	  "Description": "description of code review",
 	  "DestBranch": "master",
 	  "Draft": false,
@@ -30,7 +30,8 @@ test_expect_success "upload command (SSH protocol)" '
 		["u3", "u4"]
 	  ],
 	  "ProjectName": "test/repo",
-	  "ReviewURL": "ssh://git@example.com:29418",
+	  "RemoteName": "origin",
+	  "RemoteURL": "ssh://git@example.com:29418/test/repo.git",
 	  "Title": "title of code review",
 	  "UserEmail": "Jiang Xin <worldhello.net@gmail.com>",
 	  "Version": 1
@@ -55,7 +56,7 @@ EOF
 test_expect_success "upload command (SSH protocol, draft)" '
 	cat <<-EOF |
 	{
-	  "CodeReviewID": "",
+	  "CodeReview": {"ID": "", "Ref": ""},
 	  "Description": "description of code review",
 	  "DestBranch": "master",
 	  "Draft": true,
@@ -66,7 +67,7 @@ test_expect_success "upload command (SSH protocol, draft)" '
 		["u3", "u4"]
 	  ],
 	  "ProjectName": "test/repo",
-	  "ReviewURL": "ssh://git@example.com",
+	  "RemoteURL": "ssh://git@example.com/test/repo.git",
 	  "Title": "title of code review",
 	  "UserEmail": "Jiang Xin <worldhello.net@gmail.com>",
 	  "Version": 1
@@ -90,7 +91,7 @@ EOF
 test_expect_success "upload command (HTTP protocol)" '
 	cat <<-EOF |
 	{
-	  "CodeReviewID": "",
+	  "CodeReview": {"ID": "", "Ref": ""},
 	  "Description": "description of code review",
 	  "DestBranch": "master",
 	  "Draft": false,
@@ -101,7 +102,8 @@ test_expect_success "upload command (HTTP protocol)" '
 		["u3", "u4"]
 	  ],
 	  "ProjectName": "test/repo",
-	  "ReviewURL": "https://example.com",
+	  "RemoteName": "",
+	  "RemoteURL": "https://example.com/test/repo.git",
 	  "Title": "title of code review",
 	  "UserEmail": "Jiang Xin <worldhello.net@gmail.com>",
 	  "Version": 1
@@ -118,7 +120,7 @@ EOF
 test_expect_success "upload command (SSH protocol with code review ID)" '
 	cat <<-EOF |
 	{
-	  "CodeReviewID": "12345",
+	  "CodeReview": {"ID": "12345", "Ref": "refs/merge-requests/12345"},
 	  "Description": "description of code review",
 	  "DestBranch": "master",
 	  "Draft": false,
@@ -129,7 +131,8 @@ test_expect_success "upload command (SSH protocol with code review ID)" '
 		["u3", "u4"]
 	  ],
 	  "ProjectName": "test/repo",
-	  "ReviewURL": "ssh://git@example.com:29418",
+	  "RemoteName": "origin",
+	  "RemoteURL": "ssh://git@example.com:29418/test/repo.git",
 	  "Title": "title of code review",
 	  "UserEmail": "Jiang Xin <worldhello.net@gmail.com>",
 	  "Version": 1
@@ -146,7 +149,7 @@ EOF
 test_expect_success "upload command (HTTP protocol with code review ID, draft)" '
 	cat <<-EOF |
 	{
-	  "CodeReviewID": "12345",
+	  "CodeReview": {"ID": "12345", "Ref": "refs/merge-requests/12345"},
 	  "Description": "description of code review",
 	  "DestBranch": "master",
 	  "Draft": true,
@@ -157,7 +160,8 @@ test_expect_success "upload command (HTTP protocol with code review ID, draft)" 
 		["u3", "u4"]
 	  ],
 	  "ProjectName": "test/repo",
-	  "ReviewURL": "http://example.com",
+	  "RemoteName": "origin",
+	  "RemoteURL": "http://example.com/test/repo.git",
 	  "Title": "title of code review",
 	  "UserEmail": "Jiang Xin <worldhello.net@gmail.com>",
 	  "Version": 1

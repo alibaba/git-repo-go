@@ -52,7 +52,7 @@ EOF
 test_expect_success "upload command (SSH protocol)" '
 	cat <<-EOF |
 	{
-	  "CodeReviewID": "",
+	  "CodeReview": {"ID": "", "Ref": ""},
 	  "Description": "description of code review",
 	  "DestBranch": "master",
 	  "Draft": false,
@@ -63,7 +63,8 @@ test_expect_success "upload command (SSH protocol)" '
 		["u3", "u4"]
 	  ],
 	  "ProjectName": "test/repo",
-	  "ReviewURL": "ssh://git@example.com",
+	  "RemoteName": "",
+	  "RemoteURL": "ssh://git@example.com/test/repo.git",
 	  "Title": "title of code review",
 	  "UserEmail": "Jiang Xin <worldhello.net@gmail.com>",
 	  "Version": 1

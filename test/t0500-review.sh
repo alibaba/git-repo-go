@@ -49,17 +49,22 @@ test_expect_success "upload error: no branch" '
 	)
 '
 
-test_expect_success "upload error: unsupport url protocol" '
+test_expect_success "remote is not reviewable" '
 	(
 		cd work &&
 		cat >expect<<-EOF &&
-		Error: no remote defined for project main
+		Error: remote '"'"'origin'"'"' for project '"'"'main'"'"' is not reviewable
 		EOF
 		(
 			cd main &&
-			git checkout -q master &&
+			git checkout master
+		) &&
+		(
+			cd main &&
 			test_must_fail git peer-review \
-				--no-cache
+				--no-cache \
+				--no-edit \
+				--assume-yes
 		) >out 2>&1 &&
 		sed -e "s#file:///.*#file:///path/of/repo.git#" out >actual &&
 		test_cmp expect actual
@@ -128,7 +133,7 @@ test_expect_success "upload error: no remote URL" '
 		cd work &&
 		cat >expect<<-EOF &&
 		WARNING: no URL defined for remote: origin
-		Error: no remote defined for project main
+		Error: no remote for branch '"'"'my/topic-test'"'"' of project '"'"'main'"'"' to push
 		EOF
 		(
 			cd main &&

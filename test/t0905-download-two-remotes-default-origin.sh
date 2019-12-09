@@ -39,7 +39,7 @@ test_expect_success "default download from origin" '
 	) >out 2>&1 &&
 	head -1 out >actual &&
 	cat >expect<<-EOF &&
-	WARNING: no tracking remote defined, try to download from origin
+	WARNING: multiple remotes are defined, fallback to origin
 	EOF
 	test_cmp expect actual
 '

@@ -19,7 +19,8 @@ var (
 // LoadRemotes calls remote API to get server type and other info.
 func (v *RepoWorkSpace) LoadRemotes(noCache bool) error {
 	var (
-		query *helper.SSHInfoQuery
+		query     *helper.SSHInfoQuery
+		remoteMap = project.NewRemoteMap()
 	)
 
 	if v.Manifest == nil || v.Manifest.Remotes == nil {
@@ -34,18 +35,18 @@ func (v *RepoWorkSpace) LoadRemotes(noCache bool) error {
 		}
 		protoHelper := helper.NewProtoHelper(sshInfo)
 		remote := project.NewRemote(&r, protoHelper)
-		v.RemoteMap[r.Name] = *remote
+		remoteMap.Add(remote)
 	}
 
 	for i := range v.Projects {
+		v.Projects[i].LoadRemotes(remoteMap, noCache)
+
 		name := v.Projects[i].ManifestRemote.Name
 		if name == "" {
 			log.Warnf("empty remote for project '%s'",
 				v.Projects[i].Name)
-			continue
-		}
-		if _, ok := v.RemoteMap[name]; ok {
-			v.Projects[i].Remote = v.RemoteMap[name]
+		} else {
+			v.Projects[i].Remotes.SetDefault(name)
 		}
 	}
 

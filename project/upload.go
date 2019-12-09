@@ -27,6 +27,8 @@ type ReviewableBranch struct {
 	RemoteTrack RemoteTrack
 	Uploaded    bool
 	Error       error
+	CodeReview  common.CodeReview // Push to update specific code review, only available for single repository mode.
+	Remote      *Remote
 
 	isPublished int
 }
@@ -49,8 +51,17 @@ func (v *ReviewableBranch) IsPublished() bool {
 
 // AppendReviewers adds reviewers to people.
 func (v ReviewableBranch) AppendReviewers(people [][]string) {
+	var (
+		review string
+	)
+
 	cfg := v.Project.ConfigWithDefault()
-	review := v.Project.Remote.Review
+	if v.Remote != nil {
+		review = v.Remote.Review
+	}
+	if review == "" {
+		return
+	}
 
 	key := fmt.Sprintf("review.%s.autoreviewer", review)
 	reviewers := cfg.Get(key)
@@ -74,7 +85,11 @@ func (v ReviewableBranch) AppendReviewers(people [][]string) {
 // Published returns published reference.
 func (v *ReviewableBranch) Published() *Reference {
 	pub := Reference{}
-	pub.Name = config.RefsPub + v.Branch.ShortName()
+	if v.CodeReview.Empty() {
+		pub.Name = config.RefsPub + v.Branch.ShortName()
+	} else {
+		pub.Name = v.CodeReview.Ref
+	}
 	revid, err := v.Project.ResolveRevision(pub.Name)
 	if err != nil {
 		v.isPublished = -1
@@ -88,7 +103,16 @@ func (v *ReviewableBranch) Published() *Reference {
 
 // Commits contains commits avaiable for review.
 func (v ReviewableBranch) Commits() []string {
-	commits, err := v.Project.Revlist(v.Branch.Hash, "--not", v.RemoteTrack.Track.Hash)
+	var (
+		commits []string
+		err     error
+	)
+
+	if v.CodeReview.Empty() {
+		commits, err = v.Project.Revlist(v.Branch.Hash, "--not", v.RemoteTrack.Track.Hash)
+	} else {
+		commits, err = v.Project.Revlist(v.Branch.Hash, "--not", v.CodeReview.Ref)
+	}
 	if err != nil {
 		log.Errorf("%sfail to get commits of ReviewableBranch %s: %s",
 			v.Project.Prompt(),
@@ -107,33 +131,26 @@ func (v ReviewableBranch) UploadForReview(o *common.UploadOptions) error {
 	if p == nil {
 		return fmt.Errorf("no project for reviewable branch")
 	}
-	if !p.Remote.Initialized() {
-		return fmt.Errorf("no remote for project '%s' for review", p.Name)
-	}
-	if p.Remote.Review == "" {
+
+	remoteName, remoteURL := p.GetRemotePushNameURL(v.Remote)
+	if remoteURL == "" {
 		return fmt.Errorf("project '%s' has no review url", p.Name)
 	}
+	gitURL := config.ParseGitURL(remoteURL)
+	if gitURL == nil {
+		return fmt.Errorf("bad review URL: %s", remoteURL)
+	}
+	o.RemoteName = remoteName
+	o.RemoteURL = remoteURL
 
-	if o.DestBranch == "" {
+	if v.CodeReview.Empty() && o.DestBranch == "" {
 		o.DestBranch = v.DestBranch
 		if o.DestBranch == "" {
 			return fmt.Errorf("no destination for review")
 		}
 	}
 
-	if o.ReviewURL == "" {
-		return fmt.Errorf("review url not configured for '%s'", o.ProjectName)
-	}
-	if !strings.HasSuffix(o.ReviewURL, "/") {
-		o.ReviewURL += "/"
-	}
-	url := o.ReviewURL + o.ProjectName + ".git"
-	gitURL := config.ParseGitURL(url)
-	if gitURL == nil {
-		return fmt.Errorf("bad review URL: %s", url)
-	}
-
-	pushCmd, err := p.Remote.GetGitPushCommand(o)
+	pushCmd, err := v.Remote.GetGitPushCommand(o)
 	if err != nil {
 		return err
 	}
@@ -191,29 +208,49 @@ func (v ReviewableBranch) UploadForReview(o *common.UploadOptions) error {
 	if strings.HasPrefix(branchName, config.RefsHeads) {
 		branchName = strings.TrimPrefix(branchName, config.RefsHeads)
 	}
-	msg := fmt.Sprintf("review from %s to %s on %s",
-		branchName,
-		o.DestBranch,
-		p.Remote.Review)
 
+	var (
+		publishedRef string
+		msg          string
+	)
+	if v.CodeReview.Empty() {
+		publishedRef = config.RefsPub + branchName
+		msg = fmt.Sprintf("review from %s to %s on %s",
+			branchName,
+			o.DestBranch,
+			v.Remote.Review)
+	} else {
+		publishedRef = v.CodeReview.Ref
+		msg = fmt.Sprintf("update code review #%s of %s",
+			v.CodeReview.ID,
+			v.Remote.Review)
+	}
 	log.Debugf("%sUpdate reference '%s': %s",
 		v.Project.Prompt(),
-		config.RefsPub+branchName,
+		publishedRef,
 		msg)
-	err = p.UpdateRef(config.RefsPub+branchName,
+	err = p.UpdateRef(publishedRef,
 		config.RefsHeads+branchName,
 		msg)
 
 	if err != nil {
-		return fmt.Errorf("fail to create reference '%s': %s",
-			config.RefsPub+branchName,
+		return fmt.Errorf("fail to create or update reference '%s': %s",
+			publishedRef,
 			err)
 	}
 	return nil
 }
 
 // GetUploadableBranch returns branch which has commits ready for upload.
-func (v *Project) GetUploadableBranch(branch, remote, remoteBranch string) *ReviewableBranch {
+func (v *Project) GetUploadableBranch(branch string, remote *Remote, remoteBranch string) *ReviewableBranch {
+	if remote == nil {
+		log.Warnf("BUG: remote is nil for branch '%s' of project '%s'",
+			branch,
+			v.Name,
+		)
+		return nil
+	}
+
 	if branch == "" {
 		branch = v.GetHead()
 		if branch == "" {
@@ -221,30 +258,16 @@ func (v *Project) GetUploadableBranch(branch, remote, remoteBranch string) *Revi
 		}
 	}
 	branch = strings.TrimPrefix(branch, config.RefsHeads)
-	if remote == "" {
-		remote = v.Config().Get("branch." + branch + ".remote")
-	}
+
 	if remoteBranch == "" {
 		remoteBranch = v.Config().Get("branch." + branch + ".merge")
-	}
-
-	if v.Remote.Initialized() {
-		if remote != v.Remote.Name && !config.IsSingleMode() {
-			log.Warnf("%scannot upload, unmatch remote for '%s': %s != %s",
-				v.Prompt(),
-				branch,
-				remote,
-				v.Remote.Name,
-			)
-			return nil
-		}
 	}
 
 	branchID, err := v.ResolveRevision(branch)
 	if err != nil {
 		return nil
 	}
-	track := v.RemoteMatchingBranch(remote, remoteBranch)
+	track := v.RemoteMatchingBranch(remote.Name, remoteBranch)
 	if track == "" {
 		return nil
 	}
@@ -260,13 +283,14 @@ func (v *Project) GetUploadableBranch(branch, remote, remoteBranch string) *Revi
 			Hash: branchID},
 		DestBranch: v.TrackBranch(branch),
 		RemoteTrack: RemoteTrack{
-			Remote: remote,
+			Remote: remote.Name,
 			Branch: remoteBranch,
 			Track: Reference{
 				Name: track,
 				Hash: trackID,
 			},
 		},
+		Remote: remote,
 	}
 
 	if len(rb.Commits()) == 0 {
@@ -284,6 +308,36 @@ func (v *Project) GetUploadableBranch(branch, remote, remoteBranch string) *Revi
 	return &rb
 }
 
+// GetUploadableBranchForChange returns branch which has commits ready for upload.
+func (v *Project) GetUploadableBranchForChange(branch string, remote *Remote, codeReview *common.CodeReview) *ReviewableBranch {
+	if branch == "" {
+		branch = v.GetHead()
+		if branch == "" {
+			return nil
+		}
+	}
+	branch = strings.TrimPrefix(branch, config.RefsHeads)
+	branchID, err := v.ResolveRevision(branch)
+	if err != nil {
+		return nil
+	}
+
+	rb := ReviewableBranch{
+		Project: v,
+		Branch: Branch{
+			Name: branch,
+			Hash: branchID},
+		CodeReview: *codeReview,
+		Remote:     remote,
+	}
+
+	if len(rb.Commits()) == 0 {
+		return nil
+	}
+
+	return &rb
+}
+
 // GetUploadableBranches returns branches which has commits ready for upload.
 func (v *Project) GetUploadableBranches(branch string) []ReviewableBranch {
 	var (
@@ -291,7 +345,8 @@ func (v *Project) GetUploadableBranches(branch string) []ReviewableBranch {
 	)
 
 	if branch != "" {
-		rb := v.GetUploadableBranch(branch, "", "")
+		remote := v.GetBranchRemote(branch, false)
+		rb := v.GetUploadableBranch(branch, remote, "")
 		if rb == nil {
 			return nil
 		}
@@ -300,7 +355,8 @@ func (v *Project) GetUploadableBranches(branch string) []ReviewableBranch {
 	}
 
 	for _, head := range v.Heads() {
-		rb := v.GetUploadableBranch(head.Name, "", "")
+		remote := v.GetBranchRemote(branch, false)
+		rb := v.GetUploadableBranch(head.Name, remote, "")
 		if rb == nil {
 			continue
 		}

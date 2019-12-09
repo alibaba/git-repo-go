@@ -36,7 +36,7 @@ test_expect_success "upload error: not remote defined" '
 	(
 		cd work &&
 		cat >expect<<-EOF &&
-		Error: no remote defined for project main
+		Error: no remote for branch '"'"'master'"'"' of project '"'"'main'"'"' to push
 		EOF
 		(
 			cd main &&

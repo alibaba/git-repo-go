@@ -472,6 +472,7 @@ func NewProject(mp *manifest.Project, s *RepoSettings) *Project {
 		IsBare:    false,
 		Settings:  s,
 		Reference: referencePath(mp, s),
+		Remotes:   NewRemoteMap(),
 	}
 
 	p := Project{

@@ -53,7 +53,7 @@ test_expect_success "upload error: no tracking branch" '
 	(
 		cd work &&
 		cat >expect<<-EOF &&
-		WARNING: no tracking remote defined, try to upload to origin
+		WARNING: multiple remotes are defined, fallback to origin
 		Error: upload failed: cannot find tracking branch
 		
 		Please run command "git branch -u <upstream>" to track a remote branch. E.g.:
@@ -83,7 +83,7 @@ test_expect_success "upload --dest <branch>, with warning" '
 	(
 		cd work &&
 		cat >expect<<-EOF &&
-		WARNING: no tracking remote defined, try to upload to origin
+		WARNING: multiple remotes are defined, fallback to origin
 		Upload project (jiangxin/main) to remote branch master:
 		  branch jx/topic1 ( 1 commit(s)):
 		         <hash>
@@ -104,7 +104,6 @@ test_expect_success "upload --dest <branch>, with warning" '
 				--mock-ssh-info-status 200 \
 				--mock-ssh-info-response \
 				"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}"
-
 		) >out 2>&1 &&
 		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
 		test_cmp expect actual

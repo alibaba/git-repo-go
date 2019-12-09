@@ -197,7 +197,10 @@ func (v Project) SyncLocalHalf(o *CheckoutOptions) error {
 		v.Prompt(), head, branch, track, headid, revid, v.Revision)
 
 	PostUpdate := func(update bool) error {
-		var err error
+		var (
+			err    error
+			remote = v.GetDefaultRemote(true)
+		)
 
 		if branch != "" && track != v.Revision {
 			if v.Revision != "" {
@@ -223,13 +226,13 @@ func (v Project) SyncLocalHalf(o *CheckoutOptions) error {
 		}
 
 		// Install gerrit hooks
-		if v.Remote.Initialized() {
-			if v.Remote.GetType() == config.ProtoTypeGerrit {
+		if remote != nil {
+			if remote.GetType() == config.ProtoTypeGerrit {
 				v.InstallGerritHooks()
 			}
 
 			// Disable default push, push command must have specific refspec
-			if v.Remote.GetType() != "" {
+			if remote.GetType() != "" {
 				v.DisableDefaultPush()
 			}
 		}

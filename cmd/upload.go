@@ -15,7 +15,6 @@
 package cmd
 
 import (
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -53,7 +52,7 @@ type uploadOptions struct {
 	Branch         string
 	BypassHooks    bool
 	Cc             []string
-	CodeReviewID   string
+	CodeReview     common.CodeReview
 	CurrentBranch  bool
 	Description    string
 	DestBranch     string
@@ -295,7 +294,7 @@ func (v *uploadCommand) Command() *cobra.Command {
 		"br",
 		"",
 		"Branch to upload")
-	v.cmd.Flags().StringVarP(&v.O.CodeReviewID,
+	v.cmd.Flags().StringVarP(&v.O.CodeReview.ID,
 		"change",
 		"c",
 		"",
@@ -411,33 +410,46 @@ func (v *uploadCommand) getDestBranch(branch *project.ReviewableBranch) (string,
 func (v uploadCommand) UploadForReviewWithConfirm(branch *project.ReviewableBranch) error {
 	var (
 		answer bool
+		remote *project.Remote
 	)
 
 	p := branch.Project
-	remote := p.Remote
-	key := fmt.Sprintf("review.%s.autoupload", remote.Review)
+	remote = branch.Remote
+	if remote == nil {
+		return fmt.Errorf("cannot find remote of branch '%s' of project '%s'",
+			branch.Branch.Name,
+			p.Name,
+		)
+	}
 	commitList := branch.Commits()
 	cfg := p.ConfigWithDefault()
+	key := fmt.Sprintf("review.%s.autoupload", remote.Review)
 	if cfg.HasKey(key) {
 		answer = cfg.GetBool(key, false)
 		if !answer {
 			return fmt.Errorf("upload blocked by %s = false", key)
 		}
 	} else {
-		destBranch, err := v.getDestBranch(branch)
-		if err != nil {
-			return err
-		}
 		draftStr := ""
 		if v.O.Draft {
 			draftStr = " (draft)"
 		}
-		if p.Path == "." {
-			fmt.Printf("Upload project (%s) to remote branch %s%s:\n",
-				p.Name, destBranch, draftStr)
+
+		if branch.CodeReview.Empty() {
+			destBranch, err := v.getDestBranch(branch)
+			if err != nil {
+				return err
+			}
+			if p.Path == "." {
+				fmt.Printf("Upload project (%s) to remote branch %s%s:\n",
+					p.Name, destBranch, draftStr)
+			} else {
+				fmt.Printf("Upload project %s/ to remote branch %s%s:\n",
+					p.Path, destBranch, draftStr)
+			}
 		} else {
-			fmt.Printf("Upload project %s/ to remote branch %s%s:\n",
-				p.Path, destBranch, draftStr)
+			fmt.Printf("Upload code review #%s of project (%s)%s:\n",
+				branch.CodeReview.ID, p.Name, draftStr)
 		}
 		fmt.Printf("  branch %s (%2d commit(s)):\n",
 			branch.Branch.Name,
@@ -528,19 +540,30 @@ func (v uploadCommand) UploadForReviewWithEditor(branchesMap map[string][]projec
 			if len(b) > 0 {
 				script = append(script, "#")
 			}
-			destBranch, err := v.getDestBranch(&branch)
-			if optionsFile == "" {
-				optionsFile = destBranch
+
+			if branch.CodeReview.Empty() {
+				destBranch, err := v.getDestBranch(&branch)
+				if optionsFile == "" {
+					optionsFile = destBranch
+				}
+				if err != nil {
+					return err
+				}
+				script = append(script,
+					fmt.Sprintf("%s  branch %s (%2d commit(s)) to remote branch %s:",
+						branchComment,
+						name,
+						len(commitList),
+						destBranch))
+			} else {
+				script = append(script,
+					fmt.Sprintf("%s  branch %s (%2d commit(s)) to update code review #%s:",
+						branchComment,
+						name,
+						len(commitList),
+						branch.CodeReview.ID))
+
 			}
-			if err != nil {
-				return err
-			}
-			script = append(script,
-				fmt.Sprintf("%s  branch %s (%2d commit(s)) to remote branch %s:",
-					branchComment,
-					name,
-					len(commitList),
-					destBranch))
 			for i := range commitList {
 				if i < 10 {
 					script = append(script,
@@ -754,6 +777,8 @@ func (v *uploadCommand) UploadAndReport(branches []project.ReviewableBranch) err
 	var (
 		origPeople = [][]string{[]string{}, []string{}}
 		oldOid     = ""
+		err        error
+		destBranch string
 	)
 
 	if len(v.O.Reviewers) > 0 {
@@ -780,13 +805,21 @@ func (v *uploadCommand) UploadAndReport(branches []project.ReviewableBranch) err
 	haveErrors := false
 	for _, branch := range branches {
 		theProject := branch.Project
+		remote := branch.Remote
+		if remote == nil {
+			log.Errorf("cannot get remote of branch '%s' of project '%s'",
+				branch.Branch.Name,
+				theProject.Name,
+			)
+			continue
+		}
 		people := [][]string{[]string{}, []string{}}
 		people[0] = append(people[0], origPeople[0]...)
 		people[1] = append(people[1], origPeople[1]...)
 		branch.AppendReviewers(people)
 		cfg := theProject.ConfigWithDefault()
 		if !theProject.IsClean() {
-			key := fmt.Sprintf("review.%s.autoupload", theProject.Remote.Review)
+			key := fmt.Sprintf("review.%s.autoupload", remote.Review)
 			if !cfg.HasKey(key) {
 				fmt.Printf("Uncommitted changes in " + theProject.Name)
 				fmt.Printf(" (did you forget to amend?):\n")
@@ -802,52 +835,49 @@ func (v *uploadCommand) UploadAndReport(branches []project.ReviewableBranch) err
 			}
 		}
 		if !v.O.AutoTopic {
-			key := fmt.Sprintf("review.%s.uploadtopic", theProject.Remote.Review)
+			key := fmt.Sprintf("review.%s.uploadtopic", remote.Review)
 			v.O.AutoTopic = cfg.GetBool(key, false)
 		}
 
-		destBranch, err := v.getDestBranch(&branch)
-		if err != nil {
-			return err
-		}
-		if destBranch != "" {
-			fullDest := destBranch
-			if !strings.HasPrefix(fullDest, config.RefsHeads) {
-				fullDest = config.RefsHeads + fullDest
-			}
-			mergeBranch := branch.RemoteTrack.Branch
-			if !strings.HasPrefix(mergeBranch, config.RefsHeads) {
-				mergeBranch = config.RefsHeads + mergeBranch
-			}
-			if v.O.DestBranch == "" && mergeBranch != "" && mergeBranch != fullDest {
-				log.Errorf("merge branch %s does not match destination branch %s\n",
-					mergeBranch,
-					fullDest)
-				log.Errorf("skipping upload.")
-				log.Errorf("Please use `--dest %s` if this is intentional\n",
-					destBranch)
-				branch.Uploaded = false
-				continue
-			}
-		}
-
-		if v.O.CodeReviewID == "" {
+		if v.O.CodeReview.Empty() {
 			oldOid = theProject.PublishedRevision(branch.Branch.Name)
-		} else {
-			ref, err := theProject.Remote.GetDownloadRef(v.O.CodeReviewID, "")
+
+			destBranch, err = v.getDestBranch(&branch)
 			if err != nil {
-				log.Errorf("cannot get code review ref for %s: %s", v.O.CodeReviewID, err)
-			} else {
-				oldOid, err = theProject.ResolveRevision(ref)
-				if err != nil {
-					return fmt.Errorf("fail to find ref '%s', not downloaded yet?", ref)
+				return err
+			}
+			if destBranch != "" {
+				fullDest := destBranch
+				if !strings.HasPrefix(fullDest, config.RefsHeads) {
+					fullDest = config.RefsHeads + fullDest
 				}
+				mergeBranch := branch.RemoteTrack.Branch
+				if !strings.HasPrefix(mergeBranch, config.RefsHeads) {
+					mergeBranch = config.RefsHeads + mergeBranch
+				}
+				if v.O.DestBranch == "" && mergeBranch != "" && mergeBranch != fullDest {
+					log.Errorf("merge branch %s does not match destination branch %s\n",
+						mergeBranch,
+						fullDest)
+					log.Errorf("skipping upload.")
+					log.Errorf("Please use `--dest %s` if this is intentional\n",
+						destBranch)
+					branch.Uploaded = false
+					continue
+				}
+			}
+		} else {
+			oldOid, err = theProject.ResolveRevision(v.O.CodeReview.Ref)
+			if err != nil {
+				return fmt.Errorf("fail to parse ref '%s', not downloaded yet?",
+					v.O.CodeReview.Ref,
+				)
 			}
 		}
 
 		o := common.UploadOptions{
 			AutoTopic:    v.O.AutoTopic,
-			CodeReviewID: v.O.CodeReviewID,
+			CodeReview:   v.O.CodeReview,
 			Description:  v.O.Description,
 			DestBranch:   destBranch,
 			Draft:        v.O.Draft,
@@ -861,9 +891,7 @@ func (v *uploadCommand) UploadAndReport(branches []project.ReviewableBranch) err
 			ProjectName:  theProject.Name,
 			Private:      v.O.Private,
 			PushOptions:  v.O.PushOptions,
-			ReviewURL:    theProject.GetPushURL(branch.Branch.Name),
 			Title:        v.O.Title,
-			UserEmail:    theProject.UserEmail(),
 			WIP:          v.O.WIP,
 			Version:      1,
 		}
@@ -911,12 +939,6 @@ func (v *uploadCommand) UploadAndReport(branches []project.ReviewableBranch) err
 }
 
 func (v uploadCommand) Execute(args []string) error {
-	var (
-		head           string
-		remoteName     string
-		remoteRevision string
-	)
-
 	ws := v.WorkSpace()
 	err := ws.LoadRemotes(v.O.NoCache)
 	if err != nil {
@@ -937,114 +959,129 @@ func (v uploadCommand) Execute(args []string) error {
 		return nil
 	}
 
-	// if --single, set project.Remote according to branch name
-	if config.IsSingleMode() {
-		var (
-			remoteURL string
-		)
-
-		p := allProjects[0]
-		remoteMap := ws.GetRemoteMap()
-		if v.O.Branch == "" {
-			v.O.CurrentBranch = true
-			head = p.GetHead()
-		} else {
-			head = v.O.Branch
-			if !strings.HasPrefix(head, config.RefsHeads) {
-				head = config.RefsHeads + head
-			}
-		}
-
-		if !project.IsHead(head) {
-			log.Debugf("detached at %s", head)
-			return fmt.Errorf("upload failed: not in a branch\n\n" +
-				"Please run command \"git checkout -b <branch>\" to create a new branch.")
-		}
-
-		head = strings.TrimPrefix(head, config.RefsHeads)
-		if v.O.Remote == "" {
-			remoteName = p.TrackRemote(head)
-		} else {
-			remoteName = v.O.Remote
-		}
-		if v.O.DestBranch == "" {
-			remoteRevision = p.TrackBranch(head)
-		} else {
-			remoteRevision = v.O.DestBranch
-		}
-
-		if remoteMap.Size() == 0 {
-			return fmt.Errorf("no remote defined for project %s", p.Name)
-		}
-
-		if remoteName != "" {
-			if remote, ok := remoteMap[remoteName]; ok {
-				p.Remote = remote
-			} else {
-				return fmt.Errorf("cannot find remote %s", v.O.Remote)
-			}
-		} else {
-			for name, remote := range remoteMap {
-				if remoteMap.Size() > 1 && name != "origin" {
-					continue
-				}
-				if remoteMap.Size() != 1 {
-					log.Warning("no tracking remote defined, try to upload to origin")
-				}
-				remoteName = name
-				p.Remote = remote
-			}
-			if !p.Remote.Initialized() {
-				return errors.New("no tracking remote defined, and don't know where to upload.\n" +
-					"please try to use --remote option for upload")
-			}
-		}
-
-		if remoteRevision == "" {
-			return fmt.Errorf("upload failed: cannot find tracking branch\n\n" +
-				"Please run command \"git branch -u <upstream>\" to track a remote branch. E.g.:\n\n" +
-				"    git branch -u origin/master\n\n" +
-				"Or give the following options when uploading:\n\n" +
-				"    --dest <dest-branch> [--remote <remote>]")
-		}
-
-		// Set Revision of manifest.Remote to tracking branch.
-		p.Remote.Revision = remoteRevision
-
-		// Set project and repository name
-		remoteURL = p.GitConfigRemoteURL(remoteName)
-		gitURL := config.ParseGitURL(remoteURL)
-		if gitURL != nil && gitURL.Repo != "" {
-			if gitURL.Proto == "file" {
-				p.Name = filepath.Base(gitURL.Repo)
-			} else {
-				p.Name = gitURL.Repo
-			}
-		}
-
-		// Set other missing fields
-		p.RemoteURL = remoteURL
-		p.RemoteName = remoteName
-		p.Revision = remoteRevision
-
-		// Install hooks if remote is Gerrit server
-		if allProjects[0].Remote.GetType() == config.ProtoTypeGerrit {
-			allProjects[0].InstallGerritHooks()
-		}
-	}
-
 	tasks := make(map[string][]project.ReviewableBranch)
 	for _, p := range allProjects {
+		// For single project.
 		if config.IsSingleMode() {
-			uploadBranch := p.GetUploadableBranch(head, remoteName, remoteRevision)
+			var (
+				uploadBranch   *project.ReviewableBranch
+				head           string
+				remoteName     string
+				remoteRevision string
+				remoteURL      string
+				remote         *project.Remote
+			)
+
+			if v.O.Branch == "" {
+				v.O.CurrentBranch = true
+				head = p.GetHead()
+			} else {
+				head = v.O.Branch
+				if !strings.HasPrefix(head, config.RefsHeads) {
+					head = config.RefsHeads + head
+				}
+			}
+			if !project.IsHead(head) {
+				log.Debugf("detached at %s", head)
+				return fmt.Errorf("upload failed: not in a branch\n\n" +
+					"Please run command \"git checkout -b <branch>\" to create a new branch.")
+			}
+			head = strings.TrimPrefix(head, config.RefsHeads)
+
+			if v.O.Remote == "" {
+				remote = p.GetBranchRemote(head, true)
+				if remote == nil {
+					return fmt.Errorf("no remote for branch '%s' of project '%s' to push",
+						head,
+						p.Name,
+					)
+				}
+				remoteName = remote.Name
+			} else {
+				remoteName = v.O.Remote
+				remote = p.Remotes.Get(remoteName)
+				if remote == nil {
+					return fmt.Errorf("cannot file remote named '%s'for project '%s'",
+						remoteName,
+						p.Name,
+					)
+				}
+			}
+			if !remote.ProtoHelperReady() {
+				return fmt.Errorf("remote '%s' for project '%s' is not reviewable",
+					remote.Name,
+					p.Name,
+				)
+			}
+
+			if v.O.CodeReview.ID != "" {
+				v.O.CodeReview.Ref, err = remote.GetDownloadRef(v.O.CodeReview.ID, "")
+				if err != nil {
+					return fmt.Errorf("fail to get local ref for code review #%s: %s",
+						v.O.CodeReview.ID,
+						err)
+				}
+			}
+
+			if v.O.DestBranch == "" {
+				remoteRevision = p.TrackBranch(head)
+			} else {
+				remoteRevision = v.O.DestBranch
+			}
+			if remoteRevision == "" && v.O.CodeReview.Empty() {
+				return fmt.Errorf("upload failed: cannot find tracking branch\n\n" +
+					"Please run command \"git branch -u <upstream>\" to track a remote branch. E.g.:\n\n" +
+					"    git branch -u origin/master\n\n" +
+					"Or give the following options when uploading:\n\n" +
+					"    --dest <dest-branch> [--remote <remote>]")
+			}
+
+			// Set Revision of manifest.Remote to tracking branch.
+			// p.Remote.Revision = remoteRevision
+
+			// Set project and repository name
+			remoteURL = p.GitConfigRemoteURL(remoteName)
+			gitURL := config.ParseGitURL(remoteURL)
+			if gitURL != nil && gitURL.Repo != "" {
+				if gitURL.Proto == "file" {
+					p.Name = filepath.Base(gitURL.Repo)
+				} else {
+					p.Name = gitURL.Repo
+				}
+			}
+
+			// Set other missing fields
+			p.RemoteURL = remoteURL
+			p.RemoteName = remoteName
+			p.Revision = remoteRevision
+
+			// Install hooks if remote is Gerrit server
+			if remote.GetType() == config.ProtoTypeGerrit {
+				allProjects[0].InstallGerritHooks()
+			}
+
+			/////////////
+			if v.O.CodeReview.Empty() {
+				uploadBranch = p.GetUploadableBranch(head, remote, remoteRevision)
+			} else {
+				uploadBranch = p.GetUploadableBranchForChange(head, remote, &v.O.CodeReview)
+			}
 			if uploadBranch != nil {
 				tasks[p.Path] = []project.ReviewableBranch{*uploadBranch}
 			}
-		} else if v.O.CurrentBranch {
+			// No other projects
+			break
+		}
+
+		// For projects managed by manifests project.
+		if v.O.CurrentBranch {
 			cbr := p.GetHead()
-			uploadBranch := p.GetUploadableBranch(cbr, "", "")
-			if uploadBranch != nil {
-				tasks[p.Path] = []project.ReviewableBranch{*uploadBranch}
+			remote := p.GetBranchRemote(cbr, false)
+			if cbr != "" && remote != nil {
+				uploadBranch := p.GetUploadableBranch(cbr, remote, "")
+				if uploadBranch != nil {
+					tasks[p.Path] = []project.ReviewableBranch{*uploadBranch}
+				}
 			}
 		} else {
 			uploadBranches := p.GetUploadableBranches(v.O.Branch)

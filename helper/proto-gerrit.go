@@ -56,23 +56,18 @@ func (v GerritProtoHelper) GetGitPushCommandPipe(reader io.Reader) ([]byte, erro
 
 // GetGitPushCommand reads upload options and returns git push command.
 func (v GerritProtoHelper) GetGitPushCommand(o *common.UploadOptions) (*GitPushCommand, error) {
-	if o.CodeReviewID != "" {
+	if !o.CodeReview.Empty() {
 		return nil, fmt.Errorf("Change code review by ID is not allowed in Gerrit")
 	}
 
 	cmds := []string{"git", "push"}
 
-	if o.ReviewURL == "" {
+	if o.RemoteURL == "" {
 		return nil, fmt.Errorf("review url not configured for '%s'", o.ProjectName)
 	}
-	if !strings.HasSuffix(o.ReviewURL, "/") {
-		o.ReviewURL += "/"
-	}
-	url := o.ReviewURL + o.ProjectName + ".git"
-
-	gitURL := config.ParseGitURL(url)
+	gitURL := config.ParseGitURL(o.RemoteURL)
 	if gitURL == nil {
-		return nil, fmt.Errorf("bad review url: %s", url)
+		return nil, fmt.Errorf("bad review url: %s", o.RemoteURL)
 	}
 
 	if gitURL.IsSSH() {
@@ -81,7 +76,11 @@ func (v GerritProtoHelper) GetGitPushCommand(o *common.UploadOptions) (*GitPushC
 	for _, pushOption := range o.PushOptions {
 		cmds = append(cmds, "-o", pushOption)
 	}
-	cmds = append(cmds, url)
+	if o.RemoteName != "" {
+		cmds = append(cmds, o.RemoteName)
+	} else {
+		cmds = append(cmds, o.RemoteURL)
+	}
 
 	destBranch := o.DestBranch
 	if strings.HasPrefix(destBranch, config.RefsHeads) {

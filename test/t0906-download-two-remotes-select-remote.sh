@@ -30,7 +30,7 @@ test_expect_success "add two remotes" '
 test_expect_success "fail to download without --remote" '
 	(
 		cd work/main &&
-		git-repo download --single \
+		test_must_fail git-repo download --single \
 			--no-cache \
 			--mock-ssh-info-status 200 \
 			--mock-ssh-info-response \
@@ -38,8 +38,7 @@ test_expect_success "fail to download without --remote" '
 			12345
 	) >actual 2>&1 &&
 	cat >expect<<-EOF &&
-	ERROR: no tracking remote defined, and don'"'"'t know where to download from.
-	ERROR: please try to use --remote option for download
+	FATAL: not remote tracking defined, and do not know where to download
 	EOF
 	test_cmp expect actual
 '

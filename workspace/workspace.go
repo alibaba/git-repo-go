@@ -18,20 +18,16 @@ package workspace
 import (
 	"code.alibaba-inc.com/force/git-repo/config"
 	"code.alibaba-inc.com/force/git-repo/project"
+	log "github.com/jiangxin/multi-log"
 )
 
-// RemoteMap maps name to RemoteWithError
-type RemoteMap map[string]project.Remote
-
-// Size is size of map
-func (v RemoteMap) Size() int {
-	return len(v)
-}
+var (
+	_ = log.Debug
+)
 
 // WorkSpace is interface for workspace, implemented with repo workspace or single git workspace.
 type WorkSpace interface {
 	AdminDir() string
-	GetRemoteMap() RemoteMap
 	LoadRemotes(bool) error
 	IsSingle() bool
 	IsMirror() bool

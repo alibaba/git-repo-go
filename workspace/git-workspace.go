@@ -4,14 +4,15 @@ import (
 	"errors"
 	"net/http"
 	"path/filepath"
-	"strings"
 
-	"code.alibaba-inc.com/force/git-repo/config"
-	"code.alibaba-inc.com/force/git-repo/helper"
 	"code.alibaba-inc.com/force/git-repo/manifest"
 	"code.alibaba-inc.com/force/git-repo/path"
 	"code.alibaba-inc.com/force/git-repo/project"
 	log "github.com/jiangxin/multi-log"
+)
+
+var (
+	_ = log.Debug
 )
 
 // GitWorkSpace defines structure for single git workspace.
@@ -23,18 +24,12 @@ type GitWorkSpace struct {
 	Projects        []*project.Project
 	projectByName   map[string][]*project.Project
 	projectByPath   map[string]*project.Project
-	RemoteMap       map[string]project.Remote
 	httpClient      *http.Client
 }
 
 // AdminDir returns .git dir.
 func (v GitWorkSpace) AdminDir() string {
 	return v.GitDir
-}
-
-// GetRemoteMap returns RemoteMap.
-func (v *GitWorkSpace) GetRemoteMap() RemoteMap {
-	return v.RemoteMap
 }
 
 // IsSingle is true for git workspace.
@@ -49,65 +44,10 @@ func (v GitWorkSpace) IsMirror() bool {
 
 // LoadRemotes implements LoadRemotes interface.
 func (v *GitWorkSpace) LoadRemotes(noCache bool) error {
-	var (
-		query *helper.SSHInfoQuery
-	)
 	if len(v.Projects) != 1 {
 		return errors.New("git workspace should contain only one project")
 	}
-	p := v.Projects[0]
-	cfg := p.Config()
-	for _, name := range cfg.Sections() {
-		if !strings.HasPrefix(name, "remote.") {
-			continue
-		}
-
-		name = strings.TrimPrefix(name, "remote.")
-		remoteURL := p.GitConfigRemoteURL(name)
-		if remoteURL == "" {
-			log.Warnf("no URL defined for remote: %s", name)
-			continue
-		}
-		log.Debugf("URL of remote %s: %s", name, remoteURL)
-		mr := manifest.Remote{
-			Name:  name,
-			Fetch: remoteURL,
-		}
-		reviewURL := cfg.Get("remote." + name + ".review")
-		if reviewURL != "" {
-			mr.Review = reviewURL
-		} else {
-			gitURL := config.ParseGitURL(remoteURL)
-			if gitURL == nil {
-				log.Debugf("fail to parse remote: %s, URL: %s", name, remoteURL)
-				continue
-			}
-			reviewURL = gitURL.GetReviewURL()
-			if reviewURL == "" {
-				log.Debugf("cannot get review URL from remote: %s, URL: %s", name, remoteURL)
-				continue
-			}
-			mr.Review = reviewURL
-		}
-		log.Debugf("review of remote %s is: %s", name, reviewURL)
-
-		query = helper.NewSSHInfoQuery(p.SSHInfoCacheFile())
-		sshInfo, err := query.GetSSHInfo(mr.Review, !noCache)
-		if err != nil {
-			return err
-		}
-		protoHelper := helper.NewProtoHelper(sshInfo)
-		remote := project.NewRemote(&mr, protoHelper)
-		log.Debugf("loaded remote: %#v, error: %s", remote, err)
-		v.RemoteMap[mr.Name] = *remote
-	}
-
-	if len(v.RemoteMap) == 1 {
-		for name := range v.RemoteMap {
-			v.Projects[0].Remote = v.RemoteMap[name]
-		}
-	}
-
+	v.Projects[0].LoadRemotes(nil, noCache)
 	return nil
 }
 
@@ -161,7 +101,6 @@ func (v *GitWorkSpace) load() error {
 
 	v.projectByName = make(map[string][]*project.Project)
 	v.projectByPath = make(map[string]*project.Project)
-	v.RemoteMap = make(map[string]project.Remote)
 	v.projectByName[p.Name] = []*project.Project{p}
 	v.projectByPath[p.Path] = p
 	v.Manifest = nil

@@ -43,7 +43,7 @@ test_expect_success "upload error: unsupport url protocol" '
 				"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
 	) >actual 2>&1 &&
 	cat >expect<<-EOF &&
-	Error: no remote defined for project main
+	Error: remote '"'"'origin'"'"' for project '"'"'main'"'"' is not reviewable
 	EOF
 	test_cmp expect actual
 '

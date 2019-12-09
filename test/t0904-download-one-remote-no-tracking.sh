@@ -36,7 +36,6 @@ test_expect_success "no remote and fail to download" '
 			12345
 	) >actual 2>&1 &&
 	cat >expect<<-EOF &&
-	WARNING: no remote defined for project main
 	FATAL: not remote tracking defined, and do not know where to download
 	EOF
 	test_cmp expect actual

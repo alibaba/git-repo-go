@@ -61,12 +61,9 @@ NOTE: no editor, input data unchanged
 ##############################################################################
 # Step 1: Input your options for code review
 #
-# Note: Input your options below the comments and keep the comments unchanged
+# Note: Input your options below the comments and keep the comments unchanged,
+#       and options which work only for new created code review are hidden.
 ##############################################################################
-
-# [Title]       : one line message below as the title of code review
-
-# [Description] : multiple lines of text as the description of code review
 
 # [Issue]       : multiple lines of issue IDs for cross references
 
@@ -87,13 +84,17 @@ NOTE: no editor, input data unchanged
 
 #
 # project ./:
-   branch review ( 1 commit(s)) to remote branch master:
+   branch review ( 5 commit(s)) to update code review #12345:
+#         <hash>
+#         <hash>
+#         <hash>
+#         <hash>
 #         <hash>
 
 NOTE: will execute command: git push --receive-pack=agit-receive-pack -o oldoid=<hash> ssh://git@ssh.example.com/repository/main.git refs/heads/review:refs/for-review/12345
 NOTE: with extra environment: AGIT_FLOW=1
 NOTE: with extra environment: GIT_SSH_COMMAND=ssh -o SendEnv=AGIT_FLOW
-NOTE: will update-ref refs/published/review on refs/heads/review, reason: review from review to master on http://example.com
+NOTE: will update-ref refs/merge-requests/12345/head on refs/heads/review, reason: update code review #12345 of http://example.com
 
 ----------------------------------------------------------------------
 EOF
@@ -101,7 +102,8 @@ EOF
 test_expect_success "git repo upload --single --change 12345" '
 	(
 		cd work/main &&
-		git checkout -b review aone/master &&
+		git checkout -b review &&
+		git reset --hard aone/master &&
 		echo hack >code-review.txt &&
 		git add code-review.txt &&
 		test_tick &&

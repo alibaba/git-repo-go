@@ -3,7 +3,7 @@ package common
 // UploadOptions is options for upload related methods.
 type UploadOptions struct {
 	AutoTopic    bool
-	CodeReviewID string
+	CodeReview   CodeReview
 	Description  string
 	DestBranch   string // Target branch for code review
 	Draft        bool
@@ -17,9 +17,9 @@ type UploadOptions struct {
 	Private      bool
 	PushOptions  []string
 	ProjectName  string // New
-	ReviewURL    string // New
+	RemoteName   string
+	RemoteURL    string
 	Title        string
-	UserEmail    string // New
-	Version      int    // version: 1
+	Version      int // version: 1
 	WIP          bool
 }

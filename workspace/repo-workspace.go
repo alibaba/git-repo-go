@@ -26,7 +26,6 @@ type RepoWorkSpace struct {
 	Projects        []*project.Project
 	projectByName   map[string][]*project.Project
 	projectByPath   map[string]*project.Project
-	RemoteMap       map[string]project.Remote
 	httpClient      *http.Client
 }
 
@@ -46,11 +45,6 @@ func Exists(dir string) bool {
 // AdminDir returns .repo dir.
 func (v RepoWorkSpace) AdminDir() string {
 	return filepath.Join(v.RootDir, config.DotRepo)
-}
-
-// GetRemoteMap returns RemoteMap.
-func (v *RepoWorkSpace) GetRemoteMap() RemoteMap {
-	return v.RemoteMap
 }
 
 // IsSingle is false for workspace initialized by manifests project.
@@ -196,9 +190,6 @@ func (v *RepoWorkSpace) loadProjects(manifestURL string) error {
 	if v.ManifestProject.Config().GetBool(config.CfgAppGitRepoDisabled, false) {
 		return fmt.Errorf("git-repo is disabled for this workspace, use repo instead")
 	}
-
-	// Set RemoteMap
-	v.RemoteMap = make(map[string]project.Remote)
 
 	// Set projects
 	v.Projects = []*project.Project{}

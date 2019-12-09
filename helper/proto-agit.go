@@ -62,17 +62,12 @@ func (v AGitProtoHelper) GetGitPushCommand(o *common.UploadOptions) (*GitPushCom
 
 	cmds := []string{"git", "push"}
 
-	if o.ReviewURL == "" {
+	if o.RemoteURL == "" {
 		return nil, fmt.Errorf("review url not configured for '%s'", o.ProjectName)
 	}
-	if !strings.HasSuffix(o.ReviewURL, "/") {
-		o.ReviewURL += "/"
-	}
-	url := o.ReviewURL + o.ProjectName + ".git"
-
-	gitURL := config.ParseGitURL(url)
+	gitURL := config.ParseGitURL(o.RemoteURL)
 	if gitURL == nil || (gitURL.Proto != "ssh" && gitURL.Proto != "http" && gitURL.Proto != "https") {
-		return nil, fmt.Errorf("bad review URL: %s", url)
+		return nil, fmt.Errorf("bad review URL: %s", o.RemoteURL)
 	}
 	if gitURL.IsSSH() {
 		gitPushCmd.Env = []string{"AGIT_FLOW=1"}
@@ -105,11 +100,11 @@ func (v AGitProtoHelper) GetGitPushCommand(o *common.UploadOptions) (*GitPushCom
 		refSpec = config.RefsHeads + localBranch
 	}
 
-	if o.CodeReviewID != "" {
+	if !o.CodeReview.Empty() {
 		uploadType = "for-review"
 		refSpec += fmt.Sprintf(":refs/%s/%s",
 			uploadType,
-			o.CodeReviewID)
+			o.CodeReview.ID)
 	} else {
 		if o.Draft {
 			uploadType = "drafts"
@@ -188,7 +183,12 @@ func (v AGitProtoHelper) GetGitPushCommand(o *common.UploadOptions) (*GitPushCom
 		}
 	}
 
-	cmds = append(cmds, url, refSpec)
+	if o.RemoteName != "" {
+		cmds = append(cmds, o.RemoteName)
+	} else {
+		cmds = append(cmds, o.RemoteURL)
+	}
+	cmds = append(cmds, refSpec)
 
 	gitPushCmd.Cmd = cmds[0]
 	gitPushCmd.Args = cmds[1:]

@@ -53,8 +53,7 @@ test_expect_success "upload error: no tracking branch" '
 	(
 		cd work &&
 		cat >expect<<-EOF &&
-		Error: no tracking remote defined, and don'"'"'t know where to upload.
-		please try to use --remote option for upload
+		Error: no remote for branch '"'"'jx/topic1'"'"' of project '"'"'main'"'"' to push
 		EOF
 		(
 			cd main &&

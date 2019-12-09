@@ -158,32 +158,8 @@ func (v *downloadCommand) Execute(args []string) error {
 		return err
 	}
 
-	var remoteMap = ws.GetRemoteMap()
 	for _, c := range changes {
-		if !c.Project.Remote.Initialized() && config.IsSingleMode() {
-			if remoteMap.Size() == 0 {
-				log.Warnf("no remote defined for project %s", c.Project.Name)
-			} else if remoteMap.Size() > 1 {
-				if v.O.Remote != "" {
-					if remote, ok := remoteMap[v.O.Remote]; ok {
-						c.Project.Remote = remote
-					} else {
-						log.Errorf("cannot find remote %s", v.O.Remote)
-						continue
-					}
-				} else {
-					if remote, ok := remoteMap["origin"]; ok {
-						log.Warning("no tracking remote defined, try to download from origin")
-						c.Project.Remote = remote
-					} else {
-						log.Error("no tracking remote defined, and don't know where to download from.")
-						log.Error("please try to use --remote option for download")
-						continue
-					}
-				}
-			}
-		}
-		dl, err := c.Project.DownloadPatchSet(c.ReviewID, c.PatchID)
+		dl, err := c.Project.DownloadPatchSet(v.O.Remote, c.ReviewID, c.PatchID)
 		if err != nil {
 			return err
 		}
@@ -229,7 +205,10 @@ func (v *downloadCommand) Execute(args []string) error {
 				err = fmt.Errorf("cherry-pick aborted by user")
 			}
 		} else if v.O.Revert {
-			if c.Project.Remote.Initialized() && c.Project.Remote.GetType() == config.ProtoTypeGerrit {
+			remote := c.Project.GetDefaultRemote(true)
+			if remote == nil {
+				err = fmt.Errorf("cannot get remote of project: %s", c.Project.Name)
+			} else if remote.GetType() == config.ProtoTypeGerrit {
 				err = c.Project.Revert(dl.Commit)
 			} else {
 				err = fmt.Errorf("--revert only works for gerrit server")

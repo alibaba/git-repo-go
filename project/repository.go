@@ -31,7 +31,7 @@ type Repository struct {
 
 	IsBare    bool
 	RemoteURL string
-	Remote    Remote
+	Remotes   *RemoteMap
 	Reference string // Alternate repository
 	Settings  *RepoSettings
 	raw       *git.Repository
@@ -61,6 +61,7 @@ func (v Repository) ObjectsRepository() *Repository {
 		IsBare:    true,
 		RemoteURL: v.RemoteURL,
 		Settings:  v.Settings,
+		Remotes:   nil,
 	}
 }
 
