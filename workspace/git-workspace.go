@@ -91,7 +91,7 @@ func (v *GitWorkSpace) LoadRemotes(noCache bool) error {
 		}
 		log.Debugf("review of remote %s is: %s", name, reviewURL)
 
-		query = helper.NewSSHInfoQuery(p.ProtoCacheFile())
+		query = helper.NewSSHInfoQuery(p.SSHInfoCacheFile())
 		sshInfo, err := query.GetSSHInfo(mr.Review, !noCache)
 		if err != nil {
 			return err

@@ -26,7 +26,7 @@ func (v *RepoWorkSpace) LoadRemotes(noCache bool) error {
 		return nil
 	}
 
-	query = helper.NewSSHInfoQuery(v.ManifestProject.ProtoCacheFile())
+	query = helper.NewSSHInfoQuery(v.ManifestProject.SSHInfoCacheFile())
 	for _, r := range v.Manifest.Remotes {
 		sshInfo, err := query.GetSSHInfo(r.Review, !noCache)
 		if err != nil {

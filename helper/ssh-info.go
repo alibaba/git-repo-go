@@ -45,11 +45,13 @@ type SSHInfo struct {
 	Expire int64 `json:"-"`
 }
 
-func (v SSHInfo) String() string {
-	if v.Host == "" {
-		return ""
+// ToJSON encodes ssh_info to JSON.
+func (v SSHInfo) ToJSON() string {
+	buf, err := json.Marshal(&v)
+	if err != nil {
+		log.Errorf("fail to marshal ssh_info: %s", err)
 	}
-	return fmt.Sprintf("%s %d", v.Host, v.Port)
+	return string(buf)
 }
 
 // SSHInfoQuery wraps cache to accelerate query of ssh_info API.
@@ -62,6 +64,10 @@ type SSHInfoQuery struct {
 
 // GetSSHInfo queries ssh_info for address.
 func (v SSHInfoQuery) GetSSHInfo(address string, useCache bool) (*SSHInfo, error) {
+	var (
+		err error
+	)
+
 	key := urlToKey(address)
 	if key == "" {
 		return nil, fmt.Errorf("bad address for review '%s'", address)
@@ -69,8 +75,8 @@ func (v SSHInfoQuery) GetSSHInfo(address string, useCache bool) (*SSHInfo, error
 
 	// Try cache
 	if v.CacheFile != "" && v.cfg != nil && useCache {
-		t := v.cfg.Get(fmt.Sprintf(config.CfgManifestRemoteType, key))
-		if t != "" {
+		data := v.cfg.Get(fmt.Sprintf(config.CfgManifestRemoteSSHInfo, key))
+		if data != "" {
 			expired := true
 			expireStr := v.cfg.Get(fmt.Sprintf(config.CfgManifestRemoteExpire, key))
 			if expireStr != "" {
@@ -80,17 +86,10 @@ func (v SSHInfoQuery) GetSSHInfo(address string, useCache bool) (*SSHInfo, error
 				}
 			}
 			if !expired {
-				data := v.cfg.Get(fmt.Sprintf(config.CfgManifestRemoteSSHInfo, key))
-				sshInfo, err := sshInfoFromString(data)
-				if err == nil {
-					log.Debug("load ssh_info from cache")
-					sshInfo.ProtoType = t
-					sshInfo.ProtoVersion = v.cfg.GetInt(
-						fmt.Sprintf(config.CfgManifestRemoteVersion, key),
-						0,
-					)
-					sshInfo.User = v.cfg.Get(fmt.Sprintf(config.CfgManifestRemoteUser, key))
-					return sshInfo, nil
+				sshInfo := SSHInfo{}
+				err = json.Unmarshal([]byte(data), &sshInfo)
+				if err == nil && sshInfo.ProtoType != "" {
+					return &sshInfo, nil
 				}
 				log.Warnf("fail to parse ssh_info cache: '%s'", data)
 			} else {
@@ -107,18 +106,8 @@ func (v SSHInfoQuery) GetSSHInfo(address string, useCache bool) (*SSHInfo, error
 
 	// Update Cache
 	if v.CacheFile != "" && v.cfg != nil {
-		v.cfg.Set(fmt.Sprintf(config.CfgManifestRemoteType, key),
-			sshInfo.ProtoType)
 		v.cfg.Set(fmt.Sprintf(config.CfgManifestRemoteSSHInfo, key),
-			sshInfo.String())
-		if sshInfo.ProtoVersion != 0 {
-			v.cfg.Set(fmt.Sprintf(config.CfgManifestRemoteVersion, key),
-				sshInfo.ProtoVersion)
-		}
-		if sshInfo.User != "" {
-			v.cfg.Set(fmt.Sprintf(config.CfgManifestRemoteUser, key),
-				sshInfo.User)
-		}
+			sshInfo.ToJSON())
 		v.cfg.Set(fmt.Sprintf(config.CfgManifestRemoteExpire, key),
 			time.Now().Add(time.Second*sshInfoCacheDefaultExpire).Format(expireTimeLayout))
 		v.cfg.Save(v.CacheFile)
