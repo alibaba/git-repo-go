@@ -15,6 +15,7 @@
 package helper
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"strconv"
@@ -63,7 +64,7 @@ func (v AGitProtoHelper) GetGitPushCommand(o *common.UploadOptions) (*GitPushCom
 	cmds := []string{"git", "push"}
 
 	if o.RemoteURL == "" {
-		return nil, fmt.Errorf("review url not configured for '%s'", o.ProjectName)
+		return nil, errors.New("empty review url for helper")
 	}
 	gitURL := config.ParseGitURL(o.RemoteURL)
 	if gitURL == nil || (gitURL.Proto != "ssh" && gitURL.Proto != "http" && gitURL.Proto != "https") {

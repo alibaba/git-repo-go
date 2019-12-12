@@ -15,6 +15,7 @@
 package helper
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"strconv"
@@ -63,7 +64,7 @@ func (v GerritProtoHelper) GetGitPushCommand(o *common.UploadOptions) (*GitPushC
 	cmds := []string{"git", "push"}
 
 	if o.RemoteURL == "" {
-		return nil, fmt.Errorf("review url not configured for '%s'", o.ProjectName)
+		return nil, errors.New("empty review url for helper")
 	}
 	gitURL := config.ParseGitURL(o.RemoteURL)
 	if gitURL == nil {
@@ -87,7 +88,7 @@ func (v GerritProtoHelper) GetGitPushCommand(o *common.UploadOptions) (*GitPushC
 		destBranch = strings.TrimPrefix(destBranch, config.RefsHeads)
 	}
 	if destBranch == "" {
-		return nil, fmt.Errorf("empty dest branch for project '%s'", o.ProjectName)
+		return nil, errors.New("empty dest branch for helper")
 	}
 
 	uploadType := "for"

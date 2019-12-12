@@ -890,12 +890,10 @@ func (v *uploadCommand) UploadAndReport(branches []project.ReviewableBranch) err
 			NoEmails:     v.O.NoEmails,
 			OldOid:       oldOid,
 			People:       people,
-			ProjectName:  theProject.Name,
 			Private:      v.O.Private,
 			PushOptions:  v.O.PushOptions,
 			Title:        v.O.Title,
 			WIP:          v.O.WIP,
-			Version:      1,
 		}
 
 		err = branch.UploadForReview(&o)
