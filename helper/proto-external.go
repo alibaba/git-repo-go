@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"io"
 	"os/exec"
+	"strconv"
 	"strings"
 
 	"code.alibaba-inc.com/force/git-repo/common"
@@ -87,7 +88,11 @@ func (v ExternalProtoHelper) GetGitPushCommandPipe(reader io.Reader) ([]byte, er
 		return nil, fmt.Errorf("cannot find helper '%s'", v.Program())
 	}
 
-	cmd := exec.Command(program, "--upload")
+	cmdArgs := []string{program, "--upload"}
+	if v.sshInfo.ProtoVersion > 0 {
+		cmdArgs = append(cmdArgs, "--version", strconv.Itoa(v.sshInfo.ProtoVersion))
+	}
+	cmd := exec.Command(cmdArgs[0], cmdArgs[1:]...)
 	cmd.Stdin = reader
 	out, err := cmd.Output()
 	if err != nil {
@@ -105,7 +110,11 @@ func (v ExternalProtoHelper) GetDownloadRef(cr, patch string) (string, error) {
 		return "", fmt.Errorf("cannot find helper '%s'", v.Program())
 	}
 
-	cmd := exec.Command(program, "--download")
+	cmdArgs := []string{program, "--download"}
+	if v.sshInfo.ProtoVersion > 0 {
+		cmdArgs = append(cmdArgs, "--version", strconv.Itoa(v.sshInfo.ProtoVersion))
+	}
+	cmd := exec.Command(cmdArgs[0], cmdArgs[1:]...)
 	cmd.Stdin = strings.NewReader(cr + " " + patch)
 	out, err := cmd.Output()
 	if err != nil {

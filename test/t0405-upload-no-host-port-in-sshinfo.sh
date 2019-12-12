@@ -20,7 +20,7 @@ test_expect_success "git-repo init & sync" '
 		git-repo sync \
 			--mock-ssh-info-status 200 \
 			--mock-ssh-info-response \
-			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}"
+			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\", \"version\":2}"
 	)
 '
 
@@ -32,7 +32,7 @@ test_expect_success "detached: no branch ready for upload" '
 		EOF
 		git-repo upload --mock-ssh-info-status 200 \
 			--mock-ssh-info-response \
-			"{\"type\":\"agit\"}" \
+			"{\"type\":\"agit\", \"version\":2}" \
 			>actual 2>&1 &&
 		test_cmp expect actual
 	)
@@ -47,7 +47,7 @@ test_expect_success "new branch: no branch ready for upload" '
 		EOF
 		git-repo upload --mock-ssh-info-status 200 \
 			--mock-ssh-info-response \
-			"{\"type\":\"agit\"}" \
+			"{\"type\":\"agit\", \"version\":2}" \
 			>actual 2>&1 &&
 		test_cmp expect actual
 	)
@@ -84,7 +84,7 @@ test_expect_success "no host/port in ssh_info: bad review url" '
 			--mock-git-push \
 			--mock-ssh-info-status 200 \
 			--mock-ssh-info-response \
-			"{\"type\":\"agit\"}" \
+			"{\"type\":\"agit\", \"version\":2}" \
 			>out 2>&1 &&
 		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
 		test_cmp expect actual
@@ -117,7 +117,7 @@ test_expect_success "no host/port in ssh_info: use project's http address" '
 			--mock-git-push \
 			--mock-ssh-info-status 200 \
 			--mock-ssh-info-response \
-			"{\"type\":\"agit\"}" \
+			"{\"type\":\"agit\", \"version\":2}" \
 			>out 2>&1 &&
 		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
 		test_cmp expect actual
@@ -144,7 +144,7 @@ test_expect_success "no host/port in ssh_info: use project's ssh address" '
 		         <hash>
 		         <hash>
 		to https://example.com (y/N)? Yes
-		NOTE: main> will execute command: git push --receive-pack=agit-receive-pack -o oldoid=<hash> aone refs/heads/my/topic1:refs/for/Maint/my/topic1
+		NOTE: main> will execute command: git push -o oldoid=<hash> aone refs/heads/my/topic1:refs/for/Maint/my/topic1
 		NOTE: main> with extra environment: AGIT_FLOW=1
 		NOTE: main> with extra environment: GIT_SSH_COMMAND=ssh -o SendEnv=AGIT_FLOW
 		
@@ -157,7 +157,7 @@ test_expect_success "no host/port in ssh_info: use project's ssh address" '
 			--mock-git-push \
 			--mock-ssh-info-status 200 \
 			--mock-ssh-info-response \
-			"{\"type\":\"agit\"}" \
+			"{\"type\":\"agit\", \"version\":2}" \
 			>out 2>&1 &&
 		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
 		test_cmp expect actual

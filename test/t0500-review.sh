@@ -94,7 +94,7 @@ test_expect_success "upload error: not in a branch" '
 				--mock-git-push \
 				--mock-ssh-info-status 200 \
 				--mock-ssh-info-response \
-					"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}"
+					"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\", \"version\":2}"
 		) >actual 2>&1 &&
 		test_cmp expect actual
 	)
@@ -122,7 +122,7 @@ test_expect_success "upload error: cannot find track branch" '
 				--mock-git-push \
 				--mock-ssh-info-status 200 \
 				--mock-ssh-info-response \
-					"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}"
+					"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\", \"version\":2}"
 		) >actual 2>&1 &&
 		test_cmp expect actual
 	)
@@ -168,7 +168,7 @@ test_expect_success "No commit ready for upload" '
 				--mock-git-push \
 				--mock-ssh-info-status 200 \
 				--mock-ssh-info-response \
-					"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}"
+					"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\", \"version\":2}"
 		) >actual 2>&1 &&
 		test_cmp expect actual
 	)
@@ -217,7 +217,7 @@ test_expect_success "will upload one commit for review (http/dryrun/draft/no-edi
 		  branch my/topic-test ( 1 commit(s)):
 		         <hash>
 		to https://example.com (y/N)? Yes
-		NOTE: will execute command: git push --receive-pack=agit-receive-pack ssh://git@ssh.example.com/jiangxin/main.git refs/heads/my/topic-test:refs/drafts/master/my/topic-test
+		NOTE: will execute command: git push ssh://git@ssh.example.com/jiangxin/main.git refs/heads/my/topic-test:refs/drafts/master/my/topic-test
 		NOTE: with extra environment: AGIT_FLOW=1
 		NOTE: with extra environment: GIT_SSH_COMMAND=ssh -o SendEnv=AGIT_FLOW
 		NOTE: will update-ref refs/published/my/topic-test on refs/heads/my/topic-test, reason: review from my/topic-test to master on https://example.com
@@ -234,7 +234,7 @@ test_expect_success "will upload one commit for review (http/dryrun/draft/no-edi
 				--draft \
 				--mock-ssh-info-status 200 \
 				--mock-ssh-info-response \
-				"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}"
+				"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\", \"version\":2}"
 		) >out 2>&1 &&
 		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
 		test_cmp expect actual
@@ -291,7 +291,7 @@ test_expect_success "will upload one commit for review (http/dryrun/draft/with e
 		   branch my/topic-test ( 1 commit(s)) to remote branch master:
 		#         <hash>
 
-		NOTE: will execute command: git push --receive-pack=agit-receive-pack ssh://git@ssh.example.com/jiangxin/main.git refs/heads/my/topic-test:refs/drafts/master/my/topic-test
+		NOTE: will execute command: git push ssh://git@ssh.example.com/jiangxin/main.git refs/heads/my/topic-test:refs/drafts/master/my/topic-test
 		NOTE: with extra environment: AGIT_FLOW=1
 		NOTE: with extra environment: GIT_SSH_COMMAND=ssh -o SendEnv=AGIT_FLOW
 		NOTE: will update-ref refs/published/my/topic-test on refs/heads/my/topic-test, reason: review from my/topic-test to master on https://example.com
@@ -307,7 +307,7 @@ test_expect_success "will upload one commit for review (http/dryrun/draft/with e
 				--draft \
 				--mock-ssh-info-status 200 \
 				--mock-ssh-info-response \
-				"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}"
+				"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\", \"version\":2}"
 		) >out 2>&1 &&
 		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
 		test_cmp expect actual
@@ -325,11 +325,11 @@ test_expect_success "will upload one commit for review (http/dryrun)" '
 		EOF
 		if git-repo test version --git lt 2.10.0; then
 			cat >>expect<<-EOF
-			NOTE: will execute command: git push --receive-pack=agit-receive-pack ssh://git@ssh.example.com/jiangxin/main.git refs/heads/my/topic-test:refs/for/master/my/topic-test%r=user1,r=user2,r=user3,r=user4,cc=user5,cc=user6,cc=user7,notify=NONE,private,wip
+			NOTE: will execute command: git push ssh://git@ssh.example.com/jiangxin/main.git refs/heads/my/topic-test:refs/for/master/my/topic-test%r=user1,r=user2,r=user3,r=user4,cc=user5,cc=user6,cc=user7,notify=NONE,private,wip
 			EOF
 		else
 			cat >>expect<<-EOF
-			NOTE: will execute command: git push --receive-pack=agit-receive-pack -o title=review example -o description={base64}6K+m57uG6K+05piOXG4uLi5cbg== -o reviewers=user1,user2,user3,user4 -o cc=user5,user6,user7 -o notify=no -o private=yes -o wip=yes ssh://git@ssh.example.com/jiangxin/main.git refs/heads/my/topic-test:refs/for/master/my/topic-test
+			NOTE: will execute command: git push -o title=review example -o description={base64}6K+m57uG6K+05piOXG4uLi5cbg== -o reviewers=user1,user2,user3,user4 -o cc=user5,user6,user7 -o notify=no -o private=yes -o wip=yes ssh://git@ssh.example.com/jiangxin/main.git refs/heads/my/topic-test:refs/for/master/my/topic-test
 			EOF
 		fi &&
 		cat >>expect<<-EOF &&
@@ -348,7 +348,7 @@ test_expect_success "will upload one commit for review (http/dryrun)" '
 				--dryrun \
 				--mock-ssh-info-status 200 \
 				--mock-ssh-info-response \
-				"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
+				"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\", \"version\":2}" \
 				--reviewers user1,user2 \
 				--re user3,user4 \
 				--cc user5,user6 \
@@ -372,7 +372,7 @@ test_expect_success "will upload one commit for review (http/mock-git-push/not-d
 		  branch my/topic-test ( 1 commit(s)):
 		         <hash>
 		to https://example.com (y/N)? Yes
-		NOTE: will execute command: git push --receive-pack=agit-receive-pack ssh://git@ssh.example.com:10022/jiangxin/main.git refs/heads/my/topic-test:refs/for/master/my/topic-test
+		NOTE: will execute command: git push ssh://git@ssh.example.com:10022/jiangxin/main.git refs/heads/my/topic-test:refs/for/master/my/topic-test
 		NOTE: with extra environment: AGIT_FLOW=1
 		NOTE: with extra environment: GIT_SSH_COMMAND=ssh -o SendEnv=AGIT_FLOW
 
@@ -387,7 +387,7 @@ test_expect_success "will upload one commit for review (http/mock-git-push/not-d
 				--mock-git-push \
 				--mock-ssh-info-status 200 \
 				--mock-ssh-info-response \
-				"{\"host\":\"ssh.example.com\", \"port\":10022, \"type\":\"agit\"}"
+				"{\"host\":\"ssh.example.com\", \"port\":10022, \"type\":\"agit\", \"version\":2}"
 		) >out 2>&1 &&
 		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
 		test_cmp expect actual
@@ -418,7 +418,7 @@ test_expect_success "upload again, no branch ready for upload" '
 				--mock-git-push \
 				--mock-ssh-info-status 200 \
 				--mock-ssh-info-response \
-				"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}"
+				"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\", \"version\":2}"
 		) >out 2>&1 &&
 		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
 		test_cmp expect actual
@@ -476,7 +476,7 @@ test_expect_success "upload to a ssh review url (no ssh_info cache)" '
 		   branch my/topic-test ( 1 commit(s)) to remote branch master:
 		#         <hash>
 		
-		NOTE: will execute command: git push --receive-pack=agit-receive-pack -o oldoid=<hash> ssh://git@ssh.example.com/jiangxin/main.git refs/heads/my/topic-test:refs/drafts/master/my/topic-test
+		NOTE: will execute command: git push -o oldoid=<hash> ssh://git@ssh.example.com/jiangxin/main.git refs/heads/my/topic-test:refs/drafts/master/my/topic-test
 		NOTE: with extra environment: AGIT_FLOW=1
 		NOTE: with extra environment: GIT_SSH_COMMAND=ssh -o SendEnv=AGIT_FLOW
 		NOTE: will update-ref refs/published/my/topic-test on refs/heads/my/topic-test, reason: review from my/topic-test to master on ssh://git@example.com:10022
@@ -491,7 +491,7 @@ test_expect_success "upload to a ssh review url (no ssh_info cache)" '
 				--dryrun \
 				--mock-ssh-info-status 200 \
 				--mock-ssh-info-response \
-				"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}"
+				"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\", \"version\":2}"
 		) >out 2>&1 &&
 		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
 		test_cmp expect actual
@@ -518,7 +518,7 @@ test_expect_success "upload to gerrit ssh review url (assume-no, dryrun, use ssh
 		  branch my/topic-test ( 1 commit(s)):
 		         <hash>
 		to ssh://git@example.com:29418 (y/N)? Yes
-		NOTE: will execute command: git push --receive-pack=agit-receive-pack -o oldoid=<hash> ssh://git@ssh.example.com/jiangxin/main.git refs/heads/my/topic-test:refs/for/master/my/topic-test
+		NOTE: will execute command: git push -o oldoid=<hash> ssh://git@ssh.example.com/jiangxin/main.git refs/heads/my/topic-test:refs/for/master/my/topic-test
 		NOTE: with extra environment: AGIT_FLOW=1
 		NOTE: with extra environment: GIT_SSH_COMMAND=ssh -o SendEnv=AGIT_FLOW
 		NOTE: will update-ref refs/published/my/topic-test on refs/heads/my/topic-test, reason: review from my/topic-test to master on ssh://git@example.com:29418
@@ -533,7 +533,7 @@ test_expect_success "upload to gerrit ssh review url (assume-no, dryrun, use ssh
 				--dryrun \
 				--mock-ssh-info-status 200 \
 				--mock-ssh-info-response \
-				"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}"
+				"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\", \"version\":2}"
 		) >out 2>&1 &&
 		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
 		test_cmp expect actual
@@ -619,7 +619,7 @@ test_expect_success "upload to a ssh review using rcp style URL" '
 		  branch my/topic-test ( 1 commit(s)):
 		         <hash>
 		to ssh://git@example.com (y/N)? Yes
-		NOTE: will execute command: git push --receive-pack=agit-receive-pack -o oldoid=<hash> ssh://git@ssh.example.com/jiangxin/main.git refs/heads/my/topic-test:refs/for/master/my/topic-test
+		NOTE: will execute command: git push -o oldoid=<hash> ssh://git@ssh.example.com/jiangxin/main.git refs/heads/my/topic-test:refs/for/master/my/topic-test
 		NOTE: with extra environment: AGIT_FLOW=1
 		NOTE: with extra environment: GIT_SSH_COMMAND=ssh -o SendEnv=AGIT_FLOW
 		NOTE: will update-ref refs/published/my/topic-test on refs/heads/my/topic-test, reason: review from my/topic-test to master on ssh://git@example.com
@@ -635,7 +635,7 @@ test_expect_success "upload to a ssh review using rcp style URL" '
 				--dryrun \
 				--mock-ssh-info-status 200 \
 				--mock-ssh-info-response \
-				"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}"
+				"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\", \"version\":2}"
 		) >out 2>&1 &&
 		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
 		test_cmp expect actual
@@ -681,7 +681,7 @@ test_expect_success "ATTENTION confirm if there are too many commits for review"
 		ATTENTION: You are uploading an unusually high number of commits.
 		YOU PROBABLY DO NOT MEAN TO DO THIS. (Did you rebase across branches?)
 		If you are sure you intend to do this, type '"'"'yes'"'"': Yes
-		NOTE: will execute command: git push --receive-pack=agit-receive-pack -o oldoid=<hash> ssh://git@ssh.example.com/jiangxin/main.git refs/heads/my/topic-test:refs/for/master/my/topic-test
+		NOTE: will execute command: git push -o oldoid=<hash> ssh://git@ssh.example.com/jiangxin/main.git refs/heads/my/topic-test:refs/for/master/my/topic-test
 		NOTE: with extra environment: AGIT_FLOW=1
 		NOTE: with extra environment: GIT_SSH_COMMAND=ssh -o SendEnv=AGIT_FLOW
 
@@ -696,7 +696,7 @@ test_expect_success "ATTENTION confirm if there are too many commits for review"
 				--mock-git-push \
 				--mock-ssh-info-status 200 \
 				--mock-ssh-info-response \
-				"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}"
+				"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\", \"version\":2}"
 		) >out 2>&1 &&
 		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
 		test_cmp expect actual

@@ -30,6 +30,7 @@ type helperProtoCommand struct {
 		Upload   bool
 		Download bool
 		Type     string
+		Version  int
 	}
 }
 
@@ -50,6 +51,10 @@ func (v *helperProtoCommand) Command() *cobra.Command {
 		"type",
 		"",
 		"type of protocol")
+	v.cmd.Flags().IntVar(&v.O.Version,
+		"version",
+		0,
+		"version of protocol")
 	v.cmd.Flags().BoolVar(&v.O.Upload,
 		"upload",
 		false,
@@ -73,7 +78,7 @@ func (v *helperProtoCommand) Execute(arts []string) error {
 	if v.O.Type == "" {
 		return fmt.Errorf("must provide type of proto")
 	}
-	sshInfo := helper.SSHInfo{ProtoType: v.O.Type}
+	sshInfo := helper.SSHInfo{ProtoType: v.O.Type, ProtoVersion: v.O.Version}
 	protoHelper = helper.NewProtoHelper(&sshInfo)
 
 	if v.O.Download && v.O.Upload {

@@ -138,6 +138,31 @@ test_expect_success "with new commit, ready for upload (edit push options)" '
 		#         <hash>
 		
 		NOTE: main> will execute command: git push --receive-pack=agit-receive-pack ssh://git@ssh.example.com/main.git refs/heads/my/topic1:refs/for/Maint/my/topic1
+		NOTE: main> will update-ref refs/published/my/topic1 on refs/heads/my/topic1, reason: review from my/topic1 to Maint on https://example.com
+		
+		----------------------------------------------------------------------
+		EOF
+		git-repo upload \
+			--dryrun \
+			--no-cache \
+			--mock-ssh-info-status 200 \
+			--mock-ssh-info-response \
+			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
+			>out 2>&1 &&
+		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success "agit-flow proto v2: no agit-receive-pack, and push with environments" '
+	(
+		cd work &&
+		cat >expect<<-EOF &&
+		Upload project main/ to remote branch Maint:
+		  branch my/topic1 ( 1 commit(s)):
+		         <hash>
+		to https://example.com (y/N)? Yes
+		NOTE: main> will execute command: git push ssh://git@ssh.example.com/main.git refs/heads/my/topic1:refs/for/Maint/my/topic1
 		NOTE: main> with extra environment: AGIT_FLOW=1
 		NOTE: main> with extra environment: GIT_SSH_COMMAND=ssh -o SendEnv=AGIT_FLOW
 		NOTE: main> will update-ref refs/published/my/topic1 on refs/heads/my/topic1, reason: review from my/topic1 to Maint on https://example.com
@@ -146,9 +171,12 @@ test_expect_success "with new commit, ready for upload (edit push options)" '
 		EOF
 		git-repo upload \
 			--dryrun \
+			--no-cache \
+			--no-edit \
+			--assume-yes \
 			--mock-ssh-info-status 200 \
 			--mock-ssh-info-response \
-			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
+			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\", \"version\":2}" \
 			>out 2>&1 &&
 		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
 		test_cmp expect actual
@@ -164,9 +192,10 @@ test_expect_success "new branch, and do nothing for for upload --cbr" '
 		EOF
 		git-repo upload --cbr \
 			--assume-no \
+			--no-cache \
 			--mock-ssh-info-status 200 \
 			--mock-ssh-info-response \
-			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
+			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\", \"version\":2}" \
 			>out 2>&1 &&
 		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
 		test_cmp expect actual
@@ -189,7 +218,7 @@ test_expect_success "upload branch without --cbr" '
 			--no-edit \
 			--mock-ssh-info-status 200 \
 			--mock-ssh-info-response \
-			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
+			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\", \"version\":2}" \
 			>out 2>&1 &&
 		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
 		test_cmp expect actual
@@ -205,7 +234,7 @@ test_expect_success "upload --dryrun --drafts" '
 		  branch my/topic1 ( 1 commit(s)):
 		         <hash>
 		to https://example.com (y/N)? Yes
-		NOTE: main> will execute command: git push --receive-pack=agit-receive-pack ssh://git@ssh.example.com/main.git refs/heads/my/topic1:refs/drafts/Maint/my/topic1
+		NOTE: main> will execute command: git push ssh://git@ssh.example.com/main.git refs/heads/my/topic1:refs/drafts/Maint/my/topic1
 		NOTE: main> with extra environment: AGIT_FLOW=1
 		NOTE: main> with extra environment: GIT_SSH_COMMAND=ssh -o SendEnv=AGIT_FLOW
 		NOTE: main> will update-ref refs/published/my/topic1 on refs/heads/my/topic1, reason: review from my/topic1 to Maint on https://example.com
@@ -220,7 +249,7 @@ test_expect_success "upload --dryrun --drafts" '
 			--mock-git-push \
 			--mock-ssh-info-status 200 \
 			--mock-ssh-info-response \
-			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
+			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\", \"version\":2}" \
 			>out 2>&1 &&
 		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
 		test_cmp expect actual
@@ -239,11 +268,11 @@ test_expect_success "upload --dryrun" '
 		EOF
 		if git-repo test version --git lt 2.10.0; then
 			cat >>expect<<-EOF
-			NOTE: main> will execute command: git push --receive-pack=agit-receive-pack ssh://git@ssh.example.com/main.git refs/heads/my/topic1:refs/for/Maint/my/topic1%r=user1,r=user2,r=user3,r=user4,cc=user5,cc=user6,cc=user7,notify=NONE,private,wip
+			NOTE: main> will execute command: git push ssh://git@ssh.example.com/main.git refs/heads/my/topic1:refs/for/Maint/my/topic1%r=user1,r=user2,r=user3,r=user4,cc=user5,cc=user6,cc=user7,notify=NONE,private,wip
 			EOF
 		else
 			cat >>expect<<-EOF
-			NOTE: main> will execute command: git push --receive-pack=agit-receive-pack -o title=review example -o description={base64}6K+m57uG6K+05piOXG4uLi5cbg== -o reviewers=user1,user2,user3,user4 -o cc=user5,user6,user7 -o notify=no -o private=yes -o wip=yes ssh://git@ssh.example.com/main.git refs/heads/my/topic1:refs/for/Maint/my/topic1
+			NOTE: main> will execute command: git push -o title=review example -o description={base64}6K+m57uG6K+05piOXG4uLi5cbg== -o reviewers=user1,user2,user3,user4 -o cc=user5,user6,user7 -o notify=no -o private=yes -o wip=yes ssh://git@ssh.example.com/main.git refs/heads/my/topic1:refs/for/Maint/my/topic1
 			EOF
 		fi &&
 		cat >>expect<<-EOF &&
@@ -285,7 +314,7 @@ test_expect_success "mock-git-push, but do update-ref for upload" '
 		  branch my/topic1 ( 1 commit(s)):
 		         <hash>
 		to https://example.com (y/N)? Yes
-		NOTE: main> will execute command: git push --receive-pack=agit-receive-pack ssh://git@ssh.example.com/main.git refs/heads/my/topic1:refs/for/Maint/my/topic1
+		NOTE: main> will execute command: git push ssh://git@ssh.example.com/main.git refs/heads/my/topic1:refs/for/Maint/my/topic1
 		NOTE: main> with extra environment: AGIT_FLOW=1
 		NOTE: main> with extra environment: GIT_SSH_COMMAND=ssh -o SendEnv=AGIT_FLOW
 		
@@ -297,7 +326,7 @@ test_expect_success "mock-git-push, but do update-ref for upload" '
 			--mock-git-push \
 			--mock-ssh-info-status 200 \
 			--mock-ssh-info-response \
-			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
+			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\", \"version\":2}" \
 			>out 2>&1 &&
 		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
 		test_cmp expect actual

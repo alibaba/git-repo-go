@@ -70,9 +70,12 @@ func (v AGitProtoHelper) GetGitPushCommand(o *common.UploadOptions) (*GitPushCom
 		return nil, fmt.Errorf("bad review URL: %s", o.RemoteURL)
 	}
 	if gitURL.IsSSH() {
-		gitPushCmd.Env = []string{"AGIT_FLOW=1"}
-		// TODO: obsolete, removed later.
-		cmds = append(cmds, "--receive-pack=agit-receive-pack")
+		switch v.sshInfo.ProtoVersion {
+		case 0:
+			cmds = append(cmds, "--receive-pack=agit-receive-pack")
+		default:
+			gitPushCmd.Env = []string{"AGIT_FLOW=1"}
+		}
 	} else {
 		gitPushCmd.GitConfig = []string{`http.extraHeader="AGIT-FLOW: 1"`}
 	}

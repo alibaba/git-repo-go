@@ -63,7 +63,7 @@ test_expect_success "upload error: no tracking branch" '
 				--dryrun \
 				--mock-ssh-info-status 200 \
 				--mock-ssh-info-response \
-				"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}"
+				"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\", \"version\":2}"
 
 		) >actual 2>&1 &&
 		test_cmp expect actual
@@ -78,7 +78,7 @@ test_expect_success "upload --remote 1st --dest <branch>" '
 		  branch jx/topic1 ( 1 commit(s)):
 		         <hash>
 		to https://example.com (y/N)? Yes
-		NOTE: will execute command: git push --receive-pack=agit-receive-pack ssh://git@ssh.example.com/jiangxin/main.git refs/heads/jx/topic1:refs/for/master/jx/topic1
+		NOTE: will execute command: git push ssh://git@ssh.example.com/jiangxin/main.git refs/heads/jx/topic1:refs/for/master/jx/topic1
 		NOTE: with extra environment: AGIT_FLOW=1
 		NOTE: with extra environment: GIT_SSH_COMMAND=ssh -o SendEnv=AGIT_FLOW
 		NOTE: will update-ref refs/published/jx/topic1 on refs/heads/jx/topic1, reason: review from jx/topic1 to master on https://example.com
@@ -93,7 +93,7 @@ test_expect_success "upload --remote 1st --dest <branch>" '
 				--dryrun \
 				--mock-ssh-info-status 200 \
 				--mock-ssh-info-response \
-				"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}"
+				"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\", \"version\":2}"
 
 		) >out 2>&1 &&
 		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
@@ -116,7 +116,7 @@ test_expect_success "upload --remote 1st --br <branch> --dest <branch>" '
 		  branch jx/topic1 ( 1 commit(s)):
 		         <hash>
 		to https://example.com (y/N)? Yes
-		NOTE: will execute command: git push --receive-pack=agit-receive-pack ssh://git@ssh.example.com/jiangxin/main.git refs/heads/jx/topic1:refs/for/master/jx/topic1
+		NOTE: will execute command: git push ssh://git@ssh.example.com/jiangxin/main.git refs/heads/jx/topic1:refs/for/master/jx/topic1
 		NOTE: with extra environment: AGIT_FLOW=1
 		NOTE: with extra environment: GIT_SSH_COMMAND=ssh -o SendEnv=AGIT_FLOW
 		NOTE: will update-ref refs/published/jx/topic1 on refs/heads/jx/topic1, reason: review from jx/topic1 to master on https://example.com
@@ -131,7 +131,7 @@ test_expect_success "upload --remote 1st --br <branch> --dest <branch>" '
 				--dryrun \
 				--mock-ssh-info-status 200 \
 				--mock-ssh-info-response \
-				"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}"
+				"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\", \"version\":2}"
 
 		) >out 2>&1 &&
 		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&

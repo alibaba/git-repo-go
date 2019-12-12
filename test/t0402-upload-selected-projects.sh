@@ -20,7 +20,7 @@ test_expect_success "git-repo init & sync" '
 		git-repo sync \
 			--mock-ssh-info-status 200 \
 			--mock-ssh-info-response \
-			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}"
+			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\", \"version\":2}"
 	)
 '
 
@@ -97,7 +97,7 @@ test_expect_success "edit script for multiple uploadable branches" '
 			--mock-no-tty \
 			--mock-ssh-info-status 200 \
 			--mock-ssh-info-response \
-			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
+			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\", \"version\":2}" \
 			>out 2>&1 &&
 		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
 		test_cmp expect actual
@@ -121,7 +121,7 @@ test_expect_success "upload with args: project1" '
 			--mock-no-tty \
 			--mock-ssh-info-status 200 \
 			--mock-ssh-info-response \
-			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
+			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\", \"version\":2}" \
 			project1 \
 			>out 2>&1 &&
 		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
@@ -146,7 +146,7 @@ test_expect_success "upload with args: projects/app1" '
 			--mock-no-tty \
 			--mock-ssh-info-status 200 \
 			--mock-ssh-info-response \
-			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
+			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\", \"version\":2}" \
 			projects/app1 \
 			>out 2>&1 &&
 		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
@@ -173,7 +173,7 @@ test_expect_success "upload with args: app1" '
 				--mock-no-tty \
 				--mock-ssh-info-status 200 \
 				--mock-ssh-info-response \
-				"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
+				"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\", \"version\":2}" \
 				app1 \
 				2>&1
 		) >out &&
@@ -201,7 +201,7 @@ test_expect_success "upload with args: ." '
 				--mock-no-tty \
 				--mock-ssh-info-status 200 \
 				--mock-ssh-info-response \
-				"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
+				"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\", \"version\":2}" \
 				. \
 				2>&1
 		) >out &&
@@ -260,7 +260,7 @@ test_expect_success "upload with args: main, projects/app1" '
 			--mock-no-tty \
 			--mock-ssh-info-status 200 \
 			--mock-ssh-info-response \
-			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
+			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\", \"version\":2}" \
 			main projects/app1 projects/app2 \
 			>out 2>&1 &&
 		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
@@ -292,7 +292,7 @@ test_expect_success "upload with args: main, projects/app1" '
 			--mock-edit-script=mock-edit-script \
 			--mock-ssh-info-status 200 \
 			--mock-ssh-info-response \
-			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
+			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\", \"version\":2}" \
 			main projects/app1 projects/app2 \
 			>out 2>&1 &&
 		sed -e "s/[0-9a-f]\{40\}/<hash>/g" out >actual &&
@@ -372,7 +372,7 @@ test_expect_success "if has many commits, must confirm before upload" '
 		ATTENTION: You are uploading an unusually high number of commits.
 		YOU PROBABLY DO NOT MEAN TO DO THIS. (Did you rebase across branches?)
 		If you are sure you intend to do this, type '"'"'yes'"'"': Yes
-		NOTE: projects/app1> will execute command: git push --receive-pack=agit-receive-pack ssh://git@ssh.example.com/project1.git refs/heads/my/topic1:refs/for/Maint/my/topic1
+		NOTE: projects/app1> will execute command: git push ssh://git@ssh.example.com/project1.git refs/heads/my/topic1:refs/for/Maint/my/topic1
 		NOTE: projects/app1> with extra environment: AGIT_FLOW=1
 		NOTE: projects/app1> with extra environment: GIT_SSH_COMMAND=ssh -o SendEnv=AGIT_FLOW
 		
@@ -387,7 +387,7 @@ test_expect_success "if has many commits, must confirm before upload" '
 				--mock-git-push \
 				--mock-ssh-info-status 200 \
 				--mock-ssh-info-response \
-				"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
+				"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\", \"version\":2}" \
 				projects/app1 \
 				2>&1
 		) >out &&
