@@ -803,7 +803,9 @@ func (v *uploadCommand) UploadAndReport(branches []project.ReviewableBranch) err
 	}
 
 	haveErrors := false
-	for _, branch := range branches {
+	for i := range branches {
+		// Will update branch.Error in this loop.
+		branch := &(branches[i])
 		theProject := branch.Project
 		remote := branch.Remote
 		if remote == nil {
@@ -842,7 +844,7 @@ func (v *uploadCommand) UploadAndReport(branches []project.ReviewableBranch) err
 		if v.O.CodeReview.Empty() {
 			oldOid = theProject.PublishedRevision(branch.Branch.Name)
 
-			destBranch, err = v.getDestBranch(&branch)
+			destBranch, err = v.getDestBranch(branch)
 			if err != nil {
 				return err
 			}
@@ -897,7 +899,6 @@ func (v *uploadCommand) UploadAndReport(branches []project.ReviewableBranch) err
 		}
 
 		err = branch.UploadForReview(&o)
-
 		if err != nil {
 			branch.Uploaded = false
 			branch.Error = err
