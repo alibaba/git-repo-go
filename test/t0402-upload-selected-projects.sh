@@ -373,7 +373,7 @@ test_expect_success "if has many commits, must confirm before upload" '
 		YOU PROBABLY DO NOT MEAN TO DO THIS. (Did you rebase across branches?)
 		If you are sure you intend to do this, type '"'"'yes'"'"': Yes
 		NOTE: projects/app1> will execute command: git push ssh://git@ssh.example.com/project1.git refs/heads/my/topic1:refs/for/Maint/my/topic1
-		NOTE: projects/app1> with extra environment: AGIT_FLOW=1
+		NOTE: projects/app1> with extra environment: AGIT_FLOW=git-repo/n.n.n.n
 		NOTE: projects/app1> with extra environment: GIT_SSH_COMMAND=ssh -o SendEnv=AGIT_FLOW
 		
 		----------------------------------------------------------------------
@@ -391,7 +391,7 @@ test_expect_success "if has many commits, must confirm before upload" '
 				projects/app1 \
 				2>&1
 		) >out &&
-		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
+		sed -e "s/[0-9a-f]\{40\}/<hash>/g" -e "s/git-repo\/[^ \"\\]*/git-repo\/n.n.n.n/g" <out >actual &&
 		test_cmp expect actual
 	)
 '

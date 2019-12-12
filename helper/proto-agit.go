@@ -25,6 +25,7 @@ import (
 	"code.alibaba-inc.com/force/git-repo/common"
 	"code.alibaba-inc.com/force/git-repo/config"
 	"code.alibaba-inc.com/force/git-repo/encode"
+	"code.alibaba-inc.com/force/git-repo/version"
 	log "github.com/jiangxin/multi-log"
 )
 
@@ -70,15 +71,21 @@ func (v AGitProtoHelper) GetGitPushCommand(o *common.UploadOptions) (*GitPushCom
 	if gitURL == nil || (gitURL.Proto != "ssh" && gitURL.Proto != "http" && gitURL.Proto != "https") {
 		return nil, fmt.Errorf("bad review URL: %s", o.RemoteURL)
 	}
+
+	gitRepoAgent := "git-repo" + "/" + version.GetVersion()
 	if gitURL.IsSSH() {
 		switch v.sshInfo.ProtoVersion {
 		case 0:
 			cmds = append(cmds, "--receive-pack=agit-receive-pack")
 		default:
-			gitPushCmd.Env = []string{"AGIT_FLOW=1"}
+			gitPushCmd.Env = []string{
+				"AGIT_FLOW=" + gitRepoAgent,
+			}
 		}
 	} else {
-		gitPushCmd.GitConfig = []string{`http.extraHeader="AGIT-FLOW: 1"`}
+		gitPushCmd.GitConfig = []string{
+			fmt.Sprintf(`http.extraHeader="AGIT-FLOW: %s"`, gitRepoAgent),
+		}
 	}
 
 	gitCanPushOptions := cap.GitCanPushOptions()

@@ -92,7 +92,7 @@ NOTE: no editor, input data unchanged
 #         <hash>
 
 NOTE: will execute command: git push -o oldoid=<hash> ssh://git@ssh.example.com/repository/main.git refs/heads/review:refs/for-review/12345
-NOTE: with extra environment: AGIT_FLOW=1
+NOTE: with extra environment: AGIT_FLOW=git-repo/n.n.n.n
 NOTE: with extra environment: GIT_SSH_COMMAND=ssh -o SendEnv=AGIT_FLOW
 NOTE: will update-ref refs/merge-requests/12345/head on refs/heads/review, reason: update code review #12345 of http://example.com
 
@@ -119,7 +119,7 @@ test_expect_success "git repo upload --single --change 12345" '
 			--mock-ssh-info-response \
 			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\", \"version\":2}"
 	) >out 2>&1 &&
-	sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
+	sed -e "s/[0-9a-f]\{40\}/<hash>/g" -e "s/git-repo\/[^ \"\\]*/git-repo\/n.n.n.n/g" <out >actual &&
 	test_cmp expect actual
 '
 

@@ -163,7 +163,7 @@ test_expect_success "agit-flow proto v2: no agit-receive-pack, and push with env
 		         <hash>
 		to https://example.com (y/N)? Yes
 		NOTE: main> will execute command: git push ssh://git@ssh.example.com/main.git refs/heads/my/topic1:refs/for/Maint/my/topic1
-		NOTE: main> with extra environment: AGIT_FLOW=1
+		NOTE: main> with extra environment: AGIT_FLOW=git-repo/n.n.n.n
 		NOTE: main> with extra environment: GIT_SSH_COMMAND=ssh -o SendEnv=AGIT_FLOW
 		NOTE: main> will update-ref refs/published/my/topic1 on refs/heads/my/topic1, reason: review from my/topic1 to Maint on https://example.com
 		
@@ -178,7 +178,7 @@ test_expect_success "agit-flow proto v2: no agit-receive-pack, and push with env
 			--mock-ssh-info-response \
 			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\", \"version\":2}" \
 			>out 2>&1 &&
-		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
+		sed -e "s/[0-9a-f]\{40\}/<hash>/g" -e "s/git-repo\/[^ \"\\]*/git-repo\/n.n.n.n/g" <out >actual &&
 		test_cmp expect actual
 	)
 '
@@ -235,7 +235,7 @@ test_expect_success "upload --dryrun --drafts" '
 		         <hash>
 		to https://example.com (y/N)? Yes
 		NOTE: main> will execute command: git push ssh://git@ssh.example.com/main.git refs/heads/my/topic1:refs/drafts/Maint/my/topic1
-		NOTE: main> with extra environment: AGIT_FLOW=1
+		NOTE: main> with extra environment: AGIT_FLOW=git-repo/n.n.n.n
 		NOTE: main> with extra environment: GIT_SSH_COMMAND=ssh -o SendEnv=AGIT_FLOW
 		NOTE: main> will update-ref refs/published/my/topic1 on refs/heads/my/topic1, reason: review from my/topic1 to Maint on https://example.com
 		
@@ -251,7 +251,7 @@ test_expect_success "upload --dryrun --drafts" '
 			--mock-ssh-info-response \
 			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\", \"version\":2}" \
 			>out 2>&1 &&
-		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
+		sed -e "s/[0-9a-f]\{40\}/<hash>/g" -e "s/git-repo\/[^ \"\\]*/git-repo\/n.n.n.n/g" <out >actual &&
 		test_cmp expect actual
 	)
 '
@@ -276,7 +276,7 @@ test_expect_success "upload --dryrun" '
 			EOF
 		fi &&
 		cat >>expect<<-EOF &&
-		NOTE: main> with extra environment: AGIT_FLOW=1
+		NOTE: main> with extra environment: AGIT_FLOW=git-repo/n.n.n.n
 		NOTE: main> with extra environment: GIT_SSH_COMMAND=ssh -o SendEnv=AGIT_FLOW
 		NOTE: main> will update-ref refs/published/my/topic1 on refs/heads/my/topic1, reason: review from my/topic1 to Maint on https://example.com
 		
@@ -300,7 +300,7 @@ test_expect_success "upload --dryrun" '
 			--wip \
 			--no-emails \
 			>out 2>&1 &&
-		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
+		sed -e "s/[0-9a-f]\{40\}/<hash>/g" -e "s/git-repo\/[^ \"\\]*/git-repo\/n.n.n.n/g" <out >actual &&
 		test_cmp expect actual
 	)
 '
@@ -315,7 +315,7 @@ test_expect_success "mock-git-push, but do update-ref for upload" '
 		         <hash>
 		to https://example.com (y/N)? Yes
 		NOTE: main> will execute command: git push ssh://git@ssh.example.com/main.git refs/heads/my/topic1:refs/for/Maint/my/topic1
-		NOTE: main> with extra environment: AGIT_FLOW=1
+		NOTE: main> with extra environment: AGIT_FLOW=git-repo/n.n.n.n
 		NOTE: main> with extra environment: GIT_SSH_COMMAND=ssh -o SendEnv=AGIT_FLOW
 		
 		----------------------------------------------------------------------
@@ -328,7 +328,7 @@ test_expect_success "mock-git-push, but do update-ref for upload" '
 			--mock-ssh-info-response \
 			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\", \"version\":2}" \
 			>out 2>&1 &&
-		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
+		sed -e "s/[0-9a-f]\{40\}/<hash>/g" -e "s/git-repo\/[^ \"\\]*/git-repo\/n.n.n.n/g" <out >actual &&
 		test_cmp expect actual
 	)
 '

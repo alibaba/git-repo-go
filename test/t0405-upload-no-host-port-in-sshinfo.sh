@@ -106,7 +106,7 @@ test_expect_success "no host/port in ssh_info: use project's http address" '
 		  branch my/topic1 ( 1 commit(s)):
 		         <hash>
 		to https://example.com (y/N)? Yes
-		NOTE: main> will execute command: git -c http.extraHeader="AGIT-FLOW: 1" push aone refs/heads/my/topic1:refs/for/Maint/my/topic1
+		NOTE: main> will execute command: git -c http.extraHeader="AGIT-FLOW: git-repo/n.n.n.n" push aone refs/heads/my/topic1:refs/for/Maint/my/topic1
 		
 		----------------------------------------------------------------------
 		EOF
@@ -119,11 +119,10 @@ test_expect_success "no host/port in ssh_info: use project's http address" '
 			--mock-ssh-info-response \
 			"{\"type\":\"agit\", \"version\":2}" \
 			>out 2>&1 &&
-		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
+		sed -e "s/[0-9a-f]\{40\}/<hash>/g" -e "s/git-repo\/[^ \"\\]*/git-repo\/n.n.n.n/g" <out >actual &&
 		test_cmp expect actual
 	)
 '
-
 
 test_expect_success "manifests url changed to SSH protocol" '
 	(
@@ -145,7 +144,7 @@ test_expect_success "no host/port in ssh_info: use project's ssh address" '
 		         <hash>
 		to https://example.com (y/N)? Yes
 		NOTE: main> will execute command: git push -o oldoid=<hash> aone refs/heads/my/topic1:refs/for/Maint/my/topic1
-		NOTE: main> with extra environment: AGIT_FLOW=1
+		NOTE: main> with extra environment: AGIT_FLOW=git-repo/n.n.n.n
 		NOTE: main> with extra environment: GIT_SSH_COMMAND=ssh -o SendEnv=AGIT_FLOW
 		
 		----------------------------------------------------------------------
@@ -159,7 +158,7 @@ test_expect_success "no host/port in ssh_info: use project's ssh address" '
 			--mock-ssh-info-response \
 			"{\"type\":\"agit\", \"version\":2}" \
 			>out 2>&1 &&
-		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
+		sed -e "s/[0-9a-f]\{40\}/<hash>/g" -e "s/git-repo\/[^ \"\\]*/git-repo\/n.n.n.n/g" <out >actual &&
 		test_cmp expect actual
 	)
 '

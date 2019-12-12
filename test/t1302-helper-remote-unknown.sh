@@ -90,7 +90,7 @@ cat >expect <<EOF
 		"refs/heads/my/topic:refs/for/master/my/topic"
 	],
 	"env": [
-		"AGIT_FLOW=1"
+		"AGIT_FLOW=git-repo/n.n.n.n"
 	]
 }
 EOF
@@ -116,7 +116,8 @@ test_expect_success "upload command (SSH protocol, version 2)" '
 	  "Version": 1
 	}
 	EOF
-	git-repo helper proto --type unknown1 --version 2 --upload >actual 2>&1 &&
+	git-repo helper proto --type unknown1 --version 2 --upload >out 2>&1 &&
+	sed -e "s/git-repo\/[^ \"\\]*/git-repo\/n.n.n.n/g" <out >actual &&
 	test_cmp expect actual
 '
 
