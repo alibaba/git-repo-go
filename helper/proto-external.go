@@ -18,7 +18,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -61,28 +60,18 @@ func (v *ExternalProtoHelper) Program() string {
 
 // GetGitPushCommand reads upload options and returns git push command.
 func (v ExternalProtoHelper) GetGitPushCommand(o *common.UploadOptions) (*GitPushCommand, error) {
-	data, err := json.Marshal(o)
+	var (
+		input   []byte
+		output  []byte
+		err     error
+		pushCmd = GitPushCommand{}
+	)
+
+	input, err = json.Marshal(o)
 	if err != nil {
 		return nil, err
 	}
 
-	reader := bytes.NewReader(data)
-	result, err := v.GetGitPushCommandPipe(reader)
-	if err != nil {
-		return nil, err
-	}
-
-	cmd := GitPushCommand{}
-	err = json.Unmarshal(result, &cmd)
-	if err != nil {
-		return nil, err
-	}
-	return &cmd, nil
-}
-
-// GetGitPushCommandPipe reads JSON from reader, and format it into proper JSON
-// contains git push command.
-func (v ExternalProtoHelper) GetGitPushCommandPipe(reader io.Reader) ([]byte, error) {
 	program, err := exec.LookPath(v.Program())
 	if err != nil {
 		return nil, fmt.Errorf("cannot find helper '%s'", v.Program())
@@ -93,14 +82,19 @@ func (v ExternalProtoHelper) GetGitPushCommandPipe(reader io.Reader) ([]byte, er
 		cmdArgs = append(cmdArgs, "--version", strconv.Itoa(v.sshInfo.ProtoVersion))
 	}
 	cmd := exec.Command(cmdArgs[0], cmdArgs[1:]...)
-	cmd.Stdin = reader
-	out, err := cmd.Output()
+	cmd.Stdin = bytes.NewReader(input)
+	output, err = cmd.Output()
 	if err != nil {
 		if exitError, ok := err.(*exec.ExitError); ok {
 			return nil, fmt.Errorf("fail to run %s: %s", v.Program(), exitError.Stderr)
 		}
 	}
-	return bytes.TrimSpace(out), err
+
+	err = json.Unmarshal(output, &pushCmd)
+	if err != nil {
+		return nil, fmt.Errorf("invalid output from command '%s': %s", v.Program(), err)
+	}
+	return &pushCmd, nil
 }
 
 // GetDownloadRef returns reference name of the specific code review.

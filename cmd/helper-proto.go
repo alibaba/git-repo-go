@@ -103,7 +103,7 @@ func (v *helperProtoCommand) Execute(arts []string) error {
 		return nil
 	}
 
-	buf, err = protoHelper.GetGitPushCommandPipe(os.Stdin)
+	buf, err = helper.GetGitPushCommandPipe(protoHelper)
 	if err != nil {
 		return err
 	}

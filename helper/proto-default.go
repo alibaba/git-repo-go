@@ -16,7 +16,6 @@ package helper
 
 import (
 	"errors"
-	"io"
 
 	"code.alibaba-inc.com/force/git-repo/common"
 )
@@ -44,12 +43,6 @@ func (v DefaultProtoHelper) GetSSHInfo() *SSHInfo {
 
 // GetGitPushCommand reads upload options and returns git push command.
 func (v DefaultProtoHelper) GetGitPushCommand(o *common.UploadOptions) (*GitPushCommand, error) {
-	return nil, errors.New("not implement")
-}
-
-// GetGitPushCommandPipe reads JSON from reader, and format it into proper JSON
-// contains git push command.
-func (v DefaultProtoHelper) GetGitPushCommandPipe(reader io.Reader) ([]byte, error) {
 	return nil, errors.New("not implement")
 }
 

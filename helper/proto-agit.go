@@ -17,7 +17,6 @@ package helper
 import (
 	"errors"
 	"fmt"
-	"io"
 	"strconv"
 	"strings"
 
@@ -48,12 +47,6 @@ func (v AGitProtoHelper) GetType() string {
 // GetSSHInfo returns SSHInfo object.
 func (v AGitProtoHelper) GetSSHInfo() *SSHInfo {
 	return v.sshInfo
-}
-
-// GetGitPushCommandPipe reads JSON from reader, and format it into proper JSON
-// contains git push command.
-func (v AGitProtoHelper) GetGitPushCommandPipe(reader io.Reader) ([]byte, error) {
-	return getGitPushCommandPipe(&v, reader)
 }
 
 // GetGitPushCommand reads upload options and returns git push command.

@@ -16,7 +16,7 @@ package helper
 
 import (
 	"encoding/json"
-	"io"
+	"os"
 	"strings"
 
 	"code.alibaba-inc.com/force/git-repo/common"
@@ -34,7 +34,6 @@ type GitPushCommand struct {
 type ProtoHelper interface {
 	GetType() string
 	GetSSHInfo() *SSHInfo
-	GetGitPushCommandPipe(io.Reader) ([]byte, error)
 	GetGitPushCommand(*common.UploadOptions) (*GitPushCommand, error)
 	GetDownloadRef(string, string) (string, error)
 }
@@ -52,13 +51,15 @@ func NewProtoHelper(sshInfo *SSHInfo) ProtoHelper {
 	return NewExternalProtoHelper(sshInfo)
 }
 
-func getGitPushCommandPipe(proto ProtoHelper, reader io.Reader) ([]byte, error) {
+// GetGitPushCommandPipe reads JSON from STDIN, pipe it to the helper, and
+// output the result in JSON.
+func GetGitPushCommandPipe(proto ProtoHelper) ([]byte, error) {
 	var (
 		o   = common.UploadOptions{}
 		err error
 	)
 
-	decoder := json.NewDecoder(reader)
+	decoder := json.NewDecoder(os.Stdin)
 	err = decoder.Decode(&o)
 	if err != nil {
 		return nil, err
