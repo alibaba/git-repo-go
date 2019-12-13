@@ -2,6 +2,21 @@
 
 Changes of git-repo.
 
+## 0.7.0 (2019-12-13)
+
+New features:
+
+* Add helper for protocol extension, and use can add external helper.
+* Smart selection of remote if repository has many remotes defined.
+* AGit-Flow 2.0: set `AGIT_FLOW` envirionment for git connection.
+* AGit-Flow 2.0: support version of `ssh_info` response.
+* AGit-Flow 2.0: multiple users working on one code review.
+* AGit-Flow 2.0: force push prevention if oldoid is provided.
+
+Refactors, Enhancements and bugfixes:
+
+* Many refactors, such as project.Remote.
+
 ## 0.6.1 (2019-11-10)
 
 + manifest: repo compatible parsing for project revision
