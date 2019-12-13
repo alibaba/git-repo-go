@@ -22,6 +22,12 @@ import (
 	"code.alibaba-inc.com/force/git-repo/common"
 )
 
+// Proto types
+const (
+	ProtoTypeAGit   = "agit"
+	ProtoTypeGerrit = "gerrit"
+)
+
 // GitPushCommand holds command and args for git command.
 type GitPushCommand struct {
 	Cmd       string   `json:"cmd,omitempty"`
@@ -41,9 +47,9 @@ type ProtoHelper interface {
 // NewProtoHelper returns proto helper for specific proto type.
 func NewProtoHelper(sshInfo *SSHInfo) ProtoHelper {
 	switch strings.ToLower(sshInfo.ProtoType) {
-	case "agit":
+	case ProtoTypeAGit:
 		return NewAGitProtoHelper(sshInfo)
-	case "gerrit":
+	case ProtoTypeGerrit:
 		return NewGerritProtoHelper(sshInfo)
 	case "":
 		return NewDefaultProtoHelper(sshInfo)

@@ -41,7 +41,7 @@ func NewAGitProtoHelper(sshInfo *SSHInfo) *AGitProtoHelper {
 
 // GetType returns remote server type.
 func (v AGitProtoHelper) GetType() string {
-	return "agit"
+	return ProtoTypeAGit
 }
 
 // GetSSHInfo returns SSHInfo object.

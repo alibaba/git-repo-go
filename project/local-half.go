@@ -12,6 +12,7 @@ import (
 
 	"code.alibaba-inc.com/force/git-repo/cap"
 	"code.alibaba-inc.com/force/git-repo/config"
+	"code.alibaba-inc.com/force/git-repo/helper"
 	"code.alibaba-inc.com/force/git-repo/path"
 	log "github.com/jiangxin/multi-log"
 )
@@ -227,7 +228,7 @@ func (v Project) SyncLocalHalf(o *CheckoutOptions) error {
 
 		// Install gerrit hooks
 		if remote != nil {
-			if remote.GetType() == config.ProtoTypeGerrit {
+			if remote.GetType() == helper.ProtoTypeGerrit {
 				v.InstallGerritHooks()
 			}
 

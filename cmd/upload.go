@@ -26,6 +26,7 @@ import (
 	"code.alibaba-inc.com/force/git-repo/common"
 	"code.alibaba-inc.com/force/git-repo/config"
 	"code.alibaba-inc.com/force/git-repo/editor"
+	"code.alibaba-inc.com/force/git-repo/helper"
 	"code.alibaba-inc.com/force/git-repo/path"
 	"code.alibaba-inc.com/force/git-repo/project"
 	log "github.com/jiangxin/multi-log"
@@ -1055,7 +1056,7 @@ func (v uploadCommand) Execute(args []string) error {
 			p.Revision = remoteRevision
 
 			// Install hooks if remote is Gerrit server
-			if remote.GetType() == config.ProtoTypeGerrit {
+			if remote.GetType() == helper.ProtoTypeGerrit {
 				allProjects[0].InstallGerritHooks()
 			}
 

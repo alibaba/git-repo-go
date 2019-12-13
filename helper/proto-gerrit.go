@@ -40,7 +40,7 @@ func NewGerritProtoHelper(sshInfo *SSHInfo) *GerritProtoHelper {
 
 // GetType returns remote server type.
 func (v GerritProtoHelper) GetType() string {
-	return "gerrit"
+	return ProtoTypeGerrit
 }
 
 // GetSSHInfo returns SSHInfo object.

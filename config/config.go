@@ -72,9 +72,6 @@ const (
 	ProjectObjects   = "project-objects"
 	Projects         = "projects"
 
-	ProtoTypeGerrit = "gerrit"
-	ProtoTypeAGit   = "agit"
-
 	RefsChanges = "refs/changes/"
 	RefsMr      = "refs/merge-requests/"
 	RefsHeads   = "refs/heads/"

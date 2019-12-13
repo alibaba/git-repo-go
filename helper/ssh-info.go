@@ -147,7 +147,7 @@ func querySSHInfo(address string) (*SSHInfo, error) {
 	// Compatible with android repo.
 	if strings.HasPrefix(address, "sso:") ||
 		os.Getenv("REPO_IGNORE_SSH_INFO") != "" {
-		return &SSHInfo{ProtoType: config.ProtoTypeGerrit}, nil
+		return &SSHInfo{ProtoType: ProtoTypeGerrit}, nil
 	}
 
 	url := config.ParseGitURL(address)
@@ -283,7 +283,7 @@ func sshInfoFromCommand(url *config.GitURL) (*SSHInfo, error) {
 			return &SSHInfo{
 				Host:      url.Host,
 				Port:      url.Port,
-				ProtoType: config.ProtoTypeGerrit}, nil
+				ProtoType: ProtoTypeGerrit}, nil
 		}
 
 		log.Notef("fail to check ssh_info for SSH protocol, will check HTTP instead")
@@ -313,7 +313,7 @@ func sshInfoFromString(data string) (*SSHInfo, error) {
 
 	if !strings.ContainsAny(data, "\n") {
 		if data == "NOT_AVAILABLE" {
-			sshInfo.ProtoType = config.ProtoTypeGerrit
+			sshInfo.ProtoType = ProtoTypeGerrit
 			return &sshInfo, nil
 		}
 		if sshInfoPattern.MatchString(data) {
@@ -328,7 +328,7 @@ func sshInfoFromString(data string) (*SSHInfo, error) {
 			}
 			sshInfo.Port = port
 			sshInfo.Host = items[0]
-			sshInfo.ProtoType = config.ProtoTypeGerrit
+			sshInfo.ProtoType = ProtoTypeGerrit
 			return &sshInfo, nil
 		}
 	}

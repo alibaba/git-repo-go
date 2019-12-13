@@ -20,6 +20,7 @@ import (
 	"strconv"
 
 	"code.alibaba-inc.com/force/git-repo/config"
+	"code.alibaba-inc.com/force/git-repo/helper"
 	"code.alibaba-inc.com/force/git-repo/project"
 	log "github.com/jiangxin/multi-log"
 	"github.com/spf13/cobra"
@@ -208,7 +209,7 @@ func (v *downloadCommand) Execute(args []string) error {
 			remote := c.Project.GetDefaultRemote(true)
 			if remote == nil {
 				err = fmt.Errorf("cannot get remote of project: %s", c.Project.Name)
-			} else if remote.GetType() == config.ProtoTypeGerrit {
+			} else if remote.GetType() == helper.ProtoTypeGerrit {
 				err = c.Project.Revert(dl.Commit)
 			} else {
 				err = fmt.Errorf("--revert only works for gerrit server")
