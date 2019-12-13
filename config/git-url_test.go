@@ -21,7 +21,7 @@ func TestGitURL(t *testing.T) {
 	} {
 		u = ParseGitURL(address)
 		if assert.NotNil(u) {
-			assert.Equal("http://code.aone.alibaba-inc.com:8080", u.GetReviewURL())
+			assert.Equal("http://code.aone.alibaba-inc.com:8080", u.GetRootURL())
 			assert.Equal("http", u.Proto)
 			assert.Equal("git:pass", u.User)
 			assert.Equal("code.aone.alibaba-inc.com", u.Host)
@@ -38,7 +38,7 @@ func TestGitURL(t *testing.T) {
 	} {
 		u = ParseGitURL(address)
 		if assert.NotNil(u) {
-			assert.Equal("https://code.aone.alibaba-inc.com", u.GetReviewURL())
+			assert.Equal("https://code.aone.alibaba-inc.com", u.GetRootURL())
 			assert.Equal("https", u.Proto)
 			assert.Equal("code.aone.alibaba-inc.com", u.Host)
 		}
@@ -52,7 +52,7 @@ func TestGitURL(t *testing.T) {
 	} {
 		u = ParseGitURL(address)
 		if assert.NotNil(u) {
-			assert.Equal("ssh://git@code.aone.alibaba-inc.com:10022", u.GetReviewURL())
+			assert.Equal("ssh://git@code.aone.alibaba-inc.com:10022", u.GetRootURL())
 			assert.Equal("ssh", u.Proto)
 			assert.Equal("git", u.User)
 			assert.Equal("code.aone.alibaba-inc.com", u.Host)
@@ -73,7 +73,7 @@ func TestGitURL(t *testing.T) {
 	} {
 		u = ParseGitURL(address)
 		if assert.NotNil(u) {
-			assert.Equal("ssh://git@code.aone.alibaba-inc.com", u.GetReviewURL())
+			assert.Equal("ssh://git@code.aone.alibaba-inc.com", u.GetRootURL())
 			assert.Equal("ssh", u.Proto)
 			assert.Equal("git", u.User)
 			assert.Equal("code.aone.alibaba-inc.com", u.Host)
@@ -93,7 +93,7 @@ func TestGitURL(t *testing.T) {
 	} {
 		u = ParseGitURL(address)
 		if assert.NotNil(u) {
-			assert.Equal("ssh://code.aone.alibaba-inc.com", u.GetReviewURL())
+			assert.Equal("ssh://code.aone.alibaba-inc.com", u.GetRootURL())
 			assert.Equal("ssh", u.Proto)
 			assert.Equal("code.aone.alibaba-inc.com", u.Host)
 			assert.Equal("my/repo", u.Repo)
@@ -108,7 +108,7 @@ func TestGitURL(t *testing.T) {
 	} {
 		u = ParseGitURL(address)
 		if assert.NotNil(u) {
-			assert.Equal("ssh://git@code.aone.alibaba-inc.com", u.GetReviewURL())
+			assert.Equal("ssh://git@code.aone.alibaba-inc.com", u.GetRootURL())
 			assert.Equal("ssh", u.Proto)
 			assert.Equal("code.aone.alibaba-inc.com", u.Host)
 		}
@@ -122,7 +122,7 @@ func TestGitURL(t *testing.T) {
 	} {
 		u = ParseGitURL(address)
 		if assert.NotNil(u) {
-			assert.Equal("code.aone.alibaba-inc.com", u.GetReviewURL())
+			assert.Equal("code.aone.alibaba-inc.com", u.GetRootURL())
 			assert.Equal("git", u.Proto)
 			assert.Equal("code.aone.alibaba-inc.com", u.Host)
 		}
@@ -135,7 +135,7 @@ func TestGitURL(t *testing.T) {
 	} {
 		u = ParseGitURL(address)
 		if assert.NotNil(u) {
-			assert.Equal("", u.GetReviewURL())
+			assert.Equal("", u.GetRootURL())
 			assert.Equal("file", u.Proto)
 			assert.Equal("/path/of/repo.git", u.Repo)
 		}

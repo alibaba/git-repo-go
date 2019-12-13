@@ -181,7 +181,7 @@ func sshInfoFromAPI(url *config.GitURL) (*SSHInfo, error) {
 		err error
 	)
 
-	infoURL := url.GetReviewURL() + "/ssh_info"
+	infoURL := url.GetRootURL() + "/ssh_info"
 
 	// Mock ssh_info API
 	if config.GetMockSSHInfoResponse() != "" || config.GetMockSSHInfoStatus() != 0 {
@@ -228,7 +228,7 @@ func sshInfoFromAPI(url *config.GitURL) (*SSHInfo, error) {
 	sshInfo, err := sshInfoFromString(buf.String())
 	if err != nil {
 		return nil, fmt.Errorf("fail to run ssh_info API on %s: %s",
-			url.GetReviewURL(),
+			url.GetRootURL(),
 			err)
 	}
 	return sshInfo, nil

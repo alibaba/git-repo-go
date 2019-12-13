@@ -255,7 +255,7 @@ func (v *Project) LoadRemotes(remoteMap *RemoteMap, noCache bool) {
 				if gitURL == nil {
 					log.Warnf("fail to parse remote: %s, URL: %s", name, pushURL)
 				} else {
-					reviewURL = gitURL.GetReviewURL()
+					reviewURL = gitURL.GetRootURL()
 					if reviewURL == "" {
 						log.Debugf("cannot get review URL from remote: %s, URL: %s", name, pushURL)
 					}

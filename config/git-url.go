@@ -38,8 +38,8 @@ func (v GitURL) UserHost() string {
 	return v.User + "@" + v.Host
 }
 
-// GetReviewURL returns review URL.
-func (v GitURL) GetReviewURL() string {
+// GetRootURL returns root URL, can be used for review.
+func (v GitURL) GetRootURL() string {
 	var u string
 
 	if u, ok := mapReviewHosts[v.Host]; ok {
