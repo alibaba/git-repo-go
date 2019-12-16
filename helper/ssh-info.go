@@ -89,11 +89,12 @@ func (v SSHInfoQuery) GetSSHInfo(address string, useCache bool) (*SSHInfo, error
 				sshInfo := SSHInfo{}
 				err = json.Unmarshal([]byte(data), &sshInfo)
 				if err == nil && sshInfo.ProtoType != "" {
+					log.Debugf("get ssh_info cache from '%s': '%s'", v.CacheFile, string(data))
 					return &sshInfo, nil
 				}
-				log.Warnf("fail to parse ssh_info cache: '%s'", data)
+				log.Warnf("fail to parse ssh_info cache from '%s': '%s'", v.CacheFile, data)
 			} else {
-				log.Debug("ssh_info cache is expired")
+				log.Debugf("cache of ssh_info in '%s' is expired", v.CacheFile)
 			}
 		}
 	}
@@ -103,14 +104,16 @@ func (v SSHInfoQuery) GetSSHInfo(address string, useCache bool) (*SSHInfo, error
 	if err != nil {
 		return nil, err
 	}
+	log.Debugf("query ssh_info successfully: %#v", sshInfo)
 
 	// Update Cache
 	if v.CacheFile != "" && v.cfg != nil {
-		v.cfg.Set(fmt.Sprintf(config.CfgManifestRemoteSSHInfo, key),
-			sshInfo.ToJSON())
-		v.cfg.Set(fmt.Sprintf(config.CfgManifestRemoteExpire, key),
-			time.Now().Add(time.Second*sshInfoCacheDefaultExpire).Format(expireTimeLayout))
+		data := sshInfo.ToJSON()
+		expireTime := time.Now().Add(time.Second * sshInfoCacheDefaultExpire).Format(expireTimeLayout)
+		v.cfg.Set(fmt.Sprintf(config.CfgManifestRemoteSSHInfo, key), data)
+		v.cfg.Set(fmt.Sprintf(config.CfgManifestRemoteExpire, key), expireTime)
 		v.cfg.Save(v.CacheFile)
+		log.Debugf("save cache file '%s', expire at '%s', data: '%s'", v.CacheFile, expireTime, data)
 	}
 
 	return sshInfo, nil
@@ -133,6 +136,7 @@ func NewSSHInfoQuery(cacheFile string) *SSHInfoQuery {
 func querySSHInfo(address string) (*SSHInfo, error) {
 	env := os.Getenv("REPO_HOST_PORT_INFO")
 	if env != "" {
+		log.Debugf("parse ssh_info from env: '%s'", env)
 		return sshInfoFromString(env)
 	}
 
@@ -147,6 +151,7 @@ func querySSHInfo(address string) (*SSHInfo, error) {
 	// Compatible with android repo.
 	if strings.HasPrefix(address, "sso:") ||
 		os.Getenv("REPO_IGNORE_SSH_INFO") != "" {
+		log.Debug("REPO_IGNORE_SSH_INFO is defined, fallback to gerrit protocol")
 		return &SSHInfo{ProtoType: ProtoTypeGerrit}, nil
 	}
 
@@ -195,6 +200,7 @@ func sshInfoFromAPI(url *config.GitURL) (*SSHInfo, error) {
 			BodyString(mockResponse)
 	}
 
+	log.Debugf("get ssh_info from API: %s", infoURL)
 	req, err := http.NewRequest("GET", infoURL, nil)
 	if err != nil {
 		return nil, fmt.Errorf("bad ssh_info access to '%s': %s", infoURL, err)
@@ -268,7 +274,7 @@ func sshInfoFromCommand(url *config.GitURL) (*SSHInfo, error) {
 			sshInfoCmdTimeout*time.Second,
 		)
 		defer cancel()
-		log.Debugf("will execute: %s", strings.Join(cmdArgs, " "))
+		log.Debugf("get ssh_info from command: %s", strings.Join(cmdArgs, " "))
 		out, err = exec.CommandContext(ctx, cmdArgs[0], cmdArgs[1:]...).Output()
 		if err != nil {
 			err = fmt.Errorf("pipe ssh_info cmd failed: %s", err)
