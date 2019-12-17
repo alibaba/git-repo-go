@@ -13,7 +13,7 @@ import (
 
 const (
 	gitExtraConfigVersion = "5"
-	gitExtraConfigFile    = "~/.git-repo/gitconfig"
+	gitExtraConfigFile    = "gitconfig"
 	cfgRepoConfigVersion  = "repo.configversion"
 )
 
@@ -78,7 +78,12 @@ func saveExtraGitConfig() error {
 		err error
 	)
 
-	filename, _ := path.Abs(gitExtraConfigFile)
+	configDir, err := GetConfigDir()
+	if err != nil {
+		return err
+	}
+	filename := filepath.Join(configDir, gitExtraConfigFile)
+
 	dir := filepath.Dir(filename)
 	lockfile := filename + ".lock"
 
@@ -123,7 +128,11 @@ func InstallExtraGitConfig() error {
 
 	log.Debugf("unmatched git config version: %s != %s", version, gitExtraConfigVersion)
 	found := false
-	absExtraConfigFile, _ := path.Abs(gitExtraConfigFile)
+	configDir, err := GetConfigDir()
+	if err != nil {
+		return err
+	}
+	absExtraConfigFile := filepath.Join(configDir, gitExtraConfigFile)
 	for _, p := range globalConfig.GetAll("include.path") {
 		p, _ = path.Abs(p)
 		if p == absExtraConfigFile {

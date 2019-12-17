@@ -92,12 +92,11 @@ var (
 
 // GetRepoHooksDir returns the hooks template dir for git-repo.
 func GetRepoHooksDir() (string, error) {
-	home, err := path.HomeDir()
+	cfgDir, err := GetConfigDir()
 	if err != nil {
 		return "", fmt.Errorf("fail to get hooks dir: %s", err)
 	}
-	return filepath.Join(home, DefaultConfigPath, "hooks"), nil
-
+	return filepath.Join(cfgDir, "hooks"), nil
 }
 
 func hooksVersionFile() string {

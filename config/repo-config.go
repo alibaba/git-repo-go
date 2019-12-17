@@ -4,13 +4,12 @@ import (
 	"os"
 	"path/filepath"
 
-	"code.alibaba-inc.com/force/git-repo/path"
 	log "github.com/jiangxin/multi-log"
 )
 
 const (
 	// DefaultGitRepoConfigFile is default git-repo config file
-	DefaultGitRepoConfigFile = "~/.git-repo/config"
+	DefaultGitRepoConfigFile = "config"
 )
 
 var (
@@ -35,7 +34,11 @@ var (
 
 // InstallRepoConfig installs default git-repo config example file.
 func InstallRepoConfig() error {
-	filename, err := path.Abs(DefaultGitRepoConfigFile + ".yml.example")
+	configDir, err := GetConfigDir()
+	if err != nil {
+		return err
+	}
+	filename := filepath.Join(configDir, DefaultGitRepoConfigFile+".yml.example")
 	if err != nil {
 		return err
 	}

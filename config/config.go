@@ -45,9 +45,9 @@ var (
 const (
 	GIT = "git"
 
-	DefaultConfigPath = ".git-repo"
-	DefaultLogRotate  = 20 * 1024 * 1024
-	DefaultLogLevel   = "warn"
+	DefaultConfigDir = ".git-repo"
+	DefaultLogRotate = 20 * 1024 * 1024
+	DefaultLogLevel  = "warn"
 
 	CfgRepoArchive           = "repo.archive"
 	CfgRepoDepth             = "repo.depth"
@@ -111,17 +111,26 @@ func IsSingleMode() bool {
 	return viper.GetBool("single")
 }
 
+// GetConfigDir returns ~/.git-repo dir
+func GetConfigDir() (string, error) {
+	home, err := homedir.Dir()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(home, DefaultConfigDir), nil
+}
+
 // GetLogFile gets --logfile option.
 func GetLogFile() string {
 	logfile := viper.GetString("logfile")
 	if logfile != "" && !filepath.IsAbs(logfile) {
 		// Find home directory.
-		home, err := homedir.Dir()
+		configDir, err := GetConfigDir()
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		}
-		logfile = filepath.Join(home, DefaultConfigPath, logfile)
+		logfile = filepath.Join(configDir, logfile)
 	}
 	return logfile
 }

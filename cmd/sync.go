@@ -505,8 +505,7 @@ func (v syncCommand) removeWorktree(dir string, gitTrees []string) error {
 			if path == p {
 				return filepath.SkipDir
 			}
-			// TODO: seperator is /?
-			if strings.HasPrefix(p, path+"/") {
+			if strings.HasPrefix(p, path+string(os.PathSeparator)) || strings.HasPrefix(p, path+"/") {
 				return nil
 			}
 		}

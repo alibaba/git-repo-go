@@ -29,7 +29,6 @@ import (
 
 	"code.alibaba-inc.com/force/git-repo/config"
 	"code.alibaba-inc.com/force/git-repo/manifest"
-	"code.alibaba-inc.com/force/git-repo/path"
 	"code.alibaba-inc.com/force/git-repo/version"
 
 	log "github.com/jiangxin/multi-log"
@@ -215,11 +214,12 @@ func (v rootCommand) initConfig() {
 		// Use config file from the flag.
 		viper.SetConfigFile(cfgFile)
 	} else {
-		filename, err := path.Abs(config.DefaultGitRepoConfigFile)
+		configDir, err := config.GetConfigDir()
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		}
+		filename := filepath.Join(configDir, config.DefaultGitRepoConfigFile)
 
 		// Search config in home directory with name ".git-repo" (without extension).
 		viper.AddConfigPath(filepath.Dir(filename))
