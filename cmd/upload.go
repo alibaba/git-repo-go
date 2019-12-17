@@ -608,7 +608,7 @@ func (v uploadCommand) UploadForReviewWithEditor(branchesMap map[string][]projec
 	optsInEditString := strings.Split(editString, markbranchSelection)[0]
 	v.O.LoadFromText(optsInEditString)
 
-	// Save editString to UPLOAD_OPTIONS file
+	// Save editString to template file `.git/UPLOAD_OPTIONS.d/<branch>`
 	err = v.saveUploadOptions(optionsFile, v.O)
 	if err != nil {
 		log.Error(err)
@@ -737,6 +737,16 @@ func (v uploadCommand) fmtUploadOptionsScript(optionsFile string, published bool
 					return filepath.SkipDir
 				},
 			)
+		}
+
+		// fallback to ~/.git-repo/UPLOAD_OPTIONS
+		if !path.Exist(optionsFile) {
+			configDir, err := config.GetConfigDir()
+			if err != nil {
+				log.Warnf("fail get config dir: %s", err)
+			} else {
+				optionsFile = filepath.Join(configDir, uploadOptionsFile)
+			}
 		}
 	}
 
