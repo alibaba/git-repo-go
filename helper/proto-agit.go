@@ -77,7 +77,7 @@ func (v AGitProtoHelper) GetGitPushCommand(o *common.UploadOptions) (*GitPushCom
 		}
 	} else {
 		gitPushCmd.GitConfig = []string{
-			fmt.Sprintf(`http.extraHeader="AGIT-FLOW: %s"`, gitRepoAgent),
+			fmt.Sprintf(`http.extraHeader=AGIT-FLOW: %s`, gitRepoAgent),
 		}
 	}
 
