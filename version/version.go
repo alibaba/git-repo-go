@@ -43,12 +43,17 @@ type gitCompatibleIssue struct {
 var gitCompatibleIssues = []gitCompatibleIssue{
 	gitCompatibleIssue{
 		"1.7.10",
-		"Git config extensions (by include.path directive) are only supported in git 1.7.10 and above",
+		"Git config extension (by include.path directive) is only supported in git 1.7.10 and above",
 		true,
 	},
 	gitCompatibleIssue{
 		"2.2.0",
 		"The git-interpret-trailers command introduced in git 2.2.0 is used for the Gerrit commit-msg hook.",
+		false,
+	},
+	gitCompatibleIssue{
+		"2.9.0",
+		"sending custom HTTP headers is only supported in git 2.9.0 and above",
 		false,
 	},
 	gitCompatibleIssue{
