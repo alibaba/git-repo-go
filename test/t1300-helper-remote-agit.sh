@@ -170,7 +170,7 @@ cat >expect <<EOF
 		"refs/heads/my/topic:refs/for/master/my/topic"
 	],
 	"gitconfig": [
-		"http.extraHeader=\"AGIT-FLOW: git-repo/n.n.n.n\""
+		"http.extraHeader=AGIT-FLOW: git-repo/n.n.n.n"
 	]
 }
 EOF
@@ -317,7 +317,7 @@ cat >expect <<EOF
 		"refs/heads/my/topic:refs/for-review/12345"
 	],
 	"gitconfig": [
-		"http.extraHeader=\"AGIT-FLOW: git-repo/n.n.n.n\""
+		"http.extraHeader=AGIT-FLOW: git-repo/n.n.n.n"
 	]
 }
 EOF

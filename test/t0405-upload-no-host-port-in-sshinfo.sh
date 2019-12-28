@@ -106,7 +106,7 @@ test_expect_success "no host/port in ssh_info: use project's http address" '
 		  branch my/topic1 ( 1 commit(s)):
 		         <hash>
 		to https://example.com (y/N)? Yes
-		NOTE: main> will execute command: git -c http.extraHeader="AGIT-FLOW: git-repo/n.n.n.n" push aone refs/heads/my/topic1:refs/for/Maint/my/topic1
+		NOTE: main> will execute command: git -c http.extraHeader=AGIT-FLOW: git-repo/n.n.n.n push aone refs/heads/my/topic1:refs/for/Maint/my/topic1
 		
 		----------------------------------------------------------------------
 		EOF
