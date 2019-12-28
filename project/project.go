@@ -260,26 +260,6 @@ func (v *Project) GitWorktree() (*git.Worktree, error) {
 	return r.Worktree()
 }
 
-// Head returns current branch of project's workdir.
-func (v *Project) Head() string {
-	r, err := v.GitRepository()
-	if err != nil {
-		return ""
-	}
-
-	// Not checkout yet
-	head, err := r.Head()
-	if head == nil {
-		return ""
-	}
-
-	headName := head.Name().String()
-	if headName == "HEAD" {
-		return ""
-	}
-	return headName
-}
-
 // HeadBranch returns current branch (name and oid) of project's workdir.
 func (v *Project) HeadBranch() Branch {
 	r, err := v.GitRepository()

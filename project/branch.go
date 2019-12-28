@@ -151,11 +151,6 @@ func (v Repository) UpdateRef(refname, base, reason string) error {
 	return nil
 }
 
-// GetHead returns head branch.
-func (v Project) GetHead() string {
-	return v.Head()
-}
-
 // RemoteTracking returns name of current remote tracking branch.
 func (v Project) RemoteTracking(rev string) string {
 	if rev == "" || IsSha(rev) {

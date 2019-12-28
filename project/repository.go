@@ -45,6 +45,26 @@ func (v Repository) RepoDir() string {
 	return v.GitDir
 }
 
+// CommonDir returns commondir of a repository.
+func (v Repository) CommonDir() string {
+	dir := v.RepoDir()
+	commonDir := dir
+	if path.IsFile(filepath.Join(dir, "commondir")) {
+		f, err := os.Open(filepath.Join(dir, "commondir"))
+		if err == nil {
+			s := bufio.NewScanner(f)
+			if s.Scan() {
+				commonDir = s.Text()
+				if !filepath.IsAbs(commonDir) {
+					commonDir = filepath.Join(dir, commonDir)
+				}
+			}
+			f.Close()
+		}
+	}
+	return commonDir
+}
+
 // ObjectsRepository returns repository which ObjectsGitDir points to
 func (v Repository) ObjectsRepository() *Repository {
 	if v.ObjectsGitDir == "" {
@@ -150,22 +170,26 @@ func (v Repository) applyCloneBundle() {
 
 // GetHead returns current branch name
 func (v Repository) GetHead() string {
-	r := v.Raw()
-	if r == nil {
-		return ""
-	}
+	var head string
 
-	// Not checkout yet
-	head, err := r.Head()
-	if head == nil || err != nil {
+	headFile := filepath.Join(v.RepoDir(), "HEAD")
+	if !path.IsFile(headFile) {
 		return ""
 	}
-
-	headName := head.Name().String()
-	if headName == "HEAD" {
-		return ""
+	f, err := os.Open(headFile)
+	if err == nil {
+		s := bufio.NewScanner(f)
+		if s.Scan() {
+			head = s.Text()
+			if strings.HasPrefix(head, "ref: ") {
+				head = head[5:]
+			} else {
+				head = ""
+			}
+		}
+		f.Close()
 	}
-	return headName
+	return head
 }
 
 // IsRebaseInProgress checks whether is in middle of a rebase.
@@ -259,7 +283,7 @@ func (v Repository) Raw() *git.Repository {
 		return v.raw
 	}
 
-	v.raw, err = git.PlainOpen(v.RepoDir())
+	v.raw, err = git.PlainOpen(v.CommonDir())
 	if err != nil {
 		log.Errorf("cannot open git repo '%s': %s", v.RepoDir(), err)
 		return nil
@@ -268,7 +292,7 @@ func (v Repository) Raw() *git.Repository {
 }
 
 func (v Repository) configFile() string {
-	return filepath.Join(v.RepoDir(), "config")
+	return filepath.Join(v.CommonDir(), "config")
 }
 
 // SSHInfoCacheFile is filename used to cache proto settings.
