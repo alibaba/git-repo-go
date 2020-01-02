@@ -2,7 +2,7 @@
 
 Changes of git-repo.
 
-## 0.7.0 (2019-12-13)
+## 0.7.1 (2020-01-02)
 
 New features:
 
@@ -16,6 +16,10 @@ New features:
 Refactors, Enhancements and bugfixes:
 
 * Many refactors, such as project.Remote.
+* upload: can upload repo managed by git-worktree
+* path: IsGitDir work with git worktree command
+* version: add compatible issue for version below 2.9.0
+* upload: fallback to `~/.git-repo/UPLOAD_OPTIONS` if no file found
 
 ## 0.6.1 (2019-11-10)
 
