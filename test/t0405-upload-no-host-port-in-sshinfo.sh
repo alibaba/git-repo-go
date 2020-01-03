@@ -74,7 +74,7 @@ test_expect_success "no host/port in ssh_info: bad review url" '
 		
 		----------------------------------------------------------------------
 		[FAILED] main/           my/topic1      
-		       (bad review URL: file:///Users/jiangxin/work/git-repo/git-repo/test/test-repositories/hello/main.git)
+		       (bad review URL: file:///path/to/hello/main.git)
 		
 		EOF
 		test_must_fail git-repo upload \
@@ -86,7 +86,9 @@ test_expect_success "no host/port in ssh_info: bad review url" '
 			--mock-ssh-info-response \
 			"{\"type\":\"agit\", \"version\":2}" \
 			>out 2>&1 &&
-		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
+		sed -e "s/[0-9a-f]\{40\}/<hash>/g" \
+			-e "s#///.*/hello/main.git#///path/to/hello/main.git#g" \
+			<out >actual &&
 		test_cmp expect actual
 	)
 '
