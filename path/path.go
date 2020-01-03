@@ -315,3 +315,11 @@ func IsDir(name string) bool {
 	}
 	return true
 }
+
+// SafeCreateParentDir will create parent dir if not exist.
+func SafeCreateParentDir(name string) {
+	dirName := filepath.Dir(name)
+	if !Exist(dirName) {
+		os.MkdirAll(dirName, 0755)
+	}
+}

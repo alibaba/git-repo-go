@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"code.alibaba-inc.com/force/git-repo/config"
+	"code.alibaba-inc.com/force/git-repo/path"
 	"github.com/jiangxin/goconfig"
 	log "github.com/jiangxin/multi-log"
 	"gopkg.in/h2non/gock.v1"
@@ -108,6 +109,7 @@ func (v SSHInfoQuery) GetSSHInfo(address string, useCache bool) (*SSHInfo, error
 
 	// Update Cache
 	if v.CacheFile != "" && v.cfg != nil {
+		path.SafeCreateParentDir(v.CacheFile)
 		data := sshInfo.ToJSON()
 		expireTime := time.Now().Add(time.Second * sshInfoCacheDefaultExpire).Format(expireTimeLayout)
 		v.cfg.Set(fmt.Sprintf(config.CfgManifestRemoteSSHInfo, key), data)
