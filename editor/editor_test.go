@@ -82,4 +82,10 @@ func TestEditorCommandsWindows(t *testing.T) {
 		editorCommands("'C:/Program Files (x86)/Notepad++/notepad++.exe' -multiInst -nosession",
 			"file"))
 
+	assert.Equal([]string{
+		"C:/Program Files/Git/usr/bin/vi",
+		"file"},
+		editorCommands("C:/Program Files/Git/usr/bin/vi",
+			"file"))
+
 }

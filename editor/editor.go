@@ -24,6 +24,7 @@ import (
 	"strings"
 
 	"code.alibaba-inc.com/force/git-repo/cap"
+	"code.alibaba-inc.com/force/git-repo/path"
 	"github.com/jiangxin/goconfig"
 	log "github.com/jiangxin/multi-log"
 	"github.com/mattn/go-shellwords"
@@ -93,9 +94,32 @@ func editorCommands(editor string, args ...string) []string {
 
 	if cap.IsWindows() {
 		// Split on spaces, respecting quoted strings
-		cmdArgs, err = shellwords.Parse(editor)
-		if err != nil {
-			log.Errorf("fail to parse editor '%s': %s", editor, err)
+		if len(editor) > 0 && (editor[0] == '"' || editor[0] == '\'') {
+			cmdArgs, err = shellwords.Parse(editor)
+
+			if err != nil {
+				log.Errorf("fail to parse editor '%s': %s", editor, err)
+				cmdArgs = append(cmdArgs, editor)
+			}
+		} else {
+			for i, c := range editor {
+				if c == ' ' || c == '\t' {
+					if path.Exist(editor[:i]) {
+						cmdArgs = append(cmdArgs, editor[:i])
+						args, err := shellwords.Parse(editor[i+1:])
+						if err != nil {
+							log.Errorf("fail to parse args'%s': %s", editor[i+1:], err)
+							cmdArgs = append(cmdArgs, editor[i+1:])
+						} else {
+							cmdArgs = append(cmdArgs, args...)
+						}
+						break
+					}
+				}
+			}
+			if len(cmdArgs) == 0 {
+				cmdArgs = append(cmdArgs, editor)
+			}
 		}
 	} else if regexp.MustCompile(`^.*[$ \t'].*$`).MatchString(editor) {
 		// See: https://gerrit-review.googlesource.com/c/git-repo/+/16156
