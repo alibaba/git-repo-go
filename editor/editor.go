@@ -83,7 +83,12 @@ func (v theEditor) selectEditor() string {
 
 	}
 
-	return "vi"
+	for _, c := range []string{"vim", "vi", "emacs", "nano"} {
+		if path, err := exec.LookPath(c); err == nil {
+			return path
+		}
+	}
+	return ":"
 }
 
 func editorCommands(editor string, args ...string) []string {
