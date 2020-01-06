@@ -35,7 +35,6 @@ import (
 	"code.alibaba-inc.com/force/git-repo/cap"
 	"code.alibaba-inc.com/force/git-repo/config"
 	"code.alibaba-inc.com/force/git-repo/format"
-	"code.alibaba-inc.com/force/git-repo/path"
 	"code.alibaba-inc.com/force/git-repo/version"
 	log "github.com/jiangxin/multi-log"
 	"github.com/spf13/cobra"
@@ -511,13 +510,14 @@ func (v upgradeCommand) Execute(args []string) error {
 		mainProgram string
 	)
 
-	mainProgram, err = path.Abs(os.Args[0])
+	mainProgram, err = os.Executable()
 	if err != nil {
 		return err
 	}
 	if linkProgram, err := os.Readlink(mainProgram); err == nil {
 		mainProgram = linkProgram
 	}
+	log.Debugf("program location: %s", mainProgram)
 
 	if v.O.URL == "" {
 		return errors.New("empty upgrade URL")
