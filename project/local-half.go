@@ -10,10 +10,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"code.alibaba-inc.com/force/git-repo/cap"
-	"code.alibaba-inc.com/force/git-repo/config"
-	"code.alibaba-inc.com/force/git-repo/helper"
-	"code.alibaba-inc.com/force/git-repo/path"
+	"github.com/aliyun/git-repo-go/cap"
+	"github.com/aliyun/git-repo-go/config"
+	"github.com/aliyun/git-repo-go/helper"
+	"github.com/aliyun/git-repo-go/path"
 	log "github.com/jiangxin/multi-log"
 )
 

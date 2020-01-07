@@ -19,10 +19,10 @@ import (
 	"fmt"
 	"strings"
 
-	"code.alibaba-inc.com/force/git-repo/color"
-	"code.alibaba-inc.com/force/git-repo/config"
-	"code.alibaba-inc.com/force/git-repo/path"
-	"code.alibaba-inc.com/force/git-repo/project"
+	"github.com/aliyun/git-repo-go/color"
+	"github.com/aliyun/git-repo-go/config"
+	"github.com/aliyun/git-repo-go/path"
+	"github.com/aliyun/git-repo-go/project"
 	log "github.com/jiangxin/multi-log"
 	"github.com/spf13/cobra"
 )

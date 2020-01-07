@@ -47,7 +47,7 @@ function.
     	  <remote  name="aone"
     	           alias="origin"
     		   fetch=".."
-    		   review="https://code.aone.alibaba-inc.com" />
+    		   review="https://codeup.teambition.com" />
     
         ... ...
     }

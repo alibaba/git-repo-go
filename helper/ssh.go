@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"code.alibaba-inc.com/force/git-repo/config"
+	"github.com/aliyun/git-repo-go/config"
 	log "github.com/jiangxin/multi-log"
 )
 

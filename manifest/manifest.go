@@ -23,8 +23,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"code.alibaba-inc.com/force/git-repo/config"
-	"code.alibaba-inc.com/force/git-repo/path"
+	"github.com/aliyun/git-repo-go/config"
+	"github.com/aliyun/git-repo-go/path"
 	"github.com/jiangxin/goconfig"
 	log "github.com/jiangxin/multi-log"
 )

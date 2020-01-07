@@ -32,7 +32,7 @@ test_expect_success "setup repositories: manifests" '
 		  <remote  name="origin"
 			   fetch=".."
 			   revision="master"
-			   review="https://code.aone.alibaba-inc.com" />
+			   review="https://example.com" />
 		  <default remote="origin"
 			   revision="master"
 			   sync-j="4" />
@@ -167,9 +167,9 @@ test_expect_success "local commit rebased" '
 		git log --oneline
 	) >actual &&
 	cat >expect <<-EOF &&
-	914fdc9 local hack
-	b45c0c1 remote hack
-	26f382a initial
+	6edd9ab local hack
+	a360f94 remote hack
+	daa9359 initial
 	EOF
 	test_cmp expect actual
 '

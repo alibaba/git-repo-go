@@ -18,7 +18,7 @@ import (
 	"io"
 	"os"
 
-	"code.alibaba-inc.com/force/git-repo/manifest"
+	"github.com/aliyun/git-repo-go/manifest"
 	log "github.com/jiangxin/multi-log"
 	"github.com/spf13/cobra"
 )

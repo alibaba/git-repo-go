@@ -19,8 +19,8 @@ import (
 	"os"
 	"runtime"
 
-	"code.alibaba-inc.com/force/git-repo/config"
-	"code.alibaba-inc.com/force/git-repo/version"
+	"github.com/aliyun/git-repo-go/config"
+	"github.com/aliyun/git-repo-go/version"
 	"github.com/mattn/go-isatty"
 )
 

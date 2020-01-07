@@ -8,9 +8,9 @@ import (
 	"testing"
 	"time"
 
-	"code.alibaba-inc.com/force/git-repo/config"
-	"code.alibaba-inc.com/force/git-repo/errors"
-	"code.alibaba-inc.com/force/git-repo/project"
+	"github.com/aliyun/git-repo-go/config"
+	"github.com/aliyun/git-repo-go/errors"
+	"github.com/aliyun/git-repo-go/project"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
@@ -37,7 +37,7 @@ func testCreateManifests(topDir, manifestURL string) error {
 	// Create manifest XMLs in manifest workdir
 	filename := filepath.Join(mProject.WorkDir, "m1.xml")
 	err = ioutil.WriteFile(filename, []byte(`<manifest>
-  <remote name="aone" alias="origin" fetch=".." review="https://code.aone.alibaba-inc.com" revision="default"></remote>
+  <remote name="aone" alias="origin" fetch=".." review="https://example.com" revision="default"></remote>
   <default remote="aone" revision="master"></default>
   <project name="platform/drivers" path="platform-drivers">
     <project name="platform/nic" path="nic"></project>
@@ -51,7 +51,7 @@ func testCreateManifests(topDir, manifestURL string) error {
 
 	filename = filepath.Join(mProject.WorkDir, "m2.xml")
 	err = ioutil.WriteFile(filename, []byte(`<manifest>
-  <remote name="origin" alias="origin" fetch=".." review="https://code.aone.alibaba-inc.com" revision="default"></remote>
+  <remote name="origin" alias="origin" fetch=".." review="https://example.com" revision="default"></remote>
   <default remote="origin" revision="master"></default>
   <project name="jiangxin/hello" path="hello"/>
   <project name="jiangxin/world" path="world"/>
@@ -153,7 +153,7 @@ func TestLoadRepoWorkSpace(t *testing.T) {
 	workdir := filepath.Join(tmpdir, "workdir")
 	err = os.MkdirAll(workdir, 0755)
 	assert.Nil(err)
-	mURL := "https://code.aone.alibaba-inc.com/zhiyou.jx/manifest.git"
+	mURL := "https://example.com/zhiyou.jx/manifest.git"
 	err = testCreateManifests(workdir, mURL)
 	assert.Nil(err)
 
@@ -193,7 +193,7 @@ func TestManifestsProjectName(t *testing.T) {
 	var (
 		expect string
 		actual string
-		URL    = "https://code.alibaba-inc.com/my/test/repository"
+		URL    = "https://example.com/my/test/repository"
 	)
 
 	assert := assert.New(t)
@@ -222,7 +222,7 @@ func TestManifestsProjectName(t *testing.T) {
 	actual = manifestsProjectName(URL, "../../")
 	assert.Equal(expect, actual)
 
-	expect = "code.alibaba-inc.com/my/test/repository"
+	expect = "example.com/my/test/repository"
 	actual = manifestsProjectName(URL, "../../../../../../..")
 	assert.Equal(expect, actual)
 }

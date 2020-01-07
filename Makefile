@@ -1,5 +1,5 @@
 TARGETS := git-repo
-PKG := code.alibaba-inc.com/force/git-repo
+PKG := github.com/aliyun/git-repo-go
 VENDOR_EXISTS=$(shell test -d vendor && echo 1 || echo 0)
 ifeq ($(VENDOR_EXISTS), 1)
     GOBUILD := GO111MODULE=on CGO_ENABLED=0 go build -mod=vendor
@@ -43,7 +43,7 @@ RELEASE_LDFLAGS := -ldflags "-X $(PKG)/version.Version=$(REPO_VERSION) -s -w"
 
 git-repo: $(shell find . -name '*.go') | REPO-VERSION-FILE
 	$(call message,Building $@)
-	$(GOBUILD) $(LDFLAGS)
+	$(GOBUILD) $(LDFLAGS) -o $@
 
 golint:
 	$(call message,Testing git-repo using golint for coding style)

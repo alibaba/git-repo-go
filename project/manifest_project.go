@@ -1,8 +1,8 @@
 package project
 
 import (
-	"code.alibaba-inc.com/force/git-repo/config"
-	"code.alibaba-inc.com/force/git-repo/manifest"
+	"github.com/aliyun/git-repo-go/config"
+	"github.com/aliyun/git-repo-go/manifest"
 	"github.com/jiangxin/goconfig"
 )
 

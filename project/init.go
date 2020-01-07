@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"code.alibaba-inc.com/force/git-repo/path"
+	"github.com/aliyun/git-repo-go/path"
 )
 
 // IsRepoInitialized indicates repository is initialized or not.

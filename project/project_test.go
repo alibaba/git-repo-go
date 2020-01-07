@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"code.alibaba-inc.com/force/git-repo/manifest"
+	"github.com/aliyun/git-repo-go/manifest"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -61,15 +61,15 @@ func TestProjectGitInit(t *testing.T) {
 	assert.Equal("https://github.com/jiangxin/my/foo.git", u)
 
 	// Call GitInit twice
-	mURL = "https://code.aone.alibaba-inc.com/zhiyou.jx/manifest.git"
+	mURL = "https://example.com/zhiyou.jx/manifest.git"
 	p.SetManifestURL(mURL)
 	err = p.GitInit()
 	assert.Nil(err)
 	// TODO: fix it
-	assert.Equal("https://code.aone.alibaba-inc.com/zhiyou.jx/my/foo.git",
+	assert.Equal("https://example.com/zhiyou.jx/my/foo.git",
 		p.gitConfigRemoteURL())
 	u, err = p.GetRemoteURL()
-	assert.Equal("https://code.aone.alibaba-inc.com/zhiyou.jx/my/foo.git", u)
+	assert.Equal("https://example.com/zhiyou.jx/my/foo.git", u)
 }
 
 func TestProjectMatchGroups(t *testing.T) {

@@ -32,7 +32,7 @@ test_expect_success "setup repositories: manifests" '
 		  <remote  name="origin"
 			   fetch=".."
 			   revision="master"
-			   review="https://code.aone.alibaba-inc.com" />
+			   review="https://example.com" />
 		  <default remote="origin"
 			   revision="master"
 			   sync-j="4" />

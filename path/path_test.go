@@ -9,7 +9,7 @@ import (
 	"runtime"
 	"testing"
 
-	"code.alibaba-inc.com/force/git-repo/errors"
+	"github.com/aliyun/git-repo-go/errors"
 	"github.com/stretchr/testify/assert"
 )
 

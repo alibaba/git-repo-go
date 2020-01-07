@@ -17,7 +17,7 @@ package helper
 import (
 	"errors"
 
-	"code.alibaba-inc.com/force/git-repo/common"
+	"github.com/aliyun/git-repo-go/common"
 )
 
 // DefaultProtoHelper implements helper for unknown remote service.

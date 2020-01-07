@@ -6,9 +6,9 @@ import (
 	"os/exec"
 	"strings"
 
-	"code.alibaba-inc.com/force/git-repo/common"
-	"code.alibaba-inc.com/force/git-repo/config"
-	"code.alibaba-inc.com/force/git-repo/helper"
+	"github.com/aliyun/git-repo-go/common"
+	"github.com/aliyun/git-repo-go/config"
+	"github.com/aliyun/git-repo-go/helper"
 	log "github.com/jiangxin/multi-log"
 )
 

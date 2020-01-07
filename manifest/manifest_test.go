@@ -24,8 +24,8 @@ func TestMarshal(t *testing.T) {
 			Remote{
 				Name:     "aone",
 				Alias:    "origin",
-				Fetch:    "https://code.aone.alibaba-inc.com",
-				Review:   "https://code.aone.alibaba-inc.com",
+				Fetch:    "https://example.com",
+				Review:   "https://example.com",
 				Revision: "default",
 			},
 		},
@@ -78,7 +78,7 @@ func TestMarshal(t *testing.T) {
 		paths)
 
 	expected := `<manifest>
-  <remote name="aone" alias="origin" fetch="https://code.aone.alibaba-inc.com" review="https://code.aone.alibaba-inc.com" revision="default"></remote>
+  <remote name="aone" alias="origin" fetch="https://example.com" review="https://example.com" revision="default"></remote>
   <default remote="aone" revision="master"></default>
   <project name="platform/drivers" path="platform-drivers">
     <project name="nic" path="nic"></project>
@@ -132,7 +132,7 @@ func TestLoad(t *testing.T) {
 	manifestFile := filepath.Join(repoDir, "manifest.xml")
 	err = ioutil.WriteFile(manifestFile, []byte(`
 <manifest>
-  <remote name="aone" alias="origin" fetch="https://code.aone.alibaba-inc.com" review="https://code.aone.alibaba-inc.com" revision="default"></remote>
+  <remote name="aone" alias="origin" fetch="https://example.com" review="https://example.com" revision="default"></remote>
   <default remote="aone" revision="master"></default>
   <project name="platform/drivers" path="platform-drivers">
     <project name="nic" path="nic"></project>
@@ -154,8 +154,8 @@ func TestLoad(t *testing.T) {
 		[]Remote{Remote{
 			Name:     "aone",
 			Alias:    "origin",
-			Fetch:    "https://code.aone.alibaba-inc.com",
-			Review:   "https://code.aone.alibaba-inc.com",
+			Fetch:    "https://example.com",
+			Review:   "https://example.com",
 			Revision: "default"},
 		}, m.Remotes)
 	projects := []string{}
@@ -202,7 +202,7 @@ func TestInclude(t *testing.T) {
 	manifestFile := filepath.Join(repoDir, "manifest.xml")
 	err = ioutil.WriteFile(manifestFile, []byte(`
 <manifest>
-  <remote name="aone" alias="origin" fetch="https://code.aone.alibaba-inc.com" review="https://code.aone.alibaba-inc.com" revision="default"></remote>
+  <remote name="aone" alias="origin" fetch="https://example.com" review="https://example.com" revision="default"></remote>
   <default remote="aone" revision="master"></default>
   <project name="platform/drivers" path="platform-drivers">
     <project name="nic" path="nic"></project>
@@ -261,7 +261,7 @@ func TestLoadWithLocalManifest(t *testing.T) {
 	manifestFile := filepath.Join(repoDir, "manifest.xml")
 	err = ioutil.WriteFile(manifestFile, []byte(`
 <manifest>
-  <remote name="aone" alias="origin" fetch="https://code.aone.alibaba-inc.com" review="https://code.aone.alibaba-inc.com" revision="default"></remote>
+  <remote name="aone" alias="origin" fetch="https://example.com" review="https://example.com" revision="default"></remote>
   <default remote="aone" revision="master"></default>
   <project name="platform/drivers" path="platform-drivers">
     <project name="nic" path="nic"></project>
@@ -328,7 +328,7 @@ func TestCircularInclude(t *testing.T) {
 	manifestFile := filepath.Join(repoDir, "manifest.xml")
 	err = ioutil.WriteFile(manifestFile, []byte(`
 <manifest>
-  <remote name="aone" alias="origin" fetch="https://code.aone.alibaba-inc.com" review="https://code.aone.alibaba-inc.com" revision="default"></remote>
+  <remote name="aone" alias="origin" fetch="https://example.com" review="https://example.com" revision="default"></remote>
   <default remote="aone" revision="master"></default>
   <project name="platform/drivers" path="platform-drivers">
     <project name="platform/nic" path="nic"></project>
@@ -364,15 +364,15 @@ func TestManifestRevision1(t *testing.T) {
 	buf := []byte(`
 <manifest>
   <remote name="aone" alias="origin"
-    fetch="https://code.aone.alibaba-inc.com"
-    pushurl="https://code.aone.alibaba-inc.com/push"
-    review="https://code.aone.alibaba-inc.com"
+    fetch="https://example.com"
+    pushurl="https://example.com/push"
+    review="https://example.com"
     revision="aone-master"
     type="agit" />
   <remote name="gerrit"
-    fetch="https://gerrit.alibaba-inc.com"
-    pushurl="https://gerrit.alibaba-inc.com/push"
-    review="https://gerrit.alibaba-inc.com"
+    fetch="https://gerrit.example.com"
+    pushurl="https://gerrit.example.com/push"
+    review="https://gerrit.example.com"
     revision="gerrit-master"
     type="gerrit" />
   <default remote="aone"
@@ -418,14 +418,14 @@ func TestManifestRevision2(t *testing.T) {
 	buf := []byte(`
 <manifest>
   <remote name="aone" alias="origin"
-    fetch="https://code.aone.alibaba-inc.com"
-    pushurl="https://code.aone.alibaba-inc.com/push"
-    review="https://code.aone.alibaba-inc.com"
+    fetch="https://example.com"
+    pushurl="https://example.com/push"
+    review="https://example.com"
     type="agit" />
   <remote name="gerrit"
-    fetch="https://gerrit.alibaba-inc.com"
-    pushurl="https://gerrit.alibaba-inc.com/push"
-    review="https://gerrit.alibaba-inc.com"
+    fetch="https://gerrit.example.com"
+    pushurl="https://gerrit.example.com/push"
+    review="https://gerrit.example.com"
     type="gerrit" />
   <default remote="aone"
     revision="default-master"
@@ -470,15 +470,15 @@ func TestManifestRevision3(t *testing.T) {
 	buf := []byte(`
 <manifest>
   <remote name="aone" alias="origin"
-    fetch="https://code.aone.alibaba-inc.com"
-    pushurl="https://code.aone.alibaba-inc.com/push"
-    review="https://code.aone.alibaba-inc.com"
+    fetch="https://example.com"
+    pushurl="https://example.com/push"
+    review="https://example.com"
     revision="aone-master"
     type="agit" />
   <remote name="gerrit"
-    fetch="https://gerrit.alibaba-inc.com"
-    pushurl="https://gerrit.alibaba-inc.com/push"
-    review="https://gerrit.alibaba-inc.com"
+    fetch="https://gerrit.example.com"
+    pushurl="https://gerrit.example.com/push"
+    review="https://gerrit.example.com"
     type="gerrit" />
   <default remote="aone"
     revision="default-master"
@@ -512,8 +512,8 @@ func ExampleMarshal() {
 			Remote{
 				Name:     "aone",
 				Alias:    "origin",
-				Fetch:    "https://code.aone.alibaba-inc.com",
-				Review:   "https://code.aone.alibaba-inc.com",
+				Fetch:    "https://example.com",
+				Review:   "https://example.com",
 				Revision: "default",
 			},
 		},
@@ -554,7 +554,7 @@ func ExampleMarshal() {
 
 	// Output:
 	// <manifest>
-	//   <remote name="aone" alias="origin" fetch="https://code.aone.alibaba-inc.com" review="https://code.aone.alibaba-inc.com" revision="default"></remote>
+	//   <remote name="aone" alias="origin" fetch="https://example.com" review="https://example.com" revision="default"></remote>
 	//   <default remote="aone" revision="master"></default>
 	//   <project name="platform/drivers" path="platform-drivers">
 	//     <project name="platform/nic" path="nic"></project>
@@ -567,7 +567,7 @@ func ExampleMarshal() {
 func ExampleUnmarshal() {
 	buf := []byte(`
 <manifest>
-  <remote name="aone" alias="origin" fetch="https://code.aone.alibaba-inc.com" review="https://code.aone.alibaba-inc.com" revision="default"></remote>
+  <remote name="aone" alias="origin" fetch="https://example.com" review="https://example.com" revision="default"></remote>
   <default remote="aone" revision="master"></default>
   <project name="platform/drivers" path="platform-drivers">
     <project name="platform/nic" path="nic"></project>

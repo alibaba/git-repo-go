@@ -17,7 +17,7 @@ package main
 import (
 	"os"
 
-	"code.alibaba-inc.com/force/git-repo/cmd"
+	"github.com/aliyun/git-repo-go/cmd"
 	"github.com/spf13/cobra"
 )
 

@@ -14,117 +14,117 @@ func TestGitURL(t *testing.T) {
 	)
 
 	for _, address = range []string{
-		"http://git:pass@code.aone.alibaba-inc.com:8080/my/repo.git/",
-		"http://git:pass@code.aone.alibaba-inc.com:8080/my/repo.git",
-		"http://git:pass@code.aone.alibaba-inc.com:8080/my/repo",
-		"http://git:pass@code.aone.alibaba-inc.com:8080/my/repo/",
+		"http://git:pass@example.com:8080/my/repo.git/",
+		"http://git:pass@example.com:8080/my/repo.git",
+		"http://git:pass@example.com:8080/my/repo",
+		"http://git:pass@example.com:8080/my/repo/",
 	} {
 		u = ParseGitURL(address)
 		if assert.NotNil(u) {
-			assert.Equal("http://code.aone.alibaba-inc.com:8080", u.GetRootURL())
+			assert.Equal("http://example.com:8080", u.GetRootURL())
 			assert.Equal("http", u.Proto)
 			assert.Equal("git:pass", u.User)
-			assert.Equal("code.aone.alibaba-inc.com", u.Host)
+			assert.Equal("example.com", u.Host)
 			assert.Equal(8080, u.Port)
 			assert.Equal("my/repo", u.Repo)
 		}
 	}
 
 	for _, address = range []string{
-		"https://code.aone.alibaba-inc.com/my/repo.git/",
-		"https://code.aone.alibaba-inc.com/my/repo.git",
-		"https://code.aone.alibaba-inc.com/",
-		"https://code.aone.alibaba-inc.com",
+		"https://example.com/my/repo.git/",
+		"https://example.com/my/repo.git",
+		"https://example.com/",
+		"https://example.com",
 	} {
 		u = ParseGitURL(address)
 		if assert.NotNil(u) {
-			assert.Equal("https://code.aone.alibaba-inc.com", u.GetRootURL())
+			assert.Equal("https://example.com", u.GetRootURL())
 			assert.Equal("https", u.Proto)
-			assert.Equal("code.aone.alibaba-inc.com", u.Host)
+			assert.Equal("example.com", u.Host)
 		}
 	}
 
 	for _, address = range []string{
-		"ssh://git@code.aone.alibaba-inc.com:10022/my/repo.git/",
-		"ssh://git@code.aone.alibaba-inc.com:10022/my/repo.git",
-		"ssh://git@code.aone.alibaba-inc.com:10022/my/repo",
-		"ssh://git@code.aone.alibaba-inc.com:10022/my/repo/",
+		"ssh://git@example.com:10022/my/repo.git/",
+		"ssh://git@example.com:10022/my/repo.git",
+		"ssh://git@example.com:10022/my/repo",
+		"ssh://git@example.com:10022/my/repo/",
 	} {
 		u = ParseGitURL(address)
 		if assert.NotNil(u) {
-			assert.Equal("ssh://git@code.aone.alibaba-inc.com:10022", u.GetRootURL())
+			assert.Equal("ssh://git@example.com:10022", u.GetRootURL())
 			assert.Equal("ssh", u.Proto)
 			assert.Equal("git", u.User)
-			assert.Equal("code.aone.alibaba-inc.com", u.Host)
+			assert.Equal("example.com", u.Host)
 			assert.Equal(10022, u.Port)
 			assert.Equal("my/repo", u.Repo)
 		}
 	}
 
 	for _, address = range []string{
-		"ssh://git@code.aone.alibaba-inc.com/my/repo.git/",
-		"ssh://git@code.aone.alibaba-inc.com/my/repo.git",
-		"ssh://git@code.aone.alibaba-inc.com/my/repo",
-		"ssh://git@code.aone.alibaba-inc.com/my/repo/",
-		"git@code.aone.alibaba-inc.com:my/repo.git/",
-		"git@code.aone.alibaba-inc.com:my/repo.git",
-		"git@code.aone.alibaba-inc.com:my/repo/",
-		"git@code.aone.alibaba-inc.com:my/repo",
+		"ssh://git@example.com/my/repo.git/",
+		"ssh://git@example.com/my/repo.git",
+		"ssh://git@example.com/my/repo",
+		"ssh://git@example.com/my/repo/",
+		"git@example.com:my/repo.git/",
+		"git@example.com:my/repo.git",
+		"git@example.com:my/repo/",
+		"git@example.com:my/repo",
 	} {
 		u = ParseGitURL(address)
 		if assert.NotNil(u) {
-			assert.Equal("ssh://git@code.aone.alibaba-inc.com", u.GetRootURL())
+			assert.Equal("ssh://git@example.com", u.GetRootURL())
 			assert.Equal("ssh", u.Proto)
 			assert.Equal("git", u.User)
-			assert.Equal("code.aone.alibaba-inc.com", u.Host)
+			assert.Equal("example.com", u.Host)
 			assert.Equal("my/repo", u.Repo)
 		}
 	}
 
 	for _, address = range []string{
-		"ssh://code.aone.alibaba-inc.com/my/repo.git/",
-		"ssh://code.aone.alibaba-inc.com/my/repo.git",
-		"ssh://code.aone.alibaba-inc.com/my/repo",
-		"ssh://code.aone.alibaba-inc.com/my/repo/",
-		"code.aone.alibaba-inc.com:my/repo.git/",
-		"code.aone.alibaba-inc.com:my/repo.git",
-		"code.aone.alibaba-inc.com:my/repo/",
-		"code.aone.alibaba-inc.com:my/repo",
+		"ssh://example.com/my/repo.git/",
+		"ssh://example.com/my/repo.git",
+		"ssh://example.com/my/repo",
+		"ssh://example.com/my/repo/",
+		"example.com:my/repo.git/",
+		"example.com:my/repo.git",
+		"example.com:my/repo/",
+		"example.com:my/repo",
 	} {
 		u = ParseGitURL(address)
 		if assert.NotNil(u) {
-			assert.Equal("ssh://code.aone.alibaba-inc.com", u.GetRootURL())
+			assert.Equal("ssh://example.com", u.GetRootURL())
 			assert.Equal("ssh", u.Proto)
-			assert.Equal("code.aone.alibaba-inc.com", u.Host)
+			assert.Equal("example.com", u.Host)
 			assert.Equal("my/repo", u.Repo)
 		}
 	}
 
 	for _, address = range []string{
-		"ssh://git@code.aone.alibaba-inc.com:22/",
-		"ssh://git@code.aone.alibaba-inc.com:22",
-		"ssh://git@code.aone.alibaba-inc.com/",
-		"ssh://git@code.aone.alibaba-inc.com",
+		"ssh://git@example.com:22/",
+		"ssh://git@example.com:22",
+		"ssh://git@example.com/",
+		"ssh://git@example.com",
 	} {
 		u = ParseGitURL(address)
 		if assert.NotNil(u) {
-			assert.Equal("ssh://git@code.aone.alibaba-inc.com", u.GetRootURL())
+			assert.Equal("ssh://git@example.com", u.GetRootURL())
 			assert.Equal("ssh", u.Proto)
-			assert.Equal("code.aone.alibaba-inc.com", u.Host)
+			assert.Equal("example.com", u.Host)
 		}
 	}
 
 	for _, address = range []string{
-		"git://code.aone.alibaba-inc.com/my/repo.git/",
-		"git://code.aone.alibaba-inc.com/my/repo.git",
-		"git://code.aone.alibaba-inc.com/",
-		"git://code.aone.alibaba-inc.com",
+		"git://example.com/my/repo.git/",
+		"git://example.com/my/repo.git",
+		"git://example.com/",
+		"git://example.com",
 	} {
 		u = ParseGitURL(address)
 		if assert.NotNil(u) {
-			assert.Equal("code.aone.alibaba-inc.com", u.GetRootURL())
+			assert.Equal("example.com", u.GetRootURL())
 			assert.Equal("git", u.Proto)
-			assert.Equal("code.aone.alibaba-inc.com", u.Host)
+			assert.Equal("example.com", u.Host)
 		}
 	}
 

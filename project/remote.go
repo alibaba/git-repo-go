@@ -7,9 +7,9 @@ import (
 	"strings"
 	"sync"
 
-	"code.alibaba-inc.com/force/git-repo/config"
-	"code.alibaba-inc.com/force/git-repo/helper"
-	"code.alibaba-inc.com/force/git-repo/manifest"
+	"github.com/aliyun/git-repo-go/config"
+	"github.com/aliyun/git-repo-go/helper"
+	"github.com/aliyun/git-repo-go/manifest"
 	log "github.com/jiangxin/multi-log"
 )
 

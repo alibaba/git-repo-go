@@ -7,7 +7,7 @@ import (
 	"sort"
 	"strings"
 
-	"code.alibaba-inc.com/force/git-repo/color"
+	"github.com/aliyun/git-repo-go/color"
 	log "github.com/jiangxin/multi-log"
 )
 

@@ -114,9 +114,9 @@ func TestProjectUrlJoinAbs(t *testing.T) {
 	///////////////////
 	base = "https://github.com/jiangxin/manifest.git"
 
-	u, err = urlJoin(base, "https://code.alibaba-inc.com/projects", "repo")
+	u, err = urlJoin(base, "https://example.com/projects", "repo")
 	assert.Nil(err)
-	assert.Equal("https://code.alibaba-inc.com/projects/repo", u)
+	assert.Equal("https://example.com/projects/repo", u)
 
 }
 

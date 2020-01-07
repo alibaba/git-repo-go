@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"os"
 
-	"code.alibaba-inc.com/force/git-repo/version"
+	"github.com/aliyun/git-repo-go/version"
 	"github.com/spf13/cobra"
 )
 
