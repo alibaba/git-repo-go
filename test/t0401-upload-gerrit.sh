@@ -69,7 +69,8 @@ test_expect_success "new commit: ready for upload" '
 		  branch my/topic1 ( 1 commit(s)):
 		         <hash>
 		to https://example.com (y/N)? No
-		Error: upload aborted by user
+		ERROR: upload aborted by user
+		Error: nothing confirmed for upload
 		EOF
 		test_must_fail git-repo upload \
 			--assume-no \

@@ -49,47 +49,6 @@ test_expect_success "create commits" '
 test_expect_success "edit script for multiple uploadable branches" '
 	(
 		cd work &&
-		cat >expect<<-EOF &&
-		INFO: editor is '"'"':'"'"', return directly
-		NOTE: no editor, input data unchanged
-		##############################################################################
-		# Step 1: Input your options for code review
-		#
-		# Note: Input your options below the comments and keep the comments unchanged
-		##############################################################################
-		
-		# [Title]       : one line message below as the title of code review
-		
-		# [Description] : multiple lines of text as the description of code review
-		
-		# [Issue]       : multiple lines of issue IDs for cross references
-		
-		# [Reviewer]    : multiple lines of user names as the reviewers for code review
-		
-		# [Cc]          : multiple lines of user names as the watchers for code review
-		
-		# [Draft]       : a boolean (yes/no, or true/false) to turn on/off draft mode
-		
-		# [Private]     : a boolean (yes/no, or true/false) to turn on/off private mode
-		
-		
-		##############################################################################
-		# Step 2: Select project and branches for upload
-		#
-		# Note: Uncomment the branches to upload, and not touch the project lines
-		##############################################################################
-		
-		#
-		# project main/:
-		#  branch my/topic1 ( 1 commit(s)) to remote branch Maint:
-		#         <hash>
-		#
-		# project projects/app1/:
-		#  branch my/topic1 ( 1 commit(s)) to remote branch Maint:
-		#         <hash>
-
-		FATAL: nothing uncommented for upload
-		EOF
 		test_must_fail git-repo upload \
 			-v \
 			--assume-no \
@@ -100,6 +59,21 @@ test_expect_success "edit script for multiple uploadable branches" '
 			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\", \"version\":2}" \
 			>out 2>&1 &&
 		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
+		cat >expect<<-EOF &&
+		[1/2] project main: my/topic1
+		Upload project main/ to remote branch Maint:
+		  branch my/topic1 ( 1 commit(s)):
+		         <hash>
+		to https://example.com (y/N)? No
+		ERROR: upload aborted by user
+		[2/2] project projects/app1: my/topic1
+		Upload project projects/app1/ to remote branch Maint:
+		  branch my/topic1 ( 1 commit(s)):
+		         <hash>
+		to https://example.com (y/N)? No
+		ERROR: upload aborted by user
+		Error: nothing confirmed for upload
+		EOF
 		test_cmp expect actual
 	)
 '
@@ -107,13 +81,6 @@ test_expect_success "edit script for multiple uploadable branches" '
 test_expect_success "upload with args: project1" '
 	(
 		cd work &&
-		cat >expect<<-EOF &&
-		Upload project projects/app1/ to remote branch Maint:
-		  branch my/topic1 ( 1 commit(s)):
-		         <hash>
-		to https://example.com (y/N)? No
-		Error: upload aborted by user
-		EOF
 		test_must_fail git-repo upload \
 			-v \
 			--assume-no \
@@ -125,6 +92,14 @@ test_expect_success "upload with args: project1" '
 			project1 \
 			>out 2>&1 &&
 		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
+		cat >expect<<-EOF &&
+		Upload project projects/app1/ to remote branch Maint:
+		  branch my/topic1 ( 1 commit(s)):
+		         <hash>
+		to https://example.com (y/N)? No
+		ERROR: upload aborted by user
+		Error: nothing confirmed for upload
+		EOF
 		test_cmp expect actual
 	)
 '
@@ -132,13 +107,6 @@ test_expect_success "upload with args: project1" '
 test_expect_success "upload with args: projects/app1" '
 	(
 		cd work &&
-		cat >expect<<-EOF &&
-		Upload project projects/app1/ to remote branch Maint:
-		  branch my/topic1 ( 1 commit(s)):
-		         <hash>
-		to https://example.com (y/N)? No
-		Error: upload aborted by user
-		EOF
 		test_must_fail git-repo upload \
 			-v \
 			--assume-no \
@@ -150,6 +118,14 @@ test_expect_success "upload with args: projects/app1" '
 			projects/app1 \
 			>out 2>&1 &&
 		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
+		cat >expect<<-EOF &&
+		Upload project projects/app1/ to remote branch Maint:
+		  branch my/topic1 ( 1 commit(s)):
+		         <hash>
+		to https://example.com (y/N)? No
+		ERROR: upload aborted by user
+		Error: nothing confirmed for upload
+		EOF
 		test_cmp expect actual
 	)
 '
@@ -157,13 +133,6 @@ test_expect_success "upload with args: projects/app1" '
 test_expect_success "upload with args: app1" '
 	(
 		cd work &&
-		cat >expect<<-EOF &&
-		Upload project projects/app1/ to remote branch Maint:
-		  branch my/topic1 ( 1 commit(s)):
-		         <hash>
-		to https://example.com (y/N)? No
-		Error: upload aborted by user
-		EOF
 		(
 			cd projects &&
 			test_must_fail git-repo upload \
@@ -178,6 +147,14 @@ test_expect_success "upload with args: app1" '
 				2>&1
 		) >out &&
 		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
+		cat >expect<<-EOF &&
+		Upload project projects/app1/ to remote branch Maint:
+		  branch my/topic1 ( 1 commit(s)):
+		         <hash>
+		to https://example.com (y/N)? No
+		ERROR: upload aborted by user
+		Error: nothing confirmed for upload
+		EOF
 		test_cmp expect actual
 	)
 '
@@ -185,13 +162,6 @@ test_expect_success "upload with args: app1" '
 test_expect_success "upload with args: ." '
 	(
 		cd work &&
-		cat >expect<<-EOF &&
-		Upload project projects/app1/ to remote branch Maint:
-		  branch my/topic1 ( 1 commit(s)):
-		         <hash>
-		to https://example.com (y/N)? No
-		Error: upload aborted by user
-		EOF
 		(
 			cd projects/app1 &&
 			test_must_fail git-repo upload \
@@ -206,6 +176,14 @@ test_expect_success "upload with args: ." '
 				2>&1
 		) >out &&
 		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
+		cat >expect<<-EOF &&
+		Upload project projects/app1/ to remote branch Maint:
+		  branch my/topic1 ( 1 commit(s)):
+		         <hash>
+		to https://example.com (y/N)? No
+		ERROR: upload aborted by user
+		Error: nothing confirmed for upload
+		EOF
 		test_cmp expect actual
 	)
 '

@@ -30,65 +30,52 @@ import (
 	"github.com/mattn/go-shellwords"
 )
 
-// theEditor is wapper for editor.
-type theEditor struct {
-	cfg    goconfig.GitConfig
-	editor string
-}
+var (
+	cfg       goconfig.GitConfig
+	editorCmd string
+)
 
-// Config returns git default settings.
-func (v *theEditor) Config() goconfig.GitConfig {
-	if v.cfg == nil {
-		v.cfg = goconfig.DefaultConfig()
+func config() goconfig.GitConfig {
+	if cfg != nil {
+		return cfg
 	}
-	return v.cfg
+
+	cfg = goconfig.DefaultConfig()
+	return cfg
 }
 
 // Editor returns program name of the editor.
-func (v *theEditor) Editor() string {
-	if v.editor == "" {
-		v.editor = v.selectEditor()
-	}
-	return v.editor
-}
+func Editor() string {
+	var (
+		env string
+	)
 
-func (v theEditor) selectEditor() string {
-	var e string
-
-	e = os.Getenv("GIT_EDITOR")
-	if e != "" {
-		return e
+	if editorCmd != "" {
+		return editorCmd
 	}
 
-	e = v.Config().Get("core.editor")
-	if e != "" {
-		return e
-	}
-
-	e = os.Getenv("VISUAL")
-	if e != "" {
-		return e
-	}
-
-	e = os.Getenv("EDITOR")
-	if e != "" {
-		return e
-	}
-
-	if os.Getenv("TERM") == "dumb" {
+	if env = os.Getenv("GIT_EDITOR"); env != "" {
+		editorCmd = env
+	} else if env = config().Get("core.editor"); env != "" {
+		editorCmd = env
+	} else if env = os.Getenv("VISUAL"); env != "" {
+		editorCmd = env
+	} else if env = os.Getenv("EDITOR"); env != "" {
+		editorCmd = env
+	} else if os.Getenv("TERM") == "dumb" {
 		log.Fatal(
 			"No editor specified in GIT_EDITOR, core.editor, VISUAL or EDITOR.\n" +
 				"Tried to fall back to vi but terminal is dumb.  Please configure at\n" +
 				"least one of these before using this command.")
-
-	}
-
-	for _, c := range []string{"vim", "vi", "emacs", "nano"} {
-		if path, err := exec.LookPath(c); err == nil {
-			return path
+	} else {
+		for _, c := range []string{"vim", "vi", "emacs", "nano"} {
+			if path, err := exec.LookPath(c); err == nil {
+				editorCmd = path
+				break
+			}
 		}
 	}
-	return ":"
+	return editorCmd
 }
 
 func editorCommands(editor string, args ...string) []string {
@@ -140,15 +127,15 @@ func editorCommands(editor string, args ...string) []string {
 	return cmdArgs
 }
 
-// EditString starts the editor to edit data, and returns the edited data.
-func (v theEditor) EditString(data string) string {
+// EditString starts an editor to edit data, and returns the edited data.
+func EditString(data string) string {
 	var (
 		err    error
 		editor string
 	)
 
-	editor = v.Editor()
-	if editor == ":" || !cap.Isatty() {
+	editor = Editor()
+	if editor == ":" || editor == "" || !cap.Isatty() {
 		if editor == ":" {
 			log.Info("editor is ':', return directly")
 		}
@@ -195,10 +182,4 @@ func (v theEditor) EditString(data string) string {
 		log.Fatal(err)
 	}
 	return string(buf)
-}
-
-// EditString starts an editor to edit data, and returns the edited data.
-func EditString(data string) string {
-	e := theEditor{}
-	return e.EditString(data)
 }

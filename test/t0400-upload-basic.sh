@@ -86,7 +86,8 @@ test_expect_success "with new commit, ready for upload (--no-edit)" '
 		  branch my/topic1 ( 1 commit(s)):
 		         <hash>
 		to https://example.com (y/N)? No
-		Error: upload aborted by user
+		ERROR: upload aborted by user
+		Error: nothing confirmed for upload
 		EOF
 		test_must_fail git-repo upload \
 			--assume-no \
@@ -206,13 +207,6 @@ test_expect_success "upload branch without --cbr" '
 	(
 		cd work &&
 		git repo start --all my/topic2 &&
-		cat >expect<<-EOF &&
-		Upload project main/ to remote branch Maint:
-		  branch my/topic1 ( 1 commit(s)):
-		         <hash>
-		to https://example.com (y/N)? No
-		Error: upload aborted by user
-		EOF
 		test_must_fail git-repo upload \
 			--assume-no \
 			--no-edit \
@@ -221,6 +215,14 @@ test_expect_success "upload branch without --cbr" '
 			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\", \"version\":2}" \
 			>out 2>&1 &&
 		sed -e "s/[0-9a-f]\{40\}/<hash>/g" <out >actual &&
+		cat >expect<<-EOF &&
+		Upload project main/ to remote branch Maint:
+		  branch my/topic1 ( 1 commit(s)):
+		         <hash>
+		to https://example.com (y/N)? No
+		ERROR: upload aborted by user
+		Error: nothing confirmed for upload
+		EOF
 		test_cmp expect actual
 	)
 '
