@@ -1,3 +1,5 @@
+[![Build Status](https://dev.azure.com/git-repo-go/git-repo-go/_apis/build/status/aliyun.git-repo-go)](https://dev.azure.com/git-repo-go/git-repo-go/_build/latest?definitionId=1)
+
 ## git-repo
 
 **repo reimplemented in Golang and many others**
