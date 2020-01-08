@@ -9,6 +9,12 @@ else
     GOTEST := GO111MODULE=on go test
 endif
 
+ifeq ($(shell uname), Darwin)
+    TAR=gtar
+else
+    TAR=tar
+endif
+
 GOBUILD_LINUX_64 := env GOOS=linux GOARCH=amd64 $(GOBUILD)
 GOBUILD_LINUX_32 := env GOOS=linux GOARCH=386 $(GOBUILD)
 GOBUILD_WINDOWS_64 := env GOOS=windows GOARCH=amd64 $(GOBUILD)
@@ -68,70 +74,78 @@ version-yml: REPO-VERSION-FILE
 	@echo "production: $(REPO_VERSION)" > _build/version.yml
 	@echo "test: $(REPO_VERSION)" >> _build/version.yml
 
-release: darwin linux windows
+release: macOS Linux Windows
 
-linux: linux-amd64 linux-386
-linux-amd64: _build/$(REPO_VERSION)/linux/amd64/git-repo
-_build/$(REPO_VERSION)/linux/amd64/git-repo: FORCE
+Linux: Linux-64 Linux-32
+Linux-64: _build/$(REPO_VERSION)/Linux-64/git-repo
+_build/$(REPO_VERSION)/Linux-64/git-repo: FORCE
 	@$(call message,Building $@)
 	@mkdir -p $(shell dirname $@)
 	$(GOBUILD_LINUX_64) $(RELEASE_LDFLAGS) -o $@
 	$(UPX) $@
 	(cd $(shell dirname $@) && \
 		$(SHA256SUM) $(shell basename $@) >$(shell basename $@).sha256 && \
-		$(GPGSIGN) -o $(shell basename $@).sha256.gpg $(shell basename $@).sha256)
+		$(GPGSIGN) -o $(shell basename $@).sha256.gpg $(shell basename $@).sha256 && \
+		$(TAR) -zcvf ../git-repo-$(REPO_VERSION)-Linux-64.tar.gz --transform "s/^\./git-repo-$(REPO_VERSION)-Linux-64/" .)
 
-linux-386: _build/$(REPO_VERSION)/linux/386/git-repo
-_build/$(REPO_VERSION)/linux/386/git-repo: FORCE
+Linux-32: _build/$(REPO_VERSION)/Linux-32/git-repo
+_build/$(REPO_VERSION)/Linux-32/git-repo: FORCE
 	$(call message,Building $@)
 	@mkdir -p $(shell dirname $@)
 	$(GOBUILD_LINUX_32) $(RELEASE_LDFLAGS) -o $@
 	$(UPX) $@
 	(cd $(shell dirname $@) && \
 		$(SHA256SUM) $(shell basename $@) >$(shell basename $@).sha256 && \
-		$(GPGSIGN) -o $(shell basename $@).sha256.gpg $(shell basename $@).sha256)
+		$(GPGSIGN) -o $(shell basename $@).sha256.gpg $(shell basename $@).sha256 && \
+		$(TAR) -zcvf ../git-repo-$(REPO_VERSION)-Linux-32.tar.gz --transform "s/^\./git-repo-$(REPO_VERSION)-Linux-32/" .)
 
-windows: windows-amd64 windows-386
-windows-amd64: _build/$(REPO_VERSION)/windows/amd64/git-repo.exe
-_build/$(REPO_VERSION)/windows/amd64/git-repo.exe: FORCE
+Windows: Windows-64 Windows-32
+Windows-64: _build/$(REPO_VERSION)/git-repo-$(REPO_VERSION)-Windows-64/git-repo.exe
+_build/$(REPO_VERSION)/git-repo-$(REPO_VERSION)-Windows-64/git-repo.exe: FORCE
 	$(call message,Building $@)
 	@mkdir -p $(shell dirname $@)
 	$(GOBUILD_WINDOWS_64) $(RELEASE_LDFLAGS) -o $@
 	$(UPX) $@
 	(cd $(shell dirname $@) && \
 		$(SHA256SUM) $(shell basename $@) >$(shell basename $@).sha256 && \
-		$(GPGSIGN) -o $(shell basename $@).sha256.gpg $(shell basename $@).sha256)
+		$(GPGSIGN) -o $(shell basename $@).sha256.gpg $(shell basename $@).sha256 && \
+		cd .. && \
+		zip -r git-repo-$(REPO_VERSION)-Windows-64.zip git-repo-$(REPO_VERSION)-Windows-64/)
 
-windows-386: _build/$(REPO_VERSION)/windows/386/git-repo.exe
-_build/$(REPO_VERSION)/windows/386/git-repo.exe: FORCE
+Windows-32: _build/$(REPO_VERSION)/git-repo-$(REPO_VERSION)-Windows-32/git-repo.exe
+_build/$(REPO_VERSION)/git-repo-$(REPO_VERSION)-Windows-32/git-repo.exe: FORCE
 	$(call message,Building $@)
 	@mkdir -p $(shell dirname $@)
 	$(GOBUILD_WINDOWS_32) $(RELEASE_LDFLAGS) -o $@
 	$(UPX) $@
 	(cd $(shell dirname $@) && \
 		$(SHA256SUM) $(shell basename $@) >$(shell basename $@).sha256 && \
-		$(GPGSIGN) -o $(shell basename $@).sha256.gpg $(shell basename $@).sha256)
+		$(GPGSIGN) -o $(shell basename $@).sha256.gpg $(shell basename $@).sha256 && \
+		cd .. && \
+		zip -r git-repo-$(REPO_VERSION)-Windows-32.zip git-repo-$(REPO_VERSION)-Windows-32/)
 
-darwin: darwin-amd64 darwin-386
-darwin-amd64: _build/$(REPO_VERSION)/darwin/amd64/git-repo
-_build/$(REPO_VERSION)/darwin/amd64/git-repo: FORCE
+macOS: macOS-64 macOS-32
+macOS-64: _build/$(REPO_VERSION)/macOS-64/git-repo
+_build/$(REPO_VERSION)/macOS-64/git-repo: FORCE
 	$(call message,Building $@)
 	@mkdir -p $(shell dirname $@)
 	$(GOBUILD_MAC_64) $(RELEASE_LDFLAGS) -o $@
 	$(UPX) $@
 	(cd $(shell dirname $@) && \
 		$(SHA256SUM) $(shell basename $@) >$(shell basename $@).sha256 && \
-		$(GPGSIGN) -o $(shell basename $@).sha256.gpg $(shell basename $@).sha256)
+		$(GPGSIGN) -o $(shell basename $@).sha256.gpg $(shell basename $@).sha256 && \
+		$(TAR) -zcvf ../git-repo-$(REPO_VERSION)-macOS-64.tar.gz --transform "s/^\./git-repo-$(REPO_VERSION)-macOS-64/" .)
 
-darwin-386: _build/$(REPO_VERSION)/darwin/386/git-repo
-_build/$(REPO_VERSION)/darwin/386/git-repo: FORCE
+macOS-32: _build/$(REPO_VERSION)/macOS-32/git-repo
+_build/$(REPO_VERSION)/macOS-32/git-repo: FORCE
 	$(call message,Building $@)
 	@mkdir -p $(shell dirname $@)
 	$(GOBUILD_MAC_32) $(RELEASE_LDFLAGS) -o $@
 	$(UPX) $@
 	(cd $(shell dirname $@) && \
 		$(SHA256SUM) $(shell basename $@) >$(shell basename $@).sha256 && \
-		$(GPGSIGN) -o $(shell basename $@).sha256.gpg $(shell basename $@).sha256)
+		$(GPGSIGN) -o $(shell basename $@).sha256.gpg $(shell basename $@).sha256 && \
+		$(TAR) -zcvf ../git-repo-$(REPO_VERSION)-macOS-32.tar.gz --transform "s/^\./git-repo-$(REPO_VERSION)-macOS-32/" .)
 
 index:
 	$(call message,Building $@)
