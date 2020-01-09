@@ -410,89 +410,99 @@ func (v *uploadCommand) getDestBranch(branch *project.ReviewableBranch) (string,
 
 func (v uploadCommand) UploadForReviewWithConfirm(branchesMap map[string][]project.ReviewableBranch) error {
 	var (
-		answer bool
-		count  int
-		i      int
-		todo   []project.ReviewableBranch
+		answer   bool
+		count    int
+		i        int
+		branches []project.ReviewableBranch
+		todo     []project.ReviewableBranch
 	)
-
-	for _, bs := range branchesMap {
-		count += len(bs)
-	}
 
 	for key := range branchesMap {
 		for _, branch := range branchesMap[key] {
-			p := branch.Project
-			remote := branch.Remote
-			if count > 1 {
-				i++
-				fmt.Printf("[%d/%d] project %s: %s\n", i, count, p.Path, branch.Branch.Name)
-			}
-			if remote == nil {
-				log.Errorf("cannot find remote of branch '%s' of project '%s'",
-					branch.Branch.Name,
-					p.Name,
-				)
+			branches = append(branches, branch)
+		}
+	}
+	sort.Slice(branches, func(i, j int) bool {
+		if branches[i].Project.Name < branches[j].Project.Name {
+			return true
+		} else if branches[i].Project.Name == branches[j].Project.Name {
+			return branches[i].Branch.Name < branches[j].Branch.Name
+		}
+		return false
+	})
+	count = len(branches)
+
+	for _, branch := range branches {
+		p := branch.Project
+		remote := branch.Remote
+		if count > 1 {
+			i++
+			fmt.Printf("[%d/%d] project %s: %s\n", i, count, p.Path, branch.Branch.Name)
+		}
+		if remote == nil {
+			log.Errorf("cannot find remote of branch '%s' of project '%s'",
+				branch.Branch.Name,
+				p.Name,
+			)
+			continue
+		}
+		commitList := branch.Commits()
+		cfg := p.ConfigWithDefault()
+		key := fmt.Sprintf("review.%s.autoupload", remote.Review)
+		if cfg.HasKey(key) {
+			answer = cfg.GetBool(key, false)
+			if !answer {
+				log.Errorf("upload blocked by %s = false", key)
 				continue
 			}
-			commitList := branch.Commits()
-			cfg := p.ConfigWithDefault()
-			key := fmt.Sprintf("review.%s.autoupload", remote.Review)
-			if cfg.HasKey(key) {
-				answer = cfg.GetBool(key, false)
-				if !answer {
-					log.Errorf("upload blocked by %s = false", key)
-					continue
-				}
-			} else {
-				draftStr := ""
-				if v.O.Draft {
-					draftStr = " (draft)"
-				}
-
-				if branch.CodeReview.Empty() {
-					destBranch, err := v.getDestBranch(&branch)
-					if err != nil {
-						return err
-					}
-					if p.Path == "." {
-						fmt.Printf("Upload project (%s) to remote branch %s%s:\n",
-							p.Name, destBranch, draftStr)
-					} else {
-						fmt.Printf("Upload project %s/ to remote branch %s%s:\n",
-							p.Path, destBranch, draftStr)
-					}
-				} else {
-					fmt.Printf("Upload code review #%s of project (%s)%s:\n",
-						branch.CodeReview.ID, p.Name, draftStr)
-				}
-				fmt.Printf("  branch %s (%2d commit(s)):\n",
-					branch.Branch.Name,
-					len(commitList))
-				for _, commit := range commitList {
-					fmt.Printf("         %s\n", commit)
-				}
-
-				input := userInput(
-					fmt.Sprintf("to %s (y/N)? ", remote.Review),
-					"N")
-				if answerIsTrue(input) {
-					answer = true
-					todo = append(todo, branch)
-				} else {
-					log.Error("upload aborted by user")
-					continue
-				}
+		} else {
+			draftStr := ""
+			if v.O.Draft {
+				draftStr = " (draft)"
 			}
 
-			if len(commitList) > unusualCommitThreshold {
-				fmt.Printf("ATTENTION: You are uploading an unusually high number of commits.\n")
-				fmt.Println("YOU PROBABLY DO NOT MEAN TO DO THIS. (Did you rebase across branches?)")
-				input := userInput("If you are sure you intend to do this, type 'yes': ", "N")
-				if !answerIsTrue(input) {
-					log.Error("upload aborted by user")
-					continue
+			if branch.CodeReview.Empty() {
+				destBranch, err := v.getDestBranch(&branch)
+				if err != nil {
+					return err
 				}
+				if p.Path == "." {
+					fmt.Printf("Upload project (%s) to remote branch %s%s:\n",
+						p.Name, destBranch, draftStr)
+				} else {
+					fmt.Printf("Upload project %s/ to remote branch %s%s:\n",
+						p.Path, destBranch, draftStr)
+				}
+			} else {
+				fmt.Printf("Upload code review #%s of project (%s)%s:\n",
+					branch.CodeReview.ID, p.Name, draftStr)
+			}
+			fmt.Printf("  branch %s (%2d commit(s)):\n",
+				branch.Branch.Name,
+				len(commitList))
+			for _, commit := range commitList {
+				fmt.Printf("         %s\n", commit)
+			}
+
+			input := userInput(
+				fmt.Sprintf("to %s (y/N)? ", remote.Review),
+				"N")
+			if answerIsTrue(input) {
+				answer = true
+				todo = append(todo, branch)
+			} else {
+				log.Error("upload aborted by user")
+				continue
+			}
+		}
+
+		if len(commitList) > unusualCommitThreshold {
+			fmt.Printf("ATTENTION: You are uploading an unusually high number of commits.\n")
+			fmt.Println("YOU PROBABLY DO NOT MEAN TO DO THIS. (Did you rebase across branches?)")
+			input := userInput("If you are sure you intend to do this, type 'yes': ", "N")
+			if !answerIsTrue(input) {
+				log.Error("upload aborted by user")
+				continue
 			}
 		}
 	}
