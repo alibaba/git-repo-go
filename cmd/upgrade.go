@@ -15,10 +15,17 @@
 package cmd
 
 import (
+	"archive/tar"
+	"archive/zip"
+	"compress/bzip2"
+	"compress/gzip"
+	"crypto/sha1"
 	"crypto/sha256"
+	"crypto/sha512"
 	"crypto/tls"
 	"errors"
 	"fmt"
+	"hash"
 	"io"
 	"io/ioutil"
 	"net"
@@ -43,8 +50,10 @@ import (
 )
 
 const (
-	// defaultUpgradeURL indicates where to download git-repo new package
-	defaultUpgradeURL = "http://repo.code.alibaba-inc.com/download"
+	// defaultUpgradeInfoURL is where to download version.yml from.
+	defaultUpgradeInfoURL = "http://git-repo.info/download/version.yml"
+	// defaultDownloadURL is where to download package file.
+	defaultDownloadURL = "https://github.com/aliyun/git-repo-go/releases/download/v<version>/git-repo-<version>-<os>-<arch>.<ext>"
 )
 
 type upgradeCommand struct {
@@ -59,9 +68,62 @@ type upgradeCommand struct {
 	}
 }
 
-type upgradeVersion struct {
+type upgradeInfo struct {
 	Production string `yaml:"production"`
 	Test       string `yaml:"test"`
+	URLPattern string `yaml:"url"`
+}
+
+func (v *upgradeInfo) Version(isProduction bool) string {
+	if isProduction {
+		return v.Production
+	}
+	return v.Test
+}
+
+func (v *upgradeInfo) URLs(isProduction bool) []string {
+	var urls []string
+
+	url := v.URLPattern
+	if url == "" {
+		url = defaultDownloadURL
+	}
+
+	os := runtime.GOOS
+	switch os {
+	case "darwin":
+		os = "macOS"
+	case "linux":
+		os = "Linux"
+	case "windows":
+		os = "Windows"
+	}
+
+	arch := runtime.GOARCH
+	switch arch {
+	case "386":
+		arch = "32"
+	case "amd64":
+		arch = "64"
+	}
+
+	url = strings.ReplaceAll(url, "<version>", v.Version(isProduction))
+	url = strings.ReplaceAll(url, "<os>", os)
+	url = strings.ReplaceAll(url, "<arch>", arch)
+	if strings.Contains(url, ".<ext>") {
+		if os == "Windows" {
+			urls = append(urls, strings.ReplaceAll(url, "<ext>", "zip"))
+		} else {
+			urls = append(urls,
+				strings.ReplaceAll(url, "<ext>", "tar.gz"),
+				strings.ReplaceAll(url, "<ext>", "tar.bz2"),
+			)
+		}
+	} else {
+		urls = append(urls, url)
+	}
+
+	return urls
 }
 
 func (v *upgradeCommand) Command() *cobra.Command {
@@ -80,7 +142,7 @@ func (v *upgradeCommand) Command() *cobra.Command {
 	v.cmd.Flags().StringVarP(&v.O.URL,
 		"url",
 		"u",
-		defaultUpgradeURL,
+		defaultUpgradeInfoURL,
 		"upgrade from this URL")
 	v.cmd.Flags().StringVar(&v.O.Version,
 		"version",
@@ -128,67 +190,67 @@ func (v *upgradeCommand) HTTPClient() *http.Client {
 	return v.httpClient
 }
 
-func (v upgradeCommand) GetUpgradeVersion() (string, error) {
+func (v upgradeCommand) GetUpgradeInfo() (*upgradeInfo, error) {
 	var (
-		targetVersion = upgradeVersion{}
+		info = upgradeInfo{}
 	)
 
-	vURL := v.O.URL + "/version.yml"
-
-	req, err := http.NewRequest("GET", vURL, nil)
-	if err != nil {
-		return "", err
+	infoURL := v.O.URL
+	if strings.HasSuffix(v.O.URL, "/") {
+		infoURL = infoURL + "version.yml"
 	}
 
-	log.Debugf("checking upgrade version from %s", vURL)
+	req, err := http.NewRequest("GET", infoURL, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	log.Debugf("checking upgrade version from %s", infoURL)
 	resp, err := v.HTTPClient().Do(req)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode >= 300 {
-		return "", fmt.Errorf("bad HTTP respose (status: %d) from %s",
+		return nil, fmt.Errorf("cannot fetch upgrade info from %s, bad status: %d",
+			infoURL,
 			resp.StatusCode,
-			vURL,
 		)
 	}
 
 	decoder := yaml.NewDecoder(resp.Body)
-	err = decoder.Decode(&targetVersion)
+	err = decoder.Decode(&info)
 	if err != nil {
-		return "", err
+		log.Error(err)
+		return nil, fmt.Errorf("fail to parse upgrade info from %s", infoURL)
 	}
-
-	if v.O.Test {
-		return targetVersion.Test, nil
-	}
-	return targetVersion.Production, nil
+	return &info, nil
 }
 
-func (v upgradeCommand) Download(URL string, f *os.File, showProgress bool) error {
+func (v upgradeCommand) Download(URL string, dir string, showProgress bool) (string, error) {
 	var (
 		done = make(chan int)
 		wg   sync.WaitGroup
 	)
 
-	log.Debugf("will download %s to %s", URL, f.Name())
+	fileName := filepath.Join(dir, filepath.Base(URL))
+	log.Debugf("will download %s to %s", URL, fileName)
 
 	client := v.HTTPClient()
 	req, err := http.NewRequest("GET", URL, nil)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer resp.Body.Close()
-	defer f.Close()
 
 	if resp.StatusCode >= 300 {
-		return fmt.Errorf("cannot access %s (status: %d)", URL, resp.StatusCode)
+		return "", fmt.Errorf("cannot access %s (status: %d)", URL, resp.StatusCode)
 	}
 
 	if showProgress {
@@ -247,22 +309,28 @@ func (v upgradeCommand) Download(URL string, f *os.File, showProgress bool) erro
 				time.Sleep(time.Second)
 			}
 			fmt.Printf("\n")
-		}(f.Name(), contentLength)
+		}(fileName, contentLength)
 	}
 
-	_, err = io.Copy(f, resp.Body)
+	f, err := os.OpenFile(fileName, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0644)
+	if err != nil {
+		return "", err
+	}
+	defer f.Close()
 
+	_, err = io.Copy(f, resp.Body)
 	if showProgress {
 		done <- 1
 		wg.Wait()
 
 	}
-	return err
+	return fileName, err
 }
 
 func (v upgradeCommand) verifyChecksum(source, checksum string) error {
 	var (
 		err error
+		h   hash.Hash
 	)
 
 	checksumFile, err := os.Open(checksum)
@@ -282,7 +350,17 @@ func (v upgradeCommand) verifyChecksum(source, checksum string) error {
 		return err
 	}
 	defer f.Close()
-	h := sha256.New()
+
+	switch filepath.Ext(checksum) {
+	case ".sha1":
+		h = sha1.New()
+	case ".sha512":
+		h = sha512.New()
+	case ".sha256":
+		h = sha256.New()
+	default:
+		return fmt.Errorf("unknown checksum method for: %s", checksum)
+	}
 	if _, err := io.Copy(h, f); err != nil {
 		return err
 	}
@@ -341,86 +419,211 @@ func (v upgradeCommand) verifySignature(source, sig string) error {
 	return nil
 }
 
-func (v upgradeCommand) Verify(binURL, binFile string) error {
+func (v upgradeCommand) ExtractPackage(pkgFile, dir string) (binFile, shaFile, gpgFile string, err error) {
+	if strings.HasSuffix(pkgFile, ".zip") {
+		return v.ExtractZip(pkgFile, dir)
+	}
+	return v.ExtractTar(pkgFile, dir)
+}
+
+func (v upgradeCommand) ExtractZip(pkgFile, dir string) (binFile, shaFile, gpgFile string, err error) {
 	var (
-		checksumURL  string
-		signatureURL string
+		in  io.ReadCloser
+		out *os.File
 	)
 
-	// Check if have a sha256 signature
-	checksumURL = binURL + ".sha256"
-	checksumFile, err := ioutil.TempFile("", "git-repo.sha256-")
+	r, err := zip.OpenReader(pkgFile)
 	if err != nil {
-		return err
+		err = fmt.Errorf("cannot open %s: %s", pkgFile, err)
+		return
 	}
-	defer os.Remove(checksumFile.Name())
+	defer r.Close()
 
-	err = v.Download(checksumURL, checksumFile, false)
+	for _, f := range r.File {
+		baseName := filepath.Base(f.Name)
+		fullpath := filepath.Join(dir, baseName)
+		if baseName == "git-repo" || baseName == "git-repo.exe" {
+			binFile = fullpath
+		} else if strings.HasSuffix(baseName, ".sha256") ||
+			strings.HasSuffix(baseName, ".sha512") ||
+			strings.HasSuffix(baseName, ".sha1") {
+			shaFile = fullpath
+		} else if strings.HasSuffix(baseName, ".gpg") ||
+			strings.HasSuffix(baseName, ".asc") {
+			gpgFile = fullpath
+		} else {
+			log.Warningf("unknown file in package: %s", baseName)
+			continue
+		}
+		in, err = f.Open()
+		if err != nil {
+			err = fmt.Errorf("extract error, cannot open %s", f.Name)
+			return
+		}
+		out, err = os.OpenFile(fullpath,
+			os.O_CREATE|os.O_RDWR|os.O_TRUNC,
+			0644)
+		if err == nil {
+			_, err = io.Copy(out, in)
+			if err != nil {
+				err = fmt.Errorf("fail to write %s: %s", fullpath, err)
+			}
+			out.Close()
+		} else {
+			err = fmt.Errorf("cannot open %s to write: %s", fullpath, err)
+		}
+		in.Close()
+		if err != nil {
+			return
+		}
+	}
+	return
+}
+
+func (v upgradeCommand) ExtractTar(pkgFile, dir string) (binFile, shaFile, gpgFile string, err error) {
+	var reader io.Reader
+
+	pkgf, err := os.Open(pkgFile)
 	if err != nil {
-		return fmt.Errorf("cannot find sha256 checksum: %s", checksumURL)
+		return
+	}
+	defer pkgf.Close()
+	switch filepath.Ext(pkgFile) {
+	case ".gz", ".tgz":
+		reader, err = gzip.NewReader(pkgf)
+	case ".bzip2", ".bz2":
+		reader = bzip2.NewReader(pkgf)
+	default:
+		err = fmt.Errorf("unknown compress method for %s", filepath.Base(pkgFile))
 	}
 
-	err = v.verifyChecksum(binFile, checksumFile.Name())
 	if err != nil {
-		return err
+		return
 	}
 
-	// Check pgp signature
-	signatureURL = binURL + ".sha256.gpg"
-	signatureFile, err := ioutil.TempFile("", "git-repo.sha256.gpg-")
+	tarReader := tar.NewReader(reader)
+	for {
+		var (
+			header *tar.Header
+			f      *os.File
+		)
+
+		header, err = tarReader.Next()
+
+		if err == io.EOF {
+			break
+		}
+
+		if err != nil {
+			return
+		}
+
+		name := header.Name
+		switch header.Typeflag {
+		case tar.TypeDir:
+			continue
+		case tar.TypeReg:
+			break
+		default:
+			err = fmt.Errorf("unkown type \"%c\" for %s",
+				header.Typeflag,
+				name,
+			)
+			return
+		}
+
+		baseName := filepath.Base(name)
+		if baseName == "git-repo" || baseName == "git-repo.exe" {
+			binFile = filepath.Join(dir, baseName)
+		} else if strings.HasSuffix(baseName, ".sha256") ||
+			strings.HasSuffix(baseName, ".sha512") ||
+			strings.HasSuffix(baseName, ".sha1") {
+			shaFile = filepath.Join(dir, baseName)
+		} else if strings.HasSuffix(baseName, ".gpg") ||
+			strings.HasSuffix(baseName, ".asc") {
+			gpgFile = filepath.Join(dir, baseName)
+		} else {
+			log.Warningf("unknown file in package: %s", baseName)
+			continue
+		}
+		f, err = os.OpenFile(filepath.Join(dir, baseName),
+			os.O_CREATE|os.O_RDWR|os.O_TRUNC,
+			0644)
+		if err != nil {
+			return
+		}
+		io.Copy(f, tarReader)
+		f.Close()
+	}
+
+	return
+}
+
+func (v upgradeCommand) ExtractAndVerify(pkgFile, dir string) (string, error) {
+	var (
+		binFile, shaFile, gpgFile string
+		err                       error
+	)
+
+	binFile, shaFile, gpgFile, err = v.ExtractPackage(pkgFile, dir)
+	if binFile == "" {
+		return "", fmt.Errorf("cannot find git-repo in package")
+	}
+	if shaFile == "" {
+		return "", fmt.Errorf("cannot find checksum in package")
+	}
+
+	err = v.verifyChecksum(binFile, shaFile)
 	if err != nil {
-		return err
+		return "", err
 	}
-	defer os.Remove(signatureFile.Name())
 
-	if err = v.Download(signatureURL, signatureFile, false); err != nil {
+	if gpgFile == "" {
 		input := userInput(
 			fmt.Sprintf("cannot find pgp signature, still want to install? (y/N)? "),
 			"N")
 		if !answerIsTrue(input) {
-			return fmt.Errorf("cannot valiate package, abort")
+			return "", fmt.Errorf("cannot valiate package, abort")
 		}
-	} else if err = v.verifySignature(checksumFile.Name(), signatureFile.Name()); err != nil {
+	} else if err = v.verifySignature(shaFile, gpgFile); err != nil {
 		input := userInput(
 			fmt.Sprintf("invalid pgp signature, still want to install? (y/N)? "),
 			"N")
 		if !answerIsTrue(input) {
-			return fmt.Errorf("invalid package, abort")
+			return "", fmt.Errorf("invalid package, abort")
 		}
 	}
-	return nil
+
+	return binFile, nil
 }
 
-func (v upgradeCommand) UpgradeVersion(target, targetVersion string) error {
+func (v upgradeCommand) UpgradeVersion(target string, info *upgradeInfo) error {
 	var (
-		binURL string
-		err    error
+		downloadURL string
+		pkgFile     string
+		err         error
+		newVersion  = info.Version(!v.O.Test)
 	)
 
-	binURL = fmt.Sprintf("%s/%s/%s/%s/%s",
-		v.O.URL,
-		targetVersion,
-		runtime.GOOS,
-		runtime.GOARCH,
-		"git-repo",
-	)
-
-	if cap.IsWindows() {
-		binURL += ".exe"
-	}
-
-	binFile, err := ioutil.TempFile("", "git-repo-")
+	tmpDir, err := ioutil.TempDir("", "git-repo-")
 	if err != nil {
 		return err
 	}
-	defer os.Remove(binFile.Name())
+	defer os.RemoveAll(tmpDir)
 
-	err = v.Download(binURL, binFile, true)
+	for _, downloadURL = range info.URLs(!v.O.Test) {
+		pkgFile, err = v.Download(downloadURL, tmpDir, true)
+		if err == nil {
+			break
+		}
+	}
 	if err != nil {
-		return fmt.Errorf("fail to download %s: %s", binURL, err)
+		return fmt.Errorf("fail to download %s: %s", downloadURL, err)
+	} else if downloadURL == "" {
+		return fmt.Errorf("unknown download URL")
 	}
 
-	err = v.Verify(binURL, binFile.Name())
+	binFile, err := v.ExtractAndVerify(pkgFile, tmpDir)
 	if err != nil {
 		return err
 	}
@@ -428,19 +631,19 @@ func (v upgradeCommand) UpgradeVersion(target, targetVersion string) error {
 	if config.IsDryRun() {
 		log.Notef("will upgrade git-repo from version %s to %s, from file %s",
 			version.Version,
-			targetVersion,
-			binFile.Name())
+			newVersion,
+			binFile)
 		return nil
 	}
 
-	err = v.InstallImage(binFile.Name(), target)
+	err = v.InstallImage(binFile, target)
 	if err != nil {
 		return err
 	}
 
 	log.Notef("successfully upgrade git-repo from %s to %s",
 		version.Version,
-		targetVersion,
+		newVersion,
 	)
 	return nil
 }
@@ -470,29 +673,31 @@ func (v upgradeCommand) InstallImage(bin, target string) error {
 	if err != nil {
 		log.Debugf("no permission to write file '%s', will write to tmpfile instead",
 			lockFile)
-		out, err = ioutil.TempFile("", fmt.Sprintf("git-repo-%s-", v.O.Version))
+		tmpDir, err := ioutil.TempDir("", "git-repo-")
 		if err != nil {
 			return err
 		}
-		lockFile = out.Name()
+		lockFile = filepath.Join(tmpDir, filepath.Base(target))
+		out, err = os.OpenFile(lockFile, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0755)
+		if err != nil {
+			return err
+		}
 	}
 
-	log.Debugf("first, install %s to %s", in.Name(), out.Name())
+	log.Debugf("first, install %s to %s", in.Name(), lockFile)
 	_, err = io.Copy(out, in)
 	if err != nil {
 		out.Close()
-		return fmt.Errorf("fail to copy from %s to %s", in.Name(), out.Name())
+		return fmt.Errorf("fail to copy from %s to %s", bin, lockFile)
 	}
 	out.Close()
 
-	os.Chmod(out.Name(), 0755)
-
 	log.Debugf("at last, move %s to %s", out.Name(), target)
-	err = os.Rename(out.Name(), target)
+	err = os.Rename(lockFile, target)
 	if err != nil {
 		box := format.NewMessageBox(78)
-		box.Add("Fail to upgrade. Please copy")
-		box.Add(fmt.Sprintf("        %s", out.Name()))
+		box.Add("ERROR: fail to upgrade. Please copy")
+		box.Add(fmt.Sprintf("        %s", lockFile))
 		box.Add("to")
 		box.Add(fmt.Sprintf("        %s", target))
 		box.Add("by hands")
@@ -505,10 +710,15 @@ func (v upgradeCommand) InstallImage(bin, target string) error {
 
 func (v upgradeCommand) Execute(args []string) error {
 	var (
-		uv          string
-		err         error
 		mainProgram string
+		info        *upgradeInfo
+		newVersion  string
+		err         error
 	)
+
+	if v.O.Test && v.O.Version != "" {
+		return fmt.Errorf("cannot use --test and --version together")
+	}
 
 	mainProgram, err = os.Executable()
 	if err != nil {
@@ -536,35 +746,31 @@ func (v upgradeCommand) Execute(args []string) error {
 		}
 	}
 	v.O.URL = u.String()
-	if strings.HasSuffix(v.O.URL, "/") {
-		v.O.URL = strings.TrimSuffix(v.O.URL, "/")
-	}
 
 	if v.O.Version == "" {
-		uv, err = v.GetUpgradeVersion()
+		info, err = v.GetUpgradeInfo()
 		if err != nil {
 			return err
 		}
 	} else {
-		uv = v.O.Version
+		info = &upgradeInfo{
+			Production: v.O.Version,
+		}
 	}
 
-	if version.CompareVersion(uv, version.Version) <= 0 {
+	newVersion = info.Version(!v.O.Test)
+	if version.CompareVersion(newVersion, version.Version) <= 0 {
 		if v.O.Version != "" {
-			log.Warnf("will downgrade version from %s to %s", version.Version, v.O.Version)
+			log.Warnf("will downgrade version from %s to %s", version.Version, newVersion)
 		} else {
 			log.Notef("current version (%s) is uptodate", version.Version)
-			v.O.Version = uv
 			return nil
 		}
 	} else {
-		log.Debugf("compare versions: %s > %s", uv, version.Version)
+		log.Debugf("compare versions: %s > %s", newVersion, version.Version)
 	}
 
-	if v.O.Version == "" {
-		v.O.Version = uv
-	}
-	return v.UpgradeVersion(mainProgram, uv)
+	return v.UpgradeVersion(mainProgram, info)
 }
 
 var upgradeCmd = upgradeCommand{}
