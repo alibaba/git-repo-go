@@ -5,6 +5,7 @@
 
 trigger:
 - master
+- pu
 
 jobs:
 - job: linux
