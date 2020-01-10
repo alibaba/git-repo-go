@@ -2,6 +2,17 @@
 
 Changes of git-repo.
 
+## 0.7.3 (2020-01-11)
+
+* The first release on github.com: github.com/aliyun/git-repo
+* upgrade: download and install tar.gz/zip package
+* README: how to use git-repo
+* upload: confirm all upload tasks if no editor defined
+* editor: search editor from candidates
+* editor: work with editor path with spaces in git-bash
+* upgrade: get program path using os.Executable
+* test: fixed test cases for Linux
+
 ## 0.7.1 (2020-01-02)
 
 New features:
