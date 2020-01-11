@@ -230,7 +230,7 @@ func (v upgradeCommand) GetUpgradeInfo() (*upgradeInfo, error) {
 
 func (v upgradeCommand) Download(URL string, dir string, showProgress bool) (string, error) {
 	var (
-		done = make(chan int)
+		done = make(chan int, 1)
 		wg   sync.WaitGroup
 	)
 
@@ -253,11 +253,19 @@ func (v upgradeCommand) Download(URL string, dir string, showProgress bool) (str
 		return "", fmt.Errorf("cannot access %s (status: %d)", URL, resp.StatusCode)
 	}
 
+	f, err := os.OpenFile(fileName, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0644)
+	if err != nil {
+		return "", err
+	}
+	defer f.Close()
+
 	if showProgress {
 		contentLength, err := strconv.Atoi(resp.Header.Get("Content-Length"))
 		if err != nil {
 			log.Debugf("fail to get content-length: %s", err)
 			contentLength = 0
+		} else {
+			log.Debugf("content-length for %s: %d", URL, contentLength)
 		}
 
 		wg.Add(1)
@@ -311,12 +319,6 @@ func (v upgradeCommand) Download(URL string, dir string, showProgress bool) (str
 			fmt.Printf("\n")
 		}(fileName, contentLength)
 	}
-
-	f, err := os.OpenFile(fileName, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0644)
-	if err != nil {
-		return "", err
-	}
-	defer f.Close()
 
 	_, err = io.Copy(f, resp.Body)
 	if showProgress {
