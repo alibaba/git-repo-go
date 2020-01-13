@@ -60,7 +60,7 @@ func (v GerritProtoHelper) GetGitPushCommand(o *common.UploadOptions) (*GitPushC
 		return nil, errors.New("empty review url for helper")
 	}
 	gitURL := config.ParseGitURL(o.RemoteURL)
-	if gitURL == nil {
+	if gitURL == nil || (!gitURL.IsSSH() && !gitURL.IsHTTP()) {
 		return nil, fmt.Errorf("bad review url: %s", o.RemoteURL)
 	}
 

@@ -390,13 +390,13 @@ func urlToKey(address string) string {
 		return ""
 	}
 
-	if u.Proto == "http" || u.Proto == "https" {
+	if u.IsHTTP() {
 		key = u.Proto + "://"
 		key += u.Host
 		if u.Port > 0 && u.Port != 80 && u.Port != 443 {
 			key += fmt.Sprintf(":%d", u.Port)
 		}
-	} else if u.Proto == "ssh" {
+	} else if u.IsSSH() {
 		key = u.Proto + "://"
 		key += u.Host
 		if u.Port > 0 && u.Port != 22 {

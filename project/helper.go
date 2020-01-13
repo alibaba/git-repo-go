@@ -42,51 +42,32 @@ func urlJoin(u string, paths ...string) (string, error) {
 	return u, nil
 }
 
-func joinTwoURL(u, p string) (string, error) {
-	var (
-		prefix    string
-		remain    string
-		keepSlash bool
-	)
+func joinTwoURL(l, r string) (string, error) {
+	lURL := config.ParseGitURL(l)
+	rURL := config.ParseGitURL(r)
 
-	if filepath.IsAbs(p) || strings.Contains(p, ":") {
-		return p, nil
+	if rURL != nil {
+		return r, nil
 	}
-
-	if strings.Contains(u, "://") {
-		slices := strings.SplitN(u, "://", 2)
-		prefix = slices[0] + "://"
-		remains := strings.SplitN(slices[1], "/", 2)
-		prefix += remains[0] + "/"
-		if len(remains) == 1 {
-			remain = ""
-		} else {
-			remain = remains[1]
+	if lURL == nil {
+		return "", fmt.Errorf("fail to parse URL: %s", l)
+	}
+	if lURL.Repo == "" {
+		lURL.Repo = r
+	} else {
+		lPath := lURL.Repo
+		if !filepath.IsAbs(lPath) {
+			lPath = "/" + lPath
 		}
-	} else if strings.Contains(u, ":") {
-		slices := strings.SplitN(u, ":", 2)
-		prefix = slices[0] + ":"
-		remain = slices[1]
-	} else if filepath.IsAbs(u) {
-		prefix = "/"
-		remain = u[1:]
-	} else {
-		return "", fmt.Errorf("invalid git url: %s", u)
+		lPath = filepath.Join(lPath, r)
+		lPath = filepath.ToSlash(filepath.Clean(lPath))
+		if !lURL.IsLocal() && len(lPath) > 0 && lPath[0] == '/' {
+			lPath = lPath[1:]
+		}
+		lURL.Repo = lPath
 	}
 
-	if len(remain) == 0 {
-		remain = "/"
-	} else if remain[0] == '/' {
-		keepSlash = true
-	} else {
-		remain = "/" + remain
-	}
-
-	remain = filepath.Join(remain, p)
-	if !keepSlash && len(remain) > 0 && remain[0] == '/' {
-		remain = remain[1:]
-	}
-	return prefix + remain, nil
+	return lURL.String(), nil
 }
 
 // MatchGroups checks if project has matched groups.

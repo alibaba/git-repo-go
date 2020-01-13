@@ -137,7 +137,7 @@ func TestGitURL(t *testing.T) {
 		if assert.NotNil(u) {
 			assert.Equal("", u.GetRootURL())
 			assert.Equal("file", u.Proto)
-			assert.Equal("/path/of/repo.git", u.Repo)
+			assert.Equal("path/of/repo.git", u.Repo)
 		}
 	}
 

@@ -1,9 +1,12 @@
 package config
 
 import (
+	"bytes"
 	"fmt"
+	"path/filepath"
 	"regexp"
 	"strconv"
+	"strings"
 )
 
 var (
@@ -11,12 +14,12 @@ var (
 	GitHTTPProtocolPattern = regexp.MustCompile(`^(?P<proto>http|https)://((?P<user>.*?)@)?(?P<host>[^/]+?)(:(?P<port>[0-9]+))?(/(?P<repo>.*?)(\.git)?/?)?$`)
 	// GitSSHProtocolPattern indicates git over SSH protocol
 	GitSSHProtocolPattern = regexp.MustCompile(`^(?P<proto>ssh)://((?P<user>.*?)@)?(?P<host>[^/]+?)(:(?P<port>[0-9]+))?(/(?P<repo>.+?)(\.git)?)?/?$`)
-	// GitRsyncProtocolPattern indicates rsync style git over SSH protocol
-	GitRsyncProtocolPattern = regexp.MustCompile(`^((?P<user>.*?)@)?(?P<host>[^/:]+?):(?P<repo>[^/].*?)(\.git)?/?$`)
+	// GitSCPProtocolPattern indicates scp-style git over SSH protocol
+	GitSCPProtocolPattern = regexp.MustCompile(`^((?P<user>.*?)@)?(?P<host>[^/:]+?):(?P<repo>.*?)(\.git)?/?$`)
 	// GitDaemonProtocolPattern indicates git over git-daemon protocol
 	GitDaemonProtocolPattern = regexp.MustCompile(`^(?P<proto>git)://(?P<host>[^/]+?)(:(?P<port>[0-9]+))?(/(?P<repo>.*?)(\.git)?/?)?$`)
 	// GitFileProtocolPattern indicates git over file protocol
-	GitFileProtocolPattern = regexp.MustCompile(`^(?:(?P<proto>file)://)?(?P<repo>/.+?)/?$`)
+	GitFileProtocolPattern = regexp.MustCompile(`^(?:(?P<proto>file)://)?(/(?P<repo>.*?)/?)?$`)
 
 	mapReviewHosts map[string]string
 )
@@ -63,7 +66,7 @@ func (v GitURL) GetRootURL() string {
 		}
 	} else if v.Proto == "git" {
 		u = v.Host
-	} else if v.Proto == "file" {
+	} else if v.Proto == "file" || v.Proto == "local" {
 		u = ""
 	} else {
 		u = v.Host
@@ -71,9 +74,46 @@ func (v GitURL) GetRootURL() string {
 	return u
 }
 
+// String returns full URL
+func (v GitURL) String() string {
+	var buf = bytes.NewBuffer([]byte{})
+
+	switch v.Proto {
+	case "http", "https", "ssh", "git":
+		buf.WriteString(v.Proto + "://")
+		if v.User != "" {
+			buf.WriteString(v.User + "@")
+		}
+		buf.WriteString(v.Host)
+		if v.Port > 0 && v.Port != 80 && v.Port != 443 && v.Port != 22 {
+			buf.WriteString(fmt.Sprintf(":%d", v.Port))
+		}
+		buf.WriteByte('/')
+	case "file":
+		buf.WriteString(v.Proto + ":///")
+	}
+
+	if strings.HasPrefix(v.Repo, "/") && v.Proto != "local" {
+		buf.WriteString(v.Repo[1:])
+	} else {
+		buf.WriteString(v.Repo)
+	}
+	return buf.String()
+}
+
 // IsSSH indicates whether protocol is SSH.
 func (v GitURL) IsSSH() bool {
 	return v.Proto == "ssh"
+}
+
+// IsHTTP indicates whether protocol is HTTP/HTTPS.
+func (v GitURL) IsHTTP() bool {
+	return v.Proto == "http" || v.Proto == "https"
+}
+
+// IsLocal indicates whether protocol is local path.
+func (v GitURL) IsLocal() bool {
+	return v.Proto == "local"
 }
 
 func getMatchedGitURL(re *regexp.Regexp, data string) *GitURL {
@@ -138,10 +178,22 @@ func ParseGitURL(address string) *GitURL {
 		return gitURL
 	}
 
-	gitURL = getMatchedGitURL(GitRsyncProtocolPattern, address)
+	if strings.Contains(address, "://") {
+		return nil
+	}
+
+	gitURL = getMatchedGitURL(GitSCPProtocolPattern, address)
 	if gitURL != nil {
 		if gitURL.Proto == "" {
 			gitURL.Proto = "ssh"
+		}
+		return gitURL
+	}
+
+	if filepath.IsAbs(address) {
+		gitURL = &GitURL{
+			Proto: "local",
+			Repo:  address,
 		}
 		return gitURL
 	}

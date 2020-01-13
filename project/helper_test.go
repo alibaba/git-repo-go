@@ -92,15 +92,15 @@ func TestProjectUrlJoinManifest(t *testing.T) {
 
 	u, err = urlJoin(base, ".", "repo")
 	assert.Nil(err)
-	assert.Equal("git@github.com:jiangxin/repo", u)
+	assert.Equal("ssh://git@github.com/jiangxin/repo", u)
 
 	u, err = urlJoin(base, "..", "my/repo")
 	assert.Nil(err)
-	assert.Equal("git@github.com:my/repo", u)
+	assert.Equal("ssh://git@github.com/my/repo", u)
 
 	u, err = urlJoin(base, "../../..", "my/repo")
 	assert.Nil(err)
-	assert.Equal("git@github.com:my/repo", u)
+	assert.Equal("ssh://git@github.com/my/repo", u)
 }
 
 func TestProjectUrlJoinAbs(t *testing.T) {
@@ -200,15 +200,15 @@ func TestProjectUrlJoinManifestWithSpace(t *testing.T) {
 
 	u, err = urlJoin(base, ".", "repo")
 	assert.Nil(err)
-	assert.Equal("git@example.com:repo dir/jiangxin/repo", u)
+	assert.Equal("ssh://git@example.com/repo dir/jiangxin/repo", u)
 
 	u, err = urlJoin(base, "..", "my/repo")
 	assert.Nil(err)
-	assert.Equal("git@example.com:repo dir/my/repo", u)
+	assert.Equal("ssh://git@example.com/repo dir/my/repo", u)
 
 	u, err = urlJoin(base, "../../..", "my/repo")
 	assert.Nil(err)
-	assert.Equal("git@example.com:my/repo", u)
+	assert.Equal("ssh://git@example.com/my/repo", u)
 }
 
 func TestMatchGroups(t *testing.T) {
