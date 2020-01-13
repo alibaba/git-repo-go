@@ -62,7 +62,7 @@ var attrMap = mapping{
 }
 
 func colorEnabled() bool {
-	if !cap.Isatty() {
+	if !cap.Isatty() || cap.IsWindows() {
 		return false
 	}
 	return true
