@@ -2,6 +2,10 @@
 
 Changes of git-repo.
 
+## 0.7.3.1 (2020-01-13)
+
+* Windows: fix wrong URL for repos of a manifest project.
+
 ## 0.7.3 (2020-01-11)
 
 * The first release on github.com: github.com/aliyun/git-repo
