@@ -311,7 +311,7 @@ func (v *Project) AddRemote(mr *manifest.Remote, noCache bool) *Remote {
 			query := helper.NewSSHInfoQuery(v.SSHInfoCacheFile())
 			sshInfo, err := query.GetSSHInfo(mr.Review, !noCache)
 			if err != nil {
-				log.Warn(err)
+				log.Debug(err)
 			} else {
 				protoHelper = helper.NewProtoHelper(sshInfo)
 			}

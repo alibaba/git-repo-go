@@ -33,6 +33,7 @@ const (
 var (
 	sshInfoPattern = regexp.MustCompile(`^[\S]+ [0-9]+$`)
 	httpClient     *http.Client
+	internalCache  map[string]interface{}
 )
 
 // SSHInfo wraps host and port which ssh_info returned.
@@ -74,6 +75,18 @@ func (v SSHInfoQuery) GetSSHInfo(address string, useCache bool) (*SSHInfo, error
 		return nil, fmt.Errorf("bad address for review '%s'", address)
 	}
 
+	// Try internal cache
+	if cache, ok := internalCache[key]; ok {
+		switch cache.(type) {
+		case error:
+			return nil, cache.(error)
+		case *SSHInfo:
+			return cache.(*SSHInfo), nil
+		default:
+			log.Errorf("bad internal cache for SSHInfo: %#v", cache)
+		}
+	}
+
 	// Try cache
 	if v.CacheFile != "" && v.cfg != nil && useCache {
 		data := v.cfg.Get(fmt.Sprintf(config.CfgManifestRemoteSSHInfo, key))
@@ -103,8 +116,12 @@ func (v SSHInfoQuery) GetSSHInfo(address string, useCache bool) (*SSHInfo, error
 	// Call ssh_info API
 	sshInfo, err := querySSHInfo(address)
 	if err != nil {
+		// Update internal cache
+		internalCache[key] = err
 		return nil, err
 	}
+	// Update internal cache
+	internalCache[key] = sshInfo
 	log.Debugf("query ssh_info successfully: %#v", sshInfo)
 
 	// Update Cache
@@ -294,7 +311,7 @@ func sshInfoFromCommand(url *config.GitURL) (*SSHInfo, error) {
 				ProtoType: ProtoTypeGerrit}, nil
 		}
 
-		log.Notef("fail to check ssh_info for SSH protocol, will check HTTP instead")
+		log.Debug("fail to check ssh_info for SSH protocol, will check HTTP instead")
 		return querySSHInfo(url.Host)
 	}
 	return sshInfo, nil
@@ -404,4 +421,8 @@ func urlToKey(address string) string {
 		}
 	}
 	return key
+}
+
+func init() {
+	internalCache = make(map[string]interface{})
 }
