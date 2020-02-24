@@ -1,0 +1,216 @@
+From a36bcdd660c50f40c07b96784e8531b7d2f76ec2 Mon Sep 17 00:00:00 2001
+From: Jiang Xin <zhiyou.jx@alibaba-inc.com>
+Date: Thu, 16 Jan 2020 18:57:54 +0800
+Subject: [PATCH 4/7] receive-pack: read env from execute-commands output
+
+The results of the `execute-commands` hook may need to be passed to
+subsequent `post-receive` hooks. Read and parse the output of the
+`execute-commands` hook and set the environment for subsequent
+`post-receive` hooks.
+
+Signed-off-by: Jiang Xin <zhiyou.jx@alibaba-inc.com>
+---
+ builtin/receive-pack.c           | 42 +++++++++++++++--
+ t/t5411-execute-commands-hook.sh | 79 ++++++++++++++++++++++++++++++++
+ 2 files changed, 117 insertions(+), 4 deletions(-)
+
+diff --git a/builtin/receive-pack.c b/builtin/receive-pack.c
+index 03ba6ae46e..3571d18a41 100644
+--- a/builtin/receive-pack.c
++++ b/builtin/receive-pack.c
+@@ -85,6 +85,7 @@ static const char *nonce_status;
+ static long nonce_stamp_slop;
+ static timestamp_t nonce_stamp_slop_limit;
+ static struct ref_transaction *transaction;
++struct argv_array post_receive_env_array;
+ 
+ static enum {
+ 	KEEPALIVE_NEVER = 0,
+@@ -678,7 +679,9 @@ struct receive_hook_feed_state {
+ };
+ 
+ typedef int (*feed_fn)(void *, const char **, size_t *);
++typedef void (*stdout_handler_fn)(int out);
+ static int run_and_feed_hook(const char *hook_name, feed_fn feed,
++			     stdout_handler_fn stdout_handler,
+ 			     struct receive_hook_feed_state *feed_state)
+ {
+ 	struct child_process proc = CHILD_PROCESS_INIT;
+@@ -713,9 +716,15 @@ static int run_and_feed_hook(const char *hook_name, feed_fn feed,
+ 
+ 	proc.argv = argv;
+ 	proc.in = -1;
+-	proc.stdout_to_stderr = 1;
++	if (stdout_handler)
++		proc.out = -1;
++	else
++		proc.stdout_to_stderr = 1;
+ 	proc.trace2_hook_name = hook_name;
+ 
++	if (!strcmp(hook_name, "post-receive") && post_receive_env_array.argc > 0)
++		argv_array_pushv(&proc.env_array, post_receive_env_array.argv);
++
+ 	if (feed_state->push_options) {
+ 		int i;
+ 		for (i = 0; i < feed_state->push_options->nr; i++)
+@@ -760,6 +769,10 @@ static int run_and_feed_hook(const char *hook_name, feed_fn feed,
+ 			break;
+ 	}
+ 	close(proc.in);
++
++	if (stdout_handler)
++		stdout_handler(proc.out);
++
+ 	if (use_sideband)
+ 		finish_async(&muxer);
+ 
+@@ -817,7 +830,7 @@ static int run_receive_hook(struct command *commands,
+ 		return 0;
+ 	state.cmd = commands;
+ 	state.push_options = push_options;
+-	status = run_and_feed_hook(hook_name, feed_receive_hook, &state);
++	status = run_and_feed_hook(hook_name, feed_receive_hook, NULL, &state);
+ 	strbuf_release(&state.buf);
+ 	return status;
+ }
+@@ -868,11 +881,29 @@ static int run_execute_commands_pre_receive_hook(struct command *commands,
+ 	state.cmd = commands;
+ 	state.push_options = push_options;
+ 	status = run_and_feed_hook("execute-commands--pre-receive",
+-			feed_receive_hook, &state);
++			feed_receive_hook, NULL, &state);
+ 	strbuf_release(&state.buf);
+ 	return status;
+ }
+ 
++
++static void prepare_post_receive_env(int in)
++{
++	struct strbuf stdout_buf = STRBUF_INIT;
++
++	while (strbuf_getwholeline_fd(&stdout_buf, in, '\n') != EOF) {
++		char *p = stdout_buf.buf + stdout_buf.len -1;
++		if (*p =='\n')
++			*p = '\0';
++		p = strchr(stdout_buf.buf, '=');
++		if (p == NULL)
++			continue;
++		argv_array_push(&post_receive_env_array, stdout_buf.buf);
++		strbuf_reset(&stdout_buf);
++	}
++	strbuf_release(&stdout_buf);
++}
++
+ static int run_execute_commands_hook(struct command *commands,
+ 				     const struct string_list *push_options)
+ {
+@@ -889,7 +920,8 @@ static int run_execute_commands_hook(struct command *commands,
+ 		return 0;
+ 	state.cmd = commands;
+ 	state.push_options = push_options;
+-	status = run_and_feed_hook("execute-commands", feed_receive_hook, &state);
++	status = run_and_feed_hook("execute-commands",
++			feed_receive_hook, prepare_post_receive_env, &state);
+ 	strbuf_release(&state.buf);
+ 	return status;
+ }
+@@ -2064,6 +2096,8 @@ int cmd_receive_pack(int argc, const char **argv, const char *prefix)
+ 		OPT_END()
+ 	};
+ 
++	argv_array_init(&post_receive_env_array);
++
+ 	packet_trace_identity("receive-pack");
+ 
+ 	argc = parse_options(argc, argv, prefix, options, receive_pack_usage, 0);
+diff --git a/t/t5411-execute-commands-hook.sh b/t/t5411-execute-commands-hook.sh
+index 0bf14e702d..1907d0619d 100755
+--- a/t/t5411-execute-commands-hook.sh
++++ b/t/t5411-execute-commands-hook.sh
+@@ -454,4 +454,83 @@ test_expect_success "cannot push mixed references (declined)" '
+ 	test_cmp expect actual
+ '
+ 
++test_expect_success "new execute-commands and post-receive hooks (environments in output)" '
++	## execute-commands hook
++	mv $bare/hooks/execute-commands $bare/hooks/execute-commands.ok &&
++	cat >$bare/hooks/execute-commands <<-EOF &&
++	#!/bin/sh
++
++	printf >&2 "execute: execute-commands\n"
++
++	if test \$# -gt 0 && test "\$1" = "--pre-receive"
++	then
++		printf >&2 ">> pre-receive mode\n"
++	else
++		printf "GIT_VAR1=var1\n"
++		printf "GIT_VAR2=var2\n"
++		printf "AGIT_VAR1=foo\n"
++		printf "AGIT_VAR2=bar\n"
++	fi
++
++	while read old new ref
++	do
++		printf >&2 ">> old: \$old, new: \$new, ref: \$ref.\n"
++	done
++
++	for k in GIT_VAR1 GIT_VAR2 AGIT_VAR1 AGIT_VAR2
++	do
++		if test -n "\$(eval echo \\"\\\$\$k\")"
++		then
++			printf >&2 ">> has env: \$k=\$(eval echo \\"\\\$\$k\").\n"
++		fi
++	done
++	EOF
++	chmod a+x $bare/hooks/execute-commands &&
++
++	## post-receive hook
++	mv $bare/hooks/post-receive $bare/hooks/post-receive.ok &&
++	cat >$bare/hooks/post-receive <<-EOF &&
++	#!/bin/sh
++
++	printf >&2 "execute: post-receive hook\n"
++
++	while read old new ref
++	do
++		printf >&2 ">> old: \$old, new: \$new, ref: \$ref.\n"
++	done
++
++	for k in GIT_VAR1 GIT_VAR2 AGIT_VAR1 AGIT_VAR2
++	do
++		if test -n "\$(eval echo \\"\\\$\$k\")"
++		then
++			printf >&2 ">> has env: \$k=\$(eval echo \\"\\\$\$k\").\n"
++		fi
++	done
++	EOF
++	chmod a+x $bare/hooks/post-receive
++'
++
++test_expect_success "push and show environments" '
++	(
++		cd work &&
++		git push origin \
++			HEAD:refs/for/master/my/topic
++	) >out 2>&1 &&
++	grep "^remote:" out | sed -e "s/  *\$//g" >actual &&
++	cat >expect <<-EOF &&
++	remote: execute: execute-commands
++	remote: >> pre-receive mode
++	remote: >> old: 0000000000000000000000000000000000000000, new: ce858e653cdbf70f9955a39d73a44219e4b92e9e, ref: refs/for/master/my/topic.
++	remote: execute: execute-commands
++	remote: >> old: 0000000000000000000000000000000000000000, new: ce858e653cdbf70f9955a39d73a44219e4b92e9e, ref: refs/for/master/my/topic.
++	remote: execute: post-receive hook
++	remote: >> old: 0000000000000000000000000000000000000000, new: ce858e653cdbf70f9955a39d73a44219e4b92e9e, ref: refs/for/master/my/topic.
++	remote: >> has env: GIT_VAR1=var1.
++	remote: >> has env: GIT_VAR2=var2.
++	remote: >> has env: AGIT_VAR1=foo.
++	remote: >> has env: AGIT_VAR2=bar.
++	EOF
++	test_cmp expect actual
++'
++
+ test_done
+-- 
+2.25.1.362.g51ebf55b93
+

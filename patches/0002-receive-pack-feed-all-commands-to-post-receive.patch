@@ -1,0 +1,128 @@
+From fc0b81bc08bde3258756011766f66434389bfcf2 Mon Sep 17 00:00:00 2001
+From: Jiang Xin <zhiyou.jx@alibaba-inc.com>
+Date: Thu, 16 Jan 2020 20:50:52 +0800
+Subject: [PATCH 2/7] receive-pack: feed all commands to post-receive
+
+Feed all commands to "post-receive" hook, not only normal commands, but
+also commands with "exec_by_hook" flag.
+
+Signed-off-by: Jiang Xin <zhiyou.jx@alibaba-inc.com>
+---
+ builtin/receive-pack.c           | 11 +++++++++--
+ t/t5411-execute-commands-hook.sh |  8 ++++----
+ 2 files changed, 13 insertions(+), 6 deletions(-)
+
+diff --git a/builtin/receive-pack.c b/builtin/receive-pack.c
+index 48e7700da4..ede7625fd3 100644
+--- a/builtin/receive-pack.c
++++ b/builtin/receive-pack.c
+@@ -669,6 +669,7 @@ static void prepare_push_cert_sha1(struct child_process *proc)
+ 
+ struct receive_hook_feed_state {
+ 	struct command *cmd;
++	int exec_all;
+ 	int exec_by_hook;
+ 	int hook_must_exist;
+ 	int skip_broken;
+@@ -761,6 +762,8 @@ static int feed_receive_hook(void *state_, const char **bufp, size_t *sizep)
+ 	while (cmd)
+ 		if (state->skip_broken && (cmd->error_string || cmd->did_not_exist))
+ 			cmd = cmd->next;
++		else if (state->exec_all)
++		       break;
+ 		else if (state->exec_by_hook && !cmd->exec_by_hook)
+ 			cmd = cmd->next;
+ 		else if (!state->exec_by_hook && cmd->exec_by_hook)
+@@ -784,6 +787,7 @@ static int feed_receive_hook(void *state_, const char **bufp, size_t *sizep)
+ static int run_receive_hook(struct command *commands,
+ 			    const char *hook_name,
+ 			    int skip_broken,
++			    int exec_all,
+ 			    const struct string_list *push_options)
+ {
+ 	struct receive_hook_feed_state state;
+@@ -791,6 +795,7 @@ static int run_receive_hook(struct command *commands,
+ 
+ 	strbuf_init(&state.buf, 0);
+ 	state.cmd = commands;
++	state.exec_all = exec_all;
+ 	state.exec_by_hook = 0;
+ 	state.hook_must_exist = 0;
+ 	state.skip_broken = skip_broken;
+@@ -840,6 +845,7 @@ static int run_execute_commands_pre_receive_hook(struct command *commands,
+ 
+ 	strbuf_init(&state.buf, 0);
+ 	state.cmd = commands;
++	state.exec_all = 0;
+ 	state.exec_by_hook = 1;
+ 	state.hook_must_exist = 0;
+ 	state.skip_broken = 0;
+@@ -861,6 +867,7 @@ static int run_execute_commands_hook(struct command *commands,
+ 
+ 	strbuf_init(&state.buf, 0);
+ 	state.cmd = commands;
++	state.exec_all = 0;
+ 	state.exec_by_hook = 1;
+ 	state.hook_must_exist = 1;
+ 	state.skip_broken = 1;
+@@ -1587,7 +1594,7 @@ static void execute_commands(struct command *commands,
+ 	}
+ 
+ 	if (seen_internal_exec)
+-		if (run_receive_hook(commands, "pre-receive", 0, push_options)) {
++		if (run_receive_hook(commands, "pre-receive", 0, 0, push_options)) {
+ 			for (cmd = commands; cmd; cmd = cmd->next) {
+ 				if (!cmd->error_string)
+ 					cmd->error_string = "pre-receive hook declined";
+@@ -2126,7 +2133,7 @@ int cmd_receive_pack(int argc, const char **argv, const char *prefix)
+ 			unlink_or_warn(pack_lockfile);
+ 		if (report_status)
+ 			report(commands, unpack_status);
+-		run_receive_hook(commands, "post-receive", 1,
++		run_receive_hook(commands, "post-receive", 1, 1,
+ 				 &push_options);
+ 		run_update_post_hook(commands);
+ 		string_list_clear(&push_options, 0);
+diff --git a/t/t5411-execute-commands-hook.sh b/t/t5411-execute-commands-hook.sh
+index 2ff0d5cbcd..b6444ca047 100755
+--- a/t/t5411-execute-commands-hook.sh
++++ b/t/t5411-execute-commands-hook.sh
+@@ -125,7 +125,7 @@ test_expect_success "create local topic branch" '
+ 	)
+ '
+ 
+-test_expect_failure "push one special ref: refs/for/master" '
++test_expect_success "push one special ref: refs/for/master" '
+ 	(
+ 		cd work &&
+ 		git update-ref HEAD $B &&
+@@ -182,7 +182,7 @@ test_expect_success "add back the execute-commands hook" '
+ 	mv $bare/hooks/execute-commands.ok $bare/hooks/execute-commands
+ '
+ 
+-test_expect_failure "push one special ref: refs/for/a/b/c" '
++test_expect_success "push one special ref: refs/for/a/b/c" '
+ 	(
+ 		cd work &&
+ 		git push origin HEAD:refs/for/a/b/c/my/topic
+@@ -199,7 +199,7 @@ test_expect_failure "push one special ref: refs/for/a/b/c" '
+ 	test_cmp expect actual
+ '
+ 
+-test_expect_failure "push two special references" '
++test_expect_success "push two special references" '
+ 	(
+ 		cd work &&
+ 		git push origin \
+@@ -300,7 +300,7 @@ test_expect_success "restore execute-commands hook" '
+ 	mv $bare/hooks/execute-commands.ok $bare/hooks/execute-commands
+ '
+ 
+-test_expect_failure "push mixed references successfully" '
++test_expect_success "push mixed references successfully" '
+ 	(
+ 		cd work &&
+ 		git push origin \
+-- 
+2.25.1.362.g51ebf55b93
+
