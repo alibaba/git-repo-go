@@ -372,6 +372,7 @@ Either delete the .repo folder in this workspace, or initialize in another locat
 
 		Quiet:      config.GetQuiet(),
 		DetachHead: false,
+		IsManifest: true,
 	}
 	err = v.ws.ManifestProject.SyncLocalHalf(&checkoutOptions)
 	if err != nil {

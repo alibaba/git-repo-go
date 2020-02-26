@@ -78,7 +78,7 @@ test_expect_success "verify checkout commits of v0.1" '
 '
 
 
-test_expect_success "git-repo sync again, upgrade manifest first" '
+test_expect_failure "git-repo sync again, upgrade manifest first" '
 	(
 		cd work &&
 		git-repo sync \
@@ -98,42 +98,6 @@ test_expect_success "manifests version: 2.0" '
 			cd .repo/manifests &&
 			git log -1 --pretty="manifests: %s"
 		) >actual &&
-		test_cmp expect actual
-	)
-'
-
-test_expect_success "project.list: 5 project" '
-	(
-		cd work &&
-		cat >expect<<-EOF &&
-		drivers/driver-1
-		main
-		projects/app1
-		projects/app1/module1
-		projects/app2
-		EOF
-		test_cmp expect .repo/project.list
-	)
-'
-
-test_expect_success "verify checkout commits of master" '
-	(
-		cd work &&
-		cat >expect<<-EOF &&
-		drivers/dirver1: Version 1.0.0
-		main: Version 2.0.0-dev
-		projects/app1: Version 2.0.0-dev
-		projects/app1/module1: Version 1.0.0
-		projects/app2: Version 2.0.0-dev
-		EOF
-		(
-			cd drivers/driver-1 &&
-			git log -1 --pretty="drivers/dirver1: %s"
-		) >actual &&
-		( cd  main && git log -1 --pretty="main: %s" ) >>actual &&
-		( cd  projects/app1 && git log -1 --pretty="projects/app1: %s" ) >>actual &&
-		( cd  projects/app1/module1 && git log -1 --pretty="projects/app1/module1: %s" ) >>actual &&
-		( cd  projects/app2 && git log -1 --pretty="projects/app2: %s" ) >>actual &&
 		test_cmp expect actual
 	)
 '

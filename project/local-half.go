@@ -23,6 +23,7 @@ type CheckoutOptions struct {
 
 	Quiet      bool
 	DetachHead bool
+	IsManifest bool
 }
 
 // IsClean indicates git worktree is clean.
@@ -294,50 +295,70 @@ func (v Project) SyncLocalHalf(o *CheckoutOptions) error {
 		log.Errorf("%srev-list failed: %s", v.Prompt(), err)
 	}
 
-	// No remote changes, no update.
-	if len(remoteChanges) == 0 {
-		log.Debugf("%sno remote changes found for project %s", v.Prompt(), v.Name)
-		return PostUpdate(false)
+	if !o.IsManifest || v.Revision == track {
+		// No remote changes, no update.
+		if len(remoteChanges) == 0 {
+			log.Debugf("%sno remote changes found for project %s", v.Prompt(), v.Name)
+			return PostUpdate(false)
+		}
 	}
 
-	pubid := v.PublishedRevision(branch)
-	// Local branched is published.
-	if pubid != "" {
-		notMerged, err := v.Revlist(pubid, "--not", revid)
-		if err != nil {
-			return fmt.Errorf("fail to check publish status for branch '%s': %s",
-				branch,
-				err)
-		}
-		// Has unpublished changes, fail to update.
-		if len(notMerged) > 0 {
-			log.Debugf("%shas %d unpublished commit(s) for project %s",
-				v.Prompt(),
-				len(notMerged),
-				v.Name)
-			if len(remoteChanges) > 0 {
-				log.Errorf("%sbranch %s is published (but not merged) and is now "+
-					"%d commits behind",
-					v.Prompt(),
-					branch,
-					len(remoteChanges))
-			}
-			return fmt.Errorf("branch %s is published (but not merged)", branch)
-		}
-		// Since last published, no other local changes.
-		if pubid == headid {
-			log.Debugf("%sall local commits are published", v.Prompt())
-			err = v.FastForward(revid)
+	// Manifest project do not need to check publish ref.
+	if !o.IsManifest {
+		pubid := v.PublishedRevision(branch)
+		// Local branched is published.
+		if pubid != "" {
+			notMerged, err := v.Revlist(pubid, "--not", revid)
 			if err != nil {
-				return err
+				return fmt.Errorf("fail to check publish status for branch '%s': %s",
+					branch,
+					err)
 			}
-			return PostUpdate(true)
+			// Has unpublished changes, fail to update.
+			if len(notMerged) > 0 {
+				log.Debugf("%shas %d unpublished commit(s) for project %s",
+					v.Prompt(),
+					len(notMerged),
+					v.Name)
+				if len(remoteChanges) > 0 {
+					log.Errorf("%sbranch %s is published (but not merged) and is now "+
+						"%d commits behind",
+						v.Prompt(),
+						branch,
+						len(remoteChanges))
+				}
+				return fmt.Errorf("branch %s is published (but not merged)", branch)
+			}
+			// Since last published, no other local changes.
+			if pubid == headid {
+				log.Debugf("%sall local commits are published", v.Prompt())
+				err = v.FastForward(revid)
+				if err != nil {
+					return err
+				}
+				return PostUpdate(true)
+			}
 		}
 	}
 
 	// Failed if worktree is dirty.
 	if !v.IsClean() {
 		return fmt.Errorf("worktree of %s is dirty, checkout failed", v.Name)
+	}
+
+	// For ManifestProject, use `reset --hard` to switch branch,
+	// no need to resolve conflict on a manifest project.
+	if o.IsManifest && v.Revision != track {
+		trackid, err := v.ResolveRemoteTracking(track)
+		localChanges, err := v.Revlist(headid, "--not", trackid)
+		if len(localChanges) > 0 {
+			return fmt.Errorf("add --detach option to `git repo init` to throw away changes in '.repo/manifests'")
+		}
+		err = v.HardReset(revid)
+		if err != nil {
+			return err
+		}
+		return PostUpdate(false)
 	}
 
 	localChanges, err := v.Revlist(headid, "--not", revid)

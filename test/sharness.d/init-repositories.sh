@@ -1,6 +1,6 @@
 #!/bin/sh
 
-REPO_TEST_REPOSITORIES_VERSION=9
+REPO_TEST_REPOSITORIES_VERSION=10
 
 # Create test repositories in .repositories
 REPO_TEST_REPOSITORIES="${SHARNESS_TEST_SRCDIR}/test-repositories"
@@ -155,6 +155,29 @@ test_create_manifest_projects () {
 		   fetch="."
 		   review="https://example.com" />
 	  <default remote="aone"
+	           revision="refs/heads/master"
+		   sync-j="4" />
+	  <project name="main" path="main" groups="app">
+	    <copyfile src="VERSION" dest="VERSION"></copyfile>
+	    <linkfile src="Makefile" dest="Makefile"></linkfile>
+	  </project>
+	</manifest>
+	<!-- base commit -->
+	EOF
+	git add default.xml &&
+	test_tick &&
+	git commit -m "base commit" &&
+
+	# create tag v0.1
+	git checkout master^{} &&
+	cat >default.xml <<-EOF &&
+	<?xml version="1.0" encoding="UTF-8"?>
+	<manifest>
+	  <remote  name="aone"
+	           alias="origin"
+		   fetch="."
+		   review="https://example.com" />
+	  <default remote="aone"
 	           revision="refs/tags/v0.1.0"
 		   sync-j="4" />
 	  <project name="main" path="main" groups="app">
@@ -162,12 +185,15 @@ test_create_manifest_projects () {
 	    <linkfile src="Makefile" dest="Makefile"></linkfile>
 	  </project>
 	</manifest>
+	<!-- tag v0.1 -->
 	EOF
-
 	git add default.xml &&
-	test_tick && git commit -m "Version 0.1" &&
-	test_tick && git tag -m v0.1 v0.1 &&
+	test_tick &&
+	git commit -m "Version 0.1" &&
+	git tag -m v0.1 v0.1 &&
 
+	# create tag v0.2
+	git checkout master^{} &&
 	cat >default.xml <<-EOF &&
 	<?xml version="1.0" encoding="UTF-8"?>
 	<manifest>
@@ -186,12 +212,14 @@ test_create_manifest_projects () {
 	    <project name="module1" path="module1" groups="app"/>
 	  </project>
 	</manifest>
+	<!-- tag v0.2 -->
 	EOF
-
 	git add default.xml &&
 	test_tick && git commit -m "Version 0.2" &&
 	test_tick && git tag -m v0.2 v0.2 &&
 
+	# create tag v1.0 and branch Maint
+	git checkout master^{} &&
 	cat >default.xml <<-EOF &&
 	<?xml version="1.0" encoding="UTF-8"?>
 	<manifest>
@@ -216,13 +244,15 @@ test_create_manifest_projects () {
 	  <project name="drivers/driver1" path="drivers/driver-1" groups="drivers" remote="driver" />
 	  <project name="drivers/driver2" path="drivers/driver-2" groups="notdefault,drivers" remote="driver" />
 	</manifest>
+	<!-- tag v1.0 -->
 	EOF
-
 	git add default.xml &&
 	test_tick && git commit -m "Version 1.0" &&
 	test_tick && git tag -m v1.0 v1.0 &&
 	git branch Maint &&
 
+	# update tag 2.0 and branch master
+	git checkout master &&
 	cat >default.xml <<-EOF &&
 	<?xml version="1.0" encoding="UTF-8"?>
 	<manifest>
@@ -248,6 +278,7 @@ test_create_manifest_projects () {
 	  <project name="drivers/driver1" path="drivers/driver-1" groups="drivers" remote="driver" />
 	  <project name="drivers/driver2" path="drivers/driver-2" groups="notdefault,drivers" remote="driver" />
 	</manifest>
+	<!-- tag v2.0 -->
 	EOF
 
 	cat >next.xml <<-EOF &&
@@ -276,6 +307,7 @@ test_create_manifest_projects () {
 	  <project name="drivers/driver2" path="drivers/driver-2" groups="notdefault,drivers" remote="driver" />
 	  <project name="drivers/driver3" path="drivers/driver-3" groups="drivers" remote="driver" />
 	</manifest>
+	<!-- tag v2.0 -->
 	EOF
 
 	git add default.xml next.xml &&

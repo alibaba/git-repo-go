@@ -121,10 +121,9 @@ test_expect_success "switch file: test init -m <file>" '
 test_expect_success "switch branch: maint, no rollback" '
 	(
 		cd work &&
-		git-repo init -u $manifest_url -b Maint &&
+		git-repo init -u $manifest_url -b Maint -m default.xml &&
 		cat >expect<<-EOF &&
 		.repo/manifests/default.xml
-		.repo/manifests/next.xml
 		EOF
 		ls .repo/manifests/*.xml >actual &&
 		test_cmp expect actual

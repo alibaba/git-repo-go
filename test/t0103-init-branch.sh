@@ -198,11 +198,11 @@ test_expect_success "back to Maint" '
 	)
 '
 
-test_expect_success "head commit still is: version 2.0" '
+test_expect_success "head commit switched to version 1.0" '
 	(
 		cd work &&
 		cat >expect<<-EOF &&
-		Version 2.0
+		Version 1.0
 		EOF
 		(
 			cd .repo/manifests &&
