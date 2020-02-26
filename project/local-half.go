@@ -361,18 +361,9 @@ func (v Project) SyncLocalHalf(o *CheckoutOptions) error {
 		return PostUpdate(false)
 	}
 
-	localChanges, err := v.Revlist(headid, "--not", revid)
-	if err != nil {
-		log.Warnf("%srev-list for local changes failed: %s", v.Prompt(), err)
-	}
-
+	// Default action if not turn off by rebase attribute of project in manifest file.
 	if v.IsRebase() {
 		err = v.Rebase(revid)
-		if err != nil {
-			return err
-		}
-	} else if len(localChanges) > 0 {
-		err = v.HardReset(revid)
 		if err != nil {
 			return err
 		}
