@@ -226,16 +226,13 @@ test_expect_success "switch to tag: v0.1" '
 		git-repo init -u $manifest_url -b refs/tags/v0.1 &&
 		(
 			cd .repo/manifests &&
-			git symbolic-ref HEAD &&
-			echo "----" &&
+			test_must_fail git symbolic-ref HEAD &&
 			test_must_fail git config branch.default.remote &&
 			test_must_fail git config branch.default.merge &&
 			git config manifest.name &&
 			git describe
 		) >actual &&
 		cat >expect <<-EOF &&
-		refs/heads/default
-		----
 		default.xml
 		v0.1
 		EOF

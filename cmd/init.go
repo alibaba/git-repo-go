@@ -371,7 +371,7 @@ Either delete the .repo folder in this workspace, or initialize in another locat
 		RepoSettings: *s,
 
 		Quiet:      config.GetQuiet(),
-		DetachHead: false,
+		DetachHead: v.O.DetachHead,
 		IsManifest: true,
 	}
 	err = v.ws.ManifestProject.SyncLocalHalf(&checkoutOptions)
@@ -379,21 +379,15 @@ Either delete the .repo folder in this workspace, or initialize in another locat
 		return err
 	}
 
-	if v.O.DetachHead {
-		if v.ws.ManifestProject.GetHead() != "" {
-			if err = v.ws.ManifestProject.DetachHead(); err != nil {
-				return nil
+	if !v.O.DetachHead {
+		if isNew || v.ws.ManifestProject.GetHead() == "" {
+			if !project.IsImmutable(v.ws.ManifestProject.Revision) {
+				// Recreate default branch.
+				err := v.ws.ManifestProject.StartBranch("default", "", true)
+				if err != nil {
+					return fmt.Errorf("cannot create default in manifest: %s", err)
+				}
 			}
-
-			if err = v.ws.ManifestProject.DeleteBranch("refs/heads/default"); err != nil {
-				return nil
-			}
-		}
-	} else if isNew || v.ws.ManifestProject.GetHead() == "" {
-		// Recreate default branch.
-		err := v.ws.ManifestProject.StartBranch("default", "", true)
-		if err != nil {
-			return fmt.Errorf("cannot create default in manifest: %s", err)
 		}
 	}
 

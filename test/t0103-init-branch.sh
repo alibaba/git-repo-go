@@ -37,7 +37,9 @@ test_expect_success "head commit: version 0.1" '
 test_expect_success "current branch = default" '
 	(
 		cd work &&
-		echo "ref: refs/heads/default" >expect &&
+		cat >expect <<-EOF &&
+		955eabf3fc15481b8b48a2c7d5cb8ee22440242a
+		EOF
 		cp .repo/manifests.git/HEAD actual &&
 		test_cmp expect actual
 	)

@@ -78,7 +78,7 @@ test_expect_success "verify checkout commits of v0.1" '
 '
 
 
-test_expect_failure "git-repo sync again, upgrade manifest first" '
+test_expect_success "git-repo sync again" '
 	(
 		cd work &&
 		git-repo sync \
@@ -88,11 +88,11 @@ test_expect_failure "git-repo sync again, upgrade manifest first" '
 	)
 '
 
-test_expect_success "manifests version: 2.0" '
+test_expect_success "detached manifests not changed" '
 	(
 		cd work &&
 		cat >expect<<-EOF &&
-		manifests: Version 2.0
+		manifests: Version 0.1
 		EOF
 		(
 			cd .repo/manifests &&
