@@ -39,9 +39,6 @@ func InstallRepoConfig() error {
 		return err
 	}
 	filename := filepath.Join(configDir, DefaultGitRepoConfigFile+".yml.example")
-	if err != nil {
-		return err
-	}
 
 	fi, err := os.Stat(filename)
 	if err == nil {
@@ -60,7 +57,7 @@ func InstallRepoConfig() error {
 		}
 	}
 
-	file, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE, 0644)
+	file, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
 		return err
 	}
