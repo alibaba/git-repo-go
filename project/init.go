@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/aliyun/git-repo-go/file"
 	"github.com/aliyun/git-repo-go/path"
 )
 
@@ -78,12 +79,12 @@ func (v *Repository) initMissing() error {
 		}
 	}
 
-	for file, content := range files {
-		file = filepath.Join(v.GitDir, file)
-		if _, err = os.Stat(file); err == nil {
+	for name, content := range files {
+		name = filepath.Join(v.GitDir, name)
+		if _, err = os.Stat(name); err == nil {
 			continue
 		}
-		f, err := os.OpenFile(file, os.O_CREATE|os.O_RDWR, 0644)
+		f, err := file.New(name).OpenCreateRewrite()
 		if err != nil {
 			return err
 		}

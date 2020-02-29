@@ -18,6 +18,7 @@ import (
 	"io"
 	"os"
 
+	"github.com/aliyun/git-repo-go/file"
 	"github.com/aliyun/git-repo-go/manifest"
 	log "github.com/jiangxin/multi-log"
 	"github.com/spf13/cobra"
@@ -105,7 +106,7 @@ func (v manifestCommand) Execute(args []string) error {
 	} else if v.O.OutputFile == "-" {
 		writer = os.Stdout
 	} else {
-		file, err := os.OpenFile(v.O.OutputFile, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
+		file, err := file.New(v.O.OutputFile).OpenCreateRewrite()
 		if err != nil {
 			return err
 		}

@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/aliyun/git-repo-go/file"
 	"github.com/aliyun/git-repo-go/path"
 	log "github.com/jiangxin/multi-log"
 )
@@ -39,7 +40,7 @@ func (v *Repository) Fetch(remote string, o *FetchOptions) error {
 		os.MkdirAll(filepath.Dir(altFile), 0755)
 
 		var f *os.File
-		f, err = os.OpenFile(altFile, os.O_CREATE|os.O_RDWR, 0644)
+		f, err = file.New(altFile).OpenCreateRewrite()
 		defer f.Close()
 		if err == nil {
 			target := filepath.Join(v.Reference, "objects")

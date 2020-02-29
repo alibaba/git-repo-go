@@ -26,6 +26,7 @@ import (
 
 	"github.com/aliyun/git-repo-go/cap"
 	"github.com/aliyun/git-repo-go/config"
+	"github.com/aliyun/git-repo-go/file"
 	"github.com/aliyun/git-repo-go/project"
 	"github.com/aliyun/git-repo-go/workspace"
 	log "github.com/jiangxin/multi-log"
@@ -626,9 +627,7 @@ func (v syncCommand) UpdateProjectList() error {
 	}
 
 	projectListLockFile := projectListFile + ".lock"
-	lockf, err := os.OpenFile(projectListLockFile,
-		os.O_RDWR|os.O_CREATE|os.O_EXCL,
-		0644)
+	lockf, err := file.New(projectListLockFile).OpenCreateRewriteExcl()
 	if err != nil {
 		return fmt.Errorf("fail to create lockfile '%s': %s", projectListLockFile, err)
 	}

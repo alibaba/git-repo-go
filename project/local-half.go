@@ -12,6 +12,7 @@ import (
 
 	"github.com/aliyun/git-repo-go/cap"
 	"github.com/aliyun/git-repo-go/config"
+	"github.com/aliyun/git-repo-go/file"
 	"github.com/aliyun/git-repo-go/helper"
 	"github.com/aliyun/git-repo-go/path"
 	log "github.com/jiangxin/multi-log"
@@ -448,7 +449,7 @@ func (v Project) CopyFile(src, dest string) error {
 	}
 	defer srcFile.Close()
 
-	destFile, err := os.OpenFile(destAbs, os.O_RDWR|os.O_CREATE, finfo.Mode())
+	destFile, err := file.New(destAbs).SetPerm(finfo.Mode()).OpenCreateRewrite()
 	if err != nil {
 		return fmt.Errorf("fail to open '%s': %s", destAbs, err)
 	}

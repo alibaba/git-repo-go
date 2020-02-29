@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/aliyun/git-repo-go/file"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/h2non/gock.v1"
 )
@@ -174,7 +175,7 @@ qUDzwGflENTCedt+7lz7oLhAk3Oor0Gxk95u43ki9REJMIkS68CXDfe3t4GKUrKa
 	binFile.WriteString(data)
 	binFile.Close()
 
-	checksumFile, err := os.OpenFile(binFile.Name()+".sha256", os.O_RDWR|os.O_CREATE, 0644)
+	checksumFile, err := file.New(binFile.Name() + ".sha256").OpenCreateRewrite()
 	if err != nil {
 		t.Fatalf("fail to create checksum file: %s", err)
 	}
@@ -182,7 +183,7 @@ qUDzwGflENTCedt+7lz7oLhAk3Oor0Gxk95u43ki9REJMIkS68CXDfe3t4GKUrKa
 	checksumFile.WriteString(checksum)
 	checksumFile.Close()
 
-	sigFile, err := os.OpenFile(binFile.Name()+".sha256.gpg", os.O_RDWR|os.O_CREATE, 0644)
+	sigFile, err := file.New(binFile.Name() + ".sha256.gpg").OpenCreateRewrite()
 	if err != nil {
 		t.Fatalf("fail to create sig file: %s", err)
 	}

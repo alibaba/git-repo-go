@@ -41,6 +41,7 @@ import (
 
 	"github.com/aliyun/git-repo-go/cap"
 	"github.com/aliyun/git-repo-go/config"
+	"github.com/aliyun/git-repo-go/file"
 	"github.com/aliyun/git-repo-go/format"
 	"github.com/aliyun/git-repo-go/version"
 	log "github.com/jiangxin/multi-log"
@@ -253,7 +254,7 @@ func (v upgradeCommand) Download(URL string, dir string, showProgress bool) (str
 		return "", fmt.Errorf("cannot access %s (status: %d)", URL, resp.StatusCode)
 	}
 
-	f, err := os.OpenFile(fileName, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0644)
+	f, err := file.New(fileName).OpenCreateRewrite()
 	if err != nil {
 		return "", err
 	}
@@ -462,9 +463,7 @@ func (v upgradeCommand) ExtractZip(pkgFile, dir string) (binFile, shaFile, gpgFi
 			err = fmt.Errorf("extract error, cannot open %s", f.Name)
 			return
 		}
-		out, err = os.OpenFile(fullpath,
-			os.O_CREATE|os.O_RDWR|os.O_TRUNC,
-			0644)
+		out, err = file.New(fullpath).OpenCreateRewrite()
 		if err == nil {
 			_, err = io.Copy(out, in)
 			if err != nil {
@@ -548,9 +547,7 @@ func (v upgradeCommand) ExtractTar(pkgFile, dir string) (binFile, shaFile, gpgFi
 			log.Warningf("unknown file in package: %s", baseName)
 			continue
 		}
-		f, err = os.OpenFile(filepath.Join(dir, baseName),
-			os.O_CREATE|os.O_RDWR|os.O_TRUNC,
-			0644)
+		f, err = file.New(filepath.Join(dir, baseName)).OpenCreateRewrite()
 		if err != nil {
 			return
 		}
@@ -671,7 +668,7 @@ func (v upgradeCommand) InstallImage(bin, target string) error {
 	}
 	defer in.Close()
 
-	out, err := os.OpenFile(lockFile, os.O_RDWR|os.O_CREATE, 0755)
+	out, err := file.New(lockFile).SetExecutable().OpenCreateRewrite()
 	if err != nil {
 		log.Debugf("no permission to write file '%s', will write to tmpfile instead",
 			lockFile)
@@ -680,7 +677,7 @@ func (v upgradeCommand) InstallImage(bin, target string) error {
 			return err
 		}
 		lockFile = filepath.Join(tmpDir, filepath.Base(target))
-		out, err = os.OpenFile(lockFile, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0755)
+		out, err = file.New(lockFile).SetExecutable().OpenCreateRewrite()
 		if err != nil {
 			return err
 		}

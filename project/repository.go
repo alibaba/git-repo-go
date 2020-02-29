@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/aliyun/git-repo-go/config"
+	"github.com/aliyun/git-repo-go/file"
 	"github.com/aliyun/git-repo-go/manifest"
 	"github.com/aliyun/git-repo-go/path"
 	"github.com/jiangxin/goconfig"
@@ -122,7 +123,7 @@ func (v Repository) setAlternates(reference string) {
 		altFile := filepath.Join(v.GitDir, "objects", "info", "alternates")
 		os.MkdirAll(filepath.Dir(altFile), 0755)
 		var f *os.File
-		f, err = os.OpenFile(altFile, os.O_CREATE|os.O_RDWR, 0644)
+		f, err = file.New(altFile).OpenCreateRewrite()
 		defer f.Close()
 		if err == nil {
 			relPath := filepath.Join(reference, "objects")

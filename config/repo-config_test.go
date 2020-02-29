@@ -1,8 +1,8 @@
 package config
 
 import (
+	"github.com/aliyun/git-repo-go/file"
 	"github.com/stretchr/testify/assert"
-	"os"
 	"path/filepath"
 	"testing"
 )
@@ -38,7 +38,7 @@ func Test_InstallRepoConfig(t *testing.T) {
 	filename := filepath.Join(configDir, DefaultGitRepoConfigFile+".yml.example")
 	assert.NoError(t, err)
 
-	fileOpen, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
+	fileOpen, err := file.New(filename).OpenCreateRewrite()
 	assert.NoError(t, err)
 	defer fileOpen.Close()
 
@@ -48,7 +48,7 @@ func Test_InstallRepoConfig(t *testing.T) {
 
 	InstallRepoConfig()
 
-	fileRead, err := os.OpenFile(filename, os.O_RDONLY, 0644)
+	fileRead, err := file.New(filename).Open()
 	assert.NoError(t, err)
 	defer fileRead.Close()
 

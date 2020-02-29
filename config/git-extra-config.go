@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"path/filepath"
 
+	"github.com/aliyun/git-repo-go/file"
 	"github.com/aliyun/git-repo-go/path"
 	"github.com/jiangxin/goconfig"
 	log "github.com/jiangxin/multi-log"
@@ -94,7 +95,7 @@ func saveExtraGitConfig() error {
 		}
 	}
 
-	file, err := os.OpenFile(lockfile, os.O_CREATE|os.O_TRUNC|os.O_RDWR, 0644)
+	file, err := file.New(lockfile).OpenCreateRewrite()
 	if err != nil {
 		return err
 	}

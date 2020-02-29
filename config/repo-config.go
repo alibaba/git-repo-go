@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/aliyun/git-repo-go/file"
 	log "github.com/jiangxin/multi-log"
 )
 
@@ -57,7 +58,7 @@ func InstallRepoConfig() error {
 		}
 	}
 
-	file, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
+	file, err := file.New(filename).OpenCreateRewrite()
 	if err != nil {
 		return err
 	}
