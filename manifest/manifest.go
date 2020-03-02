@@ -637,7 +637,5 @@ var ManifestsProject = &Project{
 	Name:          "manifests",
 	Path:          "manifests",
 	RemoteName:    "origin",
-	Revision:      "refs/heads/master",
-	DestBranch:    "master",
 	isMetaProject: true,
 }

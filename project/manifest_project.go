@@ -137,6 +137,10 @@ func NewManifestProject(topDir, mURL string) *ManifestProject {
 				ManifestURL: mURL,
 			})),
 	}
+	track := p.TrackBranch("")
+	if track != "" {
+		p.Revision = track
+	}
 	p.ReadSettings()
 	if mURL != "" && p.Settings.ManifestURL == "" {
 		p.Settings.ManifestURL = mURL

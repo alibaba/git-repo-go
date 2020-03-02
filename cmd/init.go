@@ -248,15 +248,6 @@ func (v initCommand) Execute(args []string) error {
 	} else if isNew {
 		log.Debugf("set manifest project new setup revision to %s", "master")
 		v.ws.ManifestProject.SetRevision("master")
-	} else {
-		track := v.ws.ManifestProject.TrackBranch("")
-		if track != "" {
-			log.Debugf("set manifest project revision to track branch %s", track)
-			v.ws.ManifestProject.SetRevision(track)
-		} else {
-			log.Debug("not set manifest project revision")
-			v.ws.ManifestProject.SetRevision("")
-		}
 	}
 
 	// Update manifest project settings
