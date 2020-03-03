@@ -2,6 +2,18 @@
 
 Changes of git-repo.
 
+## 0.7.4 (2020-03-03)
+
+Bugfix:
+
+* To prevent wrong flag for OpenFile, use new file package
+* fix: config example file is not completely overwritten
+* Set proper Revision for manifest project
+* sync: remove unused and unsafe code
+* init: detach manifests project for immutable revision
+* init: when switch manifest branch, use hard reset
+* ssh-info: run ssh_info once for the same hosts
+
 ## 0.7.3.1 (2020-01-13)
 
 * Windows: fix wrong URL for repos of a manifest project.
