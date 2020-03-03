@@ -5,3 +5,4 @@
 repo-list.txt
 repo-write-list.txt
 *.inc
+.repo
