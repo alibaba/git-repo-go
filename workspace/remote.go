@@ -3,8 +3,8 @@ package workspace
 import (
 	"net/http"
 
-	"github.com/aliyun/git-repo-go/helper"
-	"github.com/aliyun/git-repo-go/project"
+	"github.com/alibaba/git-repo-go/helper"
+	"github.com/alibaba/git-repo-go/project"
 	log "github.com/jiangxin/multi-log"
 )
 

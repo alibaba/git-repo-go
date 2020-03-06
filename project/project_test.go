@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/aliyun/git-repo-go/manifest"
+	"github.com/alibaba/git-repo-go/manifest"
 	"github.com/stretchr/testify/assert"
 )
 

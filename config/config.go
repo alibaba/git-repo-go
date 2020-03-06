@@ -23,7 +23,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/aliyun/git-repo-go/path"
+	"github.com/alibaba/git-repo-go/path"
 	"github.com/jiangxin/goconfig"
 	log "github.com/jiangxin/multi-log"
 	homedir "github.com/mitchellh/go-homedir"

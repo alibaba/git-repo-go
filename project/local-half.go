@@ -10,11 +10,11 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/aliyun/git-repo-go/cap"
-	"github.com/aliyun/git-repo-go/config"
-	"github.com/aliyun/git-repo-go/file"
-	"github.com/aliyun/git-repo-go/helper"
-	"github.com/aliyun/git-repo-go/path"
+	"github.com/alibaba/git-repo-go/cap"
+	"github.com/alibaba/git-repo-go/config"
+	"github.com/alibaba/git-repo-go/file"
+	"github.com/alibaba/git-repo-go/helper"
+	"github.com/alibaba/git-repo-go/path"
 	log "github.com/jiangxin/multi-log"
 )
 

@@ -1,5 +1,5 @@
 TARGETS := git-repo
-PKG := github.com/aliyun/git-repo-go
+PKG := github.com/alibaba/git-repo-go
 VENDOR_EXISTS=$(shell test -d vendor && echo 1 || echo 0)
 ifeq ($(VENDOR_EXISTS), 1)
     GOBUILD := GO111MODULE=on CGO_ENABLED=0 go build -mod=vendor

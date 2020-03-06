@@ -19,8 +19,8 @@ import (
 	"regexp"
 	"sort"
 
-	"github.com/aliyun/git-repo-go/project"
-	"github.com/aliyun/git-repo-go/workspace"
+	"github.com/alibaba/git-repo-go/project"
+	"github.com/alibaba/git-repo-go/workspace"
 	log "github.com/jiangxin/multi-log"
 	"github.com/spf13/cobra"
 )

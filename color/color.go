@@ -18,7 +18,7 @@ package color
 import (
 	"fmt"
 
-	"github.com/aliyun/git-repo-go/cap"
+	"github.com/alibaba/git-repo-go/cap"
 )
 
 type mapping map[string]int

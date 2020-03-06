@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"path/filepath"
 
-	"github.com/aliyun/git-repo-go/manifest"
-	"github.com/aliyun/git-repo-go/path"
-	"github.com/aliyun/git-repo-go/project"
+	"github.com/alibaba/git-repo-go/manifest"
+	"github.com/alibaba/git-repo-go/path"
+	"github.com/alibaba/git-repo-go/project"
 	log "github.com/jiangxin/multi-log"
 )
 

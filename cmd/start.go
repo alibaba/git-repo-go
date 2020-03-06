@@ -15,7 +15,7 @@
 package cmd
 
 import (
-	"github.com/aliyun/git-repo-go/project"
+	"github.com/alibaba/git-repo-go/project"
 	log "github.com/jiangxin/multi-log"
 	"github.com/spf13/cobra"
 )

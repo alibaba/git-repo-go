@@ -20,11 +20,11 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/aliyun/git-repo-go/cap"
-	"github.com/aliyun/git-repo-go/common"
-	"github.com/aliyun/git-repo-go/config"
-	"github.com/aliyun/git-repo-go/encode"
-	"github.com/aliyun/git-repo-go/version"
+	"github.com/alibaba/git-repo-go/cap"
+	"github.com/alibaba/git-repo-go/common"
+	"github.com/alibaba/git-repo-go/config"
+	"github.com/alibaba/git-repo-go/encode"
+	"github.com/alibaba/git-repo-go/version"
 	log "github.com/jiangxin/multi-log"
 )
 

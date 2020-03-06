@@ -10,9 +10,9 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/aliyun/git-repo-go/config"
-	"github.com/aliyun/git-repo-go/manifest"
-	"github.com/aliyun/git-repo-go/path"
+	"github.com/alibaba/git-repo-go/config"
+	"github.com/alibaba/git-repo-go/manifest"
+	"github.com/alibaba/git-repo-go/path"
 	"github.com/jiangxin/goconfig"
 	log "github.com/jiangxin/multi-log"
 	"gopkg.in/src-d/go-git.v4"

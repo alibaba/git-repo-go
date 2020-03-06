@@ -20,7 +20,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/aliyun/git-repo-go/helper"
+	"github.com/alibaba/git-repo-go/helper"
 	"github.com/spf13/cobra"
 )
 

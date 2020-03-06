@@ -4,7 +4,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/aliyun/git-repo-go/file"
+	"github.com/alibaba/git-repo-go/file"
 	log "github.com/jiangxin/multi-log"
 )
 

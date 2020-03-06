@@ -1,4 +1,4 @@
-[![Build Status](https://dev.azure.com/git-repo-go/git-repo-go/_apis/build/status/aliyun.git-repo-go)](https://dev.azure.com/git-repo-go/git-repo-go/_build/latest?definitionId=1)
+[![Build Status](https://dev.azure.com/git-repo-go/git-repo-go/_apis/build/status/alibaba.git-repo-go)](https://dev.azure.com/git-repo-go/git-repo-go/_build/latest?definitionId=2)
 
 ## git-repo
 

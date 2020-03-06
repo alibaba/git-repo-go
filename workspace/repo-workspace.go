@@ -8,12 +8,12 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/aliyun/git-repo-go/cap"
-	"github.com/aliyun/git-repo-go/config"
-	"github.com/aliyun/git-repo-go/errors"
-	"github.com/aliyun/git-repo-go/manifest"
-	"github.com/aliyun/git-repo-go/path"
-	"github.com/aliyun/git-repo-go/project"
+	"github.com/alibaba/git-repo-go/cap"
+	"github.com/alibaba/git-repo-go/config"
+	"github.com/alibaba/git-repo-go/errors"
+	"github.com/alibaba/git-repo-go/manifest"
+	"github.com/alibaba/git-repo-go/path"
+	"github.com/alibaba/git-repo-go/project"
 	"github.com/jiangxin/goconfig"
 	log "github.com/jiangxin/multi-log"
 )

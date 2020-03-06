@@ -3,7 +3,7 @@ package editor
 import (
 	"testing"
 
-	"github.com/aliyun/git-repo-go/cap"
+	"github.com/alibaba/git-repo-go/cap"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )

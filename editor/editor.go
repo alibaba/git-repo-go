@@ -23,8 +23,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/aliyun/git-repo-go/cap"
-	"github.com/aliyun/git-repo-go/path"
+	"github.com/alibaba/git-repo-go/cap"
+	"github.com/alibaba/git-repo-go/path"
 	"github.com/jiangxin/goconfig"
 	log "github.com/jiangxin/multi-log"
 	"github.com/mattn/go-shellwords"

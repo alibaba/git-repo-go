@@ -1,8 +1,8 @@
 package project
 
 import (
-	"github.com/aliyun/git-repo-go/config"
-	"github.com/aliyun/git-repo-go/manifest"
+	"github.com/alibaba/git-repo-go/config"
+	"github.com/alibaba/git-repo-go/manifest"
 	"github.com/jiangxin/goconfig"
 )
 

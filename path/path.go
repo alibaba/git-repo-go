@@ -23,7 +23,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/aliyun/git-repo-go/errors"
+	"github.com/alibaba/git-repo-go/errors"
 )
 
 // Macros for path

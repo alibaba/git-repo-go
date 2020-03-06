@@ -8,9 +8,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/aliyun/git-repo-go/config"
-	"github.com/aliyun/git-repo-go/errors"
-	"github.com/aliyun/git-repo-go/project"
+	"github.com/alibaba/git-repo-go/config"
+	"github.com/alibaba/git-repo-go/errors"
+	"github.com/alibaba/git-repo-go/project"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing/object"

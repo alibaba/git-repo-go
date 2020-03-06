@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/aliyun/git-repo-go/path"
+	"github.com/alibaba/git-repo-go/path"
 )
 
 const (

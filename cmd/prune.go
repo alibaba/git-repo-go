@@ -19,9 +19,9 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/aliyun/git-repo-go/color"
-	"github.com/aliyun/git-repo-go/config"
-	"github.com/aliyun/git-repo-go/project"
+	"github.com/alibaba/git-repo-go/color"
+	"github.com/alibaba/git-repo-go/config"
+	"github.com/alibaba/git-repo-go/project"
 	log "github.com/jiangxin/multi-log"
 	"github.com/spf13/cobra"
 )

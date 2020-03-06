@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/aliyun/git-repo-go/file"
+	"github.com/alibaba/git-repo-go/file"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/h2non/gock.v1"
 )
@@ -47,26 +47,26 @@ func TestUpgradeInfoURLs(t *testing.T) {
 	assert.Equal("1.0.0.rc1", uinfo.Version(false), "test version")
 	if runtime.GOOS == "windows" {
 		expect = []string{
-			"https://github.com/aliyun/git-repo-go/releases/download/v0.9.1/git-repo-0.9.1-" + osType + "-" + archType + ".zip",
+			"https://github.com/alibaba/git-repo-go/releases/download/v0.9.1/git-repo-0.9.1-" + osType + "-" + archType + ".zip",
 		}
 
 	} else {
 		expect = []string{
-			"https://github.com/aliyun/git-repo-go/releases/download/v0.9.1/git-repo-0.9.1-" + osType + "-" + archType + ".tar.gz",
-			"https://github.com/aliyun/git-repo-go/releases/download/v0.9.1/git-repo-0.9.1-" + osType + "-" + archType + ".tar.bz2",
+			"https://github.com/alibaba/git-repo-go/releases/download/v0.9.1/git-repo-0.9.1-" + osType + "-" + archType + ".tar.gz",
+			"https://github.com/alibaba/git-repo-go/releases/download/v0.9.1/git-repo-0.9.1-" + osType + "-" + archType + ".tar.bz2",
 		}
 	}
 	assert.Equal(expect, uinfo.URLs(true))
 
 	if runtime.GOOS == "windows" {
 		expect = []string{
-			"https://github.com/aliyun/git-repo-go/releases/download/v1.0.0.rc1/git-repo-1.0.0.rc1-" + osType + "-" + archType + ".zip",
+			"https://github.com/alibaba/git-repo-go/releases/download/v1.0.0.rc1/git-repo-1.0.0.rc1-" + osType + "-" + archType + ".zip",
 		}
 
 	} else {
 		expect = []string{
-			"https://github.com/aliyun/git-repo-go/releases/download/v1.0.0.rc1/git-repo-1.0.0.rc1-" + osType + "-" + archType + ".tar.gz",
-			"https://github.com/aliyun/git-repo-go/releases/download/v1.0.0.rc1/git-repo-1.0.0.rc1-" + osType + "-" + archType + ".tar.bz2",
+			"https://github.com/alibaba/git-repo-go/releases/download/v1.0.0.rc1/git-repo-1.0.0.rc1-" + osType + "-" + archType + ".tar.gz",
+			"https://github.com/alibaba/git-repo-go/releases/download/v1.0.0.rc1/git-repo-1.0.0.rc1-" + osType + "-" + archType + ".tar.bz2",
 		}
 	}
 	assert.Equal(expect, uinfo.URLs(false))

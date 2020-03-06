@@ -19,7 +19,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/aliyun/git-repo-go/common"
+	"github.com/alibaba/git-repo-go/common"
 )
 
 // Proto types

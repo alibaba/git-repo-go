@@ -7,7 +7,7 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/aliyun/git-repo-go/config"
+	"github.com/alibaba/git-repo-go/config"
 )
 
 const (

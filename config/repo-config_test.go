@@ -1,7 +1,7 @@
 package config
 
 import (
-	"github.com/aliyun/git-repo-go/file"
+	"github.com/alibaba/git-repo-go/file"
 	"github.com/stretchr/testify/assert"
 	"path/filepath"
 	"testing"

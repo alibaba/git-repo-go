@@ -27,9 +27,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/aliyun/git-repo-go/config"
-	"github.com/aliyun/git-repo-go/manifest"
-	"github.com/aliyun/git-repo-go/version"
+	"github.com/alibaba/git-repo-go/config"
+	"github.com/alibaba/git-repo-go/manifest"
+	"github.com/alibaba/git-repo-go/version"
 
 	log "github.com/jiangxin/multi-log"
 	"github.com/spf13/cobra"

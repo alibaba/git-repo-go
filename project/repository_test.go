@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/aliyun/git-repo-go/manifest"
+	"github.com/alibaba/git-repo-go/manifest"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing/object"

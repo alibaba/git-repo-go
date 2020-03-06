@@ -1,4 +1,4 @@
-module github.com/aliyun/git-repo-go
+module github.com/alibaba/git-repo-go
 
 require (
 	github.com/BurntSushi/toml v0.3.1 // indirect
