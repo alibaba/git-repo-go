@@ -604,7 +604,6 @@ func (v syncCommand) UpdateProjectList() error {
 	projectListFile := filepath.Join(ws.RootDir, config.DotRepo, "project.list")
 	if _, err = os.Stat(projectListFile); err == nil {
 		f, err := os.Open(projectListFile)
-		defer f.Close()
 		if err != nil {
 			log.Fatalf("fail to open %s: %s", projectListFile, err)
 		}
@@ -619,6 +618,7 @@ func (v syncCommand) UpdateProjectList() error {
 				break
 			}
 		}
+		f.Close()
 	}
 
 	err = v.removeObsoletePaths(oldPaths, newPaths)
