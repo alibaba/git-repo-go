@@ -619,6 +619,7 @@ func (v syncCommand) UpdateProjectList() error {
 				break
 			}
 		}
+ 		f.Close()
 	}
 
 	err = v.removeObsoletePaths(oldPaths, newPaths)
