@@ -111,6 +111,11 @@ func (v GitURL) IsHTTP() bool {
 	return v.Proto == "http" || v.Proto == "https"
 }
 
+// IsHTTPS indicates whether protocol is HTTPS.
+func (v GitURL) IsHTTPS() bool {
+	return v.Proto == "https"
+}
+
 // IsLocal indicates whether protocol is local path.
 func (v GitURL) IsLocal() bool {
 	return v.Proto == "local"
