@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	neturl "net/url"
 	"os"
 	"os/exec"
 	"regexp"
@@ -202,7 +203,9 @@ func querySSHInfo(address string) (*SSHInfo, error) {
 // sshInfoFromAPI queries ssh_info API and return SSHInfo object.
 func sshInfoFromAPI(url *config.GitURL) (*SSHInfo, error) {
 	var (
-		err error
+		err         error
+		proxyRawURL string
+		proxyURL    *neturl.URL
 	)
 
 	infoURL := url.GetRootURL() + "/ssh_info"
@@ -227,6 +230,34 @@ func sshInfoFromAPI(url *config.GitURL) (*SSHInfo, error) {
 	req.Header.Set("Accept", "application/json")
 
 	client := getHTTPClient()
+	gitConfig, err := goconfig.LoadAll("")
+	if err != nil {
+		return nil, err
+	}
+
+	if url.IsHTTPS() {
+		proxyRawURL = gitConfig.Get("https.proxy")
+		if proxyRawURL == "" {
+			proxyRawURL = os.Getenv("HTTPS_PROXY")
+		}
+	} else {
+		proxyRawURL = gitConfig.Get("http.proxy")
+		if proxyRawURL == "" {
+			proxyRawURL = os.Getenv("HTTP_PROXY")
+		}
+	}
+
+	if proxyRawURL != "" {
+		proxyURL, err = neturl.Parse(proxyRawURL)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if proxyURL != nil {
+		client.Transport.(*http.Transport).Proxy = http.ProxyURL(proxyURL)
+	}
+
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("bad ssh_info request to '%s': %s", infoURL, err)
