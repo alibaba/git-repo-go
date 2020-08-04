@@ -230,19 +230,24 @@ func sshInfoFromAPI(url *config.GitURL) (*SSHInfo, error) {
 	req.Header.Set("Accept", "application/json")
 
 	client := getHTTPClient()
+
+	// Get http proxy by git config file
 	gitConfig, err := goconfig.LoadAll("")
 	if err != nil {
-		return nil, err
+		log.Debugf("fail to load config file: %s", err)
+	} else {
+		if url.IsHTTPS() {
+			proxyRawURL = gitConfig.Get("https.proxy")
+		} else {
+			proxyRawURL = gitConfig.Get("http.proxy")
+		}
 	}
 
-	if url.IsHTTPS() {
-		proxyRawURL = gitConfig.Get("https.proxy")
-		if proxyRawURL == "" {
+	// Get http proxy by environment variables
+	if proxyRawURL == "" {
+		if url.IsHTTPS() {
 			proxyRawURL = os.Getenv("HTTPS_PROXY")
-		}
-	} else {
-		proxyRawURL = gitConfig.Get("http.proxy")
-		if proxyRawURL == "" {
+		} else {
 			proxyRawURL = os.Getenv("HTTP_PROXY")
 		}
 	}
@@ -250,7 +255,7 @@ func sshInfoFromAPI(url *config.GitURL) (*SSHInfo, error) {
 	if proxyRawURL != "" {
 		proxyURL, err = neturl.Parse(proxyRawURL)
 		if err != nil {
-			return nil, err
+			log.Debugf("fail to parse proxy url: %s", err)
 		}
 	}
 
