@@ -350,7 +350,7 @@ test_expect_success "Still tracking remote Maint branch" '
 	)
 '
 
-test_expect_failure "git-repo init -b master --detach" '
+test_expect_success "git-repo init -b master --detach" '
 	(
 		cd work &&
 		git-repo init -u $manifest_url -b master --detach &&

@@ -112,6 +112,11 @@ test_expect_success "git-repo abandon a single branch, twice" '
 		git-repo abandon -b jx/topic1
 	) >actual 2>&1 &&
 	cat >expect<<-EOF &&
+	ERROR: project main> fail to resolve refs/heads/jx/topic1
+	ERROR: project projects/app1> fail to resolve refs/heads/jx/topic1
+	ERROR: project projects/app1/module1> fail to resolve refs/heads/jx/topic1
+	ERROR: project projects/app2> fail to resolve refs/heads/jx/topic1
+	ERROR: project drivers/driver-2> fail to resolve refs/heads/jx/topic1
 	Pending branches (which have unmerged commits, leave it as is)
 	------------------------------------------------------------------------------
 	Project drivers/driver-1/
@@ -126,6 +131,11 @@ test_expect_success "git-repo abandon a single branch, force" '
 		git-repo abandon -b jx/topic1 --force
 	) >actual 2>&1 &&
 	cat >expect<<-EOF &&
+	ERROR: project main> fail to resolve refs/heads/jx/topic1
+	ERROR: project projects/app1> fail to resolve refs/heads/jx/topic1
+	ERROR: project projects/app1/module1> fail to resolve refs/heads/jx/topic1
+	ERROR: project projects/app2> fail to resolve refs/heads/jx/topic1
+	ERROR: project drivers/driver-2> fail to resolve refs/heads/jx/topic1
 	Abandoned branches
 	------------------------------------------------------------------------------
 	jx/topic1                 | drivers/driver-1      (was 9ea948a)

@@ -58,4 +58,5 @@ test_expect_success "git-repo prune all" '
 	EOF
 	test_cmp expect actual
 '
+
 test_done

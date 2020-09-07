@@ -105,6 +105,11 @@ func (v pruneCommand) Execute(args []string) error {
 	}
 
 	maxProjectWidth := 0
+	forceDropCmdArgs := []string{project.GIT, "branch", "-D"}
+	normalDropCmdArgs := []string{project.GIT, "branch", "-d"}
+	forceDropCmdArgsInitSize := len(forceDropCmdArgs)
+	normalDropCmdArgsInitSize := len(normalDropCmdArgs)
+
 	for _, p := range projects {
 		w := len(p.Path)
 		if w > maxProjectWidth {
@@ -116,7 +121,7 @@ func (v pruneCommand) Execute(args []string) error {
 		if v.O.Branch != "" && v.O.Branch != cb.Name {
 			oid, err := p.ResolveRevision(v.O.Branch)
 			if err != nil {
-				log.Debugf("fail to resolve %s in %s", v.O.Branch, p.Path)
+				log.Errorf("project %s> fail to resolve %s", p.Path, v.O.Branch)
 			} else {
 				branches = append(branches,
 					project.Branch{
@@ -134,13 +139,9 @@ func (v pruneCommand) Execute(args []string) error {
 
 		// Check current branch for deletion
 		if cb.Name != "" && (v.O.All || cb.Name == v.O.Branch) {
+			shouldPruneCurrentBranch := false
 			if v.O.Force {
-				err := p.DetachHead()
-				if err != nil {
-					log.Errorf("cannot detach current branch for abandon: %s", err)
-				} else {
-					branches = append(branches, cb)
-				}
+				shouldPruneCurrentBranch = true
 			} else {
 				// Check if there are no commits ahead for current branch
 				tb := p.LocalTrackBranch(cb.Name)
@@ -150,29 +151,37 @@ func (v pruneCommand) Execute(args []string) error {
 					tb, err = p.ResolveRevision(tb)
 				}
 				if err != nil {
-					log.Errorf("cannot find tracking branch %s of %s: %s",
+					log.Debugf("cannot find tracking branch %s of %s: %s",
 						cb.Name,
 						p.Path,
 						err)
+					if p.IsClean() {
+						shouldPruneCurrentBranch = true
+					}
 				} else {
 					list, err := p.Revlist(cb.Name, "--not", tb)
 					if err != nil {
-						log.Errorf("revlist failed for HEAD: %s", err)
+						log.Errorf("project %s> revlist failed for HEAD: %s", p.Path, err)
 					} else if len(list) == 0 && p.IsClean() {
-						err := p.DetachHead()
-						if err != nil {
-							log.Errorf("cannot detach current branch for prune: %s", err)
-						} else {
-							branches = append(branches, cb)
-						}
-					} else {
-						failure = append(failure, projectBranch{
-							Branch:    cb,
-							Project:   p,
-							IsCurrent: true,
-						})
+						shouldPruneCurrentBranch = true
 					}
 				}
+			}
+			if shouldPruneCurrentBranch {
+				err := p.DetachHead()
+				if err != nil {
+					shouldPruneCurrentBranch = false
+					log.Errorf("project %s> cannot detach current branch for abandon: %s", p.Path, err)
+				} else {
+					branches = append(branches, cb)
+				}
+			}
+			if !shouldPruneCurrentBranch {
+				failure = append(failure, projectBranch{
+					Branch:    cb,
+					Project:   p,
+					IsCurrent: true,
+				})
 			}
 		}
 
@@ -180,24 +189,37 @@ func (v pruneCommand) Execute(args []string) error {
 		if len(branches) == 0 {
 			log.Debugf("no branch to prune for project %s", p.Name)
 		} else {
-			// run bfranch -d ...
-			cmdArgs := []string{
-				project.GIT,
-				"branch",
-			}
-			if v.O.Force {
-				cmdArgs = append(cmdArgs, "-D")
-			} else {
-				cmdArgs = append(cmdArgs, "-d")
-			}
-			for _, b := range branches {
-				branchName := strings.TrimPrefix(b.Name, config.RefsHeads)
-				cmdArgs = append(cmdArgs, branchName)
-			}
+			// run branch -d ...
+			forceDropCmdArgs = forceDropCmdArgs[:forceDropCmdArgsInitSize]
+			normalDropCmdArgs = normalDropCmdArgs[:normalDropCmdArgsInitSize]
+			allDropSuccess := true
 
-			result := p.ExecuteCommand(cmdArgs...)
-			if result.Error == nil {
-				needToClean = true
+			for _, b := range branches {
+				if v.O.Force || p.TrackBranch(b.Name) == "" {
+					forceDropCmdArgs = append(forceDropCmdArgs, b.ShortName())
+				} else {
+					normalDropCmdArgs = append(normalDropCmdArgs, b.ShortName())
+				}
+			}
+			if len(forceDropCmdArgs) > forceDropCmdArgsInitSize {
+				result := p.ExecuteCommand(forceDropCmdArgs...)
+				if result.Error != nil {
+					allDropSuccess = false
+					log.Debugf("project %s> %s", p.Path, result.Stderr())
+				} else {
+					needToClean = true
+				}
+			}
+			if len(normalDropCmdArgs) > normalDropCmdArgsInitSize {
+				result := p.ExecuteCommand(normalDropCmdArgs...)
+				if result.Error != nil {
+					allDropSuccess = false
+					log.Debugf("project %s> %s", p.Path, result.Stderr())
+				} else {
+					needToClean = true
+				}
+			}
+			if allDropSuccess {
 				for _, b := range branches {
 					success = append(success, projectBranch{
 						Branch:    b,
