@@ -81,14 +81,18 @@ func (v startCommand) Execute(args []string) error {
 
 	for _, p := range allProjects {
 		merge := ""
-		if project.IsImmutable(p.Revision) {
+		if p.Revision == "" || project.IsImmutable(p.Revision) {
 			if p.DestBranch != "" {
 				merge = p.DestBranch
 			} else {
-				if rws.Manifest != nil &&
+				if p.Revision == "" &&
+					rws.Manifest != nil &&
 					rws.Manifest.Default != nil {
 					merge = rws.Manifest.Default.Revision
 				}
+			}
+			if merge != "" && project.IsImmutable(merge) {
+				merge = ""
 			}
 		}
 		err := p.StartBranch(branch, merge, false)

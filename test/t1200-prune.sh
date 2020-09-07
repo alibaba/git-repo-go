@@ -85,6 +85,7 @@ test_expect_success "git-repo prune all" '
 		git-repo prune
 	) >actual 2>&1 &&
 	cat >expect<<-EOF &&
+	ERROR: cannot find tracking branch refs/heads/jx/topic4 of projects/app1/module1: revision refs/remotes/aone/jx/topic4 in project1/module1 not found
 	Pruned branches (already merged)
 	------------------------------------------------------------------------------
 	jx/topic1                 | drivers/driver-1      (was 69d4c01)
@@ -120,8 +121,7 @@ test_expect_success "git-repo prune all" '
 	  jx/topic2 ( 2 commits, Thu Apr 7 15:14:13 -0700 2005)
 	
 	Project projects/app1/module1/
-	  jx/topic2 ( 3 commits, Thu Apr 7 15:15:13 -0700 2005)
-	* jx/topic4 ( 3 commits, Thu Apr 7 15:15:13 -0700 2005)
+	  jx/topic2
 	EOF
 	test_cmp expect actual
 '

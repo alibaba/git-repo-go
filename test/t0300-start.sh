@@ -7,6 +7,15 @@ test_description="start new branch test"
 # Create manifest repositories
 manifest_url="file://${REPO_TEST_REPOSITORIES}/hello/manifests"
 
+git_repo_show_current_branch_and_tracking() {
+	git-repo forall '
+		echo "## $REPO_PATH" &&
+		branch=$(git branch 2> /dev/null | sed -e "/^[^*]/d" -e "s/* \(.*\)/\1/") &&
+		printf "   $branch => " &&
+		(git config branch.${branch}.merge || true)
+	'
+}
+
 test_expect_success "setup" '
 	# create .repo file as a barrier, not find .repo deeper
 	touch .repo &&
@@ -58,23 +67,21 @@ test_expect_success "check current branch" '
 test_expect_success "check tracking branch" '
 	(
 		cd work &&
-		echo "main: refs/heads/Maint" >expect &&
-		(printf "main: " && cd main && git config branch.my/topic1.merge) >actual &&
-		test_cmp expect actual &&
-		echo "driver1: refs/heads/Maint" >expect &&
-		(printf "driver1: " && cd drivers/driver-1 && git config branch.my/topic1.merge) >actual &&
-		test_cmp expect actual &&
-		echo "driver2: refs/heads/Maint" >expect &&
-		(printf "driver2: " && cd drivers/driver-2 && git config branch.my/topic1.merge) >actual &&
-		test_cmp expect actual &&
-		echo "app1: refs/heads/Maint" >expect &&
-		(printf "app1: " && cd projects/app1 && git config branch.my/topic1.merge) >actual &&
-		test_cmp expect actual &&
-		echo "app2: refs/heads/Maint" >expect &&
-		(printf "app2: " && cd projects/app2 && git config branch.my/topic1.merge) >actual &&
-		test_cmp expect actual &&
-		echo "module1: refs/heads/Maint" >expect &&
-		(printf "module1: " && cd projects/app1/module1 && git config branch.my/topic1.merge) >actual &&
+		git_repo_show_current_branch_and_tracking >actual &&
+		cat >expect <<-EOF &&
+		## main
+		   my/topic1 => refs/heads/Maint
+		## projects/app1
+		   my/topic1 => refs/heads/Maint
+		## projects/app1/module1
+		   my/topic1 => 
+		## projects/app2
+		   my/topic1 => refs/heads/Maint
+		## drivers/driver-1
+		   my/topic1 => refs/heads/Maint
+		## drivers/driver-2
+		   my/topic1 => refs/heads/Maint
+		EOF
 		test_cmp expect actual
 	)
 '
