@@ -14,6 +14,7 @@ test_expect_success "setup" '
 		cd work &&
 		git clone --no-local $main_repo_url master &&
 		cd master &&
+		git branch -t Maint origin/Maint
 		git worktree add ../Maint Maint
 	)
 '
