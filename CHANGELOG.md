@@ -49,7 +49,7 @@ New features:
 
 * Add helper for protocol extension, and use can add external helper.
 * Smart selection of remote if repository has many remotes defined.
-* AGit-Flow 2.0: set `AGIT_FLOW` envirionment for git connection.
+* AGit-Flow 2.0: set `AGIT_FLOW` environment for git connection.
 * AGit-Flow 2.0: support version of `ssh_info` response.
 * AGit-Flow 2.0: multiple users working on one code review.
 * AGit-Flow 2.0: force push prevention if oldoid is provided.
@@ -69,11 +69,11 @@ Refactors, Enhancements and bugfixes:
 ## 0.6.0 (2019-11-08)
 
 NOTE: All users are suggested to upgrade to this version. Local changed files
-      will not be overwrited.
+      will not be overwritten.
 
 + Show project path in log message as prompt
 + init: force create default branch for manifest project
-+ sync: donot overwrite local changed files
++ sync: do not overwrite local changed files
 + sync: sync -d: always detach even if nothing changed
 + sync: should not make manifest project detached
 + init: no need to set color if color.ui defined in git global/system config
@@ -106,10 +106,10 @@ New features:
 Refactors, Enhancements and bugfixes:
 
 + color: add Hilight and Dim methods
-+ refactor: donot check Remote type to get reviewable branch
++ refactor: do not check Remote type to get reviewable branch
 + repository: get last modified of a revision
 + bugfix: not change Revision during network-half
-+ refactor: make WorkRepository as embedding struction for Project
++ refactor: make WorkRepository as embedding struct for Project
 + go.mod: update goconfig, check cache against file size
 + refactor: rename Path field name of Repository to RepoDir
 + refactor: remove ObjectRepository from project
@@ -132,7 +132,7 @@ Refactors, Enhancements and bugfixes:
 + download: support --remote option
 + compatibility: Use push options only if git is greater than 2.10.0
 + compatibility: Show compatible issues of git versions
-+ compatibility: Fix compatible issue of gerrit hook
++ compatibility: Fix compatible issue of Gerrit hook
 + compatibility: Use absolute path for 'include.path' directive
 + README: add badge for CI build status
 + compatibility: Use strings.Replace to be compatible with go 1.11
@@ -148,7 +148,7 @@ Enhancement and bugfix:
 
 + bugfix: add protection for write git extra config file
 + Only set push.default to nothing if it is unset
-+ Makfile: build with vendor and new release target
++ Makefile: build with vendor and new release target
 + Ignore vendor dir
 + filter: ignore errors for smudge
 + debug: add more debug info for repo sync
@@ -164,7 +164,7 @@ New Features:
 + Add --no-cache option to ignore `ssh_info` API cache
 + config: add new filter driver keyword-subst
 + New command: filter, for keyword-subst content filter
-+ Install gerrit hooks if review server is gerrit
++ Install Gerrit hooks if review server is Gerrit
 + Set push.default to nothing if remote is reviewable
 
 Enhancement and bugfix:
@@ -177,7 +177,7 @@ Enhancement and bugfix:
 + test: add test cases for git-repo filter
 + sync: default use 4 jobs
 + test: add test case for git pr --br <branch>
-+ Not quit immediately if cannot get review url
++ Not quit immediately if cannot get review URL
 + refactor: delay load remote for GitWorkspace
 + Only save config for DisableDefaultPush when necessary
 + Format every multi-log imports by adding alias log
@@ -189,7 +189,7 @@ Enhancement and bugfix:
 Enhancement and bugfix:
 
 + bugfix: add protection for write git extra config file
-+ Makfile: build with vendor and new release target
++ Makefile: build with vendor and new release target
 
 
 ## 0.2.0 (2019-6-9) DEPRECATED
@@ -199,9 +199,9 @@ Enhancement and bugfix:
 + refactor: urlJoin should keep spaces unchanged
 + Add build tag for windows build support
 + test: use git peer-review instead of git review
-+ When comparing, undefined version is lower then others
++ When comparing, undefined version is lower than others
 + New alias: git pr, stands for git peer-review
-+ version: check if git-repo aliases can be use safely
++ version: check if git-repo aliases can be used safely
 + Install ~/.git-repo/config.yml.example file
 + refactor: store extra git config and comments in string
 
@@ -244,29 +244,29 @@ Enhancement and bugfix:
 ## 0.0.2 (2019-5-20)
 
 + test: add test case for install hooks
-+ Link gerrit hooks when sync repo from gerrit
++ Link Gerrit hooks when sync repo from Gerrit
 + Install git-hook templates to ~/.git-repo/hooks
-+ LinkManifest failed if canot find manifest file
++ LinkManifest failed if cannot find manifest file
 + refactor: use NewEmptyRepoWorkSpace for initial workspace
-+ If init from a wrong url, remove and quit
++ If init from a wrong URL, remove and quit
 + sync: segfault: check if ws.Manifest is nil
 + upload: add debug info for upload command
 + Encode reviewers and cc using encodeString
-+ test: fixed review test url
-+ If ssh port is 29418, set remote type to Gerrit
-+ Hide standard ssh port for SSHInfo
++ test: fixed review test URL
++ If SSH port is 29418, set remote type to Gerrit
++ Hide standard SSH port for SSHInfo
 + refactor: handle review URL for single git repository
-+ Do not add --receive-pack option for http url when pushing
++ Do not add --receive-pack option for http URL when pushing
 + Check git URL using config.ParseGitURL
 + Not check `ssh_info`, if review URL is rsync protocol
 + refactor: move git address pattern to config
 + Read ReviewURL from git config remote.origin.review
 + test: mock ssh-info API when calling git-repo sync
-+ sync: call `ssh_info` API and install hooks if remote is gerrit
++ sync: call `ssh_info` API and install hooks if remote is Gerrit
 + test: add test cases for git review (upload --single)
 + Add alias command 'git review'
 
 
 ## 0.0.1 (2019-5-14)
 
-+ Initial versoin
++ Initial version
