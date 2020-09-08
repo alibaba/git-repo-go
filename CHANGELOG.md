@@ -2,6 +2,20 @@
 
 Changes of git-repo.
 
+## 0.7.5 (2020-09-08)
+
+Improvements:
+
+* Support using http proxy when access `ssh_info` API
+* prune: drop branches without a tracking branch
+* start: not setup tracking branch for immutable rev
+
+Bugfix:
+
+* bugfix: close project.list file before rename
+* Transfer repository from aliyun to alibaba
+
+
 ## 0.7.4 (2020-03-03)
 
 Bugfix:
