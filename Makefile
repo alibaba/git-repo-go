@@ -124,7 +124,7 @@ _build/$(REPO_VERSION)/git-repo-$(REPO_VERSION)-Windows-32/git-repo.exe: FORCE
 		cd .. && \
 		zip -r git-repo-$(REPO_VERSION)-Windows-32.zip git-repo-$(REPO_VERSION)-Windows-32/)
 
-macOS: macOS-64 macOS-32
+macOS: macOS-64
 macOS-64: _build/$(REPO_VERSION)/macOS-64/git-repo
 _build/$(REPO_VERSION)/macOS-64/git-repo: FORCE
 	$(call message,Building $@)
@@ -136,6 +136,7 @@ _build/$(REPO_VERSION)/macOS-64/git-repo: FORCE
 		$(GPGSIGN) -o $(shell basename $@).sha256.gpg $(shell basename $@).sha256 && \
 		$(TAR) -zcvf ../git-repo-$(REPO_VERSION)-macOS-64.tar.gz --transform "s/^\./git-repo-$(REPO_VERSION)-macOS-64/" .)
 
+# go 1.15 no longer support build of macOS-32
 macOS-32: _build/$(REPO_VERSION)/macOS-32/git-repo
 _build/$(REPO_VERSION)/macOS-32/git-repo: FORCE
 	$(call message,Building $@)
