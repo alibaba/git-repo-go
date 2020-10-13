@@ -43,6 +43,7 @@ import (
 	"github.com/alibaba/git-repo-go/config"
 	"github.com/alibaba/git-repo-go/file"
 	"github.com/alibaba/git-repo-go/format"
+	"github.com/alibaba/git-repo-go/helper"
 	"github.com/alibaba/git-repo-go/version"
 	log "github.com/jiangxin/multi-log"
 	"github.com/spf13/cobra"
@@ -185,6 +186,15 @@ func (v *upgradeCommand) HTTPClient() *http.Client {
 		MaxIdleConns:          10,
 		IdleConnTimeout:       timeout * time.Second,
 		DisableCompression:    true,
+		Proxy:                 http.ProxyFromEnvironment,
+	}
+
+	// http.proxy overrides env $HTTP_PROXY, $HTTPS_PROXY and $NO_PROXY (or the lowercase versions thereof).
+	proxyURL, err := helper.GetProxyFromGitConfig()
+	if err != nil {
+		log.Debugf("fail to get proxy from git config: %s", err)
+	} else {
+		tr.Proxy = http.ProxyURL(proxyURL)
 	}
 
 	v.httpClient = &http.Client{Transport: tr}
