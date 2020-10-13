@@ -239,15 +239,6 @@ func sshInfoFromAPI(url *config.GitURL) (*SSHInfo, error) {
 		proxyRawURL = gitConfig.Get("http.proxy")
 	}
 
-	// Get http proxy by environment variables
-	if proxyRawURL == "" {
-		if url.IsHTTPS() {
-			proxyRawURL = os.Getenv("HTTPS_PROXY")
-		} else {
-			proxyRawURL = os.Getenv("HTTP_PROXY")
-		}
-	}
-
 	if proxyRawURL != "" {
 		proxyURL, err = neturl.Parse(proxyRawURL)
 		if err != nil {
@@ -255,6 +246,7 @@ func sshInfoFromAPI(url *config.GitURL) (*SSHInfo, error) {
 		}
 	}
 
+	// http.proxy overrides env $HTTP_PROXY, $HTTPS_PROXY and $NO_PROXY (or the lowercase versions thereof).
 	if proxyURL != nil {
 		client.Transport.(*http.Transport).Proxy = http.ProxyURL(proxyURL)
 	}
@@ -416,6 +408,7 @@ func getHTTPClient() *http.Client {
 		MaxIdleConns:          10,
 		IdleConnTimeout:       remoteCallTimeout * time.Second,
 		DisableCompression:    true,
+		Proxy:                 http.ProxyFromEnvironment,
 	}
 
 	httpClient = &http.Client{Transport: tr}
