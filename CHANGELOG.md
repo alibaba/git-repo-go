@@ -2,6 +2,17 @@
 
 Changes of git-repo.
 
+## 0.7.6 (2020-10-13)
+
+Improvements:
+
+* Add http proxy support in command `git-repo upgrade`
+* Fix http proxy support for API call of `ssh-info`
+
+Bugfix:
+
+* go 1.15 compatible issue: not add rune with int
+
 ## 0.7.5 (2020-09-08)
 
 Improvements:
