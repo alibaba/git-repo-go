@@ -236,11 +236,7 @@ func sshInfoFromAPI(url *config.GitURL) (*SSHInfo, error) {
 	if err != nil {
 		log.Debugf("fail to load config file: %s", err)
 	} else {
-		if url.IsHTTPS() {
-			proxyRawURL = gitConfig.Get("https.proxy")
-		} else {
-			proxyRawURL = gitConfig.Get("http.proxy")
-		}
+		proxyRawURL = gitConfig.Get("http.proxy")
 	}
 
 	// Get http proxy by environment variables
