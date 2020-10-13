@@ -102,7 +102,7 @@ func Color(fgColor, bgColor, attrVal string) string {
 
 	if attr >= 0 || fg >= 0 || bg >= 0 {
 		if attr >= 0 {
-			code = string('0' + attr)
+			code = string('0' + rune(attr))
 		}
 
 		if fg >= 0 {
@@ -111,9 +111,9 @@ func Color(fgColor, bgColor, attrVal string) string {
 			}
 
 			if fg < 8 {
-				code += "3" + string('0'+fg)
+				code += "3" + string('0'+rune(fg))
 			} else {
-				code += "38;5;" + string('0'+fg)
+				code += "38;5;" + string('0'+rune(fg))
 			}
 		}
 
@@ -122,9 +122,9 @@ func Color(fgColor, bgColor, attrVal string) string {
 				code += ";"
 			}
 			if bg < 8 {
-				code += "4" + string('0'+bg)
+				code += "4" + string('0'+rune(bg))
 			} else {
-				code += "48;5;" + string('0'+bg)
+				code += "48;5;" + string('0'+rune(bg))
 			}
 		}
 		code += "m"
