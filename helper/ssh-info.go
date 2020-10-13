@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	neturl "net/url"
 	"os"
 	"os/exec"
 	"regexp"
@@ -203,9 +202,7 @@ func querySSHInfo(address string) (*SSHInfo, error) {
 // sshInfoFromAPI queries ssh_info API and return SSHInfo object.
 func sshInfoFromAPI(url *config.GitURL) (*SSHInfo, error) {
 	var (
-		err         error
-		proxyRawURL string
-		proxyURL    *neturl.URL
+		err error
 	)
 
 	infoURL := url.GetRootURL() + "/ssh_info"
@@ -230,26 +227,6 @@ func sshInfoFromAPI(url *config.GitURL) (*SSHInfo, error) {
 	req.Header.Set("Accept", "application/json")
 
 	client := getHTTPClient()
-
-	// Get http proxy by git config file
-	gitConfig, err := goconfig.LoadAll("")
-	if err != nil {
-		log.Debugf("fail to load config file: %s", err)
-	} else {
-		proxyRawURL = gitConfig.Get("http.proxy")
-	}
-
-	if proxyRawURL != "" {
-		proxyURL, err = neturl.Parse(proxyRawURL)
-		if err != nil {
-			log.Debugf("fail to parse http proxy: %s", err)
-		}
-	}
-
-	// http.proxy overrides env $HTTP_PROXY, $HTTPS_PROXY and $NO_PROXY (or the lowercase versions thereof).
-	if proxyURL != nil {
-		client.Transport.(*http.Transport).Proxy = http.ProxyURL(proxyURL)
-	}
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -409,6 +386,14 @@ func getHTTPClient() *http.Client {
 		IdleConnTimeout:       remoteCallTimeout * time.Second,
 		DisableCompression:    true,
 		Proxy:                 http.ProxyFromEnvironment,
+	}
+
+	// http.proxy overrides env $HTTP_PROXY, $HTTPS_PROXY and $NO_PROXY (or the lowercase versions thereof).
+	proxyURL, err := GetProxyFromGitConfig()
+	if err != nil {
+		log.Debugf("fail to get proxy from git config: %s", err)
+	} else {
+		tr.Proxy = http.ProxyURL(proxyURL)
 	}
 
 	httpClient = &http.Client{Transport: tr}
