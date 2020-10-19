@@ -21,6 +21,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 
 	"github.com/alibaba/git-repo-go/config"
@@ -55,6 +56,7 @@ type Remote struct {
 	Alias    string `xml:"alias,attr,omitempty"`
 	Fetch    string `xml:"fetch,attr,omitempty"`
 	PushURL  string `xml:"pushurl,attr,omitempty"`
+	Override bool   `xml:"override,attr,omitempty"`
 	Review   string `xml:"review,attr,omitempty"`
 	Revision string `xml:"revision,attr,omitempty"`
 	Type     string `xml:"type,attr,omitempty"`
@@ -66,6 +68,7 @@ type Default struct {
 	Revision   string `xml:"revision,attr,omitempty"`
 	DestBranch string `xml:"dest-branch,attr,omitempty"`
 	Upstream   string `xml:"upstream,attr,omitempty"`
+	Override   bool   `xml:"override,attr,omitempty"`
 	SyncJ      int    `xml:"sync-j,attr,omitempty"`
 	SyncC      string `xml:"sync-c,attr,omitempty"`
 	SyncS      string `xml:"sync-s,attr,omitempty"`
@@ -74,7 +77,8 @@ type Default struct {
 
 // Server is for manifest-server XML element.
 type Server struct {
-	URL string `xml:"url,attr,omitempty"`
+	Override bool   `xml:"override,attr,omitempty"`
+	URL      string `xml:"url,attr,omitempty"`
 }
 
 // Project is for project XML element.
@@ -314,10 +318,13 @@ func (v *Manifest) Merge(m *Manifest) error {
 
 	for _, r1 := range m.Remotes {
 		found := false
-		for _, r2 := range v.Remotes {
+		for idx, r2 := range v.Remotes {
 			if r1.Name == r2.Name {
-				if r1 != r2 {
-					return fmt.Errorf("duplicate remote in %s", m.SourceFile)
+				if r1.Override {
+					v.Remotes[idx] = r1
+				} else if !reflect.DeepEqual(r1, r2) {
+					return fmt.Errorf("duplicate remote in %s. If you want to override, set atrribute 'override' true",
+						m.SourceFile)
 				}
 				found = true
 				break
@@ -329,22 +336,19 @@ func (v *Manifest) Merge(m *Manifest) error {
 	}
 
 	if m.Default != nil {
-		if v.Default != nil {
-			if v.Default != m.Default {
-				return fmt.Errorf("duplicate default in %s", m.SourceFile)
-			}
-		} else {
+		if m.Default.Override || v.Default == nil {
 			v.Default = m.Default
+		} else if !reflect.DeepEqual(v.Default, m.Default) {
+			return fmt.Errorf("duplicate default in %s. If you want to override, set atrribute 'override' true", m.SourceFile)
 		}
 	}
 
 	if m.Server != nil {
-		if v.Server != nil {
-			if v.Server != m.Server {
-				return fmt.Errorf("duplicate manifest-server in %s", m.SourceFile)
-			}
-		} else {
+		if m.Server.Override || v.Server == nil {
 			v.Server = m.Server
+		} else if !reflect.DeepEqual(v.Server, m.Server) {
+			return fmt.Errorf("duplicate manifest-server in %s. If you want to override, set atrribute 'override' true",
+				m.SourceFile)
 		}
 	}
 
