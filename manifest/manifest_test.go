@@ -305,6 +305,208 @@ func TestLoadWithLocalManifest(t *testing.T) {
 		"tools/git-repo"}, projects)
 }
 
+func TestLoadWithLocalManifestDuplicateRemote(t *testing.T) {
+	assert := assert.New(t)
+
+	tmpdir, err := ioutil.TempDir("", "git-repo")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer func(dir string) {
+		os.RemoveAll(dir)
+	}(tmpdir)
+
+	workDir := filepath.Join(tmpdir, "workdir")
+	repoDir := filepath.Join(workDir, ".repo")
+	manifestDir := filepath.Join(repoDir, ".repo", "manifests")
+	err = os.MkdirAll(manifestDir, 0755)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// create manifest.xml
+	manifestFile := filepath.Join(repoDir, "manifest.xml")
+	err = ioutil.WriteFile(manifestFile, []byte(`
+<manifest>
+  <remote name="aone" alias="origin" fetch="https://example.com" review="https://example.com" revision="default"></remote>
+  <default remote="aone" revision="master"></default>
+  <project name="platform/drivers" path="platform-drivers">
+    <project name="nic" path="nic"></project>
+    <copyfile src="Makefile" dest="../Makefile"></copyfile>
+  </project>
+  <project name="platform/manifest" path="platform-manifest"></project>
+</manifest>`), 0644)
+	assert.Equal(nil, err)
+
+	// create local_manifests/test.xml
+	localManifestFile := filepath.Join(repoDir, "local_manifests", "test.xml")
+	os.MkdirAll(filepath.Dir(localManifestFile), 0755)
+	err = ioutil.WriteFile(localManifestFile, []byte(`
+<manifest>
+  <remote name="aone" alias="origin" fetch="https://git.example.com" review="https://review.example.com" revision="default"></remote>
+</manifest>`), 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// load all manifest and test
+	_, err = Load(repoDir)
+	assert.NotNil(err)
+	assert.Equal(err.Error()[len(err.Error())-54:], "If you want to override, set atrribute 'override' true")
+}
+
+func TestLoadWithLocalManifestOverrideRemote(t *testing.T) {
+	assert := assert.New(t)
+
+	tmpdir, err := ioutil.TempDir("", "git-repo")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer func(dir string) {
+		os.RemoveAll(dir)
+	}(tmpdir)
+
+	workDir := filepath.Join(tmpdir, "workdir")
+	repoDir := filepath.Join(workDir, ".repo")
+	manifestDir := filepath.Join(repoDir, ".repo", "manifests")
+	err = os.MkdirAll(manifestDir, 0755)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// create manifest.xml
+	manifestFile := filepath.Join(repoDir, "manifest.xml")
+	err = ioutil.WriteFile(manifestFile, []byte(`
+<manifest>
+  <remote name="aone" alias="origin" fetch="https://example.com" review="https://example.com" revision="default"></remote>
+  <default remote="aone" revision="master"></default>
+  <project name="platform/drivers" path="platform-drivers">
+    <project name="nic" path="nic"></project>
+    <copyfile src="Makefile" dest="../Makefile"></copyfile>
+  </project>
+  <project name="platform/manifest" path="platform-manifest"></project>
+</manifest>`), 0644)
+	assert.Equal(nil, err)
+
+	// create local_manifests/test.xml
+	localManifestFile := filepath.Join(repoDir, "local_manifests", "test.xml")
+	os.MkdirAll(filepath.Dir(localManifestFile), 0755)
+	err = ioutil.WriteFile(localManifestFile, []byte(`
+<manifest>
+  <remote name="aone" alias="origin" override="true" fetch="https://git.example.com" review="https://review.example.com" revision="default"></remote>
+</manifest>`), 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// load all manifest and test
+	m, err := Load(repoDir)
+	assert.Nil(err)
+	assert.Equal(m.Remotes[0].Name, "aone")
+	assert.Equal(m.Remotes[0].Fetch, "https://git.example.com")
+	assert.Equal(m.Remotes[0].Review, "https://review.example.com")
+}
+
+func TestLoadWithLocalManifestDuplicateDefault(t *testing.T) {
+	assert := assert.New(t)
+
+	tmpdir, err := ioutil.TempDir("", "git-repo")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer func(dir string) {
+		os.RemoveAll(dir)
+	}(tmpdir)
+
+	workDir := filepath.Join(tmpdir, "workdir")
+	repoDir := filepath.Join(workDir, ".repo")
+	manifestDir := filepath.Join(repoDir, ".repo", "manifests")
+	err = os.MkdirAll(manifestDir, 0755)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// create manifest.xml
+	manifestFile := filepath.Join(repoDir, "manifest.xml")
+	err = ioutil.WriteFile(manifestFile, []byte(`
+<manifest>
+  <remote name="aone" alias="origin" fetch="https://example.com" review="https://example.com" revision="default"></remote>
+  <default remote="aone" revision="master"></default>
+  <project name="platform/drivers" path="platform-drivers">
+    <project name="nic" path="nic"></project>
+    <copyfile src="Makefile" dest="../Makefile"></copyfile>
+  </project>
+  <project name="platform/manifest" path="platform-manifest"></project>
+</manifest>`), 0644)
+	assert.Equal(nil, err)
+
+	// create local_manifests/test.xml
+	localManifestFile := filepath.Join(repoDir, "local_manifests", "test.xml")
+	os.MkdirAll(filepath.Dir(localManifestFile), 0755)
+	err = ioutil.WriteFile(localManifestFile, []byte(`
+<manifest>
+  <default remote="aone" revision="main" override="0"></default>
+</manifest>`), 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// load all manifest and test
+	_, err = Load(repoDir)
+	assert.NotNil(err)
+	assert.Equal(err.Error()[len(err.Error())-54:], "If you want to override, set atrribute 'override' true")
+}
+
+func TestLoadWithLocalManifestOverrideDefault(t *testing.T) {
+	assert := assert.New(t)
+
+	tmpdir, err := ioutil.TempDir("", "git-repo")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer func(dir string) {
+		os.RemoveAll(dir)
+	}(tmpdir)
+
+	workDir := filepath.Join(tmpdir, "workdir")
+	repoDir := filepath.Join(workDir, ".repo")
+	manifestDir := filepath.Join(repoDir, ".repo", "manifests")
+	err = os.MkdirAll(manifestDir, 0755)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// create manifest.xml
+	manifestFile := filepath.Join(repoDir, "manifest.xml")
+	err = ioutil.WriteFile(manifestFile, []byte(`
+<manifest>
+  <remote name="aone" alias="origin" fetch="https://example.com" review="https://example.com" revision="default"></remote>
+  <default remote="aone" revision="master"></default>
+  <project name="platform/drivers" path="platform-drivers">
+    <project name="nic" path="nic"></project>
+    <copyfile src="Makefile" dest="../Makefile"></copyfile>
+  </project>
+  <project name="platform/manifest" path="platform-manifest"></project>
+</manifest>`), 0644)
+	assert.Equal(nil, err)
+
+	// create local_manifests/test.xml
+	localManifestFile := filepath.Join(repoDir, "local_manifests", "test.xml")
+	os.MkdirAll(filepath.Dir(localManifestFile), 0755)
+	err = ioutil.WriteFile(localManifestFile, []byte(`
+<manifest>
+  <default remote="aone" revision="main" override="1"></default>
+</manifest>`), 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// load all manifest and test
+	m, err := Load(repoDir)
+	assert.Nil(err)
+	assert.Equal(m.Default.Revision, "main")
+}
+
 func TestCircularInclude(t *testing.T) {
 	assert := assert.New(t)
 
