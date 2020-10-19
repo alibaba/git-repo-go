@@ -302,8 +302,7 @@ func (v *Project) AddRemote(mr *manifest.Remote, noCache bool) *Remote {
 		protoHelper helper.ProtoHelper
 	)
 
-	reviewURL := mr.Review
-	if reviewURL != "" {
+	if mr.Review != "" {
 		if mr.Type != "" {
 			sshInfo := &helper.SSHInfo{ProtoType: mr.Type}
 			protoHelper = helper.NewProtoHelper(sshInfo)

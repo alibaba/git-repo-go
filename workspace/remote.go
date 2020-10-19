@@ -1,6 +1,7 @@
 package workspace
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/alibaba/git-repo-go/helper"
@@ -29,6 +30,9 @@ func (v *RepoWorkSpace) LoadRemotes(noCache bool) error {
 
 	query = helper.NewSSHInfoQuery(v.ManifestProject.SSHInfoCacheFile())
 	for _, r := range v.Manifest.Remotes {
+		if r.Review == "" {
+			return fmt.Errorf("attribute 'review' is not defined in remote '%s'", r.Name)
+		}
 		sshInfo, err := query.GetSSHInfo(r.Review, !noCache)
 		if err != nil {
 			return err
