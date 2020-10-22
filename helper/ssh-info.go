@@ -6,6 +6,7 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -36,13 +37,14 @@ var (
 	internalCache  map[string]interface{}
 )
 
-// SSHInfo wraps host and port which ssh_info returned.
+// SSHInfo stands for Smart Submit Handler information. Hold data returned from ssh_info API
 type SSHInfo struct {
-	Host         string `json:"host,omitempty"`
-	Port         int    `json:"port,omitempty"`
-	ProtoType    string `json:"type,omitempty"`
-	ProtoVersion int    `json:"version,omitempty"`
-	User         string `json:"user,omitempty"`
+	Host             string `json:"host,omitempty"`
+	Port             int    `json:"port,omitempty"`
+	ProtoType        string `json:"type,omitempty"`
+	ProtoVersion     int    `json:"version,omitempty"`
+	User             string `json:"user,omitempty"`
+	ReviewRefPattern string `json:"review_ref,omitempty"`
 
 	Expire int64 `json:"-"`
 }
@@ -54,6 +56,97 @@ func (v SSHInfo) ToJSON() string {
 		log.Errorf("fail to marshal ssh_info: %s", err)
 	}
 	return string(buf)
+}
+
+// GetReviewRef gets review ref from ReviewRefPattern.
+func (v SSHInfo) GetReviewRef(id, patch string) (string, error) {
+	var (
+		ret strings.Builder
+		err error
+	)
+
+	if v.ReviewRefPattern == "" {
+		return "", errors.New("empty review_ref in ssh_info")
+	}
+	p := []byte(v.ReviewRefPattern)
+	for {
+		var (
+			key, mod    string
+			value       []byte
+			width       int
+			left, right int
+			loc         int
+		)
+
+		left = bytes.IndexByte(p, '{')
+		if left == -1 {
+			ret.Write(p)
+			break
+		}
+		right = bytes.IndexByte(p, '}')
+		if right == -1 {
+			ret.Write(p)
+			break
+		}
+		if right < left {
+			ret.Write(p[:right+1])
+			p = p[right+1:]
+			continue
+		}
+		ret.Write(p[:left])
+		field := p[left+1 : right]
+		loc = bytes.IndexByte(field, ':')
+		key = string(field)
+		if loc > 0 {
+			key = string(field[:loc])
+			field = field[loc+1:]
+			loc = bytes.IndexByte(field, ':')
+			if loc > 0 {
+				mod = string(field[:loc])
+				width, err = strconv.Atoi(string(field[loc+1:]))
+				if err != nil {
+					ret.Write(p[left : right+1])
+					p = p[right+1:]
+					continue
+				}
+			}
+		}
+		if key == "id" {
+			value = []byte(id)
+		} else if key == "patch" {
+			value = []byte(patch)
+		} else {
+			ret.Write(p[left : right+1])
+			p = p[right+1:]
+			continue
+		}
+		if len(mod) > 0 {
+			if mod == "left" {
+				if width <= len(value) {
+					value = value[:width]
+				} else {
+					newValue := bytes.Repeat([]byte("0"), width-len(value))
+					newValue = append(newValue, value...)
+					value = newValue
+				}
+			} else if mod == "right" {
+				if width <= len(value) {
+					value = value[len(value)-width:]
+				} else {
+					newValue := bytes.Repeat([]byte("0"), width-len(value))
+					newValue = append(newValue, value...)
+					value = newValue
+				}
+			} else {
+				ret.Write(p[left : right+1])
+				p = p[right+1:]
+				continue
+			}
+		}
+		ret.Write(value)
+		p = p[right+1:]
+	}
+	return ret.String(), nil
 }
 
 // SSHInfoQuery wraps cache to accelerate query of ssh_info API.

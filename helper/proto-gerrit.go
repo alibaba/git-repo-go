@@ -35,6 +35,9 @@ func NewGerritProtoHelper(sshInfo *SSHInfo) *GerritProtoHelper {
 	if sshInfo.User == "" {
 		sshInfo.User = "<email>"
 	}
+	if sshInfo.ReviewRefPattern == "" {
+		sshInfo.ReviewRefPattern = "refs/changes/{id:right:2}/{id}/{patch}"
+	}
 	return &GerritProtoHelper{sshInfo: sshInfo}
 }
 
@@ -143,12 +146,11 @@ func (v GerritProtoHelper) GetGitPushCommand(o *common.UploadOptions) (*GitPushC
 // GetDownloadRef returns reference name of the specific code review.
 func (v GerritProtoHelper) GetDownloadRef(cr, patch string) (string, error) {
 	var (
-		reviewID int
-		patchID  int
-		err      error
+		patchID int
+		err     error
 	)
 
-	reviewID, err = strconv.Atoi(cr)
+	_, err = strconv.Atoi(cr)
 	if err != nil {
 		return "", fmt.Errorf("bad review ID %s: %s", cr, err)
 	}
@@ -162,7 +164,7 @@ func (v GerritProtoHelper) GetDownloadRef(cr, patch string) (string, error) {
 
 	if patchID == 0 {
 		log.Warn("Patch ID should not be 0, set it to 1")
-		patchID = 1
+		patch = "1"
 	}
-	return fmt.Sprintf("%s%2.2d/%d/%d", config.RefsChanges, reviewID%100, reviewID, patchID), nil
+	return v.sshInfo.GetReviewRef(cr, patch)
 }
