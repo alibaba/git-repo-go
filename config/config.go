@@ -72,12 +72,9 @@ const (
 	ProjectObjects   = "project-objects"
 	Projects         = "projects"
 
-	RefsChanges = "refs/changes/"
-	RefsMr      = "refs/merge-requests/"
 	RefsHeads   = "refs/heads/"
 	RefsTags    = "refs/tags/"
 	RefsPub     = "refs/published/"
-	RefsM       = "refs/remotes/m/"
 	Refs        = "refs/"
 	RefsRemotes = "refs/remotes/"
 
