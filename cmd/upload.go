@@ -814,7 +814,7 @@ func (v uploadCommand) fmtUploadOptionsScript(optionsFile string, published bool
 
 func (v *uploadCommand) UploadAndReport(branches []project.ReviewableBranch) error {
 	var (
-		origPeople = [][]string{[]string{}, []string{}}
+		origPeople = [][]string{{}, {}}
 		oldOid     = ""
 		err        error
 		destBranch string
@@ -854,7 +854,7 @@ func (v *uploadCommand) UploadAndReport(branches []project.ReviewableBranch) err
 			)
 			continue
 		}
-		people := [][]string{[]string{}, []string{}}
+		people := [][]string{{}, {}}
 		people[0] = append(people[0], origPeople[0]...)
 		people[1] = append(people[1], origPeople[1]...)
 		branch.AppendReviewers(people)
