@@ -36,7 +36,7 @@ test_expect_success "manifests project is detached" '
 			cat "$(git rev-parse --git-dir)/HEAD"
 		) >actual &&
 		cat >expect <<-EOF &&
-		955eabf3fc15481b8b48a2c7d5cb8ee22440242a
+		$COMMIT_MANIFEST_0_1
 		EOF
 		test_cmp expect actual
 	)
@@ -44,14 +44,12 @@ test_expect_success "manifests project is detached" '
 
 test_expect_success "new commit in manifests" '
 	(
-		cd work &&
-		(
-			cd .repo/manifests &&
-			echo hello >>README.md &&
-			git add README.md &&
-			test_tick && git commit -m test
-		)
-	)
+		cd work/.repo/manifests &&
+		echo hello >>README.md &&
+		git add README.md &&
+		test_tick && git commit -m test
+	) &&
+	COMMIT_TIP=$(git -C work/.repo/manifests rev-parse HEAD)
 '
 
 test_expect_success "git-repo sync" '
@@ -72,7 +70,7 @@ test_expect_success "manifests project is still detached after sync" '
 			cat "$(git rev-parse --git-dir)/HEAD"
 		) >actual &&
 		cat >expect <<-EOF &&
-		b2dfdb9bb35eff99a6351416abccb406b442b790
+		$COMMIT_TIP
 		EOF
 		test_cmp expect actual
 	)
@@ -101,7 +99,7 @@ test_expect_success "manifests project is detached after sync v0.2" '
 			cat "$(git rev-parse --git-dir)/HEAD"
 		) >actual &&
 		cat >expect <<-EOF &&
-		5bb6dee40bc20fcdaeeb5a2e31a900cc4c7d8727
+		$COMMIT_MANIFEST_0_2
 		EOF
 		test_cmp expect actual
 	)
@@ -373,7 +371,7 @@ test_expect_success "manifests project is detached" '
 			cat "$(git rev-parse --git-dir)/HEAD"
 		) >actual &&
 		cat >expect <<-EOF &&
-		292bf7eaf29f3948c4d11b65b25b9ef5e9c1ab4b
+		$COMMIT_MANIFEST_MASTER
 		EOF
 		test_cmp expect actual
 	)
