@@ -229,7 +229,7 @@ func (v *Project) LoadRemotes(remoteMap *RemoteMap, noCache bool) {
 
 		wg.Add(1)
 		name = strings.TrimPrefix(name, "remote.")
-		func(name string) {
+		go func(name string) {
 			defer wg.Done()
 			URL := cfg.Get("remote." + name + ".url")
 			if URL == "" {

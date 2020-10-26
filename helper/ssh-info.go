@@ -15,6 +15,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/alibaba/git-repo-go/config"
@@ -34,7 +35,7 @@ const (
 var (
 	sshInfoPattern = regexp.MustCompile(`^[\S]+ [0-9]+$`)
 	httpClient     *http.Client
-	internalCache  map[string]interface{}
+	internalCache  = sync.Map{}
 )
 
 // SSHInfo stands for Smart Submit Handler information. Hold data returned from ssh_info API
@@ -169,7 +170,7 @@ func (v SSHInfoQuery) GetSSHInfo(address string, useCache bool) (*SSHInfo, error
 	}
 
 	// Try internal cache
-	if cache, ok := internalCache[key]; ok {
+	if cache, ok := internalCache.Load(key); ok {
 		switch cache.(type) {
 		case error:
 			return nil, cache.(error)
@@ -210,11 +211,11 @@ func (v SSHInfoQuery) GetSSHInfo(address string, useCache bool) (*SSHInfo, error
 	sshInfo, err := querySSHInfo(address)
 	if err != nil {
 		// Update internal cache
-		internalCache[key] = err
+		internalCache.Store(key, err)
 		return nil, err
 	}
 	// Update internal cache
-	internalCache[key] = sshInfo
+	internalCache.Store(key, sshInfo)
 	log.Debugf("query ssh_info successfully: %#v", sshInfo)
 
 	// Update Cache
@@ -524,8 +525,4 @@ func urlToKey(address string) string {
 		}
 	}
 	return key
-}
-
-func init() {
-	internalCache = make(map[string]interface{})
 }
