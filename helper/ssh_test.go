@@ -56,8 +56,17 @@ func TestGitSSHVariantEnv(t *testing.T) {
 	os.Unsetenv("GIT_SSH")
 	os.Unsetenv("GIT_SSH_VARIANT")
 
+	os.Setenv("GIT_SSH_VARIANT", "auto")
+	cmd := NewSSHCmd()
+	variant := cmd.Variant()
+	if variant != SSHVariantSSH && variant != SSHVariantSimple {
+		t.Errorf("bad variant for 'auto', expect: %d or %d, got: %d",
+			SSHVariantSSH,
+			SSHVariantSimple,
+			variant)
+	}
+
 	m := map[string]int{
-		"auto":          SSHVariantSSH,
 		"putty":         SSHVariantPutty,
 		"plink":         SSHVariantPlink,
 		"tortoiseplink": SSHVariantTortoisePlink,
@@ -69,7 +78,7 @@ func TestGitSSHVariantEnv(t *testing.T) {
 	for env, variant := range m {
 		os.Setenv("GIT_SSH_VARIANT", env)
 		cmd := NewSSHCmd()
-		assert.Equal(variant, cmd.Variant(), fmt.Sprintf("fail on cmd: %s", env))
+		assert.Equal(variant, cmd.Variant(), fmt.Sprintf("bad variant for '%s'", env))
 	}
 }
 
