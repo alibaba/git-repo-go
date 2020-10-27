@@ -1,6 +1,6 @@
 #!/bin/sh
 
-REPO_TEST_REPOSITORIES_VERSION=10
+REPO_TEST_REPOSITORIES_VERSION=11
 
 # Create test repositories in .repositories
 REPO_TEST_REPOSITORIES="${SHARNESS_TEST_SRCDIR}/test-repositories"
@@ -310,7 +310,41 @@ test_create_manifest_projects () {
 	<!-- tag v2.0 -->
 	EOF
 
-	git add default.xml next.xml &&
+	cat >remote-ro.xml <<-EOF &&
+	<?xml version="1.0" encoding="UTF-8"?>
+	<manifest>
+	  <remote  name="aone"
+	           alias="origin"
+		   fetch="."
+		   revision="master"
+		   review="https://example.com" />
+	  <remote  name="others"
+		   fetch=".."
+		   revision="master" />
+	  <remote  name="driver"
+		   fetch=".."
+		   revision="master"
+		   review="https://example.com" />
+	  <default remote="aone"
+	           revision="master"
+		   sync-j="4" />
+	  <project name="main" path="main" groups="app">
+	    <copyfile src="VERSION" dest="VERSION"></copyfile>
+	    <linkfile src="Makefile" dest="Makefile"></linkfile>
+	  </project>
+	  <project name="project1" path="projects/app1" groups="app">
+	    <project name="module1" path="module1" groups="notdefault,app"/>
+	  </project>
+	  <project name="drivers/driver1" path="drivers/driver-1" groups="drivers" remote="driver" />
+	  <project name="drivers/driver2" path="drivers/driver-2" groups="notdefault,drivers" remote="driver" />
+	  <project name="drivers/driver3" path="drivers/driver-3" groups="drivers" remote="driver" />
+	  <project name="others/demo1" path="others/demo-1" groups="others" remote="others" />
+	  <project name="others/demo2" path="others/demo-2" groups="notdefault,others" remote="others" />
+	</manifest>
+	<!-- tag v2.0 -->
+	EOF
+
+	git add default.xml next.xml remote-ro.xml &&
 	test_tick && git commit -m "Version 2.0" &&
 	test_tick && git tag -m v2.0 v2.0
 	git push --tags origin Maint master &&
@@ -329,11 +363,32 @@ repo_create_test_repositories_real () {
 		test_create_repository drivers/driver1.git &&
 		test_create_repository drivers/driver2.git &&
 		test_create_repository drivers/driver3.git &&
+		test_create_repository others/demo1.git &&
+		test_create_repository others/demo2.git &&
 		test_create_manifest_projects
 	)
+}
+
+get_manifest_commits () {
+	dir_m="$REPO_TEST_REPOSITORIES/hello/manifests.git"
+	git -C $dir_m config core.abbrev 7 &&
+	COMMIT_MANIFEST_MASTER=$(git -C $dir_m rev-parse master) &&
+	COMMIT_MANIFEST_MAINT=$(git -C $dir_m rev-parse Maint) &&
+	COMMIT_MANIFEST_0_1=$(git -C $dir_m rev-parse v0.1^0) &&
+	COMMIT_MANIFEST_0_2=$(git -C $dir_m rev-parse v0.2^0) &&
+	COMMIT_MANIFEST_1_0=$(git -C $dir_m rev-parse v1.0^0) &&
+	COMMIT_MANIFEST_2_0=$(git -C $dir_m rev-parse v2.0^0) &&
+	ABBREV_COMMIT_MANIFEST_MASTER=$(echo $COMMIT_MANIFEST_MASTER | cut -c 1-7) &&
+	ABBREV_COMMIT_MANIFEST_MAINT=$(echo $COMMIT_MANIFEST_MAINT | cut -c 1-7) &&
+	ABBREV_COMMIT_MANIFEST_0_1=$(echo $COMMIT_MANIFEST_0_1 | cut -c 1-7) &&
+	ABBREV_COMMIT_MANIFEST_0_2=$(echo $COMMIT_MANIFEST_0_2 | cut -c 1-7) &&
+	ABBREV_COMMIT_MANIFEST_1_0=$(echo $COMMIT_MANIFEST_1_0 | cut -c 1-7) &&
+	ABBREV_COMMIT_MANIFEST_2_0=$(echo $COMMIT_MANIFEST_2_0 | cut -c 1-7)
 }
 
 if ! test_repositories_is_uptodate
 then
 	repo_create_test_repositories
-fi
+fi &&
+
+get_manifest_commits

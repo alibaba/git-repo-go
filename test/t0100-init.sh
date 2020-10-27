@@ -54,11 +54,12 @@ test_expect_success "git config variable manifest.name = default.xml" '
 test_expect_success "two xml files checkout" '
 	(
 		cd work &&
-		# Has two xml files
+		# Has three xml files
 		ls .repo/manifests/*.xml >actual &&
 		cat >expect<<-EOF &&
 		.repo/manifests/default.xml
 		.repo/manifests/next.xml
+		.repo/manifests/remote-ro.xml
 		EOF
 		test_cmp expect actual
 	)
@@ -249,6 +250,7 @@ test_expect_success "switch branch: master, next.xml is back" '
 		cat >expect<<-EOF &&
 		.repo/manifests/default.xml
 		.repo/manifests/next.xml
+		.repo/manifests/remote-ro.xml
 		EOF
 		test_cmp expect actual
 	)

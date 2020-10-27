@@ -1,7 +1,9 @@
 package workspace
 
 import (
+	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/alibaba/git-repo-go/helper"
 	"github.com/alibaba/git-repo-go/project"
@@ -19,8 +21,9 @@ var (
 // LoadRemotes calls remote API to get server type and other info.
 func (v *RepoWorkSpace) LoadRemotes(noCache bool) error {
 	var (
-		query     *helper.SSHInfoQuery
-		remoteMap = project.NewRemoteMap()
+		query         *helper.SSHInfoQuery
+		remoteMap     = project.NewRemoteMap()
+		failedRemotes = []string{}
 	)
 
 	if v.Manifest == nil || v.Manifest.Remotes == nil {
@@ -29,9 +32,21 @@ func (v *RepoWorkSpace) LoadRemotes(noCache bool) error {
 
 	query = helper.NewSSHInfoQuery(v.ManifestProject.SSHInfoCacheFile())
 	for _, r := range v.Manifest.Remotes {
-		sshInfo, err := query.GetSSHInfo(r.Review, !noCache)
-		if err != nil {
-			return err
+		var (
+			sshInfo *helper.SSHInfo
+			err     error
+		)
+
+		if r.Review == "" {
+			log.Infof("attribute 'review' is not defined in remote '%s'", r.Name)
+			sshInfo = &helper.SSHInfo{}
+		} else {
+			sshInfo, err = query.GetSSHInfo(r.Review, !noCache)
+			if err != nil {
+				log.Error(err)
+				failedRemotes = append(failedRemotes, r.Name)
+				continue
+			}
 		}
 		protoHelper := helper.NewProtoHelper(sshInfo)
 		remote := project.NewRemote(&r, protoHelper)
@@ -50,5 +65,8 @@ func (v *RepoWorkSpace) LoadRemotes(noCache bool) error {
 		}
 	}
 
-	return nil
+	if len(failedRemotes) == 0 {
+		return nil
+	}
+	return fmt.Errorf("fail to load remotes: %s", strings.Join(failedRemotes, ", "))
 }

@@ -38,7 +38,7 @@ test_expect_success "current branch = default" '
 	(
 		cd work &&
 		cat >expect <<-EOF &&
-		955eabf3fc15481b8b48a2c7d5cb8ee22440242a
+		$COMMIT_MANIFEST_0_1
 		EOF
 		cp .repo/manifests.git/HEAD actual &&
 		test_cmp expect actual

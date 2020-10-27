@@ -31,9 +31,10 @@ test_expect_success "create new commit in manifest default branch" '
 		echo hello >master.txt &&
 		git add master.txt &&
 		test_tick &&
-		git commit -m "manifest: update masster branch" &&
+		git commit -m "manifest: update master branch" &&
 		git push origin HEAD
-	)
+	) &&
+	COMMIT_TIP=$(git -C manifests rev-parse HEAD)
 '
 
 test_expect_success "sync again" '
@@ -51,11 +52,11 @@ test_expect_success "manifests updated successful" '
 		cd work/.repo/manifests &&
 		git config branch.default.merge &&
 		git status -s &&
-		git log -1 --oneline 
+		git log --pretty="%H %s" -1
 	) >actual &&
 	cat >expect <<-EOF &&
 	refs/heads/master
-	6d4ba54 manifest: update masster branch
+	$COMMIT_TIP manifest: update master branch
 	EOF
 	test_cmp expect actual
 '
@@ -69,10 +70,10 @@ test_expect_success "init -d and init -b Maint branch" '
 	(
 		cd work/.repo/manifests &&
 		test ! -f master.txt &&
-		git log -1 --oneline
+		git log -1 --pretty="%H %s"
 	) >actual &&
 	cat >expect <<-EOF &&
-	179106b Version 1.0
+	$COMMIT_MANIFEST_MAINT Version 1.0
 	EOF
 	test_cmp expect actual
 '
@@ -86,7 +87,8 @@ test_expect_success "create new commit in manifest Maint branch" '
 		test_tick &&
 		git commit -m "manifest: update Maint branch" &&
 		git push origin HEAD
-	)
+	) &&
+	COMMIT_TIP=$(git -C manifests rev-parse HEAD)
 '
 
 test_expect_success "sync again" '
@@ -106,11 +108,11 @@ test_expect_success "manifests (track Maint branch) updated successful" '
 		git status -s &&
 		test -f maint.txt &&
 		test ! -f master.txt &&
-		git log -1 --oneline 
+		git log -1 --pretty="%H %s"
 	) >actual &&
 	cat >expect <<-EOF &&
 	refs/heads/Maint
-	485bc52 manifest: update Maint branch
+	$COMMIT_TIP manifest: update Maint branch
 	EOF
 	test_cmp expect actual
 '
