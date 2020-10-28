@@ -85,6 +85,16 @@ func (v *Project) GetRemotePushURL(remote *Remote) string {
 		log.Errorf("cannot get ssh_info for remote: %s", remote.Name)
 		return ""
 	}
+
+	if v.ManifestRemote != nil && v.ManifestRemote.PushURL != "" {
+		defaultURL = v.ManifestRemote.PushURL
+		if strings.HasSuffix(defaultURL, "/") == false {
+			defaultURL += "/"
+		}
+		defaultURL += v.Name + ".git"
+		return defaultURL
+	}
+
 	if sshInfo.Host != "" {
 		login := sshInfo.User
 		if login == "<email>" {
