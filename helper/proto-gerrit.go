@@ -33,7 +33,7 @@ type GerritProtoHelper struct {
 // NewGerritProtoHelper returns GerritProtoHelper object.
 func NewGerritProtoHelper(sshInfo *SSHInfo) *GerritProtoHelper {
 	if sshInfo.User == "" {
-		sshInfo.User = "<email>"
+		sshInfo.User = "{email}"
 	}
 	if sshInfo.ReviewRefPattern == "" {
 		sshInfo.ReviewRefPattern = "refs/changes/{id:right:2}/{id}/{patch}"

@@ -97,16 +97,16 @@ func (v *Project) GetRemotePushURL(remote *Remote) string {
 
 	if sshInfo.Host != "" {
 		login := sshInfo.User
-		if login == "<email>" {
-			login = helper.GetLoginFromEmail(v.UserEmail())
-		} else if login == "<login>" {
-			u, err := user.Current()
-			if err == nil {
-				login = u.Username
-			}
-		}
 		if login == "" {
 			login = "git"
+		} else {
+			macros := make(map[string]string)
+			macros["email"] = helper.GetLoginFromEmail(v.UserEmail())
+			u, err := user.Current()
+			if err == nil {
+				macros["login"] = u.Username
+			}
+			login = helper.ReplaceMacros(login, macros)
 		}
 		sshURL = fmt.Sprintf("ssh://%s@%s", login, sshInfo.Host)
 		if sshInfo.Port > 0 && sshInfo.Port != 22 {
