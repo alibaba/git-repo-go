@@ -17,3 +17,5 @@ REPO-VERSION-FILE
 
 /_build
 /vendor
+
+.DS_Store
