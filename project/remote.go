@@ -87,6 +87,8 @@ func (v *Project) GetRemotePushURL(remote *Remote) string {
 
 	if v.ManifestRemote != nil && v.ManifestRemote.PushURL != "" {
 		defaultURL = v.ManifestRemote.PushURL
+	} else if sshInfo.PushURL != "" {
+		defaultURL = sshInfo.PushURL
 	} else if sshInfo.Host != "" {
 		login := sshInfo.User
 		if login == "" {

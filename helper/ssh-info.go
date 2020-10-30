@@ -40,11 +40,20 @@ var (
 
 // SSHInfo stands for Smart Submit Handler information. Hold data returned from ssh_info API
 type SSHInfo struct {
-	Host         string `json:"host,omitempty"`
-	Port         int    `json:"port,omitempty"`
+	// PushURL gives the URL prefix of the repository to push.
+	// Macro "<email>" and "<login>" can be used as the user part of PushURL.
+	PushURL string `json:"pushurl,omitempty"`
+
+	// If PushURL is not defined, will try to compose a SSH URL for push
+	// using the host, port and user provided. Macro "{email}" and "{login}"
+	// can be used in the user part.
+	Host string `json:"host,omitempty"`
+	Port int    `json:"port,omitempty"`
+	User string `json:"user,omitempty"`
+
+	// Proto type and version for the protocol, such as "gerrit", "agit", etc.
 	ProtoType    string `json:"type,omitempty"`
 	ProtoVersion int    `json:"version,omitempty"`
-	User         string `json:"user,omitempty"`
 
 	// ReviewRefPattern is used to compose the refname for the the specifc code review.
 	// Macro {id}, {patch}, {id:left:N}, {id:right:N} can be used in this pattern.
