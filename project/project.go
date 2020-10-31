@@ -337,7 +337,7 @@ func (v *Project) gitConfigRemoteURL() string {
 	return v.GitConfigRemoteURL(remote)
 }
 
-// GetRemoteURL returns new remtoe url user provided or from manifest repo url
+// GetRemoteURL returns new remote url user provided or from manifest repo url
 func (v *Project) GetRemoteURL() (string, error) {
 	if v.Settings.ManifestURL == "" && v.IsMetaProject() {
 		v.Settings.ManifestURL = v.gitConfigRemoteURL()
