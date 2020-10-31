@@ -60,7 +60,7 @@ test_expect_success "use pushurl in manifest remotes" '
 		  branch my/topic1 ( 1 commit(s)):
 		         <hash>
 		to https://example.com (y/N)? Yes
-		NOTE: main> will execute command: git push ssh://{email}@aone.example.com/agit/main.git refs/heads/my/topic1:refs/for/Maint/my/topic1
+		NOTE: main> will execute command: git push ssh://committer@aone.example.com/agit/main.git refs/heads/my/topic1:refs/for/Maint/my/topic1
 		NOTE: main> with extra environment: AGIT_FLOW=git-repo/n.n.n.n
 		NOTE: main> with extra environment: GIT_SSH_COMMAND=ssh -o SendEnv=AGIT_FLOW
 		
