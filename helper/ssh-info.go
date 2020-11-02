@@ -40,11 +40,23 @@ var (
 
 // SSHInfo stands for Smart Submit Handler information. Hold data returned from ssh_info API
 type SSHInfo struct {
-	Host             string `json:"host,omitempty"`
-	Port             int    `json:"port,omitempty"`
-	ProtoType        string `json:"type,omitempty"`
-	ProtoVersion     int    `json:"version,omitempty"`
-	User             string `json:"user,omitempty"`
+	// PushURL gives the URL prefix of the repository to push.
+	// Macro "<email>" and "<login>" can be used as the user part of PushURL.
+	PushURL string `json:"pushurl,omitempty"`
+
+	// If PushURL is not defined, will try to compose a SSH URL for push
+	// using the host, port and user provided. Macro "{email}" and "{login}"
+	// can be used in the user part.
+	Host string `json:"host,omitempty"`
+	Port int    `json:"port,omitempty"`
+	User string `json:"user,omitempty"`
+
+	// Proto type and version for the protocol, such as "gerrit", "agit", etc.
+	ProtoType    string `json:"type,omitempty"`
+	ProtoVersion int    `json:"version,omitempty"`
+
+	// ReviewRefPattern is used to compose the refname for the the specifc code review.
+	// Macro {id}, {patch}, {id:left:N}, {id:right:N} can be used in this pattern.
 	ReviewRefPattern string `json:"review_ref,omitempty"`
 
 	Expire int64 `json:"-"`
@@ -61,93 +73,13 @@ func (v SSHInfo) ToJSON() string {
 
 // GetReviewRef gets review ref from ReviewRefPattern.
 func (v SSHInfo) GetReviewRef(id, patch string) (string, error) {
-	var (
-		ret strings.Builder
-		err error
-	)
-
 	if v.ReviewRefPattern == "" {
 		return "", errors.New("empty review_ref in ssh_info")
 	}
-	p := []byte(v.ReviewRefPattern)
-	for {
-		var (
-			key, mod    string
-			value       []byte
-			width       int
-			left, right int
-			loc         int
-		)
-
-		left = bytes.IndexByte(p, '{')
-		if left == -1 {
-			ret.Write(p)
-			break
-		}
-		right = bytes.IndexByte(p, '}')
-		if right == -1 {
-			ret.Write(p)
-			break
-		}
-		if right < left {
-			ret.Write(p[:right+1])
-			p = p[right+1:]
-			continue
-		}
-		ret.Write(p[:left])
-		field := p[left+1 : right]
-		loc = bytes.IndexByte(field, ':')
-		key = string(field)
-		if loc > 0 {
-			key = string(field[:loc])
-			field = field[loc+1:]
-			loc = bytes.IndexByte(field, ':')
-			if loc > 0 {
-				mod = string(field[:loc])
-				width, err = strconv.Atoi(string(field[loc+1:]))
-				if err != nil {
-					ret.Write(p[left : right+1])
-					p = p[right+1:]
-					continue
-				}
-			}
-		}
-		if key == "id" {
-			value = []byte(id)
-		} else if key == "patch" {
-			value = []byte(patch)
-		} else {
-			ret.Write(p[left : right+1])
-			p = p[right+1:]
-			continue
-		}
-		if len(mod) > 0 {
-			if mod == "left" {
-				if width <= len(value) {
-					value = value[:width]
-				} else {
-					newValue := bytes.Repeat([]byte("0"), width-len(value))
-					newValue = append(newValue, value...)
-					value = newValue
-				}
-			} else if mod == "right" {
-				if width <= len(value) {
-					value = value[len(value)-width:]
-				} else {
-					newValue := bytes.Repeat([]byte("0"), width-len(value))
-					newValue = append(newValue, value...)
-					value = newValue
-				}
-			} else {
-				ret.Write(p[left : right+1])
-				p = p[right+1:]
-				continue
-			}
-		}
-		ret.Write(value)
-		p = p[right+1:]
-	}
-	return ret.String(), nil
+	return ReplaceMacros(v.ReviewRefPattern,
+		map[string]string{
+			"id":    id,
+			"patch": patch}), nil
 }
 
 // SSHInfoQuery wraps cache to accelerate query of ssh_info API.

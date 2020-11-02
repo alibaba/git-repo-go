@@ -72,7 +72,6 @@ func (v *Project) GetRemotePushNameURL(remote *Remote) (string, string) {
 // GetRemotePushURL returns URL for push.
 func (v *Project) GetRemotePushURL(remote *Remote) string {
 	var (
-		sshURL     string
 		defaultURL string
 	)
 
@@ -88,36 +87,35 @@ func (v *Project) GetRemotePushURL(remote *Remote) string {
 
 	if v.ManifestRemote != nil && v.ManifestRemote.PushURL != "" {
 		defaultURL = v.ManifestRemote.PushURL
-		if strings.HasSuffix(defaultURL, "/") == false {
-			defaultURL += "/"
-		}
-		defaultURL += v.Name + ".git"
-		return defaultURL
-	}
-
-	if sshInfo.Host != "" {
+	} else if sshInfo.PushURL != "" {
+		defaultURL = sshInfo.PushURL
+	} else if sshInfo.Host != "" {
 		login := sshInfo.User
-		if login == "<email>" {
-			login = helper.GetLoginFromEmail(v.UserEmail())
-		} else if login == "<login>" {
-			u, err := user.Current()
-			if err == nil {
-				login = u.Username
-			}
-		}
 		if login == "" {
 			login = "git"
 		}
-		sshURL = fmt.Sprintf("ssh://%s@%s", login, sshInfo.Host)
+		defaultURL = fmt.Sprintf("ssh://%s@%s", login, sshInfo.Host)
 		if sshInfo.Port > 0 && sshInfo.Port != 22 {
-			sshURL += ":" + strconv.Itoa(sshInfo.Port)
+			defaultURL += ":" + strconv.Itoa(sshInfo.Port)
 		}
-		sshURL += "/" + v.Name + ".git"
-		return sshURL
 	}
 
-	defaultURL = remote.PushURL
-	if defaultURL == "" {
+	if defaultURL != "" {
+		macros := make(map[string]string)
+		macros["email"] = helper.GetLoginFromEmail(v.UserEmail())
+		u, err := user.Current()
+		if err == nil {
+			macros["login"] = u.Username
+		}
+		defaultURL = helper.ReplaceMacros(defaultURL, macros)
+
+		if !strings.HasSuffix(defaultURL, "/") {
+			defaultURL += "/"
+		}
+		defaultURL += v.Name + ".git"
+	} else if remote.PushURL != "" {
+		defaultURL = remote.PushURL
+	} else {
 		defaultURL = remote.Fetch
 	}
 	return defaultURL

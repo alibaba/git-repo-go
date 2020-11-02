@@ -31,7 +31,7 @@ One manifest XML can include other XML files using "include" directive.
 
     <include name="other-manifest.xml"></include>
 
-And user defined manifest XML files (XML files in `.repo/local-manifests`
+And user defined manifest XML files (XML files in `.repo/local_manifests`
 directory) are also merged with repo manifest.
 
 The `Merge()` function of Manifest object helps to merge manifests.
