@@ -23,7 +23,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/alibaba/git-repo-go/common"
 	"github.com/alibaba/git-repo-go/config"
 	"github.com/alibaba/git-repo-go/editor"
 	"github.com/alibaba/git-repo-go/helper"
@@ -53,7 +52,7 @@ type uploadOptions struct {
 	Branch         string
 	BypassHooks    bool
 	Cc             []string
-	CodeReview     common.CodeReview
+	CodeReview     config.CodeReview
 	CurrentBranch  bool
 	Description    string
 	DestBranch     string
@@ -916,7 +915,7 @@ func (v *uploadCommand) UploadAndReport(branches []project.ReviewableBranch) err
 			}
 		}
 
-		o := common.UploadOptions{
+		o := config.UploadOptions{
 			AutoTopic:    v.O.AutoTopic,
 			CodeReview:   v.O.CodeReview,
 			Description:  v.O.Description,

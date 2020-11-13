@@ -1,4 +1,4 @@
-package common
+package config
 
 // UploadOptions is options for upload related methods.
 type UploadOptions struct {

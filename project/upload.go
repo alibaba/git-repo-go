@@ -6,7 +6,6 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/alibaba/git-repo-go/common"
 	"github.com/alibaba/git-repo-go/config"
 	"github.com/alibaba/git-repo-go/helper"
 	log "github.com/jiangxin/multi-log"
@@ -27,7 +26,7 @@ type ReviewableBranch struct {
 	RemoteTrack RemoteTrack
 	Uploaded    bool
 	Error       error
-	CodeReview  common.CodeReview // Push to update specific code review, only available for single repository mode.
+	CodeReview  config.CodeReview // Push to update specific code review, only available for single repository mode.
 	Remote      *Remote
 
 	isPublished int
@@ -124,7 +123,7 @@ func (v ReviewableBranch) Commits() []string {
 }
 
 // UploadForReview sends review for branch.
-func (v ReviewableBranch) UploadForReview(o *common.UploadOptions) error {
+func (v ReviewableBranch) UploadForReview(o *config.UploadOptions) error {
 	var err error
 
 	p := v.Project
@@ -309,7 +308,7 @@ func (v *Project) GetUploadableBranch(branch string, remote *Remote, remoteBranc
 }
 
 // GetUploadableBranchForChange returns branch which has commits ready for upload.
-func (v *Project) GetUploadableBranchForChange(branch string, remote *Remote, codeReview *common.CodeReview) *ReviewableBranch {
+func (v *Project) GetUploadableBranchForChange(branch string, remote *Remote, codeReview *config.CodeReview) *ReviewableBranch {
 	if branch == "" {
 		branch = v.GetHead()
 		if branch == "" {

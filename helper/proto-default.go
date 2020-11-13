@@ -17,7 +17,7 @@ package helper
 import (
 	"errors"
 
-	"github.com/alibaba/git-repo-go/common"
+	"github.com/alibaba/git-repo-go/config"
 )
 
 // DefaultProtoHelper implements helper for unknown remote service.
@@ -42,7 +42,7 @@ func (v DefaultProtoHelper) GetSSHInfo() *SSHInfo {
 }
 
 // GetGitPushCommand reads upload options and returns git push command.
-func (v DefaultProtoHelper) GetGitPushCommand(o *common.UploadOptions) (*GitPushCommand, error) {
+func (v DefaultProtoHelper) GetGitPushCommand(o *config.UploadOptions) (*GitPushCommand, error) {
 	return nil, errors.New("not implement")
 }
 

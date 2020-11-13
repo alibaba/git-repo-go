@@ -20,7 +20,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/alibaba/git-repo-go/common"
 	"github.com/alibaba/git-repo-go/config"
 	log "github.com/jiangxin/multi-log"
 )
@@ -52,7 +51,7 @@ func (v GerritProtoHelper) GetSSHInfo() *SSHInfo {
 }
 
 // GetGitPushCommand reads upload options and returns git push command.
-func (v GerritProtoHelper) GetGitPushCommand(o *common.UploadOptions) (*GitPushCommand, error) {
+func (v GerritProtoHelper) GetGitPushCommand(o *config.UploadOptions) (*GitPushCommand, error) {
 	if !o.CodeReview.Empty() {
 		return nil, fmt.Errorf("Change code review by ID is not allowed in Gerrit")
 	}

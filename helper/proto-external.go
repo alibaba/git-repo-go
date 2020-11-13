@@ -22,7 +22,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/alibaba/git-repo-go/common"
+	"github.com/alibaba/git-repo-go/config"
 )
 
 // ExternalProtoHelper implements helper for unknown remote service.
@@ -59,7 +59,7 @@ func (v *ExternalProtoHelper) Program() string {
 }
 
 // GetGitPushCommand reads upload options and returns git push command.
-func (v ExternalProtoHelper) GetGitPushCommand(o *common.UploadOptions) (*GitPushCommand, error) {
+func (v ExternalProtoHelper) GetGitPushCommand(o *config.UploadOptions) (*GitPushCommand, error) {
 	var (
 		input   []byte
 		output  []byte
