@@ -15,7 +15,7 @@
 package cmd
 
 import (
-	"github.com/alibaba/git-repo-go/project"
+	"github.com/alibaba/git-repo-go/common"
 	log "github.com/jiangxin/multi-log"
 	"github.com/spf13/cobra"
 )
@@ -81,7 +81,7 @@ func (v startCommand) Execute(args []string) error {
 
 	for _, p := range allProjects {
 		merge := ""
-		if p.Revision == "" || project.IsImmutable(p.Revision) {
+		if p.Revision == "" || common.IsImmutable(p.Revision) {
 			if p.DestBranch != "" {
 				merge = p.DestBranch
 			} else {
@@ -91,7 +91,7 @@ func (v startCommand) Execute(args []string) error {
 					merge = rws.Manifest.Default.Revision
 				}
 			}
-			if merge != "" && project.IsImmutable(merge) {
+			if merge != "" && common.IsImmutable(merge) {
 				merge = ""
 			}
 		}

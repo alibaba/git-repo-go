@@ -23,6 +23,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/alibaba/git-repo-go/common"
 	"github.com/alibaba/git-repo-go/config"
 	"github.com/alibaba/git-repo-go/editor"
 	"github.com/alibaba/git-repo-go/helper"
@@ -1018,7 +1019,7 @@ func (v uploadCommand) Execute(args []string) error {
 					head = config.RefsHeads + head
 				}
 			}
-			if !project.IsHead(head) {
+			if !common.IsHead(head) {
 				log.Debugf("detached at %s", head)
 				return fmt.Errorf("upload failed: not in a branch\n\n" +
 					"Please run command \"git checkout -b <branch>\" to create a new branch.")

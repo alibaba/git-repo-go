@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/alibaba/git-repo-go/cap"
+	"github.com/alibaba/git-repo-go/common"
 	"github.com/alibaba/git-repo-go/config"
 	"github.com/alibaba/git-repo-go/file"
 	"github.com/alibaba/git-repo-go/helper"
@@ -186,7 +187,7 @@ func (v Project) SyncLocalHalf(o *CheckoutOptions) error {
 	head := v.GetHead()
 	headid, err := v.ResolveRevision(head)
 	if err == nil && headid != "" {
-		if IsHead(head) {
+		if common.IsHead(head) {
 			branch = strings.TrimPrefix(head, config.RefsHeads)
 		}
 	}

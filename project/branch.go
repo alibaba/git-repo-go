@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/alibaba/git-repo-go/common"
 	"github.com/alibaba/git-repo-go/config"
 	log "github.com/jiangxin/multi-log"
 	"gopkg.in/src-d/go-git.v4/plumbing"
@@ -104,7 +105,7 @@ func (v Repository) RemoteMatchingBranch(remote, branch string) string {
 func (v Repository) DeleteBranch(branch string) error {
 	// TODO: go-git fail to delete a branch
 	// TODO: return v.Raw().DeleteBranch(branch)
-	if IsHead(branch) {
+	if common.IsHead(branch) {
 		branch = strings.TrimPrefix(branch, config.RefsHeads)
 	}
 	cmdArgs := []string{
@@ -131,7 +132,7 @@ func (v Repository) UpdateRef(refname, base, reason string) error {
 
 	raw := v.Raw()
 
-	if IsSha(base) {
+	if common.IsSha(base) {
 		ref = plumbing.NewHashReference(plumbing.ReferenceName(refname),
 			plumbing.NewHash(base))
 	} else {
@@ -153,13 +154,13 @@ func (v Repository) UpdateRef(refname, base, reason string) error {
 
 // RemoteTracking returns name of current remote tracking branch.
 func (v Project) RemoteTracking(rev string) string {
-	if rev == "" || IsSha(rev) {
+	if rev == "" || common.IsSha(rev) {
 		return ""
 	}
-	if IsHead(rev) {
+	if common.IsHead(rev) {
 		rev = strings.TrimPrefix(rev, config.RefsHeads)
 	}
-	if IsRef(rev) {
+	if common.IsRef(rev) {
 		return ""
 	}
 	return v.Config().Get("branch." + rev + ".merge")
@@ -197,8 +198,8 @@ func (v Project) ResolveRemoteTracking(rev string) (string, error) {
 	if rev == "" {
 		log.Errorf("empty Revision for project '%s'", v.Name)
 	}
-	if !IsSha(rev) {
-		if IsHead(rev) {
+	if !common.IsSha(rev) {
+		if common.IsHead(rev) {
 			rev = strings.TrimPrefix(rev, config.RefsHeads)
 		}
 		if !strings.HasPrefix(rev, config.Refs) {
@@ -222,7 +223,7 @@ func (v Project) StartBranch(branch, track string, force bool) error {
 	if track == "" {
 		track = v.Revision
 	}
-	if IsHead(branch) {
+	if common.IsHead(branch) {
 		branch = strings.TrimPrefix(branch, config.RefsHeads)
 	}
 
@@ -278,15 +279,15 @@ func (v Project) StartBranch(branch, track string, force bool) error {
 func (v Project) UpdateBranchTracking(branch, remote, track string) {
 	cfg := v.Config()
 	if track == "" ||
-		IsSha(track) ||
-		(IsRef(track) && !IsHead(track)) {
+		common.IsSha(track) ||
+		(common.IsRef(track) && !common.IsHead(track)) {
 		cfg.Unset("branch." + branch + ".merge")
 		cfg.Unset("branch." + branch + ".remote")
 		v.SaveConfig(cfg)
 		return
 	}
 
-	if !IsHead(track) {
+	if !common.IsHead(track) {
 		track = config.RefsHeads + track
 	}
 

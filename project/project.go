@@ -10,6 +10,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/alibaba/git-repo-go/common"
 	"github.com/alibaba/git-repo-go/config"
 	"github.com/alibaba/git-repo-go/manifest"
 	"github.com/alibaba/git-repo-go/path"
@@ -352,7 +353,7 @@ func (v *Project) GetRemoteURL() (string, error) {
 		return "", fmt.Errorf("project '%s' has no remote '%s'", v.Name, v.RemoteName)
 	}
 
-	u, err := urlJoin(v.Settings.ManifestURL, v.ManifestRemote.Fetch, v.Name+".git")
+	u, err := common.URLJoin(v.Settings.ManifestURL, v.ManifestRemote.Fetch, v.Name+".git")
 	if err != nil {
 		return "", fmt.Errorf("fail to remote url for '%s': %s", v.Name, err)
 	}
