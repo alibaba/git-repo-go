@@ -65,7 +65,7 @@ test_expect_success "check tracking branch" '
 		## projects/app1
 		   my/topic1 => refs/heads/Maint
 		## projects/app1/module1
-		   my/topic1 => 
+		   my/topic1 => refs/heads/Maint
 		## projects/app2
 		   my/topic1 => refs/heads/Maint
 		## drivers/driver-1

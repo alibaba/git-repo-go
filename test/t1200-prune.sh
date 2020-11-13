@@ -79,6 +79,18 @@ test_expect_success "create branches and dirty worktree" '
 	)
 '
 
+# New commit:
+#
+#  * drivers/driver-1: jx/topic2 (1)
+#  * drivers/driver-2: jx/topic2 (2)
+#  * app1/module1    : jx/topic2 (3) # fixed revision, but with tracking branch
+#  * app1/module1    : jx/topic4 (3) # fixed revision, but with tracking branch
+#
+# Dirty worktree:
+#
+#  * drivers/driver-1: README.md (M)
+#  * drivers/driver-2: (Detached) new-commit, and README.md (M)
+#
 test_expect_success "git-repo prune all" '
 	(
 		cd work &&
@@ -96,7 +108,6 @@ test_expect_success "git-repo prune all" '
 	
 	jx/topic2                 | main                  (was 4d13a6c)
 	                          | projects/app1         (was 2fdfd9b)
-	                          | projects/app1/module1 (was f556e17)
 	                          | projects/app2         (was 98dc74a)
 	
 	jx/topic3                 | drivers/driver-1      (was faa6f5c)
@@ -109,7 +120,6 @@ test_expect_success "git-repo prune all" '
 	jx/topic4                 | drivers/driver-2      (was df3d4c6)
 	                          | main                  (was 4d13a6c)
 	                          | projects/app1         (was 2fdfd9b)
-	                          | projects/app1/module1 (was 3eabae6)
 	                          | projects/app2         (was 98dc74a)
 	
 	Pending branches (which have unmerged commits, leave it as is)
@@ -120,6 +130,10 @@ test_expect_success "git-repo prune all" '
 	
 	Project drivers/driver-2/
 	  jx/topic2 ( 2 commits, Thu Apr 7 15:15:13 -0700 2005)
+	
+	Project projects/app1/module1/
+	  jx/topic2 ( 3 commits, Thu Apr 7 15:16:13 -0700 2005)
+	* jx/topic4 ( 3 commits, Thu Apr 7 15:16:13 -0700 2005)
 	EOF
 
 	test_cmp expect actual
