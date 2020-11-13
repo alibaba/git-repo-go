@@ -135,7 +135,8 @@ func NewManifestProject(topDir, mURL string) *ManifestProject {
 			&RepoSettings{
 				TopDir:      topDir,
 				ManifestURL: mURL,
-			})),
+			},
+			nil)),
 	}
 	track := p.TrackBranch("")
 	if track != "" {

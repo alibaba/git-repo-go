@@ -402,7 +402,7 @@ func (v Project) UserEmail() string {
 }
 
 // NewProject returns a project: project worktree with a bared repo and a seperate repository.
-func NewProject(mp *manifest.Project, s *RepoSettings) *Project {
+func NewProject(mp *manifest.Project, s *RepoSettings, m *manifest.Manifest) *Project {
 	var (
 		workDir       string
 		dotGit        string
@@ -456,6 +456,31 @@ func NewProject(mp *manifest.Project, s *RepoSettings) *Project {
 		Remotes:   NewRemoteMap(),
 	}
 
+	if m != nil {
+		if repo.RemoteName == "" {
+			repo.RemoteName = m.Default.RemoteName
+		}
+		if repo.Revision == "" {
+			if m.Default.Revision != "" {
+				repo.Revision = m.Default.Revision
+			}
+		}
+		if repo.DestBranch == "" {
+			if m.Default.DestBranch != "" {
+				repo.DestBranch = m.Default.DestBranch
+			}
+		}
+		if repo.Upstream == "" {
+			if m.Default.Upstream != "" {
+				repo.Upstream = m.Default.DestBranch
+			}
+		}
+		if (repo.Revision == "" || common.IsImmutable(repo.Revision)) &&
+			!common.IsImmutable(m.Default.Revision) {
+			repo.ManifestDefaultRevision = m.Default.Revision
+		}
+	}
+
 	p := Project{
 		Repository: repo,
 		WorkDir:    workDir,
@@ -471,7 +496,7 @@ func NewProject(mp *manifest.Project, s *RepoSettings) *Project {
 }
 
 // NewMirrorProject returns a mirror project.
-func NewMirrorProject(mp *manifest.Project, s *RepoSettings) *Project {
+func NewMirrorProject(mp *manifest.Project, s *RepoSettings, m *manifest.Manifest) *Project {
 	var (
 		gitDir string
 	)
@@ -495,6 +520,30 @@ func NewMirrorProject(mp *manifest.Project, s *RepoSettings) *Project {
 		IsBare:    true,
 		Settings:  s,
 		Reference: referencePath(mp, s),
+	}
+
+	if m != nil {
+		if repo.RemoteName == "" {
+			repo.RemoteName = m.Default.RemoteName
+		}
+		if repo.Revision == "" {
+			if m.Default.Revision != "" {
+				repo.Revision = m.Default.Revision
+			}
+		}
+		if repo.DestBranch == "" {
+			if m.Default.DestBranch != "" {
+				repo.DestBranch = m.Default.DestBranch
+			}
+		}
+		if repo.Upstream == "" {
+			if m.Default.Upstream != "" {
+				repo.Upstream = m.Default.DestBranch
+			}
+		}
+		if repo.Revision == "" || common.IsImmutable(repo.Revision) {
+			repo.ManifestDefaultRevision = m.Default.Revision
+		}
 	}
 
 	p := Project{

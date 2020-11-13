@@ -206,13 +206,13 @@ func (v *RepoWorkSpace) loadProjects(manifestURL string) error {
 
 		for _, mp := range allProjects {
 			if s.Mirror {
-				p = project.NewMirrorProject(&mp, v.ManifestProject.Settings)
+				p = project.NewMirrorProject(&mp, v.ManifestProject.Settings, v.Manifest)
 				// Only save one of projects with the same name
 				if _, ok := v.projectByName[p.Name]; ok {
 					continue
 				}
 			} else {
-				p = project.NewProject(&mp, v.ManifestProject.Settings)
+				p = project.NewProject(&mp, v.ManifestProject.Settings, v.Manifest)
 			}
 			v.Projects = append(v.Projects, p)
 			if _, ok := v.projectByName[p.Name]; !ok {

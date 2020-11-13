@@ -30,6 +30,9 @@ type Repository struct {
 	GitDir        string // Project's bare repository inside .repo
 	ObjectsGitDir string // Several projects may share the same repository
 
+	// If project.Revision is a tag or sha, save manifest.DefaultRevision here
+	ManifestDefaultRevision string
+
 	IsBare    bool
 	RemoteURL string
 	Remotes   *RemoteMap

@@ -39,10 +39,11 @@ func TestProjectGitInit(t *testing.T) {
 		Name:  "origin",
 		Fetch: "..",
 	}
-	p := NewProject(&xmlProject, &RepoSettings{
-		TopDir:      workdir,
-		ManifestURL: mURL,
-	})
+	p := NewProject(&xmlProject,
+		&RepoSettings{
+			TopDir:      workdir,
+			ManifestURL: mURL,
+		}, nil)
 	u, err := p.GetRemoteURL()
 	assert.Nil(err)
 	assert.Equal("https://github.com/my/foo.git", u)
@@ -99,10 +100,11 @@ func TestProjectMatchGroups(t *testing.T) {
 		Name:  "origin",
 		Fetch: "..",
 	}
-	p := NewProject(&xmlProject, &RepoSettings{
-		TopDir:      workdir,
-		ManifestURL: mURL,
-	})
+	p := NewProject(&xmlProject,
+		&RepoSettings{
+			TopDir:      workdir,
+			ManifestURL: mURL,
+		}, nil)
 
 	p.Groups = ""
 	assert.True(p.MatchGroups(""))
