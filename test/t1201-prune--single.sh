@@ -43,17 +43,17 @@ test_expect_success "git-repo prune all" '
 	cat >expect<<-EOF &&
 	Pruned branches (already merged)
 	------------------------------------------------------------------------------
-	jx/topic1                 | . (was 152dee6)
+	jx/topic1                 | . (was 4d13a6c)
 	
-	jx/topic4                 | . (was 152dee6)
+	jx/topic4                 | . (was 4d13a6c)
 	
-	master                    | . (was 152dee6)
+	master                    | . (was 4d13a6c)
 	
 	Pending branches (which have unmerged commits, leave it as is)
 	------------------------------------------------------------------------------
 	Project ./
-	  jx/topic2 ( 1 commit, Thu Apr 7 15:13:13 -0700 2005)
-	  jx/topic3 ( 2 commits, Thu Apr 7 15:15:13 -0700 2005)
+	  jx/topic2 ( 1 commit, Thu Apr 7 15:14:13 -0700 2005)
+	  jx/topic3 ( 2 commits, Thu Apr 7 15:16:13 -0700 2005)
 	* jx/topic5
 	EOF
 	test_cmp expect actual

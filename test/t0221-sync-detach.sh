@@ -191,8 +191,8 @@ test_expect_success "edit and new commit" '
 			git log --pretty="%h %s" -1
 		) >actual &&
 		cat >expect <<-EOF &&
-		9419d63 initial
-		7cee347 app2: hack
+		fcf8534 initial
+		3210c0f app2: hack
 		EOF
 		test_cmp expect actual &&
 		(
@@ -269,8 +269,8 @@ test_expect_success "new commit in app2" '
 			git log --pretty="%h %s" -1
 		) >actual &&
 		cat >expect <<-EOF &&
-		9419d63 initial
-		e2a965b app2: hack2
+		fcf8534 initial
+		d59c7c9 app2: hack2
 		EOF
 		test_cmp expect actual &&
 		(

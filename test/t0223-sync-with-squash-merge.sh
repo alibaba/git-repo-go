@@ -64,9 +64,9 @@ test_expect_success "sync network-only, and show commit log" '
 		git log --oneline -3
 	) >actual &&
 	cat >expect <<-EOF &&
-	08363a8 app1: add topic3
-	6f82694 app1: add topic1
-	9590ccd Version 1.0.0
+	b840c85 app1: add topic3
+	d403463 app1: add topic1
+	c8e033e Version 1.0.0
 	EOF
 	test_cmp expect actual &&
 	(
@@ -74,8 +74,8 @@ test_expect_success "sync network-only, and show commit log" '
 		git log --oneline -2 aone/Maint
 	) >actual &&
 	cat >expect <<-EOF &&
-	ec78a0f app1: squash topic1 & topic2
-	9590ccd Version 1.0.0
+	c1dc349 app1: squash topic1 & topic2
+	c8e033e Version 1.0.0
 	EOF
 	test_cmp expect actual
 '
@@ -94,9 +94,9 @@ test_expect_success "rebased after sync" '
 		git log --oneline -3
 	) >actual &&
 	cat >expect <<-EOF &&
-	2a0661e app1: add topic3
-	ec78a0f app1: squash topic1 & topic2
-	9590ccd Version 1.0.0
+	4815294 app1: add topic3
+	c1dc349 app1: squash topic1 & topic2
+	c8e033e Version 1.0.0
 	EOF
 	test_cmp expect actual
 '

@@ -167,9 +167,9 @@ test_expect_success "local commit rebased" '
 		git log --oneline
 	) >actual &&
 	cat >expect <<-EOF &&
-	6edd9ab local hack
-	a360f94 remote hack
-	daa9359 initial
+	4c86713 local hack
+	c102292 remote hack
+	fed98db initial
 	EOF
 	test_cmp expect actual
 '
