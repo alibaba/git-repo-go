@@ -1,6 +1,6 @@
 #!/bin/sh
 
-REPO_TEST_REPOSITORIES_VERSION=12
+REPO_TEST_REPOSITORIES_VERSION=13
 
 # Create test repositories in .repositories
 REPO_TEST_REPOSITORIES="${SHARNESS_TEST_SRCDIR}/test-repositories"
@@ -149,8 +149,18 @@ test_create_repository () {
 	git commit --amend -m "New topic" &&
 	git update-ref refs/merge-requests/12345/head HEAD &&
 
+	# v1.0.1
+	git checkout v1.0.0 &&
+	echo v1.0.1 >VERSION &&
+	git add -u &&
+	git commit -m "Version 1.0.1" &&
+	git tag -m v1.0.1 v1.0.1 &&
+
 	# branch: Maint
 	git checkout -b Maint v1.0.0 &&
+	echo v1.0-dev >VERSION &&
+	git add -u &&
+	git commit -m "Version 1.0-dev" &&
 
 	git push origin +refs/*:refs/* &&
 	cd "$REPO_TEST_REPOSITORIES" &&

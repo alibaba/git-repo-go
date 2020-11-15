@@ -120,7 +120,7 @@ test_expect_success "projects after sync" '
 	(
 		cd work &&
 		cat >expect<<-EOF &&
-		driver-1: v1.0.0
+		driver-1: v1.0-dev
 		app-1: v2.0.0-dev
 		app-1.module1: v1.0.0
 		app-2: v2.0.0-dev

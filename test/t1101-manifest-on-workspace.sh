@@ -119,8 +119,8 @@ test_expect_success "git repo manifest: freeze manifest" '
 	  <project name="project1" path="projects/app1" revision="2fdfd9b9ff3bb556a74363bd0dacec0d29a0cc2a" groups="app" upstream="master"></project>
 	  <project name="project1/module1" path="projects/app1/module1" revision="8fc882db0d6eaa24013f4ee3772e6765eb920d21" groups="app" upstream="refs/tags/v1.0.0"></project>
 	  <project name="project2" path="projects/app2" revision="98dc74a3fac99714338633327dbab62b5189375b" groups="app" upstream="master"></project>
-	  <project name="drivers/driver1" path="drivers/driver-1" remote="driver" revision="4d0cd911e56ac0d27b065eda1b5137c82711a111" groups="drivers" upstream="Maint"></project>
-	  <project name="drivers/driver2" path="drivers/driver-2" remote="driver" revision="f5ad60cba9f0f49469880495c3dd13d0b3bf73c5" groups="notdefault,drivers" upstream="Maint"></project>
+	  <project name="drivers/driver1" path="drivers/driver-1" remote="driver" revision="faa6f5cedc80d51cb57505376ef99878b66cd020" groups="drivers" upstream="Maint"></project>
+	  <project name="drivers/driver2" path="drivers/driver-2" remote="driver" revision="df3d4c64f8d3be5365e1c778ba77976bda701c32" groups="notdefault,drivers" upstream="Maint"></project>
 	</manifest>
 	EOF
 	test_cmp expect actual
@@ -143,8 +143,8 @@ test_expect_success "git repo manifest: freeze manifest --suppress-upstream-revi
 	  <project name="project1" path="projects/app1" revision="2fdfd9b9ff3bb556a74363bd0dacec0d29a0cc2a" groups="app"></project>
 	  <project name="project1/module1" path="projects/app1/module1" revision="8fc882db0d6eaa24013f4ee3772e6765eb920d21" groups="app"></project>
 	  <project name="project2" path="projects/app2" revision="98dc74a3fac99714338633327dbab62b5189375b" groups="app"></project>
-	  <project name="drivers/driver1" path="drivers/driver-1" remote="driver" revision="4d0cd911e56ac0d27b065eda1b5137c82711a111" groups="drivers"></project>
-	  <project name="drivers/driver2" path="drivers/driver-2" remote="driver" revision="f5ad60cba9f0f49469880495c3dd13d0b3bf73c5" groups="notdefault,drivers"></project>
+	  <project name="drivers/driver1" path="drivers/driver-1" remote="driver" revision="faa6f5cedc80d51cb57505376ef99878b66cd020" groups="drivers"></project>
+	  <project name="drivers/driver2" path="drivers/driver-2" remote="driver" revision="df3d4c64f8d3be5365e1c778ba77976bda701c32" groups="notdefault,drivers"></project>
 	</manifest>
 	EOF
 	test_cmp expect actual

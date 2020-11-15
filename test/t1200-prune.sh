@@ -87,8 +87,8 @@ test_expect_success "git-repo prune all" '
 	cat >expect<<-EOF &&
 	Pruned branches (already merged)
 	------------------------------------------------------------------------------
-	jx/topic1                 | drivers/driver-1      (was 4d0cd91)
-	                          | drivers/driver-2      (was f5ad60c)
+	jx/topic1                 | drivers/driver-1      (was faa6f5c)
+	                          | drivers/driver-2      (was df3d4c6)
 	                          | main                  (was 4d13a6c)
 	                          | projects/app1         (was 2fdfd9b)
 	                          | projects/app1/module1 (was 8fc882d)
@@ -99,14 +99,14 @@ test_expect_success "git-repo prune all" '
 	                          | projects/app1/module1 (was f556e17)
 	                          | projects/app2         (was 98dc74a)
 	
-	jx/topic3                 | drivers/driver-1      (was 4d0cd91)
-	                          | drivers/driver-2      (was f5ad60c)
+	jx/topic3                 | drivers/driver-1      (was faa6f5c)
+	                          | drivers/driver-2      (was df3d4c6)
 	                          | main                  (was 4d13a6c)
 	                          | projects/app1         (was 2fdfd9b)
 	                          | projects/app1/module1 (was 8fc882d)
 	                          | projects/app2         (was 98dc74a)
 	
-	jx/topic4                 | drivers/driver-2      (was f5ad60c)
+	jx/topic4                 | drivers/driver-2      (was df3d4c6)
 	                          | main                  (was 4d13a6c)
 	                          | projects/app1         (was 2fdfd9b)
 	                          | projects/app1/module1 (was 3eabae6)

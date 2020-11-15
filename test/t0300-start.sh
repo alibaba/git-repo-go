@@ -95,7 +95,7 @@ test_expect_success "check current commit of app1" '
 	(
 		cd work &&
 		cat >expect<<-EOF &&
-		my/topic2> Version 1.0.0
+		my/topic2> Version 1.0-dev
 		EOF
 		(
 			printf "$(cd projects/app1 && git_current_branch)> " &&

@@ -137,7 +137,7 @@ test_expect_success "upload error: no remote URL" '
 			cd Maint &&
 			git checkout -q my/topic-test &&
 			git config branch.my/topic-test.remote origin &&
-			git config branch.my/topic-test.merge refs/heads/master &&
+			git config branch.my/topic-test.merge refs/heads/Maint &&
 			git config --unset remote.origin.url
 			test_must_fail git peer-review \
 				--no-cache
@@ -211,14 +211,14 @@ test_expect_success "will upload one commit for review (http/dryrun/draft/no-edi
 	(
 		cd work &&
 		cat >expect<<-EOF &&
-		Upload project (jiangxin/main) to remote branch master (draft):
+		Upload project (jiangxin/main) to remote branch Maint (draft):
 		  branch my/topic-test ( 1 commit(s)):
 		         <hash>
 		to https://example.com (y/N)? Yes
-		NOTE: will execute command: git push ssh://git@ssh.example.com/jiangxin/main.git refs/heads/my/topic-test:refs/drafts/master/my/topic-test
+		NOTE: will execute command: git push ssh://git@ssh.example.com/jiangxin/main.git refs/heads/my/topic-test:refs/drafts/Maint/my/topic-test
 		NOTE: with extra environment: AGIT_FLOW=git-repo/n.n.n.n
 		NOTE: with extra environment: GIT_SSH_COMMAND=ssh -o SendEnv=AGIT_FLOW
-		NOTE: will update-ref refs/published/my/topic-test on refs/heads/my/topic-test, reason: review from my/topic-test to master on https://example.com
+		NOTE: will update-ref refs/published/my/topic-test on refs/heads/my/topic-test, reason: review from my/topic-test to Maint on https://example.com
 
 		----------------------------------------------------------------------
 		EOF
@@ -286,13 +286,13 @@ test_expect_success "will upload one commit for review (http/dryrun/draft/with e
 
 		#
 		# project ./:
-		   branch my/topic-test ( 1 commit(s)) to remote branch master:
+		   branch my/topic-test ( 1 commit(s)) to remote branch Maint:
 		#         <hash>
 
-		NOTE: will execute command: git push ssh://git@ssh.example.com/jiangxin/main.git refs/heads/my/topic-test:refs/drafts/master/my/topic-test
+		NOTE: will execute command: git push ssh://git@ssh.example.com/jiangxin/main.git refs/heads/my/topic-test:refs/drafts/Maint/my/topic-test
 		NOTE: with extra environment: AGIT_FLOW=git-repo/n.n.n.n
 		NOTE: with extra environment: GIT_SSH_COMMAND=ssh -o SendEnv=AGIT_FLOW
-		NOTE: will update-ref refs/published/my/topic-test on refs/heads/my/topic-test, reason: review from my/topic-test to master on https://example.com
+		NOTE: will update-ref refs/published/my/topic-test on refs/heads/my/topic-test, reason: review from my/topic-test to Maint on https://example.com
 
 		----------------------------------------------------------------------
 		EOF
@@ -316,24 +316,24 @@ test_expect_success "will upload one commit for review (http/dryrun)" '
 	(
 		cd work &&
 		cat >expect<<-EOF &&
-		Upload project (jiangxin/main) to remote branch master:
+		Upload project (jiangxin/main) to remote branch Maint:
 		  branch my/topic-test ( 1 commit(s)):
 		         <hash>
 		to https://example.com (y/N)? Yes
 		EOF
 		if git-repo test version --git lt 2.10.0; then
 			cat >>expect<<-EOF
-			NOTE: will execute command: git push ssh://git@ssh.example.com/jiangxin/main.git refs/heads/my/topic-test:refs/for/master/my/topic-test%r=user1,r=user2,r=user3,r=user4,cc=user5,cc=user6,cc=user7,notify=NONE,private,wip
+			NOTE: will execute command: git push ssh://git@ssh.example.com/jiangxin/main.git refs/heads/my/topic-test:refs/for/Maint/my/topic-test%r=user1,r=user2,r=user3,r=user4,cc=user5,cc=user6,cc=user7,notify=NONE,private,wip
 			EOF
 		else
 			cat >>expect<<-EOF
-			NOTE: will execute command: git push -o title=review example -o description={base64}6K+m57uG6K+05piOXG4uLi5cbg== -o reviewers=user1,user2,user3,user4 -o cc=user5,user6,user7 -o notify=no -o private=yes -o wip=yes ssh://git@ssh.example.com/jiangxin/main.git refs/heads/my/topic-test:refs/for/master/my/topic-test
+			NOTE: will execute command: git push -o title=review example -o description={base64}6K+m57uG6K+05piOXG4uLi5cbg== -o reviewers=user1,user2,user3,user4 -o cc=user5,user6,user7 -o notify=no -o private=yes -o wip=yes ssh://git@ssh.example.com/jiangxin/main.git refs/heads/my/topic-test:refs/for/Maint/my/topic-test
 			EOF
 		fi &&
 		cat >>expect<<-EOF &&
 		NOTE: with extra environment: AGIT_FLOW=git-repo/n.n.n.n
 		NOTE: with extra environment: GIT_SSH_COMMAND=ssh -o SendEnv=AGIT_FLOW
-		NOTE: will update-ref refs/published/my/topic-test on refs/heads/my/topic-test, reason: review from my/topic-test to master on https://example.com
+		NOTE: will update-ref refs/published/my/topic-test on refs/heads/my/topic-test, reason: review from my/topic-test to Maint on https://example.com
 
 		----------------------------------------------------------------------
 		EOF
@@ -366,11 +366,11 @@ test_expect_success "will upload one commit for review (http/mock-git-push/not-d
 	(
 		cd work &&
 		cat >expect<<-EOF &&
-		Upload project (jiangxin/main) to remote branch master:
+		Upload project (jiangxin/main) to remote branch Maint:
 		  branch my/topic-test ( 1 commit(s)):
 		         <hash>
 		to https://example.com (y/N)? Yes
-		NOTE: will execute command: git push ssh://git@ssh.example.com:10022/jiangxin/main.git refs/heads/my/topic-test:refs/for/master/my/topic-test
+		NOTE: will execute command: git push ssh://git@ssh.example.com:10022/jiangxin/main.git refs/heads/my/topic-test:refs/for/Maint/my/topic-test
 		NOTE: with extra environment: AGIT_FLOW=git-repo/n.n.n.n
 		NOTE: with extra environment: GIT_SSH_COMMAND=ssh -o SendEnv=AGIT_FLOW
 
@@ -471,13 +471,13 @@ test_expect_success "upload to a ssh review url (no ssh_info cache)" '
 		
 		#
 		# project ./:
-		   branch my/topic-test ( 1 commit(s)) to remote branch master:
+		   branch my/topic-test ( 1 commit(s)) to remote branch Maint:
 		#         <hash>
 		
-		NOTE: will execute command: git push -o oldoid=<hash> ssh://git@ssh.example.com/jiangxin/main.git refs/heads/my/topic-test:refs/drafts/master/my/topic-test
+		NOTE: will execute command: git push -o oldoid=<hash> ssh://git@ssh.example.com/jiangxin/main.git refs/heads/my/topic-test:refs/drafts/Maint/my/topic-test
 		NOTE: with extra environment: AGIT_FLOW=git-repo/n.n.n.n
 		NOTE: with extra environment: GIT_SSH_COMMAND=ssh -o SendEnv=AGIT_FLOW
-		NOTE: will update-ref refs/published/my/topic-test on refs/heads/my/topic-test, reason: review from my/topic-test to master on ssh://git@example.com:10022
+		NOTE: will update-ref refs/published/my/topic-test on refs/heads/my/topic-test, reason: review from my/topic-test to Maint on ssh://git@example.com:10022
 
 		----------------------------------------------------------------------
 		EOF
@@ -512,14 +512,14 @@ test_expect_success "upload to gerrit ssh review url (assume-no, dryrun, use ssh
 		cd work &&
 		cat >expect<<-EOF &&
 		NOTE: mock executing: ssh -p 29418 git@example.com ssh_info
-		Upload project (jiangxin/main) to remote branch master:
+		Upload project (jiangxin/main) to remote branch Maint:
 		  branch my/topic-test ( 1 commit(s)):
 		         <hash>
 		to ssh://git@example.com:29418 (y/N)? Yes
-		NOTE: will execute command: git push -o oldoid=<hash> ssh://git@ssh.example.com/jiangxin/main.git refs/heads/my/topic-test:refs/for/master/my/topic-test
+		NOTE: will execute command: git push -o oldoid=<hash> ssh://git@ssh.example.com/jiangxin/main.git refs/heads/my/topic-test:refs/for/Maint/my/topic-test
 		NOTE: with extra environment: AGIT_FLOW=git-repo/n.n.n.n
 		NOTE: with extra environment: GIT_SSH_COMMAND=ssh -o SendEnv=AGIT_FLOW
-		NOTE: will update-ref refs/published/my/topic-test on refs/heads/my/topic-test, reason: review from my/topic-test to master on ssh://git@example.com:29418
+		NOTE: will update-ref refs/published/my/topic-test on refs/heads/my/topic-test, reason: review from my/topic-test to Maint on ssh://git@example.com:29418
 
 		----------------------------------------------------------------------
 		EOF
@@ -547,12 +547,12 @@ test_expect_success "upload to gerrit ssh review url (assume-no, dryrun, no-cach
 		cd work &&
 		cat >expect<<-EOF &&
 		NOTE: mock executing: ssh -p 29418 git@example.com ssh_info
-		Upload project (jiangxin/main) to remote branch master:
+		Upload project (jiangxin/main) to remote branch Maint:
 		  branch my/topic-test ( 1 commit(s)):
 		         <hash>
 		to ssh://git@example.com:29418 (y/N)? Yes
-		NOTE: will execute command: git push --receive-pack=gerrit receive-pack ssh://committer@ssh.example.com:29418/jiangxin/main.git refs/heads/my/topic-test:refs/for/master
-		NOTE: will update-ref refs/published/my/topic-test on refs/heads/my/topic-test, reason: review from my/topic-test to master on ssh://git@example.com:29418
+		NOTE: will execute command: git push --receive-pack=gerrit receive-pack ssh://committer@ssh.example.com:29418/jiangxin/main.git refs/heads/my/topic-test:refs/for/Maint
+		NOTE: will update-ref refs/published/my/topic-test on refs/heads/my/topic-test, reason: review from my/topic-test to Maint on ssh://git@example.com:29418
 
 		----------------------------------------------------------------------
 		EOF
@@ -580,12 +580,12 @@ test_expect_success "upload to gerrit ssh review url (use ssh_info cache)" '
 	(
 		cd work &&
 		cat >expect<<-EOF &&
-		Upload project (jiangxin/main) to remote branch master:
+		Upload project (jiangxin/main) to remote branch Maint:
 		  branch my/topic-test ( 1 commit(s)):
 		         <hash>
 		to ssh://git@example.com:29418 (y/N)? Yes
-		NOTE: will execute command: git push --receive-pack=gerrit receive-pack ssh://committer@ssh.example.com:29418/jiangxin/main.git refs/heads/my/topic-test:refs/for/master
-		NOTE: will update-ref refs/published/my/topic-test on refs/heads/my/topic-test, reason: review from my/topic-test to master on ssh://git@example.com:29418
+		NOTE: will execute command: git push --receive-pack=gerrit receive-pack ssh://committer@ssh.example.com:29418/jiangxin/main.git refs/heads/my/topic-test:refs/for/Maint
+		NOTE: will update-ref refs/published/my/topic-test on refs/heads/my/topic-test, reason: review from my/topic-test to Maint on ssh://git@example.com:29418
 
 		----------------------------------------------------------------------
 		EOF
@@ -613,14 +613,14 @@ test_expect_success "upload to a ssh review using rcp style URL" '
 		cd work &&
 		cat >expect<<-EOF &&
 		NOTE: mock executing: ssh git@example.com ssh_info
-		Upload project (jiangxin/main) to remote branch master:
+		Upload project (jiangxin/main) to remote branch Maint:
 		  branch my/topic-test ( 1 commit(s)):
 		         <hash>
 		to ssh://git@example.com (y/N)? Yes
-		NOTE: will execute command: git push -o oldoid=<hash> ssh://git@ssh.example.com/jiangxin/main.git refs/heads/my/topic-test:refs/for/master/my/topic-test
+		NOTE: will execute command: git push -o oldoid=<hash> ssh://git@ssh.example.com/jiangxin/main.git refs/heads/my/topic-test:refs/for/Maint/my/topic-test
 		NOTE: with extra environment: AGIT_FLOW=git-repo/n.n.n.n
 		NOTE: with extra environment: GIT_SSH_COMMAND=ssh -o SendEnv=AGIT_FLOW
-		NOTE: will update-ref refs/published/my/topic-test on refs/heads/my/topic-test, reason: review from my/topic-test to master on ssh://git@example.com
+		NOTE: will update-ref refs/published/my/topic-test on refs/heads/my/topic-test, reason: review from my/topic-test to Maint on ssh://git@example.com
 
 		----------------------------------------------------------------------
 		EOF
@@ -662,7 +662,7 @@ test_expect_success "ATTENTION confirm if there are too many commits for review"
 	(
 		cd work &&
 		cat >expect<<-EOF &&
-		Upload project (jiangxin/main) to remote branch master:
+		Upload project (jiangxin/main) to remote branch Maint:
 		  branch my/topic-test (11 commit(s)):
 		         <hash>
 		         <hash>
@@ -679,7 +679,7 @@ test_expect_success "ATTENTION confirm if there are too many commits for review"
 		ATTENTION: You are uploading an unusually high number of commits.
 		YOU PROBABLY DO NOT MEAN TO DO THIS. (Did you rebase across branches?)
 		If you are sure you intend to do this, type '"'"'yes'"'"': Yes
-		NOTE: will execute command: git push -o oldoid=<hash> ssh://git@ssh.example.com/jiangxin/main.git refs/heads/my/topic-test:refs/for/master/my/topic-test
+		NOTE: will execute command: git push -o oldoid=<hash> ssh://git@ssh.example.com/jiangxin/main.git refs/heads/my/topic-test:refs/for/Maint/my/topic-test
 		NOTE: with extra environment: AGIT_FLOW=git-repo/n.n.n.n
 		NOTE: with extra environment: GIT_SSH_COMMAND=ssh -o SendEnv=AGIT_FLOW
 
