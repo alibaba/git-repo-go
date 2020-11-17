@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/alibaba/git-repo-go/common"
 	"github.com/alibaba/git-repo-go/config"
 	"github.com/alibaba/git-repo-go/helper"
 	log "github.com/jiangxin/multi-log"
@@ -256,6 +257,7 @@ func (v *Project) GetUploadableBranch(branch string, remote *Remote, remoteBranc
 			return nil
 		}
 	}
+
 	branch = strings.TrimPrefix(branch, config.RefsHeads)
 
 	if remoteBranch == "" {
@@ -266,6 +268,19 @@ func (v *Project) GetUploadableBranch(branch string, remote *Remote, remoteBranc
 	if err != nil {
 		return nil
 	}
+
+	if v.Revision == "" || common.IsImmutable(v.Revision) {
+		revID, err := v.ResolveRevision(v.Revision)
+		if err != nil {
+			log.Errorf("cannot resolve '%s'", v.Revision)
+			return nil
+		}
+		// No new commit
+		if revID == branchID {
+			return nil
+		}
+	}
+
 	track := v.RemoteMatchingBranch(remote.Name, remoteBranch)
 	if track == "" {
 		return nil

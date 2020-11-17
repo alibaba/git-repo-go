@@ -97,7 +97,7 @@ test_expect_success "check settings for branch tracking" '
 	)
 '
 
-test_expect_failure "do not upload fixed revision which not changed" '
+test_expect_success "do not upload fixed revision which not changed" '
 	(
 		cd work &&
 		cat >expect<<-EOF &&
