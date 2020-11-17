@@ -21,7 +21,6 @@ import (
 	"strings"
 
 	"github.com/alibaba/git-repo-go/cap"
-	"github.com/alibaba/git-repo-go/common"
 	"github.com/alibaba/git-repo-go/config"
 	"github.com/alibaba/git-repo-go/encode"
 	"github.com/alibaba/git-repo-go/version"
@@ -52,7 +51,7 @@ func (v AGitProtoHelper) GetSSHInfo() *SSHInfo {
 }
 
 // GetGitPushCommand reads upload options and returns git push command.
-func (v AGitProtoHelper) GetGitPushCommand(o *common.UploadOptions) (*GitPushCommand, error) {
+func (v AGitProtoHelper) GetGitPushCommand(o *config.UploadOptions) (*GitPushCommand, error) {
 	var (
 		gitPushCmd = GitPushCommand{}
 	)

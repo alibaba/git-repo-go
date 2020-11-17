@@ -53,7 +53,7 @@ type uploadOptions struct {
 	Branch         string
 	BypassHooks    bool
 	Cc             []string
-	CodeReview     common.CodeReview
+	CodeReview     config.CodeReview
 	CurrentBranch  bool
 	Description    string
 	DestBranch     string
@@ -916,7 +916,7 @@ func (v *uploadCommand) UploadAndReport(branches []project.ReviewableBranch) err
 			}
 		}
 
-		o := common.UploadOptions{
+		o := config.UploadOptions{
 			AutoTopic:    v.O.AutoTopic,
 			CodeReview:   v.O.CodeReview,
 			Description:  v.O.Description,
@@ -1019,7 +1019,7 @@ func (v uploadCommand) Execute(args []string) error {
 					head = config.RefsHeads + head
 				}
 			}
-			if !project.IsHead(head) {
+			if !common.IsHead(head) {
 				log.Debugf("detached at %s", head)
 				return fmt.Errorf("upload failed: not in a branch\n\n" +
 					"Please run command \"git checkout -b <branch>\" to create a new branch.")

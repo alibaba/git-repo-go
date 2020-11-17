@@ -119,7 +119,7 @@ test_expect_success "download using cherry-pick" '
 	cat >expect<<-EOF &&
 	Branch: jx/topic
 	    New topic
-	    Version 1.0.0
+	    Version 1.0-dev
 	refs/merge-requests/12345/head
 	EOF
 	test_cmp expect actual
@@ -166,7 +166,7 @@ test_expect_success "alias download command (cherry-pick)" '
 	cat >expect<<-EOF &&
 	Branch: jx/topic
 	    New topic
-	    Version 1.0.0
+	    Version 1.0-dev
 	refs/merge-requests/12345/head
 	EOF
 	test_cmp expect actual

@@ -15,7 +15,6 @@
 package cmd
 
 import (
-	"github.com/alibaba/git-repo-go/project"
 	log "github.com/jiangxin/multi-log"
 	"github.com/spf13/cobra"
 )
@@ -80,22 +79,7 @@ func (v startCommand) Execute(args []string) error {
 	}
 
 	for _, p := range allProjects {
-		merge := ""
-		if p.Revision == "" || project.IsImmutable(p.Revision) {
-			if p.DestBranch != "" {
-				merge = p.DestBranch
-			} else {
-				if p.Revision == "" &&
-					rws.Manifest != nil &&
-					rws.Manifest.Default != nil {
-					merge = rws.Manifest.Default.Revision
-				}
-			}
-			if merge != "" && project.IsImmutable(merge) {
-				merge = ""
-			}
-		}
-		err := p.StartBranch(branch, merge, false)
+		err := p.StartBranch(branch, p.DefaultTrackingBranch(), false)
 		if err != nil {
 			failed = append(failed, p.Path)
 			execError = err

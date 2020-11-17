@@ -44,7 +44,7 @@ test_expect_success "git-repo abandon --single -b <branch>" '
 	Pending branches (which have unmerged commits, leave it as is)
 	------------------------------------------------------------------------------
 	Project ./
-	  jx/topic2 ( 1 commit, Thu Apr 7 15:13:13 -0700 2005)
+	  jx/topic2 ( 1 commit, Thu Apr 7 15:14:13 -0700 2005)
 	EOF
 	test_cmp expect actual
 '
@@ -58,7 +58,7 @@ test_expect_success "git-repo abandon --single -b <branch>, by force" '
 	cat >expect<<-EOF &&
 	Abandoned branches
 	------------------------------------------------------------------------------
-	jx/topic2                 | . (was e10ee37)
+	jx/topic2                 | . (was 8df1dc9)
 	
 	EOF
 	test_cmp expect actual
@@ -73,16 +73,16 @@ test_expect_success "git-repo abandon --single --all" '
 	cat >expect<<-EOF &&
 	Pruned branches (already merged)
 	------------------------------------------------------------------------------
-	jx/topic1                 | . (was 152dee6)
+	jx/topic1                 | . (was 4d13a6c)
 	
-	jx/topic4                 | . (was 152dee6)
+	jx/topic4                 | . (was 4d13a6c)
 	
-	master                    | . (was 152dee6)
+	master                    | . (was 4d13a6c)
 	
 	Pending branches (which have unmerged commits, leave it as is)
 	------------------------------------------------------------------------------
 	Project ./
-	  jx/topic3 ( 2 commits, Thu Apr 7 15:15:13 -0700 2005)
+	  jx/topic3 ( 2 commits, Thu Apr 7 15:16:13 -0700 2005)
 	* jx/topic5
 	EOF
 	test_cmp expect actual
@@ -97,10 +97,10 @@ test_expect_success "git-repo abandon --single --all, by force" '
 	cat >expect<<-EOF &&
 	Abandoned branches
 	------------------------------------------------------------------------------
-	jx/topic3                 | . (was 63072c1)
+	jx/topic3                 | . (was c663c44)
 	
-	jx/topic5                 | . (was 152dee6)
-	
+	jx/topic5                 | . (was 4d13a6c)
+
 	EOF
 	test_cmp expect actual
 '

@@ -92,18 +92,18 @@ test_expect_success "git-repo abandon a single branch" '
 	cat >expect<<-EOF &&
 	Pruned branches (already merged)
 	------------------------------------------------------------------------------
-	jx/topic1                 | drivers/driver-2      (was 4f58351)
-	                          | main                  (was 152dee6)
-	                          | projects/app1         (was eac322d)
-	                          | projects/app1/module1 (was 2be33cb)
-	                          | projects/app2         (was 927fd5d)
+	jx/topic1                 | drivers/driver-2      (was df3d4c6)
+	                          | main                  (was 4d13a6c)
+	                          | projects/app1         (was 2fdfd9b)
+	                          | projects/app1/module1 (was 8fc882d)
+	                          | projects/app2         (was 98dc74a)
 	
 	Pending branches (which have unmerged commits, leave it as is)
 	------------------------------------------------------------------------------
 	Project drivers/driver-1/
-	  jx/topic1 ( 1 commit, Thu Apr 7 15:13:13 -0700 2005)
-	EOF
-	test_cmp expect actual
+	  jx/topic1 ( 1 commit, Thu Apr 7 15:14:13 -0700 2005)
+		EOF
+		test_cmp expect actual
 '
 
 test_expect_success "git-repo abandon a single branch, twice" '
@@ -120,7 +120,7 @@ test_expect_success "git-repo abandon a single branch, twice" '
 	Pending branches (which have unmerged commits, leave it as is)
 	------------------------------------------------------------------------------
 	Project drivers/driver-1/
-	  jx/topic1 ( 1 commit, Thu Apr 7 15:13:13 -0700 2005)
+	  jx/topic1 ( 1 commit, Thu Apr 7 15:14:13 -0700 2005)
 	EOF
 	test_cmp expect actual
 '
@@ -138,7 +138,7 @@ test_expect_success "git-repo abandon a single branch, force" '
 	ERROR: project drivers/driver-2> fail to resolve refs/heads/jx/topic1
 	Abandoned branches
 	------------------------------------------------------------------------------
-	jx/topic1                 | drivers/driver-1      (was 9ea948a)
+	jx/topic1                 | drivers/driver-1      (was ce87c62)
 	
 	EOF
 	test_cmp expect actual
@@ -152,15 +152,15 @@ test_expect_success "git-repo abandon selected projects, force" '
 	cat >expect<<-EOF &&
 	Abandoned branches
 	------------------------------------------------------------------------------
-	jx/topic2                 | main          (was 152dee6)
-	                          | projects/app2 (was 927fd5d)
+	jx/topic2                 | main          (was 4d13a6c)
+	                          | projects/app2 (was 98dc74a)
 	
-	jx/topic3                 | main          (was 152dee6)
-	                          | projects/app2 (was 927fd5d)
+	jx/topic3                 | main          (was 4d13a6c)
+	                          | projects/app2 (was 98dc74a)
 	
-	jx/topic4                 | main          (was 152dee6)
-	                          | projects/app2 (was 927fd5d)
-	
+	jx/topic4                 | main          (was 4d13a6c)
+	                          | projects/app2 (was 98dc74a)
+
 	EOF
 	test_cmp expect actual
 '
@@ -173,21 +173,21 @@ test_expect_success "git-repo abandon all projects" '
 	cat >expect<<-EOF &&
 	Abandoned branches
 	------------------------------------------------------------------------------
-	jx/topic2                 | drivers/driver-1      (was 355b986)
-	                          | drivers/driver-2      (was 7a48050)
-	                          | projects/app1         (was eac322d)
-	                          | projects/app1/module1 (was be6d870)
+	jx/topic2                 | drivers/driver-1      (was e05767b)
+	                          | drivers/driver-2      (was 8ff4cd2)
+	                          | projects/app1         (was 2fdfd9b)
+	                          | projects/app1/module1 (was f556e17)
 	
-	jx/topic3                 | drivers/driver-1      (was 69d4c01)
-	                          | drivers/driver-2      (was 4f58351)
-	                          | projects/app1         (was eac322d)
-	                          | projects/app1/module1 (was 2be33cb)
+	jx/topic3                 | drivers/driver-1      (was faa6f5c)
+	                          | drivers/driver-2      (was df3d4c6)
+	                          | projects/app1         (was 2fdfd9b)
+	                          | projects/app1/module1 (was 8fc882d)
 	
-	jx/topic4                 | drivers/driver-1      (was 69d4c01)
-	                          | drivers/driver-2      (was 4f58351)
-	                          | projects/app1         (was eac322d)
-	                          | projects/app1/module1 (was 452fe84)
-	
+	jx/topic4                 | drivers/driver-1      (was faa6f5c)
+	                          | drivers/driver-2      (was df3d4c6)
+	                          | projects/app1         (was 2fdfd9b)
+	                          | projects/app1/module1 (was 3eabae6)
+
 	EOF
 	test_cmp expect actual
 '

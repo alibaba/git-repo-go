@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/alibaba/git-repo-go/cap"
+	"github.com/alibaba/git-repo-go/common"
 	"github.com/alibaba/git-repo-go/config"
 	"github.com/alibaba/git-repo-go/file"
 	"github.com/alibaba/git-repo-go/helper"
@@ -154,7 +155,8 @@ func (v Project) SubmoduleUpdate(args ...string) error {
 // SyncLocalHalf will checkout/rebase branch.
 func (v Project) SyncLocalHalf(o *CheckoutOptions) error {
 	var (
-		err error
+		err          error
+		defaultTrack = v.DefaultTrackingBranch()
 	)
 
 	err = v.PrepareWorkdir()
@@ -186,7 +188,7 @@ func (v Project) SyncLocalHalf(o *CheckoutOptions) error {
 	head := v.GetHead()
 	headid, err := v.ResolveRevision(head)
 	if err == nil && headid != "" {
-		if IsHead(head) {
+		if common.IsHead(head) {
 			branch = strings.TrimPrefix(head, config.RefsHeads)
 		}
 	}
@@ -205,20 +207,20 @@ func (v Project) SyncLocalHalf(o *CheckoutOptions) error {
 			remote = v.GetDefaultRemote(true)
 		)
 
-		if branch != "" && track != v.Revision {
-			if v.Revision != "" {
+		if branch != "" && track != defaultTrack {
+			if defaultTrack != "" {
 				if track == "" {
-					log.Notef("%smanifest switched to %s", v.Prompt(), v.Revision)
+					log.Notef("%smanifest switched to %s", v.Prompt(), defaultTrack)
 				} else {
-					log.Notef("%smanifest switched %s...%s", v.Prompt(), track, v.Revision)
+					log.Notef("%smanifest switched %s...%s", v.Prompt(), track, defaultTrack)
 				}
 			} else {
 				log.Notef("%smanifest no longer tracks %s", v.Prompt(), track)
 			}
 
-			log.Debugf("%supdating tracking of %s to %s/%s", v.Prompt(), branch, v.RemoteName, v.Revision)
+			log.Debugf("%supdating tracking of %s to %s/%s", v.Prompt(), branch, v.RemoteName, defaultTrack)
 			// Update remote tracking, or delete tracking if v.Revision is empty
-			v.UpdateBranchTracking(branch, v.RemoteName, v.Revision)
+			v.UpdateBranchTracking(branch, v.RemoteName, defaultTrack)
 		}
 
 		if update && o.Submodules {
@@ -296,7 +298,7 @@ func (v Project) SyncLocalHalf(o *CheckoutOptions) error {
 		log.Errorf("%srev-list failed: %s", v.Prompt(), err)
 	}
 
-	if !o.IsManifest || v.Revision == track {
+	if !o.IsManifest || defaultTrack == track {
 		// No remote changes, no update.
 		if len(remoteChanges) == 0 {
 			log.Debugf("%sno remote changes found for project %s", v.Prompt(), v.Name)

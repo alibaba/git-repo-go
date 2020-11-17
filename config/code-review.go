@@ -1,4 +1,4 @@
-package common
+package config
 
 // CodeReview to be updated.
 type CodeReview struct {

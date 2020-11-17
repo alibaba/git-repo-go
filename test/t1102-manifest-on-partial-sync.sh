@@ -59,13 +59,13 @@ test_expect_success "git repo manifest: freeze manifest with partial sync" '
 	  <remote name="aone" alias="origin" fetch="." review="https://example.com"></remote>
 	  <remote name="driver" fetch=".." review="https://example.com"></remote>
 	  <default remote="aone" revision="Maint" sync-j="4"></default>
-	  <project name="main" path="main" revision="920edd5e44b7a62b01ce93314ad38521d8721278" groups="app" upstream="Maint">
+	  <project name="main" path="main" revision="9bf4b931514c8eab528d41bc557949213a529846" groups="app" upstream="Maint">
 	    <copyfile src="VERSION" dest="VERSION"></copyfile>
 	    <linkfile src="Makefile" dest="Makefile"></linkfile>
 	  </project>
-	  <project name="project1" path="projects/app1" revision="9590ccd64309ee7cd5d97cd0c6ec52799e8e680d" groups="app" upstream="Maint"></project>
-	  <project name="project1/module1" path="projects/app1/module1" revision="557abe6dbd27fabe9beda5570e563a428dc57765" groups="app" upstream="refs/tags/v0.2.0"></project>
-	  <project name="project2" path="projects/app2" revision="8b32cf53a8d86812dc3f8557eb7628a4f5d4e27a" groups="app" upstream="Maint"></project>
+	  <project name="project1" path="projects/app1" revision="a3946522edb40ee1693e879944ff35c7f379c608" groups="app" upstream="Maint"></project>
+	  <project name="project1/module1" path="projects/app1/module1" revision="260da37cd2a35272375f0f3e64d917765b1d05e8" groups="app" upstream="refs/tags/v0.2.0"></project>
+	  <project name="project2" path="projects/app2" revision="a256c3712bbe2bef657e64b3e8ac244b9e709dc4" groups="app" upstream="Maint"></project>
 	  <project name="drivers/driver1" path="drivers/driver-1" remote="driver" groups="drivers"></project>
 	  <project name="drivers/driver2" path="drivers/driver-2" remote="driver" groups="notdefault,drivers"></project>
 	</manifest>
@@ -87,19 +87,18 @@ test_expect_success "git repo manifest: freeze manifest with partial sync, --sup
 	  <remote name="aone" alias="origin" fetch="." review="https://example.com"></remote>
 	  <remote name="driver" fetch=".." review="https://example.com"></remote>
 	  <default remote="aone" revision="Maint" sync-j="4"></default>
-	  <project name="main" path="main" revision="920edd5e44b7a62b01ce93314ad38521d8721278" groups="app">
+	  <project name="main" path="main" revision="9bf4b931514c8eab528d41bc557949213a529846" groups="app">
 	    <copyfile src="VERSION" dest="VERSION"></copyfile>
 	    <linkfile src="Makefile" dest="Makefile"></linkfile>
 	  </project>
-	  <project name="project1" path="projects/app1" revision="9590ccd64309ee7cd5d97cd0c6ec52799e8e680d" groups="app"></project>
-	  <project name="project1/module1" path="projects/app1/module1" revision="557abe6dbd27fabe9beda5570e563a428dc57765" groups="app"></project>
-	  <project name="project2" path="projects/app2" revision="8b32cf53a8d86812dc3f8557eb7628a4f5d4e27a" groups="app"></project>
+	  <project name="project1" path="projects/app1" revision="a3946522edb40ee1693e879944ff35c7f379c608" groups="app"></project>
+	  <project name="project1/module1" path="projects/app1/module1" revision="260da37cd2a35272375f0f3e64d917765b1d05e8" groups="app"></project>
+	  <project name="project2" path="projects/app2" revision="a256c3712bbe2bef657e64b3e8ac244b9e709dc4" groups="app"></project>
 	  <project name="drivers/driver1" path="drivers/driver-1" remote="driver" groups="drivers"></project>
 	  <project name="drivers/driver2" path="drivers/driver-2" remote="driver" groups="notdefault,drivers"></project>
 	</manifest>
 	EOF
 	test_cmp expect actual
 '
-
 
 test_done

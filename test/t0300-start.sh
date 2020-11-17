@@ -7,15 +7,6 @@ test_description="start new branch test"
 # Create manifest repositories
 manifest_url="file://${REPO_TEST_REPOSITORIES}/hello/manifests"
 
-git_repo_show_current_branch_and_tracking() {
-	git-repo forall '
-		echo "## $REPO_PATH" &&
-		branch=$(git branch 2> /dev/null | sed -e "/^[^*]/d" -e "s/* \(.*\)/\1/") &&
-		printf "   $branch => " &&
-		(git config branch.${branch}.merge || true)
-	'
-}
-
 test_expect_success "setup" '
 	# create .repo file as a barrier, not find .repo deeper
 	touch .repo &&
@@ -67,14 +58,14 @@ test_expect_success "check current branch" '
 test_expect_success "check tracking branch" '
 	(
 		cd work &&
-		git_repo_show_current_branch_and_tracking >actual &&
+		show_all_repo_branch_tracking >actual &&
 		cat >expect <<-EOF &&
 		## main
 		   my/topic1 => refs/heads/Maint
 		## projects/app1
 		   my/topic1 => refs/heads/Maint
 		## projects/app1/module1
-		   my/topic1 => 
+		   my/topic1 => refs/heads/Maint
 		## projects/app2
 		   my/topic1 => refs/heads/Maint
 		## drivers/driver-1
@@ -104,7 +95,7 @@ test_expect_success "check current commit of app1" '
 	(
 		cd work &&
 		cat >expect<<-EOF &&
-		my/topic2> Version 1.0.0
+		my/topic2> Version 1.0-dev
 		EOF
 		(
 			printf "$(cd projects/app1 && git_current_branch)> " &&

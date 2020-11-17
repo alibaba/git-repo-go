@@ -1,6 +1,6 @@
 #!/bin/sh
 
-REPO_TEST_REPOSITORIES_VERSION=11
+REPO_TEST_REPOSITORIES_VERSION=13
 
 # Create test repositories in .repositories
 REPO_TEST_REPOSITORIES="${SHARNESS_TEST_SRCDIR}/test-repositories"
@@ -85,7 +85,6 @@ test_create_repository () {
 	then
 		repo=${repo}.git
 	fi
-
 	name=$(basename $repo)
 	name=${name%\.git}
 	dir=$(dirname $repo)
@@ -99,42 +98,71 @@ test_create_repository () {
 	git init --bare "$repo" &&
 	git clone "$repo" "tmp-$name" &&
 	cd "tmp-$name" &&
+
+	# v0.1.0
 	echo "# projecct: $name" >README.md &&
 	echo v0.1.0 >VERSION &&
 	printf "all:\n\t@echo \"$name: \$(shell cat VERSION)\"\n">Makefile &&
 	git add README.md VERSION Makefile &&
-	test_tick && git commit -m "Version 0.1.0" &&
-	test_tick && git tag -m v0.1.0 v0.1.0 &&
+	git commit -m "Version 0.1.0" &&
+	git tag -m v0.1.0 v0.1.0 &&
+
+	# v0.2.0
 	echo v0.2.0 >VERSION &&
 	git add -u &&
-	test_tick && git commit -m "Version 0.2.0" &&
-	test_tick && git tag -m v0.2.0 v0.2.0 &&
+	git commit -m "Version 0.2.0" &&
+	git tag -m v0.2.0 v0.2.0 &&
+
+	# v0.3.0
 	echo v0.3.0 >VERSION &&
 	git add -u &&
-	test_tick && git commit -m "Version 0.3.0" &&
-	test_tick && git tag -m v0.3.0 v0.3.0 &&
+	git commit -m "Version 0.3.0" &&
+	git tag -m v0.3.0 v0.3.0 &&
+
+	# v1.0.0
 	echo v1.0.0 >VERSION &&
 	git add -u &&
-	test_tick && git commit -m "Version 1.0.0" &&
-	test_tick && git tag -m v1.0.0 v1.0.0 &&
-	git branch Maint v1.0.0 &&
+	git commit -m "Version 1.0.0" &&
+	git tag -m v1.0.0 v1.0.0 &&
+
+	# branch: master
 	echo v2.0.0-dev >VERSION &&
 	git add -u &&
-	test_tick && git commit -m "Version 2.0.0-dev" &&
-	git push --tags origin master Maint &&
+	git commit -m "Version 2.0.0-dev" &&
+
+	# refs/changes/45/12345/1
 	git checkout v0.1.0 &&
 	echo "$name: patch-1" >topic.txt &&
 	git add topic.txt &&
-	test_tick && git commit -m "New topic" &&
-	git push origin HEAD:refs/changes/45/12345/1 &&
+	git commit -m "New topic" &&
+	git update-ref refs/changes/45/12345/1 HEAD &&
+
+	# refs/changes/45/12345/2
 	echo "$name: patch-2" >topic.txt &&
 	git add topic.txt &&
-	test_tick && git commit --amend -m "New topic" &&
-	git push origin HEAD:refs/changes/45/12345/2 &&
+	git commit --amend -m "New topic" &&
+	git update-ref refs/changes/45/12345/2 HEAD &&
+
+	# refs/merge-requests/12345/head
 	echo "$name: patch-3" >topic.txt &&
 	git add topic.txt &&
-	test_tick && git commit --amend -m "New topic" &&
-	git push origin HEAD:refs/merge-requests/12345/head &&
+	git commit --amend -m "New topic" &&
+	git update-ref refs/merge-requests/12345/head HEAD &&
+
+	# v1.0.1
+	git checkout v1.0.0 &&
+	echo v1.0.1 >VERSION &&
+	git add -u &&
+	git commit -m "Version 1.0.1" &&
+	git tag -m v1.0.1 v1.0.1 &&
+
+	# branch: Maint
+	git checkout -b Maint v1.0.0 &&
+	echo v1.0-dev >VERSION &&
+	git add -u &&
+	git commit -m "Version 1.0-dev" &&
+
+	git push origin +refs/*:refs/* &&
 	cd "$REPO_TEST_REPOSITORIES" &&
 	rm -rf "tmp-$name"
 }
@@ -165,7 +193,6 @@ test_create_manifest_projects () {
 	<!-- base commit -->
 	EOF
 	git add default.xml &&
-	test_tick &&
 	git commit -m "base commit" &&
 
 	# create tag v0.1
@@ -188,7 +215,6 @@ test_create_manifest_projects () {
 	<!-- tag v0.1 -->
 	EOF
 	git add default.xml &&
-	test_tick &&
 	git commit -m "Version 0.1" &&
 	git tag -m v0.1 v0.1 &&
 
@@ -215,8 +241,8 @@ test_create_manifest_projects () {
 	<!-- tag v0.2 -->
 	EOF
 	git add default.xml &&
-	test_tick && git commit -m "Version 0.2" &&
-	test_tick && git tag -m v0.2 v0.2 &&
+	git commit -m "Version 0.2" &&
+	git tag -m v0.2 v0.2 &&
 
 	# create tag v1.0 and branch Maint
 	git checkout master^{} &&
@@ -247,8 +273,8 @@ test_create_manifest_projects () {
 	<!-- tag v1.0 -->
 	EOF
 	git add default.xml &&
-	test_tick && git commit -m "Version 1.0" &&
-	test_tick && git tag -m v1.0 v1.0 &&
+	git commit -m "Version 1.0" &&
+	git tag -m v1.0 v1.0 &&
 	git branch Maint &&
 
 	# update tag 2.0 and branch master
@@ -345,8 +371,8 @@ test_create_manifest_projects () {
 	EOF
 
 	git add default.xml next.xml remote-ro.xml &&
-	test_tick && git commit -m "Version 2.0" &&
-	test_tick && git tag -m v2.0 v2.0
+	git commit -m "Version 2.0" &&
+	git tag -m v2.0 v2.0
 	git push --tags origin Maint master &&
 
 	cd "$REPO_TEST_REPOSITORIES" &&
@@ -385,6 +411,9 @@ get_manifest_commits () {
 	ABBREV_COMMIT_MANIFEST_1_0=$(echo $COMMIT_MANIFEST_1_0 | cut -c 1-7) &&
 	ABBREV_COMMIT_MANIFEST_2_0=$(echo $COMMIT_MANIFEST_2_0 | cut -c 1-7)
 }
+
+# Run test_tick to initial author/committer name and time
+test_tick
 
 if ! test_repositories_is_uptodate
 then

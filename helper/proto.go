@@ -19,7 +19,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/alibaba/git-repo-go/common"
+	"github.com/alibaba/git-repo-go/config"
 )
 
 // Proto types
@@ -40,7 +40,7 @@ type GitPushCommand struct {
 type ProtoHelper interface {
 	GetType() string
 	GetSSHInfo() *SSHInfo
-	GetGitPushCommand(*common.UploadOptions) (*GitPushCommand, error)
+	GetGitPushCommand(*config.UploadOptions) (*GitPushCommand, error)
 	GetDownloadRef(string, string) (string, error)
 }
 
@@ -61,7 +61,7 @@ func NewProtoHelper(sshInfo *SSHInfo) ProtoHelper {
 // output the result in JSON.
 func GetGitPushCommandPipe(proto ProtoHelper) ([]byte, error) {
 	var (
-		o   = common.UploadOptions{}
+		o   = config.UploadOptions{}
 		err error
 	)
 

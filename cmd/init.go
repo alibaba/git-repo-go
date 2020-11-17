@@ -23,6 +23,7 @@ import (
 
 	"github.com/alibaba/git-repo-go/cap"
 	"github.com/alibaba/git-repo-go/color"
+	"github.com/alibaba/git-repo-go/common"
 	"github.com/alibaba/git-repo-go/config"
 	"github.com/alibaba/git-repo-go/errors"
 	"github.com/alibaba/git-repo-go/path"
@@ -372,7 +373,7 @@ Either delete the .repo folder in this workspace, or initialize in another locat
 
 	if !v.O.DetachHead {
 		if isNew || v.ws.ManifestProject.GetHead() == "" {
-			if !project.IsImmutable(v.ws.ManifestProject.Revision) {
+			if !common.IsImmutable(v.ws.ManifestProject.Revision) {
 				// Recreate default branch.
 				err := v.ws.ManifestProject.StartBranch("default", "", true)
 				if err != nil {

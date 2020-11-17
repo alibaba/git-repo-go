@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/alibaba/git-repo-go/common"
 	"github.com/alibaba/git-repo-go/file"
 	"github.com/alibaba/git-repo-go/path"
 	log "github.com/jiangxin/multi-log"
@@ -74,8 +75,8 @@ func (v *Repository) Fetch(remote string, o *FetchOptions) error {
 		}
 	}
 
-	isSha := IsSha(revision)
-	isTag := IsTag(revision)
+	isSha := common.IsSha(revision)
+	isTag := common.IsTag(revision)
 
 	if o.OptimizedFetch && isSha && v.RevisionIsValid(revision) {
 		return nil

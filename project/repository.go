@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/alibaba/git-repo-go/common"
 	"github.com/alibaba/git-repo-go/config"
 	"github.com/alibaba/git-repo-go/file"
 	"github.com/alibaba/git-repo-go/manifest"
@@ -29,6 +30,9 @@ type Repository struct {
 	DotGit        string // Path to worktree/.git
 	GitDir        string // Project's bare repository inside .repo
 	ObjectsGitDir string // Several projects may share the same repository
+
+	// If project.Revision is a tag or sha, save manifest.DefaultRevision here
+	ManifestDefaultRevision string
 
 	IsBare    bool
 	RemoteURL string
@@ -327,4 +331,22 @@ func (v Repository) Prompt() string {
 		return ""
 	}
 	return v.Path + "> "
+}
+
+// DefaultTrackingBranch is defined in Manifest file, and is used as
+// default tracking branch for current project
+func (v Repository) DefaultTrackingBranch() string {
+	if v.Revision != "" && !common.IsImmutable(v.Revision) {
+		return v.Revision
+	}
+	if v.DestBranch != "" && !common.IsImmutable(v.DestBranch) {
+		return v.DestBranch
+	}
+	if v.Upstream != "" && !common.IsImmutable(v.Upstream) {
+		return v.Upstream
+	}
+	if v.ManifestDefaultRevision != "" && !common.IsImmutable(v.ManifestDefaultRevision) {
+		return v.ManifestDefaultRevision
+	}
+	return ""
 }
