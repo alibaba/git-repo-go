@@ -617,6 +617,7 @@ func (v uploadCommand) UploadForReviewWithEditor(branchesMap map[string][]projec
 	}
 	optionsFile = strings.Replace(optionsFile, "/", ".", -1)
 	optionsFile = filepath.Join(v.ws.AdminDir(), uploadOptionsDir, optionsFile)
+	path.SafeCreateParentDir(optionsFile)
 
 	script = append(v.fmtUploadOptionsScript(optionsFile, published), script...)
 
@@ -746,10 +747,10 @@ func (v uploadCommand) fmtUploadOptionsScript(optionsFile string, published bool
 	// Load upload options file created by last upload
 	if !path.Exist(optionsFile) {
 		optionsFile = filepath.Join(v.ws.AdminDir(), uploadOptionsFile)
+		path.SafeCreateParentDir(optionsFile)
 		if !path.Exist(optionsFile) {
 			// fist file in uploadOptionsDir
-			filepath.Walk(filepath.Join(v.ws.AdminDir(),
-				uploadOptionsDir),
+			filepath.Walk(filepath.Join(v.ws.AdminDir(), uploadOptionsDir),
 				func(path string, info os.FileInfo, err error) error {
 					if err != nil {
 						return err
