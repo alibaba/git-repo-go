@@ -104,7 +104,7 @@ test_expect_success "repo sync" '
 	)
 '
 
-test_expect_failure "check settings for branch tracking after sync" '
+test_expect_success "check settings for branch tracking after sync" '
 	(
 		cd work &&
 		show_all_repo_branch_tracking >actual &&
