@@ -7,15 +7,6 @@ test_description="check tracking branch for start command"
 # Create manifest repositories
 manifest_url="file://${REPO_TEST_REPOSITORIES}/hello/manifests"
 
-git_repo_show_current_branch_and_tracking() {
-	git-repo forall '
-		echo "## $REPO_PATH" &&
-		branch=$(git branch 2> /dev/null | sed -e "/^[^*]/d" -e "s/* \(.*\)/\1/") &&
-		printf "   $branch => " &&
-		(git config branch.${branch}.merge || true)
-	'
-}
-
 test_expect_success "setup" '
 	# create .repo file as a barrier, not find .repo deeper
 	touch .repo &&
@@ -37,7 +28,7 @@ test_expect_success "no tracking branch for app1/module1" '
 	(
 		cd work &&
 		git-repo start --all jx/test1 &&
-		git_repo_show_current_branch_and_tracking >actual &&
+		show_all_repo_branch_tracking >actual &&
 		cat >expect <<-EOF &&
 		## main
 		   jx/test1 => refs/heads/Maint
@@ -84,7 +75,7 @@ test_expect_success "all projects except driver-2 have no tracking branch" '
 	(
 		cd work &&
 		git-repo start --all jx/test2 &&
-		git_repo_show_current_branch_and_tracking >actual &&
+		show_all_repo_branch_tracking >actual &&
 		cat >expect <<-EOF &&
 		## main
 		   jx/test2 => 
