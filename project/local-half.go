@@ -231,15 +231,8 @@ func (v Project) SyncLocalHalf(o *CheckoutOptions) error {
 		}
 
 		// Install gerrit hooks
-		if remote != nil {
-			if remote.GetType() == helper.ProtoTypeGerrit {
-				v.InstallGerritHooks()
-			}
-
-			// Disable default push, push command must have specific refspec
-			if remote.GetType() != "" {
-				v.DisableDefaultPush()
-			}
+		if remote != nil && remote.GetType() == helper.ProtoTypeGerrit {
+			v.InstallGerritHooks()
 		}
 
 		return v.CopyAndLinkFiles()

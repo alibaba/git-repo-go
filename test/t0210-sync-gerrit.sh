@@ -48,25 +48,6 @@ test_expect_success "git-repo sync (-l), server has gerrit response" '
 	)
 '
 
-test_expect_success "push.default is nothing after sync local-half" '
-	(
-		cd work &&
-		( cd main && git config push.default) &&
-		( cd projects/app1 && git config push.default ) &&
-		( cd projects/app1/module1 && git config push.default ) &&
-		( cd projects/app2 && git config push.default ) &&
-		( cd drivers/driver-1 && git config push.default )
-	) >actual &&
-	cat >expect <<-EOF &&
-	nothing
-	nothing
-	nothing
-	nothing
-	nothing
-	EOF
-	test_cmp expect actual
-'
-
 test_expect_success "projects hooks link to project-objects hooks" '
 	(
 		cd work &&

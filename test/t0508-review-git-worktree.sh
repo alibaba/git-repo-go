@@ -239,17 +239,6 @@ test_expect_success "will upload one commit for review (http/dryrun/draft/no-edi
 	)
 '
 
-test_expect_success "push.default has been set to nothing" '
-	(
-		cd work/Maint &&
-		git config push.default
-	) >actual &&
-	cat >expect<<-EOF &&
-	nothing
-	EOF
-	test_cmp expect actual
-'
-
 test_expect_success "will upload one commit for review (http/dryrun/draft/with edit options)" '
 	(
 		cd work &&
