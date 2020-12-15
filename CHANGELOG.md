@@ -2,6 +2,30 @@
 
 Changes of git-repo.
 
+## 0.7.7 (2020-12-15)
+
+Improvements:
+
+* sync: Set default tracking branch even for fixed revision
+* upload: do not upload fixed revision if not changed
+* helper: add new field pushurl in ssh-info
+* project: default use pushurl defined in manifest file instead of `ssh_info` resp
+* workspace: show error if review is undefined for remote
+* test: result of Variant() may change on different env
+* manifest: Merge duplicate fields if attribute override is true
+* ssh-info api: add new field `review_ref`
+
+    Add new member field `review_ref` in `ssh_info` API. When downloading
+    a review, return the reference name by parsing the pattern defined in
+    `review_ref` of `ssh_info`.
+
+
+Bugfix and style:
+
+* Bug: do not set push.default for repository
+* upload: create parent dir for cache of upload-options
+* upload: fix warning of redundant type
+
 ## 0.7.6 (2020-10-13)
 
 Improvements:
