@@ -453,6 +453,36 @@ func (v *RepoWorkSpace) UpdateProjectList(submodulesOK bool) ([]string, error) {
 	return remains, nil
 }
 
+// ShortGitObjectsDir is relative path of shared objects gitdir
+func (v *RepoWorkSpace) ShortGitObjectsDir(name string) string {
+	if name == "" {
+		return ""
+	}
+	if v.IsMirror() {
+		return name + ".git"
+	}
+	return filepath.Join(
+		config.DotRepo,
+		config.ProjectObjects,
+		name+".git",
+	)
+}
+
+// ShortGitDir is relative path of gitdir
+func (v *RepoWorkSpace) ShortGitDir(pathName string) string {
+	if pathName == "" {
+		return ""
+	}
+	if v.IsMirror() {
+		return ""
+	}
+	return filepath.Join(
+		config.DotRepo,
+		config.Projects,
+		pathName+".git",
+	)
+}
+
 func (v *RepoWorkSpace) removeObsoletePaths(oldPaths, newPaths []string) ([]string, error) {
 	var (
 		remains []string = []string{}
@@ -462,9 +492,20 @@ func (v *RepoWorkSpace) removeObsoletePaths(oldPaths, newPaths []string) ([]stri
 
 	obsoletePaths := findObsoletePaths(oldPaths, newPaths)
 
-	for _, p := range obsoletePaths {
-		workdir := filepath.Clean(filepath.Join(v.RootDir, p))
-		gitdir := filepath.Join(workdir, ".git")
+	for _, obsoletePath := range obsoletePaths {
+		var workdirAbs, gitdir, gitdirAbs string
+
+		p := filepath.Clean(obsoletePath)
+		if p == "" || p == "." || p == ".." ||
+			strings.HasPrefix(p, "./") || strings.HasPrefix(p, "../") {
+			errMsgs = append(errMsgs, fmt.Sprintf("bad project path '%s', ignored", obsoletePath))
+			continue
+		}
+		workdirAbs = filepath.Clean(filepath.Join(v.RootDir, p))
+		gitdir = v.ShortGitDir(p)
+		if gitdir != "" {
+			gitdirAbs = filepath.Clean(filepath.Join(v.RootDir, gitdir))
+		}
 		/*
 			workRepoPath := filepath.Clean(filepath.Join(v.RootDir,
 				config.DotRepo,
@@ -472,27 +513,41 @@ func (v *RepoWorkSpace) removeObsoletePaths(oldPaths, newPaths []string) ([]stri
 				p+".git"))
 		*/
 
-		// Obsolete path does not exist, ignore it.
-		if _, err := os.Stat(workdir); err != nil {
-			continue
-		}
-
-		if !strings.HasPrefix(workdir, v.RootDir) {
+		if !strings.HasPrefix(workdirAbs, v.RootDir) {
 			// Ignore bad path, and do not update remains.
 			errMsgs = append(errMsgs,
-				fmt.Sprintf("cannot delete project path '%s', which beyond repo root '%s'",
-					workdir, v.RootDir))
+				fmt.Sprintf("project '%s', which beyond repo root '%s', ignored",
+					p, v.RootDir))
+			continue
+		}
+		if strings.TrimPrefix(workdirAbs, v.RootDir) == "" {
 			continue
 		}
 
-		if _, err := os.Stat(gitdir); err != nil {
+		// Obsolete path does not exist, ignore it.
+		if !path.Exist(workdirAbs) {
+			// Remove gitdirAbs if exists
+			if gitdirAbs != "" && path.Exist(gitdirAbs) {
+				err = os.RemoveAll(gitdirAbs)
+				if err != nil {
+					remains = append(remains, p)
+					errMsgs = append(errMsgs, fmt.Sprintf("fail to remove '%s': %s", gitdir, err))
+				} else {
+					v.removeEmptyDirs(gitdirAbs)
+				}
+			}
+			continue
+		}
+
+		// workdirAbs is not a git workdir
+		if !path.Exist(filepath.Join(workdirAbs, ".git")) {
 			remains = append(remains, p)
 			errMsgs = append(errMsgs,
-				fmt.Sprintf("cannot find gitdir '%s' when removing obsolete path", gitdir))
+				fmt.Sprintf("obsolete path '%s' does not seem like a git worktree", p))
 			continue
 		}
 
-		if ok, _ := project.IsClean(workdir); !ok {
+		if ok, _ := project.IsClean(workdirAbs); !ok {
 			remains = append(remains, p)
 			errMsgs = append(errMsgs,
 				fmt.Sprintf(`cannot remove project "%s": uncommitted changes are present.
@@ -513,32 +568,14 @@ Please commit changes, upload then run sync again`,
 		continue
 
 		/*
-			// Remove gitdir first
-			err = os.RemoveAll(gitdir)
-			if err != nil {
-				return fmt.Errorf("fail to remove '%s': %s",
-					gitdir,
-					err)
-			}
-
 			// Remove worktree, except recursive git repositories
 			ignoreRepos := findGitWorktree(workdir)
 			err = removeWorktree(workdir, ignoreRepos)
 			if err != nil {
-				return fmt.Errorf("fail to remove '%s': %s", workdir, err)
-			}
-			v.removeEmptyDirs(workdir)
-
-			// Remove project repository
-			if _, err = os.Stat(workRepoPath); err != nil {
-				if !strings.HasPrefix(workRepoPath, v.RootDir) {
-					return fmt.Errorf("cannot delete project repo '%s', which beyond repo root '%s'", workRepoPath, v.RootDir)
-				}
-				err = os.RemoveAll(workRepoPath)
-				if err != nil {
-					return err
-				}
-				v.removeEmptyDirs(workRepoPath)
+				remains = append(remains, p)
+				errMsgs = append(errMsgs, fmt.Sprintf("fail to remove '%s': %s", workdir, err))
+			} else {
+				v.removeEmptyDirs(workdir)
 			}
 		*/
 	}
