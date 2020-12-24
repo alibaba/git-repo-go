@@ -46,4 +46,15 @@ test_expect_success "project repositories in workspace" '
 	)
 '
 
+test_expect_success "git-repo init with tag" '
+	(
+		cd work &&
+		git-repo init -b refs/tags/v0.2 &&
+		git-repo sync \
+			--mock-ssh-info-status 200 \
+			--mock-ssh-info-response \
+			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}"
+	)
+'
+
 test_done
