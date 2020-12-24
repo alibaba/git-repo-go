@@ -1,16 +1,19 @@
 package workspace
 
 import (
+	"bufio"
 	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
 	"runtime"
+	"sort"
 	"strings"
 
 	"github.com/alibaba/git-repo-go/cap"
 	"github.com/alibaba/git-repo-go/config"
 	"github.com/alibaba/git-repo-go/errors"
+	"github.com/alibaba/git-repo-go/file"
 	"github.com/alibaba/git-repo-go/manifest"
 	"github.com/alibaba/git-repo-go/path"
 	"github.com/alibaba/git-repo-go/project"
@@ -376,6 +379,279 @@ func (v *RepoWorkSpace) FreezeManifest(fillUpstream bool) error {
 		FillUpstream: fillUpstream,
 	}
 	return v.Manifest.ProjectHandle(handle)
+}
+
+// UpdateProjectList updates `project.list` file and try to remove obsolete projects.
+func (v *RepoWorkSpace) UpdateProjectList(submodulesOK bool) ([]string, error) {
+	var (
+		newPaths = []string{}
+		oldPaths = []string{}
+	)
+
+	allProjects, err := v.GetProjects(&GetProjectsOptions{
+		MissingOK:    true,
+		SubmodulesOK: submodulesOK,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	for _, p := range allProjects {
+		newPaths = append(newPaths, p.Path)
+	}
+
+	projectListFile := filepath.Join(v.RootDir, config.DotRepo, "project.list")
+	if _, err = os.Stat(projectListFile); err == nil {
+		f, err := os.Open(projectListFile)
+		if err != nil {
+			log.Fatalf("fail to open %s: %s", projectListFile, err)
+		}
+		r := bufio.NewReader(f)
+		for {
+			line, err := r.ReadString('\n')
+			line = strings.TrimSpace(line)
+			if line != "" {
+				oldPaths = append(oldPaths, line)
+			}
+			if err != nil {
+				break
+			}
+		}
+		f.Close()
+	}
+
+	remains, err := v.removeObsoletePaths(oldPaths, newPaths)
+	if err != nil {
+		log.Errorln(err)
+	}
+
+	projectListLockFile := projectListFile + ".lock"
+	lockf, err := file.New(projectListLockFile).OpenCreateRewriteExcl()
+	if err != nil {
+		return nil, fmt.Errorf("fail to create lockfile '%s': %s", projectListLockFile, err)
+	}
+	defer lockf.Close()
+	for _, p := range newPaths {
+		_, err = lockf.WriteString(p + "\n")
+		if err != nil {
+			return nil, fmt.Errorf("fail to save lockfile '%s': %s", projectListLockFile, err)
+		}
+	}
+	for _, p := range remains {
+		_, err = lockf.WriteString(p + "\n")
+		if err != nil {
+			return nil, fmt.Errorf("fail to save lockfile '%s': %s", projectListLockFile, err)
+		}
+	}
+	lockf.Close()
+
+	err = os.Rename(projectListLockFile, projectListFile)
+	if err != nil {
+		return nil, fmt.Errorf("fail to rename lockfile to '%s': %s", projectListFile, err)
+	}
+
+	return remains, nil
+}
+
+func (v *RepoWorkSpace) removeObsoletePaths(oldPaths, newPaths []string) ([]string, error) {
+	var (
+		remains []string = []string{}
+		errMsgs []string = []string{}
+		err     error
+	)
+
+	obsoletePaths := findObsoletePaths(oldPaths, newPaths)
+
+	for _, p := range obsoletePaths {
+		workdir := filepath.Clean(filepath.Join(v.RootDir, p))
+		gitdir := filepath.Join(workdir, ".git")
+		/*
+			workRepoPath := filepath.Clean(filepath.Join(v.RootDir,
+				config.DotRepo,
+				config.Projects,
+				p+".git"))
+		*/
+
+		// Obsolete path does not exist, ignore it.
+		if _, err := os.Stat(workdir); err != nil {
+			continue
+		}
+
+		if !strings.HasPrefix(workdir, v.RootDir) {
+			// Ignore bad path, and do not update remains.
+			errMsgs = append(errMsgs,
+				fmt.Sprintf("cannot delete project path '%s', which beyond repo root '%s'",
+					workdir, v.RootDir))
+			continue
+		}
+
+		if _, err := os.Stat(gitdir); err != nil {
+			remains = append(remains, p)
+			errMsgs = append(errMsgs,
+				fmt.Sprintf("cannot find gitdir '%s' when removing obsolete path", gitdir))
+			continue
+		}
+
+		if ok, _ := project.IsClean(workdir); !ok {
+			remains = append(remains, p)
+			errMsgs = append(errMsgs,
+				fmt.Sprintf(`cannot remove project "%s": uncommitted changes are present.
+Please commit changes, upload then run sync again`,
+					p))
+			continue
+		}
+
+		/*
+		 * TODO: Do not remove project p, if:
+		 * - There are commits in branches which are not in upstream.
+		 * - There are stash file, which may have changes not be committed.
+		 */
+
+		// TODO: Before making a implementation to check precious in obsolete path,
+		// not remove projects, and leave them for users to delete.
+		remains = append(remains, p)
+		continue
+
+		/*
+			// Remove gitdir first
+			err = os.RemoveAll(gitdir)
+			if err != nil {
+				return fmt.Errorf("fail to remove '%s': %s",
+					gitdir,
+					err)
+			}
+
+			// Remove worktree, except recursive git repositories
+			ignoreRepos := findGitWorktree(workdir)
+			err = removeWorktree(workdir, ignoreRepos)
+			if err != nil {
+				return fmt.Errorf("fail to remove '%s': %s", workdir, err)
+			}
+			v.removeEmptyDirs(workdir)
+
+			// Remove project repository
+			if _, err = os.Stat(workRepoPath); err != nil {
+				if !strings.HasPrefix(workRepoPath, v.RootDir) {
+					return fmt.Errorf("cannot delete project repo '%s', which beyond repo root '%s'", workRepoPath, v.RootDir)
+				}
+				err = os.RemoveAll(workRepoPath)
+				if err != nil {
+					return err
+				}
+				v.removeEmptyDirs(workRepoPath)
+			}
+		*/
+	}
+
+	if len(errMsgs) > 0 {
+		err = fmt.Errorf(strings.Join(errMsgs, "\n"))
+	}
+
+	return remains, err
+}
+
+// findObsoletePaths returns obsolete paths.
+func findObsoletePaths(oldPaths, newPaths []string) []string {
+	result := []string{}
+	i, j := 0, 0
+
+	// oldPaths and newPaths must be sorted.
+	sort.Strings(oldPaths)
+	sort.Strings(newPaths)
+
+	for i < len(oldPaths) && j < len(newPaths) {
+		if oldPaths[i] < newPaths[j] {
+			result = append(result, oldPaths[i])
+			i++
+		} else if oldPaths[i] > newPaths[j] {
+			j++
+		} else {
+			i++
+			j++
+		}
+	}
+	for i < len(oldPaths) {
+		result = append(result, oldPaths[i])
+		i++
+	}
+
+	return result
+}
+
+func removeWorktree(dir string, gitTrees []string) error {
+	var err error
+
+	if len(gitTrees) == 0 {
+		log.Printf("will remove %s", dir)
+		return os.RemoveAll(dir)
+	}
+
+	err = filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if !info.IsDir() {
+			log.Printf("will remove %s", path)
+			err = os.Remove(path)
+			if err != nil {
+				return err
+			}
+			return nil
+		}
+		for _, p := range gitTrees {
+			if path == p {
+				return filepath.SkipDir
+			}
+			if strings.HasPrefix(p, path+string(os.PathSeparator)) || strings.HasPrefix(p, path+"/") {
+				return nil
+			}
+		}
+		log.Printf("will remove all %s", path)
+		err = os.RemoveAll(path)
+		if err != nil {
+			return err
+		}
+		return filepath.SkipDir
+	})
+
+	return err
+}
+
+func findGitWorktree(dir string) []string {
+	result := []string{}
+
+	filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if info.IsDir() {
+			if _, err = os.Stat(filepath.Join(path, ".git")); err == nil {
+				result = append(result, path)
+				return filepath.SkipDir
+			}
+		}
+		return nil
+	})
+
+	return result
+}
+
+func (v *RepoWorkSpace) removeEmptyDirs(dir string) {
+	var (
+		oldDir = dir
+	)
+
+	for {
+		if !strings.HasPrefix(dir, v.RootDir) {
+			break
+		}
+		os.Remove(dir)
+		dir = filepath.Dir(dir)
+		if dir == oldDir {
+			break
+		}
+		oldDir = dir
+	}
 }
 
 // NewRepoWorkSpace finds and loads repo workspace. Will return an error if not found.
