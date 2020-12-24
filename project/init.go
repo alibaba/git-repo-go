@@ -38,7 +38,7 @@ func (v *Project) GitInit() error {
 	}
 
 	objectsRepo := v.ObjectsRepository()
-	if objectsRepo != nil {
+	if objectsRepo != nil && v.GitDir != objectsRepo.GitDir {
 		objectsRepo.Init("", "", "")
 		v.Repository.InitByLink(v.RemoteName, remoteURL, objectsRepo)
 	} else {
@@ -159,6 +159,10 @@ func (v *Repository) InitByLink(remoteName, remoteURL string, repo *Repository) 
 		return fmt.Errorf("attach a non-exist repo: %s", repo.GitDir)
 	}
 	repo.initMissing()
+
+	if repo.GitDir == v.GitDir {
+		return nil
+	}
 
 	err = os.MkdirAll(v.GitDir, 0755)
 	if err != nil {
