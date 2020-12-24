@@ -242,11 +242,20 @@ test_expect_success "still in default branch, but no tracking branch" '
 test_expect_success "git-repo sync" '
 	(
 		cd work &&
-		git-repo sync \
+		test_must_fail git-repo sync \
 			--mock-ssh-info-status 200 \
 			--mock-ssh-info-response \
 			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}"
-	)
+	) 2>&1 | tail -6 >actual &&
+	cat >expect <<-EOF &&
+		ERROR: The following obsolete projects are still in your workspace, please check and remove them:
+		 * drivers/driver-1
+		 * projects/app1
+		 * projects/app1/module1
+		 * projects/app2
+		Error: 4 obsolete projects in your workdir need to be removed
+		EOF
+	test_cmp expect actual
 '
 
 test_expect_success "after sync, manifest still in default branch, but no tracking branch" '

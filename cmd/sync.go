@@ -521,8 +521,12 @@ func (v syncCommand) removeWorktree(dir string, gitTrees []string) error {
 	return err
 }
 
-func (v syncCommand) removeObsoletePaths(oldPaths, newPaths []string) error {
-	var err error
+func (v syncCommand) removeObsoletePaths(oldPaths, newPaths []string) ([]string, error) {
+	var (
+		remains []string = []string{}
+		errMsgs []string = []string{}
+		err     error
+	)
 
 	sort.Strings(oldPaths)
 	sort.Strings(newPaths)
@@ -533,56 +537,91 @@ func (v syncCommand) removeObsoletePaths(oldPaths, newPaths []string) error {
 	for _, p := range obsoletePaths {
 		workdir := filepath.Clean(filepath.Join(ws.RootDir, p))
 		gitdir := filepath.Join(workdir, ".git")
-		workRepoPath := filepath.Clean(filepath.Join(ws.RootDir, config.DotRepo, p+".git"))
+		/*
+			workRepoPath := filepath.Clean(filepath.Join(ws.RootDir,
+				config.DotRepo,
+				config.Projects,
+				p+".git"))
+		*/
+
+		// Obsolete path does not exist, ignore it.
+		if _, err := os.Stat(workdir); err != nil {
+			continue
+		}
 
 		if !strings.HasPrefix(workdir, ws.RootDir) {
-			return fmt.Errorf("cannot delete project path '%s', which beyond repo root '%s'", workdir, ws.RootDir)
+			// Ignore bad path, and do not update remains.
+			errMsgs = append(errMsgs,
+				fmt.Sprintf("cannot delete project path '%s', which beyond repo root '%s'", workdir, ws.RootDir))
+			continue
 		}
 
 		if _, err := os.Stat(gitdir); err != nil {
-			log.Debugf("cannot find gitdir '%s' when removing obsolete path", gitdir)
+			remains = append(remains, p)
+			errMsgs = append(errMsgs,
+				fmt.Sprintf("cannot find gitdir '%s' when removing obsolete path", gitdir))
 			continue
 		}
 
 		if ok, _ := project.IsClean(workdir); !ok {
-			return fmt.Errorf(`Cannot remove project "%s": uncommitted changes are present.
-Please commit changes, then run sync again`,
-				p)
+			remains = append(remains, p)
+			errMsgs = append(errMsgs,
+				fmt.Sprintf(`cannot remove project "%s": uncommitted changes are present.
+Please commit changes, upload then run sync again`,
+					p))
+			continue
 		}
 
-		// Remove gitdir first
-		err = os.RemoveAll(gitdir)
-		if err != nil {
-			return fmt.Errorf("fail to remove '%s': %s",
-				gitdir,
-				err)
-		}
+		/*
+		 * TODO: Do not remove project p, if:
+		 * - There are commits in branches which are not in upstream.
+		 * - There are stash file, which may have changes not be committed.
+		 */
 
-		// Remove worktree, except recursive git repositories
-		ignoreRepos := v.findGitWorktree(workdir)
-		err = v.removeWorktree(workdir, ignoreRepos)
-		if err != nil {
-			return fmt.Errorf("fail to remove '%s': %s", workdir, err)
-		}
-		v.removeEmptyDirs(workdir)
+		// TODO: Before making a implementation to check precious in obsolete path,
+		// not remove projects, and leave them for users to delete.
+		remains = append(remains, p)
+		continue
 
-		// Remove project repository
-		if _, err = os.Stat(workRepoPath); err != nil {
-			if !strings.HasPrefix(workRepoPath, ws.RootDir) {
-				return fmt.Errorf("cannot delete project repo '%s', which beyond repo root '%s'", workRepoPath, ws.RootDir)
-			}
-			err = os.RemoveAll(workRepoPath)
+		/*
+			// Remove gitdir first
+			err = os.RemoveAll(gitdir)
 			if err != nil {
-				return err
+				return fmt.Errorf("fail to remove '%s': %s",
+					gitdir,
+					err)
 			}
-			v.removeEmptyDirs(workRepoPath)
-		}
+
+			// Remove worktree, except recursive git repositories
+			ignoreRepos := v.findGitWorktree(workdir)
+			err = v.removeWorktree(workdir, ignoreRepos)
+			if err != nil {
+				return fmt.Errorf("fail to remove '%s': %s", workdir, err)
+			}
+			v.removeEmptyDirs(workdir)
+
+			// Remove project repository
+			if _, err = os.Stat(workRepoPath); err != nil {
+				if !strings.HasPrefix(workRepoPath, ws.RootDir) {
+					return fmt.Errorf("cannot delete project repo '%s', which beyond repo root '%s'", workRepoPath, ws.RootDir)
+				}
+				err = os.RemoveAll(workRepoPath)
+				if err != nil {
+					return err
+				}
+				v.removeEmptyDirs(workRepoPath)
+			}
+		*/
 	}
 
-	return nil
+	if len(errMsgs) > 0 {
+		err = errors.New(strings.Join(errMsgs, "\n"))
+	}
+
+	return remains, err
 }
 
-func (v syncCommand) UpdateProjectList() error {
+func (v syncCommand) UpdateProjectList() ([]string, error) {
 	var (
 		newPaths = []string{}
 		oldPaths = []string{}
@@ -594,7 +633,7 @@ func (v syncCommand) UpdateProjectList() error {
 		SubmodulesOK: v.O.FetchSubmodules,
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	for _, p := range allProjects {
@@ -621,31 +660,37 @@ func (v syncCommand) UpdateProjectList() error {
 		f.Close()
 	}
 
-	err = v.removeObsoletePaths(oldPaths, newPaths)
+	remains, err := v.removeObsoletePaths(oldPaths, newPaths)
 	if err != nil {
-		return err
+		log.Errorln(err)
 	}
 
 	projectListLockFile := projectListFile + ".lock"
 	lockf, err := file.New(projectListLockFile).OpenCreateRewriteExcl()
 	if err != nil {
-		return fmt.Errorf("fail to create lockfile '%s': %s", projectListLockFile, err)
+		return nil, fmt.Errorf("fail to create lockfile '%s': %s", projectListLockFile, err)
 	}
 	defer lockf.Close()
 	for _, p := range newPaths {
 		_, err = lockf.WriteString(p + "\n")
 		if err != nil {
-			return fmt.Errorf("fail to save lockfile '%s': %s", projectListLockFile, err)
+			return nil, fmt.Errorf("fail to save lockfile '%s': %s", projectListLockFile, err)
+		}
+	}
+	for _, p := range remains {
+		_, err = lockf.WriteString(p + "\n")
+		if err != nil {
+			return nil, fmt.Errorf("fail to save lockfile '%s': %s", projectListLockFile, err)
 		}
 	}
 	lockf.Close()
 
 	err = os.Rename(projectListLockFile, projectListFile)
 	if err != nil {
-		return fmt.Errorf("fail to rename lockfile to '%s': %s", projectListFile, err)
+		return nil, fmt.Errorf("fail to rename lockfile to '%s': %s", projectListFile, err)
 	}
 
-	return nil
+	return remains, nil
 }
 
 func (v syncCommand) Execute(args []string) error {
@@ -746,7 +791,8 @@ func (v syncCommand) Execute(args []string) error {
 	}
 
 	// Remove obsolete projects
-	if err = v.UpdateProjectList(); err != nil {
+	remains, err := v.UpdateProjectList()
+	if err != nil {
 		log.Fatal(err)
 	}
 
@@ -759,6 +805,15 @@ func (v syncCommand) Execute(args []string) error {
 	// print it now...
 	if rws.Manifest != nil && rws.Manifest.Notice != "" {
 		log.Note(rws.Manifest.Notice)
+	}
+
+	// Warn user there are obsolete projects not removed.
+	if len(remains) > 0 {
+		log.Error("The following obsolete projects are still in your workspace, please check and remove them:\n")
+		for _, p := range remains {
+			fmt.Fprintf(os.Stderr, " * %s\n", p)
+		}
+		return fmt.Errorf("%d obsolete projects in your workdir need to be removed", len(remains))
 	}
 
 	return nil

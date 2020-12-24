@@ -133,14 +133,21 @@ test_expect_success "git-repo switched back to <tag-0.1>" '
 	(
 		cd work &&
 		git-repo init -u $manifest_url --detach -b refs/tags/v0.1 &&
-		git-repo sync \
+		test_must_fail git-repo sync \
 			--mock-ssh-info-status 200 \
 			--mock-ssh-info-response \
 			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}"
-	)
+	) 2>&1 | tail -4 >actual &&
+	cat >expect <<-EOF &&
+		ERROR: The following obsolete projects are still in your workspace, please check and remove them:
+		 * projects/app1
+		 * projects/app1/module1
+		Error: 2 obsolete projects in your workdir need to be removed
+		EOF
+	test_cmp expect actual
 '
 
-test_expect_success "obsolete projects and empty parents are deleted" '
+test_expect_failure "obsolete projects and empty parents are deleted" '
 	(
 		cd work &&
 		test ! -d projects
@@ -211,14 +218,20 @@ test_expect_success "git-repo init -g default" '
 	(
 		cd work &&
 		git-repo init -u $manifest_url -g default &&
-		git-repo sync \
+		test_must_fail git-repo sync \
 			--mock-ssh-info-status 200 \
 			--mock-ssh-info-response \
 			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}"
-	)
+	) 2>&1 | tail -3 >actual &&
+	cat >expect <<-EOF &&
+		ERROR: The following obsolete projects are still in your workspace, please check and remove them:
+		 * drivers/driver-2
+		Error: 1 obsolete projects in your workdir need to be removed
+		EOF
+	test_cmp expect actual
 '
 
-test_expect_success "project.list: 5 project" '
+test_expect_failure "project.list: 5 project" '
 	(
 		cd work &&
 		cat >expect<<-EOF &&
@@ -232,7 +245,7 @@ test_expect_success "project.list: 5 project" '
 	)
 '
 
-test_expect_success "obsolete project driver-2 will be deleted" '
+test_expect_failure "obsolete project driver-2 will be deleted" '
 	(
 		cd work &&
 		test -d drivers/driver-1 &&
