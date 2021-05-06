@@ -17,6 +17,7 @@ package manifest
 
 import (
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -147,6 +148,127 @@ type RepoHooks struct {
 // Include is for include XML element.
 type Include struct {
 	Name string `xml:"name,attr,omitempty"`
+}
+
+// CheckAndFixup will fixup "Manifest" element
+func (v *Manifest) CheckAndFixup() error {
+	for i := range v.Remotes {
+		if err := v.Remotes[i].CheckAndFixup(); err != nil {
+			return err
+		}
+	}
+	for i := range v.Projects {
+		if err := v.Projects[i].CheckAndFixup(); err != nil {
+			return err
+		}
+	}
+	for i := range v.RemoveProjects {
+		if err := v.RemoveProjects[i].CheckAndFixup(); err != nil {
+			return err
+		}
+	}
+	for i := range v.ExtendProjects {
+		if err := v.ExtendProjects[i].CheckAndFixup(); err != nil {
+			return err
+		}
+	}
+	for i := range v.Includes {
+		if err := v.Includes[i].CheckAndFixup(); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// CheckAndFixup will fixup "Remote" element
+func (v *Remote) CheckAndFixup() error {
+	if v.Name == "" {
+		return errors.New("\"remote\" element has empty \"name\"")
+	}
+	return nil
+}
+
+// CheckAndFixup will fixup "Include" element
+func (v *Include) CheckAndFixup() error {
+	if v.Name == "" {
+		return errors.New("\"include\" element has empty \"name\"")
+	}
+	return nil
+}
+
+// CheckAndFixup will fixup "Project" element
+func (v *Project) CheckAndFixup() error {
+	if v.Name == "" {
+		return errors.New("\"project\" element has empty \"name\"")
+	}
+	v.Name = cleanPath(v.Name)
+	if v.Path == "" {
+		v.Path = v.Name
+	} else {
+		v.Path = cleanPath(v.Path)
+	}
+	for i := range v.CopyFiles {
+		if err := v.CopyFiles[i].CheckAndFixup(); err != nil {
+			return err
+		}
+	}
+	for i := range v.LinkFiles {
+		if err := v.LinkFiles[i].CheckAndFixup(); err != nil {
+			return err
+		}
+	}
+	for i := range v.Projects {
+		if err := v.Projects[i].CheckAndFixup(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// CheckAndFixup will fixup "RemoveProject" element
+func (v *RemoveProject) CheckAndFixup() error {
+	if v.Name == "" {
+		return errors.New("\"remove-project\" element has empty \"name\"")
+	}
+	v.Name = cleanPath(v.Name)
+	return nil
+}
+
+// CheckAndFixup will fixup "ExtendProject" element
+func (v *ExtendProject) CheckAndFixup() error {
+	if v.Name == "" {
+		return errors.New("\"extend-project\" element has empty \"name\"")
+	}
+	v.Name = cleanPath(v.Name)
+	if v.Path == "" {
+		v.Path = v.Name
+	} else {
+		v.Path = cleanPath(v.Path)
+	}
+	return nil
+}
+
+// CheckAndFixup will fixup "copyfile" element
+func (v *CopyFile) CheckAndFixup() error {
+	if v.Src == "" {
+		return errors.New("\"copyfile\" element has empty \"src\"")
+	}
+	if v.Dest == "" {
+		return errors.New("\"copyfile\" element has empty \"dest\"")
+	}
+	return nil
+}
+
+// CheckAndFixup will fixup "linkfile" element
+func (v *LinkFile) CheckAndFixup() error {
+	if v.Src == "" {
+		return errors.New("\"linkfile\" element has empty \"src\"")
+	}
+	if v.Dest == "" {
+		return errors.New("\"linkfile\" element has empty \"dest\"")
+	}
+	return nil
 }
 
 // AllProjects returns all projects (include current project and all sub-projects)
@@ -362,8 +484,6 @@ func (v *Manifest) Merge(m *Manifest) error {
 		realPath[p.Path] = true
 	}
 	for _, p := range m.allProjects() {
-		p.Name = cleanPath(p.Name)
-		p.Path = cleanPath(p.Path)
 		if realPath[p.Path] {
 			return fmt.Errorf("duplicate path for project '%s' in '%s'",
 				p.Path,
@@ -375,7 +495,6 @@ func (v *Manifest) Merge(m *Manifest) error {
 
 	rmPath := make(map[string]bool)
 	for _, r := range m.RemoveProjects {
-		r.Name = cleanPath(r.Name)
 		rmPath[r.Name] = true
 	}
 	ps := []Project{}
@@ -390,7 +509,6 @@ func (v *Manifest) Merge(m *Manifest) error {
 
 	extPath := make(map[string]ExtendProject)
 	for _, p := range m.ExtendProjects {
-		p.Name = cleanPath(p.Name)
 		extPath[p.Name] = p
 	}
 	for i, p := range v.Projects {
@@ -490,6 +608,9 @@ func parseXML(file string, depth int) ([]*Manifest, error) {
 	}
 	if m == nil {
 		return ms, nil
+	}
+	if err := m.CheckAndFixup(); err != nil {
+		return ms, err
 	}
 	m.SourceFile = file
 	ms = append(ms, m)
