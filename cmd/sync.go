@@ -47,6 +47,7 @@ type syncCommand struct {
 		NetworkOnly            bool
 		DetachHead             bool
 		CurrentBranchOnly      bool
+		CheckPublished         bool
 		Jobs                   int
 		ManifestName           string
 		NoCache                bool
@@ -105,6 +106,10 @@ func (v *syncCommand) Command() *cobra.Command {
 		"c",
 		false,
 		"fetch only current branch from server")
+	v.cmd.Flags().BoolVar(&v.O.CheckPublished,
+		"check-published",
+		false,
+		"do not sync project which is published but not merged")
 	v.cmd.Flags().IntVarP(&v.O.Jobs,
 		"jobs",
 		"j",

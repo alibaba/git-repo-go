@@ -23,9 +23,10 @@ import (
 type CheckoutOptions struct {
 	RepoSettings
 
-	Quiet      bool
-	DetachHead bool
-	IsManifest bool
+	Quiet          bool
+	DetachHead     bool
+	IsManifest     bool
+	CheckPublished bool
 }
 
 // IsClean indicates git worktree is clean.
@@ -300,7 +301,7 @@ func (v Project) SyncLocalHalf(o *CheckoutOptions) error {
 	}
 
 	// Manifest project do not need to check publish ref.
-	if !o.IsManifest {
+	if !o.IsManifest && o.CheckPublished {
 		pubid := v.PublishedRevision(branch)
 		// Local branched is published.
 		if pubid != "" {
