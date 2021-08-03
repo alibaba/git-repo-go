@@ -21,44 +21,44 @@ test_tick () {
 		test_tick=1112911993
 	else
 		test_tick=$(($test_tick + 60))
-	fi
-	GIT_COMMITTER_DATE="$test_tick -0700"
-	GIT_AUTHOR_DATE="$test_tick -0700"
+	fi &&
+	GIT_COMMITTER_DATE="$test_tick -0700" &&
+	GIT_AUTHOR_DATE="$test_tick -0700" &&
 	export GIT_COMMITTER_DATE GIT_AUTHOR_DATE
 }
 
 repo_create_test_repositories () {
 	# create lock
-	lockmsg="locked by $$"
+	lockmsg="locked by $$" &&
 	while :
 	do
 		if test -f "${REPO_TEST_REPOSITORIES}.lock"
 		then
 			if test "$lockmsg" = "$(cat "${REPO_TEST_REPOSITORIES}.lock")"; then
 				break
-			fi
-			echo >&2 "Another process is creating shared repositories: $(cat "${REPO_TEST_REPOSITORIES}.lock")"
+			fi &&
+			echo >&2 "Another process is creating shared repositories: $(cat "${REPO_TEST_REPOSITORIES}.lock")" &&
 			sleep 2
 
 		else
 			echo "$lockmsg" >"${REPO_TEST_REPOSITORIES}.lock"
 		fi
-	done
+	done &&
 
 	if test_repositories_is_uptodate
 	then
 		return
-	fi
+	fi &&
 
 	# Remove whole shared repositories
-	echo >&2 "Will recreate shared repositories in $REPO_TEST_REPOSITORIES"
-	rm -rf "$REPO_TEST_REPOSITORIES"
+	echo >&2 "Will recreate shared repositories in $REPO_TEST_REPOSITORIES" &&
+	rm -rf "$REPO_TEST_REPOSITORIES" &&
 
 	# Start to create shared repositories
-	repo_create_test_repositories_real
+	repo_create_test_repositories_real &&
 
 	# create version file
-	echo ${REPO_TEST_REPOSITORIES_VERSION} >${REPO_TEST_REPOSITORIES_VERSION_FILE}
+	echo "${REPO_TEST_REPOSITORIES_VERSION}" >"${REPO_TEST_REPOSITORIES_VERSION_FILE}" &&
 
 	# release the lock
 	rm -f "${REPO_TEST_REPOSITORIES}.lock"
@@ -73,21 +73,21 @@ test_repositories_is_uptodate() {
 }
 
 test_create_repository () {
-	repo=$1
+	repo=$1 &&
 
 	if test -z "$repo"
 	then
-		echo >&2 "Usage test_create_repository <reponame>"
+		echo >&2 "Usage test_create_repository <reponame>" &&
 		return 1
-	fi
+	fi &&
 
 	if test "${repo%\.git}" = "$repo"
 	then
 		repo=${repo}.git
-	fi
-	name=$(basename $repo)
-	name=${name%\.git}
-	dir=$(dirname $repo)
+	fi &&
+	name=$(basename $repo) &&
+	name=${name%\.git} &&
+	dir=$(dirname $repo) &&
 
 	cd "$REPO_TEST_REPOSITORIES" &&
 	if test -n "$dir" && test "$dir" != "."
@@ -95,9 +95,10 @@ test_create_repository () {
 		mkdir -p "$dir"
 	fi &&
 
-	git init --bare "$repo" &&
+	git -c init.defaultBranch=master init --bare "$repo" &&
 	git clone "$repo" "tmp-$name" &&
 	cd "tmp-$name" &&
+	git config advice.detachedHead false &&
 
 	# v0.1.0
 	echo "# projecct: $name" >README.md &&
@@ -171,9 +172,11 @@ test_create_manifest_projects () {
 	# create manifest repository
 	cd "$REPO_TEST_REPOSITORIES" &&
 	mkdir -p hello &&
-	git init --bare hello/manifests.git &&
+	git -c init.defaultBranch=master init \
+		--bare hello/manifests.git &&
 	git clone hello/manifests.git tmp-manifests &&
 	cd tmp-manifests &&
+	git config advice.detachedHead false &&
 
 	cat >default.xml <<-EOF &&
 	<?xml version="1.0" encoding="UTF-8"?>
@@ -396,7 +399,7 @@ repo_create_test_repositories_real () {
 }
 
 get_manifest_commits () {
-	dir_m="$REPO_TEST_REPOSITORIES/hello/manifests.git"
+	dir_m="$REPO_TEST_REPOSITORIES/hello/manifests.git" &&
 	git -C $dir_m config core.abbrev 7 &&
 	COMMIT_MANIFEST_MASTER=$(git -C $dir_m rev-parse master) &&
 	COMMIT_MANIFEST_MAINT=$(git -C $dir_m rev-parse Maint) &&
@@ -413,7 +416,7 @@ get_manifest_commits () {
 }
 
 # Run test_tick to initial author/committer name and time
-test_tick
+test_tick &&
 
 if ! test_repositories_is_uptodate
 then
