@@ -33,9 +33,11 @@ const (
 )
 
 var (
-	sshInfoPattern = regexp.MustCompile(`^[\S]+ [0-9]+$`)
-	httpClient     *http.Client
-	internalCache  = sync.Map{}
+	sshInfoPattern  = regexp.MustCompile(`^[\S]+ [0-9]+$`)
+	httpClient      *http.Client
+	internalCache   = sync.Map{}
+	hostnamePattern = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9.-]*$`)
+	usernamePattern = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9._-]*$`)
 )
 
 // SSHInfo stands for Smart Submit Handler information. Hold data returned from ssh_info API
@@ -80,6 +82,16 @@ func (v SSHInfo) GetReviewRef(id, patch string) (string, error) {
 		map[string]string{
 			"id":    id,
 			"patch": patch}), nil
+}
+
+// Validate checks format of SSHInfo.
+func (v SSHInfo) Validate() error {
+	if v.Host != "" && !hostnamePattern.MatchString(v.Host) {
+		return fmt.Errorf("ssh_info has invalid host name: %s", v.Host)
+	} else if v.User != "" && !usernamePattern.MatchString(v.User) {
+		return fmt.Errorf("ssh_info has invalid user name: %s", v.User)
+	}
+	return nil
 }
 
 // SSHInfoQuery wraps cache to accelerate query of ssh_info API.
@@ -353,39 +365,35 @@ func sshInfoFromString(data string) (*SSHInfo, error) {
 	data = strings.TrimSpace(data)
 	if len(data) == 0 {
 		return nil, fmt.Errorf("empty ssh_info")
-	}
-
-	// If `info` contains '<', we assume the server gave us some sort
-	// of HTML response back, like maybe a login page.
-	//
-	// Assume HTTP if SSH is not enabled or ssh_info doesn't look right.
-	if strings.HasPrefix(data, "<") {
+	} else if strings.HasPrefix(data, "<") {
+		// If `info` contains '<', we assume the server gave us some sort
+		// of HTML response back, like maybe a login page.
+		//
+		// Assume HTTP if SSH is not enabled or ssh_info doesn't look right.
 		return nil, fmt.Errorf("ssh_info returns a normal HTML response")
-	}
-
-	if !strings.ContainsAny(data, "\n") {
-		if data == "NOT_AVAILABLE" {
-			sshInfo.ProtoType = ProtoTypeGerrit
-			return &sshInfo, nil
+	} else if data == "NOT_AVAILABLE" {
+		sshInfo.ProtoType = ProtoTypeGerrit
+		return &sshInfo, nil
+	} else if !strings.ContainsAny(data, "\n") && sshInfoPattern.MatchString(data) {
+		// In "hostname port" format.
+		items := strings.SplitN(data, " ", 2)
+		if len(items) != 2 {
+			return nil, fmt.Errorf("bad format: %s", data)
 		}
-		if sshInfoPattern.MatchString(data) {
-			items := strings.SplitN(data, " ", 2)
-			if len(items) != 2 {
-				return nil, fmt.Errorf("bad format: %s", data)
-			}
-
-			port, err := strconv.Atoi(items[1])
-			if err != nil {
-				return nil, fmt.Errorf("bad port number '%s': %s", items[1], err)
-			}
-			sshInfo.Port = port
-			sshInfo.Host = items[0]
-			sshInfo.ProtoType = ProtoTypeGerrit
-			return &sshInfo, nil
+		port, err := strconv.Atoi(items[1])
+		if err != nil {
+			return nil, fmt.Errorf("bad port number '%s': %s", items[1], err)
+		}
+		sshInfo.Port = port
+		sshInfo.Host = items[0]
+		sshInfo.ProtoType = ProtoTypeGerrit
+	} else {
+		err = json.Unmarshal([]byte(data), &sshInfo)
+		if err != nil {
+			return nil, fmt.Errorf("invalid ssh_info response: %s", err)
 		}
 	}
-
-	err = json.Unmarshal([]byte(data), &sshInfo)
+	err = sshInfo.Validate()
 	if err != nil {
 		return nil, err
 	}
