@@ -6,12 +6,12 @@ test_description="test git-repo version"
 
 test_expect_success "git-repo version output test" '
 	git-repo version >out &&
-	grep "^git-repo version" out >expect &&
-	test -s expect
-'
-
-test_expect_success "check version number format" '
-	grep "^git-repo version [0-9]\+\.[0-9]\+\.[0-9]\+" out >actual &&
+	grep "^git-repo version" out |
+		sed -e "s/[0-9][0-9]*\.[0-9][0-9]*\.[0-9].*$/N.N.N/" \
+		>actual &&
+	cat >expect <<-EOF &&
+	git-repo version N.N.N
+	EOF
 	test_cmp expect actual
 '
 
