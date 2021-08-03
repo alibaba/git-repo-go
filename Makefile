@@ -55,7 +55,7 @@ golint:
 	$(call message,Testing git-repo using golint for coding style)
 	@golint $(LOCAL_PACKAGES)
 
-test: golint ut it
+test: ut it
 
 ut: $(TARGETS)
 	$(call message,Testing git-repo for unit tests)

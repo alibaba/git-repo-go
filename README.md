@@ -1,4 +1,4 @@
-[![Build Status](https://dev.azure.com/git-repo-go/git-repo-go/_apis/build/status/alibaba.git-repo-go)](https://dev.azure.com/git-repo-go/git-repo-go/_build/latest?definitionId=2)
+[![Build Status](https://github.com/alibaba/git-repo-go/actions/workflows/go.yml/badge.svg)](https://github.com/alibaba/git-repo-go/actions/workflows/go.yml)
 
 ## git-repo
 

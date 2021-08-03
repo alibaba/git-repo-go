@@ -1,0 +1,83 @@
+name: Go
+
+on: [push, pull_request]
+
+jobs:
+
+  linux:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        go: ["^1.16"]
+
+    name: Linux Go ${{ matrix.go }}
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: checkout tags
+        run: |
+          git fetch --prune --unshallow --tags
+
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          stable: 'false'
+          go-version: ${{ matrix.go }}
+
+      - name: Build
+        run: make
+
+      - name: Test
+        run: make -C test DEFAULT_TEST_TARGET=test
+
+      # Run golint at the end of steps, because installing golint will
+      # change "go.mod", and which may cause failure for unit test.
+      - name: "Test: Golint"
+        run: |
+          export GO111MODULE=on
+          go get -u golang.org/x/lint/golint
+          make golint
+
+  macos:
+    # The type of runner that the job will run on
+    runs-on: macos-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        go: ["1.14.15"]
+
+    name: macOS Go ${{ matrix.go }}
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: checkout tags
+        run: |
+          git fetch --prune --unshallow --tags
+
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          stable: 'false'
+          go-version: ${{ matrix.go }}
+
+      - name: Build
+        run: make
+
+      - name: Test
+        run: make -C test DEFAULT_TEST_TARGET=prove
+
+      # Run golint at the end of steps, because installing golint will
+      # change "go.mod", and which may cause failure for unit test.
+      - name: "Test: Golint"
+        run: |
+          export GO111MODULE=on
+          go get -u golang.org/x/lint/golint
+          make golint
