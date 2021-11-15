@@ -107,6 +107,8 @@ func (v *upgradeInfo) URLs(isProduction bool) []string {
 		arch = "32"
 	case "amd64":
 		arch = "64"
+	case "arm64":
+		arch = "arm64"
 	}
 
 	url = strings.ReplaceAll(url, "<version>", v.Version(isProduction))

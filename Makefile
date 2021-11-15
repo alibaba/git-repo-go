@@ -21,6 +21,7 @@ GOBUILD_WINDOWS_64 := env GOOS=windows GOARCH=amd64 $(GOBUILD)
 GOBUILD_WINDOWS_32 := env GOOS=windows GOARCH=386 $(GOBUILD)
 GOBUILD_MAC_64 := env GOOS=darwin GOARCH=amd64 $(GOBUILD)
 GOBUILD_MAC_32 := env GOOS=darwin GOARCH=386 $(GOBUILD)
+GOBUILD_MAC_ARM64 := env GOOS=darwin GOARCH=arm64 $(GOBUILD)
 
 BUILD_RELEASE_FLAG=-ldflags "-s -w"
 
@@ -147,6 +148,17 @@ _build/$(REPO_VERSION)/macOS-32/git-repo: FORCE
 		$(SHA256SUM) $(shell basename $@) >$(shell basename $@).sha256 && \
 		$(GPGSIGN) -o $(shell basename $@).sha256.gpg $(shell basename $@).sha256 && \
 		$(TAR) -zcvf ../git-repo-$(REPO_VERSION)-macOS-32.tar.gz --transform "s/^\./git-repo-$(REPO_VERSION)-macOS-32/" .)
+
+macOS-arm64: _build/$(REPO_VERSION)/macOS-arm64/git-repo
+_build/$(REPO_VERSION)/macOS-arm64/git-repo: FORCE
+	$(call message,Building $@)
+	@mkdir -p $(shell dirname $@)
+	$(GOBUILD_MAC_ARM64) $(RELEASE_LDFLAGS) -o $@
+	$(UPX) $@
+	(cd $(shell dirname $@) && \
+		$(SHA256SUM) $(shell basename $@) >$(shell basename $@).sha256 && \
+		$(GPGSIGN) -o $(shell basename $@).sha256.gpg $(shell basename $@).sha256 && \
+		$(TAR) -zcvf ../git-repo-$(REPO_VERSION)-macOS-arm64.tar.gz --transform "s/^\./git-repo-$(REPO_VERSION)-macOS-arm64/" .)
 
 index:
 	$(call message,Building $@)
