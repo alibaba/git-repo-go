@@ -37,6 +37,8 @@ func TestUpgradeInfoURLs(t *testing.T) {
 		archType = "32"
 	case "amd64":
 		archType = "64"
+	case "arm64":
+		archType = "arm64"
 	}
 
 	uinfo = upgradeInfo{
