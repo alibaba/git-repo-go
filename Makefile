@@ -125,7 +125,7 @@ _build/$(REPO_VERSION)/git-repo-$(REPO_VERSION)-Windows-32/git-repo.exe: FORCE
 		cd .. && \
 		zip -r git-repo-$(REPO_VERSION)-Windows-32.zip git-repo-$(REPO_VERSION)-Windows-32/)
 
-macOS: macOS-64
+macOS: macOS-64 macOS-arm64
 macOS-64: _build/$(REPO_VERSION)/macOS-64/git-repo
 _build/$(REPO_VERSION)/macOS-64/git-repo: FORCE
 	$(call message,Building $@)
