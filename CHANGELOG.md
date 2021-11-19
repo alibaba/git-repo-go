@@ -2,7 +2,7 @@
 
 Changes of git-repo.
 
-## 0.7.8 (2020-12-15)
+## 0.7.8 (2021-11-19)
 
 * arm64: native Apple Silicon (M1) support to Mac builds
 * sshinfo: check response of `ssh_info` for bad hostname
