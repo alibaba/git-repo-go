@@ -2,6 +2,22 @@
 
 Changes of git-repo.
 
+## 0.7.8 (2020-12-15)
+
+* arm64: native Apple Silicon (M1) support to Mac builds
+* sshinfo: check response of `ssh_info` for bad hostname
+* ci: remove azure-pipeline, use github-action instead
+* Setup githb action
+* test: turn off git advice and warnings
+* After load manifests, check and fixup missing attrs
+* sync: check published ref if has --check-published option
+* sync: clean obsolete mirror repositories
+* sync: remove obsolete gitdir if obsolete project deleted
+* init: do not init repo with InitByLink for mirror
+* sync: refactor: move UpdateProjectList() to workspace
+* sync: instead of removing obsolete projects, show instructions
+
+
 ## 0.7.7 (2020-12-15)
 
 Improvements:
