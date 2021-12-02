@@ -86,7 +86,7 @@ func (v ReviewableBranch) AppendReviewers(people [][]string) {
 func (v *ReviewableBranch) Published() *Reference {
 	pub := Reference{}
 	if v.CodeReview.Empty() {
-		pub.Name = config.RefsPub + v.Branch.ShortName()
+		pub.Name = config.RefsPub + v.Branch.ShortName() + "/" + strings.TrimLeft(v.RemoteTrack.Branch, config.RefsHeads)
 	} else {
 		pub.Name = v.CodeReview.Ref
 	}
@@ -214,7 +214,7 @@ func (v ReviewableBranch) UploadForReview(o *config.UploadOptions) error {
 		msg          string
 	)
 	if v.CodeReview.Empty() {
-		publishedRef = config.RefsPub + branchName
+		publishedRef = config.RefsPub + branchName + "/" + strings.TrimPrefix(v.RemoteTrack.Branch, config.RefsHeads)
 		msg = fmt.Sprintf("review from %s to %s on %s",
 			branchName,
 			o.DestBranch,
@@ -229,6 +229,12 @@ func (v ReviewableBranch) UploadForReview(o *config.UploadOptions) error {
 		v.Project.Prompt(),
 		publishedRef,
 		msg)
+	/*
+		clean old-styled published refs (refs/published/<source branch>) first, so that new-styled
+		published refs (refs/published/<source branch>/<target branch>) could be created.
+	*/
+	p.CleanPublishedCache()
+
 	err = p.UpdateRef(publishedRef,
 		config.RefsHeads+branchName,
 		msg)

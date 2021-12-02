@@ -203,8 +203,22 @@ func (v Project) CleanPublishedCache() error {
 	})
 
 	for name := range pubMap {
-		branch := config.RefsHeads + strings.TrimPrefix(name, config.RefsPub)
-		if _, ok := headsMap[branch]; !ok {
+		var (
+			branch  = config.RefsHeads + strings.TrimPrefix(name, config.RefsPub)
+			reserve = false
+			itr     = branch
+		)
+		for ; itr+"/" != config.RefsHeads; itr = filepath.Dir(itr) {
+			if _, ok := headsMap[itr]; ok {
+				reserve = true
+				break
+			}
+		}
+		// old-styled published refs (refs/published/<source branch>) should be cleaned.
+		if itr == branch {
+			reserve = false
+		}
+		if !reserve {
 			log.Infof("%swill delete obsolete ref: %s", v.Prompt(), name)
 			err = raw.Storer.RemoveReference(plumbing.ReferenceName(name))
 			if err != nil {
@@ -219,8 +233,14 @@ func (v Project) CleanPublishedCache() error {
 }
 
 // PublishedReference forms published reference for specific branch.
-func (v Project) PublishedReference(branch string) string {
-	pub := config.RefsPub + branch
+func (v Project) PublishedReference(branch *ReviewableBranch) string {
+	var (
+		branchName        = branch.Branch.Name
+		remoteTrackBranch = branch.RemoteTrack.Branch
+	)
+	branchName = strings.TrimPrefix(branchName, config.RefsHeads)
+	remoteTrackBranch = strings.TrimPrefix(remoteTrackBranch, config.RefsHeads)
+	pub := config.RefsPub + branchName + "/" + remoteTrackBranch
 
 	if v.RevisionIsValid(pub) {
 		return pub
@@ -229,13 +249,15 @@ func (v Project) PublishedReference(branch string) string {
 }
 
 // PublishedRevision resolves published reference to revision id.
-func (v Project) PublishedRevision(branch string) string {
+func (v Project) PublishedRevision(branch *ReviewableBranch) string {
+	var (
+		branchName        = branch.Branch.Name
+		remoteTrackBranch = branch.RemoteTrack.Branch
+	)
 	raw := v.Raw()
-	if strings.HasPrefix(branch, config.RefsHeads) {
-		branch = strings.TrimPrefix(branch, config.RefsHeads)
-	}
-	pub := config.RefsPub + branch
-
+	branchName = strings.TrimPrefix(branchName, config.RefsHeads)
+	remoteTrackBranch = strings.TrimPrefix(remoteTrackBranch, config.RefsHeads)
+	pub := config.RefsPub + branchName + "/" + remoteTrackBranch
 	if raw == nil {
 		return ""
 	}

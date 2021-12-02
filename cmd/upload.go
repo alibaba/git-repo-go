@@ -882,7 +882,7 @@ func (v *uploadCommand) UploadAndReport(branches []project.ReviewableBranch) err
 		}
 
 		if v.O.CodeReview.Empty() {
-			oldOid = theProject.PublishedRevision(branch.Branch.Name)
+			oldOid = theProject.PublishedRevision(branch)
 
 			destBranch, err = v.getDestBranch(branch)
 			if err != nil {

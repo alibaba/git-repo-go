@@ -302,7 +302,9 @@ func (v Project) SyncLocalHalf(o *CheckoutOptions) error {
 
 	// Manifest project do not need to check publish ref.
 	if !o.IsManifest && o.CheckPublished {
-		pubid := v.PublishedRevision(branch)
+		remote := v.GetBranchRemote(branch, false)
+		rb := v.GetUploadableBranch(branch, remote, "")
+		pubid := v.PublishedRevision(rb)
 		// Local branched is published.
 		if pubid != "" {
 			notMerged, err := v.Revlist(pubid, "--not", revid)
