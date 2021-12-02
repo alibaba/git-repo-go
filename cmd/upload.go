@@ -1033,7 +1033,7 @@ func (v uploadCommand) Execute(args []string) error {
 				remoteName = v.O.Remote
 				remote = p.Remotes.Get(remoteName)
 				if remote == nil {
-					return fmt.Errorf("cannot file remote named '%s'for project '%s'",
+					return fmt.Errorf("cannot find remote named '%s'for project '%s'",
 						remoteName,
 						p.Name,
 					)
