@@ -139,7 +139,7 @@ test_expect_success "with new commit, ready for upload (edit push options)" '
 		#         <hash>
 		
 		NOTE: main> will execute command: git push --receive-pack=agit-receive-pack ssh://git@ssh.example.com/main.git refs/heads/my/topic1:refs/for/Maint/my/topic1
-		NOTE: main> will update-ref refs/published/my/topic1 on refs/heads/my/topic1, reason: review from my/topic1 to Maint on https://example.com
+		NOTE: main> will update-ref refs/published/my/topic1/Maint on refs/heads/my/topic1, reason: review from my/topic1 to Maint on https://example.com
 		
 		----------------------------------------------------------------------
 		EOF
@@ -166,7 +166,7 @@ test_expect_success "agit-flow proto v2: no agit-receive-pack, and push with env
 		NOTE: main> will execute command: git push ssh://git@ssh.example.com/main.git refs/heads/my/topic1:refs/for/Maint/my/topic1
 		NOTE: main> with extra environment: AGIT_FLOW=git-repo/n.n.n.n
 		NOTE: main> with extra environment: GIT_SSH_COMMAND=ssh -o SendEnv=AGIT_FLOW
-		NOTE: main> will update-ref refs/published/my/topic1 on refs/heads/my/topic1, reason: review from my/topic1 to Maint on https://example.com
+		NOTE: main> will update-ref refs/published/my/topic1/Maint on refs/heads/my/topic1, reason: review from my/topic1 to Maint on https://example.com
 		
 		----------------------------------------------------------------------
 		EOF
@@ -239,7 +239,7 @@ test_expect_success "upload --dryrun --drafts" '
 		NOTE: main> will execute command: git push ssh://git@ssh.example.com/main.git refs/heads/my/topic1:refs/drafts/Maint/my/topic1
 		NOTE: main> with extra environment: AGIT_FLOW=git-repo/n.n.n.n
 		NOTE: main> with extra environment: GIT_SSH_COMMAND=ssh -o SendEnv=AGIT_FLOW
-		NOTE: main> will update-ref refs/published/my/topic1 on refs/heads/my/topic1, reason: review from my/topic1 to Maint on https://example.com
+		NOTE: main> will update-ref refs/published/my/topic1/Maint on refs/heads/my/topic1, reason: review from my/topic1 to Maint on https://example.com
 		
 		----------------------------------------------------------------------
 		EOF
@@ -280,7 +280,7 @@ test_expect_success "upload --dryrun" '
 		cat >>expect<<-EOF &&
 		NOTE: main> with extra environment: AGIT_FLOW=git-repo/n.n.n.n
 		NOTE: main> with extra environment: GIT_SSH_COMMAND=ssh -o SendEnv=AGIT_FLOW
-		NOTE: main> will update-ref refs/published/my/topic1 on refs/heads/my/topic1, reason: review from my/topic1 to Maint on https://example.com
+		NOTE: main> will update-ref refs/published/my/topic1/Maint on refs/heads/my/topic1, reason: review from my/topic1 to Maint on https://example.com
 		
 		----------------------------------------------------------------------
 		EOF
@@ -339,7 +339,7 @@ test_expect_success "check update-ref" '
 	(
 		cd work &&
 		( cd main && git rev-parse refs/heads/my/topic1 ) >expect &&
-		( cd main && git rev-parse refs/published/my/topic1 ) >actual &&
+		( cd main && git rev-parse refs/published/my/topic1/Maint ) >actual &&
 		test_cmp expect actual
 	)
 '

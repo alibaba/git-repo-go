@@ -220,7 +220,7 @@ test_expect_success "will upload one commit for review (http/dryrun/draft/no-edi
 		NOTE: will execute command: git push ssh://git@ssh.example.com/jiangxin/main.git refs/heads/my/topic-test:refs/drafts/master/my/topic-test
 		NOTE: with extra environment: AGIT_FLOW=git-repo/n.n.n.n
 		NOTE: with extra environment: GIT_SSH_COMMAND=ssh -o SendEnv=AGIT_FLOW
-		NOTE: will update-ref refs/published/my/topic-test on refs/heads/my/topic-test, reason: review from my/topic-test to master on https://example.com
+		NOTE: will update-ref refs/published/my/topic-test/master on refs/heads/my/topic-test, reason: review from my/topic-test to master on https://example.com
 
 		----------------------------------------------------------------------
 		EOF
@@ -283,7 +283,7 @@ test_expect_success "will upload one commit for review (http/dryrun/draft/with e
 		NOTE: will execute command: git push ssh://git@ssh.example.com/jiangxin/main.git refs/heads/my/topic-test:refs/drafts/master/my/topic-test
 		NOTE: with extra environment: AGIT_FLOW=git-repo/n.n.n.n
 		NOTE: with extra environment: GIT_SSH_COMMAND=ssh -o SendEnv=AGIT_FLOW
-		NOTE: will update-ref refs/published/my/topic-test on refs/heads/my/topic-test, reason: review from my/topic-test to master on https://example.com
+		NOTE: will update-ref refs/published/my/topic-test/master on refs/heads/my/topic-test, reason: review from my/topic-test to master on https://example.com
 
 		----------------------------------------------------------------------
 		EOF
@@ -324,7 +324,7 @@ test_expect_success "will upload one commit for review (http/dryrun)" '
 		cat >>expect<<-EOF &&
 		NOTE: with extra environment: AGIT_FLOW=git-repo/n.n.n.n
 		NOTE: with extra environment: GIT_SSH_COMMAND=ssh -o SendEnv=AGIT_FLOW
-		NOTE: will update-ref refs/published/my/topic-test on refs/heads/my/topic-test, reason: review from my/topic-test to master on https://example.com
+		NOTE: will update-ref refs/published/my/topic-test/master on refs/heads/my/topic-test, reason: review from my/topic-test to master on https://example.com
 
 		----------------------------------------------------------------------
 		EOF
@@ -387,7 +387,7 @@ test_expect_success "published ref will be created" '
 	(
 		cd work &&
 		( cd main && git rev-parse refs/heads/my/topic-test ) >expect &&
-		( cd main && git rev-parse refs/published/my/topic-test ) >actual &&
+		( cd main && git rev-parse refs/published/my/topic-test/master ) >actual &&
 		test_cmp expect actual
 	)
 '
@@ -468,7 +468,7 @@ test_expect_success "upload to a ssh review url (no ssh_info cache)" '
 		NOTE: will execute command: git push -o oldoid=<hash> ssh://git@ssh.example.com/jiangxin/main.git refs/heads/my/topic-test:refs/drafts/master/my/topic-test
 		NOTE: with extra environment: AGIT_FLOW=git-repo/n.n.n.n
 		NOTE: with extra environment: GIT_SSH_COMMAND=ssh -o SendEnv=AGIT_FLOW
-		NOTE: will update-ref refs/published/my/topic-test on refs/heads/my/topic-test, reason: review from my/topic-test to master on ssh://git@example.com:10022
+		NOTE: will update-ref refs/published/my/topic-test/master on refs/heads/my/topic-test, reason: review from my/topic-test to master on ssh://git@example.com:10022
 
 		----------------------------------------------------------------------
 		EOF
@@ -510,7 +510,7 @@ test_expect_success "upload to gerrit ssh review url (assume-no, dryrun, use ssh
 		NOTE: will execute command: git push -o oldoid=<hash> ssh://git@ssh.example.com/jiangxin/main.git refs/heads/my/topic-test:refs/for/master/my/topic-test
 		NOTE: with extra environment: AGIT_FLOW=git-repo/n.n.n.n
 		NOTE: with extra environment: GIT_SSH_COMMAND=ssh -o SendEnv=AGIT_FLOW
-		NOTE: will update-ref refs/published/my/topic-test on refs/heads/my/topic-test, reason: review from my/topic-test to master on ssh://git@example.com:29418
+		NOTE: will update-ref refs/published/my/topic-test/master on refs/heads/my/topic-test, reason: review from my/topic-test to master on ssh://git@example.com:29418
 
 		----------------------------------------------------------------------
 		EOF
@@ -543,7 +543,7 @@ test_expect_success "upload to gerrit ssh review url (assume-no, dryrun, no-cach
 		         <hash>
 		to ssh://git@example.com:29418 (y/N)? Yes
 		NOTE: will execute command: git push --receive-pack=gerrit receive-pack ssh://committer@ssh.example.com:29418/jiangxin/main.git refs/heads/my/topic-test:refs/for/master
-		NOTE: will update-ref refs/published/my/topic-test on refs/heads/my/topic-test, reason: review from my/topic-test to master on ssh://git@example.com:29418
+		NOTE: will update-ref refs/published/my/topic-test/master on refs/heads/my/topic-test, reason: review from my/topic-test to master on ssh://git@example.com:29418
 
 		----------------------------------------------------------------------
 		EOF
@@ -576,7 +576,7 @@ test_expect_success "upload to gerrit ssh review url (use ssh_info cache)" '
 		         <hash>
 		to ssh://git@example.com:29418 (y/N)? Yes
 		NOTE: will execute command: git push --receive-pack=gerrit receive-pack ssh://committer@ssh.example.com:29418/jiangxin/main.git refs/heads/my/topic-test:refs/for/master
-		NOTE: will update-ref refs/published/my/topic-test on refs/heads/my/topic-test, reason: review from my/topic-test to master on ssh://git@example.com:29418
+		NOTE: will update-ref refs/published/my/topic-test/master on refs/heads/my/topic-test, reason: review from my/topic-test to master on ssh://git@example.com:29418
 
 		----------------------------------------------------------------------
 		EOF
@@ -611,7 +611,7 @@ test_expect_success "upload to a ssh review using rcp style URL" '
 		NOTE: will execute command: git push -o oldoid=<hash> ssh://git@ssh.example.com/jiangxin/main.git refs/heads/my/topic-test:refs/for/master/my/topic-test
 		NOTE: with extra environment: AGIT_FLOW=git-repo/n.n.n.n
 		NOTE: with extra environment: GIT_SSH_COMMAND=ssh -o SendEnv=AGIT_FLOW
-		NOTE: will update-ref refs/published/my/topic-test on refs/heads/my/topic-test, reason: review from my/topic-test to master on ssh://git@example.com
+		NOTE: will update-ref refs/published/my/topic-test/master on refs/heads/my/topic-test, reason: review from my/topic-test to master on ssh://git@example.com
 
 		----------------------------------------------------------------------
 		EOF

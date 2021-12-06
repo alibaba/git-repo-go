@@ -88,7 +88,7 @@ test_expect_success "upload: pr --br <branch> to upload specific branch" '
 		NOTE: will execute command: git push ssh://git@ssh.example.com/jiangxin/main.git refs/heads/jx/topic1:refs/drafts/master/jx/topic1
 		NOTE: with extra environment: AGIT_FLOW=git-repo/n.n.n.n
 		NOTE: with extra environment: GIT_SSH_COMMAND=ssh -o SendEnv=AGIT_FLOW
-		NOTE: will update-ref refs/published/jx/topic1 on refs/heads/jx/topic1, reason: review from jx/topic1 to master on https://example.com
+		NOTE: will update-ref refs/published/jx/topic1/master on refs/heads/jx/topic1, reason: review from jx/topic1 to master on https://example.com
 		
 		----------------------------------------------------------------------
 		EOF

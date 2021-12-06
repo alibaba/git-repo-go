@@ -105,7 +105,7 @@ test_expect_success "will upload one commit for review (http/dryrun/draft/no-edi
 		NOTE: will execute command: git push ssh://git@ssh.example.com/jiangxin/main.git refs/heads/jx/topic:refs/drafts/Maint/jx/topic
 		NOTE: with extra environment: AGIT_FLOW=git-repo/n.n.n.n
 		NOTE: with extra environment: GIT_SSH_COMMAND=ssh -o SendEnv=AGIT_FLOW
-		NOTE: will update-ref refs/published/jx/topic on refs/heads/jx/topic, reason: review from jx/topic to Maint on https://example.com
+		NOTE: will update-ref refs/published/jx/topic/Maint on refs/heads/jx/topic, reason: review from jx/topic to Maint on https://example.com
 
 		----------------------------------------------------------------------
 		EOF
@@ -168,7 +168,7 @@ test_expect_success "will upload one commit for review (http/dryrun/draft/with e
 		NOTE: will execute command: git push ssh://git@ssh.example.com/jiangxin/main.git refs/heads/jx/topic:refs/drafts/Maint/jx/topic
 		NOTE: with extra environment: AGIT_FLOW=git-repo/n.n.n.n
 		NOTE: with extra environment: GIT_SSH_COMMAND=ssh -o SendEnv=AGIT_FLOW
-		NOTE: will update-ref refs/published/jx/topic on refs/heads/jx/topic, reason: review from jx/topic to Maint on https://example.com
+		NOTE: will update-ref refs/published/jx/topic/Maint on refs/heads/jx/topic, reason: review from jx/topic to Maint on https://example.com
 
 		----------------------------------------------------------------------
 		EOF
@@ -209,7 +209,7 @@ test_expect_success "will upload one commit for review (http/dryrun)" '
 		cat >>expect<<-EOF &&
 		NOTE: with extra environment: AGIT_FLOW=git-repo/n.n.n.n
 		NOTE: with extra environment: GIT_SSH_COMMAND=ssh -o SendEnv=AGIT_FLOW
-		NOTE: will update-ref refs/published/jx/topic on refs/heads/jx/topic, reason: review from jx/topic to Maint on https://example.com
+		NOTE: will update-ref refs/published/jx/topic/Maint on refs/heads/jx/topic, reason: review from jx/topic to Maint on https://example.com
 
 		----------------------------------------------------------------------
 		EOF
@@ -272,7 +272,7 @@ test_expect_success "published ref will be created" '
 	(
 		cd work &&
 		( cd main && git rev-parse refs/heads/jx/topic ) >expect &&
-		( cd main && git rev-parse refs/published/jx/topic ) >actual &&
+		( cd main && git rev-parse refs/published/jx/topic/Maint ) >actual &&
 		test_cmp expect actual
 	)
 '
@@ -325,7 +325,7 @@ test_expect_success "upload to a ssh review url" '
 		NOTE: will execute command: git push -o oldoid=<hash> ssh://git@ssh.example.com:10022/jiangxin/main.git refs/heads/jx/topic:refs/for/Maint/jx/topic
 		NOTE: with extra environment: AGIT_FLOW=git-repo/n.n.n.n
 		NOTE: with extra environment: GIT_SSH_COMMAND=ssh -o SendEnv=AGIT_FLOW
-		NOTE: will update-ref refs/published/jx/topic on refs/heads/jx/topic, reason: review from jx/topic to Maint on ssh://git@example.com:10022
+		NOTE: will update-ref refs/published/jx/topic/Maint on refs/heads/jx/topic, reason: review from jx/topic to Maint on ssh://git@example.com:10022
 
 		----------------------------------------------------------------------
 		EOF
@@ -368,7 +368,7 @@ test_expect_success "upload to gerrit ssh review url (assume-no, dryrun, use ssh
 		NOTE: will execute command: git push -o oldoid=<hash> ssh://git@ssh.example.com:10022/jiangxin/main.git refs/heads/jx/topic:refs/for/Maint/jx/topic
 		NOTE: with extra environment: AGIT_FLOW=git-repo/n.n.n.n
 		NOTE: with extra environment: GIT_SSH_COMMAND=ssh -o SendEnv=AGIT_FLOW
-		NOTE: will update-ref refs/published/jx/topic on refs/heads/jx/topic, reason: review from jx/topic to Maint on ssh://git@example.com:29418
+		NOTE: will update-ref refs/published/jx/topic/Maint on refs/heads/jx/topic, reason: review from jx/topic to Maint on ssh://git@example.com:29418
 
 		----------------------------------------------------------------------
 		EOF
@@ -402,7 +402,7 @@ test_expect_success "upload to gerrit ssh review url (assume-no, dryrun, no-cach
 		         <hash>
 		to ssh://git@example.com:29418 (y/N)? Yes
 		NOTE: will execute command: git push --receive-pack=gerrit receive-pack ssh://committer@example.com:29418/jiangxin/main.git refs/heads/jx/topic:refs/for/Maint
-		NOTE: will update-ref refs/published/jx/topic on refs/heads/jx/topic, reason: review from jx/topic to Maint on ssh://git@example.com:29418
+		NOTE: will update-ref refs/published/jx/topic/Maint on refs/heads/jx/topic, reason: review from jx/topic to Maint on ssh://git@example.com:29418
 
 		----------------------------------------------------------------------
 		EOF
@@ -437,7 +437,7 @@ test_expect_success "upload to gerrit ssh review url" '
 		NOTE: will execute command: git push -o oldoid=<hash> ssh://git@ssh.example.com:10022/jiangxin/main.git refs/heads/jx/topic:refs/for/Maint/jx/topic
 		NOTE: with extra environment: AGIT_FLOW=git-repo/n.n.n.n
 		NOTE: with extra environment: GIT_SSH_COMMAND=ssh -o SendEnv=AGIT_FLOW
-		NOTE: will update-ref refs/published/jx/topic on refs/heads/jx/topic, reason: review from jx/topic to Maint on ssh://git@example.com:29418
+		NOTE: will update-ref refs/published/jx/topic/Maint on refs/heads/jx/topic, reason: review from jx/topic to Maint on ssh://git@example.com:29418
 
 		----------------------------------------------------------------------
 		EOF
@@ -476,7 +476,7 @@ test_expect_success "upload to a ssh review using rcp style URL" '
 		NOTE: will execute command: git push -o oldoid=<hash> ssh://git@ssh.example.com/jiangxin/main.git refs/heads/jx/topic:refs/for/Maint/jx/topic
 		NOTE: with extra environment: AGIT_FLOW=git-repo/n.n.n.n
 		NOTE: with extra environment: GIT_SSH_COMMAND=ssh -o SendEnv=AGIT_FLOW
-		NOTE: will update-ref refs/published/jx/topic on refs/heads/jx/topic, reason: review from jx/topic to Maint on ssh://git@example.com
+		NOTE: will update-ref refs/published/jx/topic/Maint on refs/heads/jx/topic, reason: review from jx/topic to Maint on ssh://git@example.com
 
 		----------------------------------------------------------------------
 		EOF
