@@ -242,7 +242,7 @@ func (v ReviewableBranch) UploadForReview(o *config.UploadOptions) error {
 }
 
 // GetUploadableBranch returns branch which has commits ready for upload.
-func (v *Project) GetUploadableBranch(branch string, remote *Remote, remoteBranch string) *ReviewableBranch {
+func (v *Project) GetUploadableBranch(branch string, remote *Remote, remoteBranch string, ignorePublished bool) *ReviewableBranch {
 	if remote == nil {
 		log.Warnf("BUG: remote is nil for branch '%s' of project '%s'",
 			branch,
@@ -311,12 +311,15 @@ func (v *Project) GetUploadableBranch(branch string, remote *Remote, remoteBranc
 		return nil
 	}
 
-	pub := rb.Published()
-	if pub != nil && pub.Hash == branchID {
-		log.Notef("no change in project %s (branch %s) since last upload",
-			v.Path,
-			branch)
-		return nil
+	if !ignorePublished {
+		pub := rb.Published()
+		if pub != nil && pub.Hash == branchID {
+			log.Notef("no change in project %s (branch %s) since last upload.",
+				v.Path,
+				branch)
+			log.Noteln("add option \"--re-run\" to bypass this check if you still want to upload.")
+			return nil
+		}
 	}
 
 	return &rb
@@ -353,14 +356,14 @@ func (v *Project) GetUploadableBranchForChange(branch string, remote *Remote, co
 }
 
 // GetUploadableBranches returns branches which has commits ready for upload.
-func (v *Project) GetUploadableBranches(branch string) []ReviewableBranch {
+func (v *Project) GetUploadableBranches(branch string, ignorePublished bool) []ReviewableBranch {
 	var (
 		avail = []ReviewableBranch{}
 	)
 
 	if branch != "" {
 		remote := v.GetBranchRemote(branch, false)
-		rb := v.GetUploadableBranch(branch, remote, "")
+		rb := v.GetUploadableBranch(branch, remote, "", ignorePublished)
 		if rb == nil {
 			return nil
 		}
@@ -370,7 +373,7 @@ func (v *Project) GetUploadableBranches(branch string) []ReviewableBranch {
 
 	for _, head := range v.Heads() {
 		remote := v.GetBranchRemote(branch, false)
-		rb := v.GetUploadableBranch(head.Name, remote, "")
+		rb := v.GetUploadableBranch(head.Name, remote, "", ignorePublished)
 		if rb == nil {
 			continue
 		}

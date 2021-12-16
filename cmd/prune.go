@@ -314,7 +314,7 @@ func (v pruneCommand) Execute(args []string) error {
 			if remote == nil {
 				fmt.Printf("%s (no remote)\n", branchName)
 			}
-			rb := p.GetUploadableBranch(b.Name, remote, "")
+			rb := p.GetUploadableBranch(b.Name, remote, "", false)
 			if rb != nil {
 				commits := rb.Commits()
 				if len(commits) > 1 {
