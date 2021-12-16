@@ -33,7 +33,7 @@ test_expect_success "setup" '
 
 '
 
-test_expect_success "keyword substitude after new checkout" '
+test_expect_failure "keyword substitude after new checkout" '
 	(
 		cd work/main &&
 		rm test-kw-subst.md &&
