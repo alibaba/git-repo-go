@@ -348,7 +348,8 @@ test_expect_success "upload again, no branch ready for upload" '
 	(
 		cd work &&
 		cat >expect<<-EOF &&
-		NOTE: no change in project main (branch my/topic1) since last upload
+		NOTE: no change in project main (branch my/topic1) since last upload.
+		NOTE: add option "--re-run" to bypass this check if you still want to upload.
 		NOTE: no branches ready for upload
 		EOF
 		git-repo upload \
@@ -356,6 +357,35 @@ test_expect_success "upload again, no branch ready for upload" '
 			--mock-ssh-info-response \
 			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
 			>actual 2>&1 &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success "upload again with --re-run option" '
+	(
+		cd work &&
+		cat >expect<<-EOF &&
+		Upload project main/ to remote branch Maint:
+		  branch my/topic1 ( 1 commit(s)):
+		         <hash>
+		to https://example.com (y/N)? Yes
+		NOTE: main> will execute command: git push -o oldoid=<hash> ssh://git@ssh.example.com/main.git refs/heads/my/topic1:refs/for/Maint/my/topic1
+		NOTE: main> with extra environment: AGIT_FLOW=git-repo/n.n.n.n
+		NOTE: main> with extra environment: GIT_SSH_COMMAND=ssh -o SendEnv=AGIT_FLOW
+		NOTE: main> will update-ref refs/published/my/topic1 on refs/heads/my/topic1, reason: review from my/topic1 to Maint on https://example.com
+
+		----------------------------------------------------------------------
+		EOF
+		git-repo upload \
+			--dryrun \
+			--re-run \
+			--no-edit \
+			--assume-yes \
+			--mock-ssh-info-status 200 \
+			--mock-ssh-info-response \
+			"{\"host\":\"ssh.example.com\", \"port\":22, \"type\":\"agit\"}" \
+			>out 2>&1 &&
+		sed -e "s/[0-9a-f]\{40\}/<hash>/g" -e "s/git-repo\/[^ \"\\]*/git-repo\/n.n.n.n/g" <out >actual &&
 		test_cmp expect actual
 	)
 '

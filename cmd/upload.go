@@ -67,6 +67,7 @@ type uploadOptions struct {
 	NoEmails       bool
 	Private        bool
 	PushOptions    []string
+	ReRun          bool
 	Reviewers      []string
 	Remote         string
 	Title          string
@@ -273,6 +274,8 @@ func (v *uploadCommand) Command() *cobra.Command {
 			name = "cbr"
 		case "destination":
 			name = "dest"
+		case "rerun":
+			name = "re-run"
 		}
 		return pflag.NormalizedName(name)
 	}
@@ -353,6 +356,10 @@ func (v *uploadCommand) Command() *cobra.Command {
 		"no-cert-checks",
 		false,
 		"Disable verifying ssl certs (unsafe)")
+	v.cmd.Flags().BoolVar(&v.O.ReRun,
+		"re-run",
+		false,
+		"Ignore checking for publish of branches to re-run the upload")
 	v.cmd.Flags().BoolVar(&v.O.BypassHooks,
 		"no-verify",
 		false,
@@ -1094,7 +1101,7 @@ func (v uploadCommand) Execute(args []string) error {
 
 			/////////////
 			if v.O.CodeReview.Empty() {
-				uploadBranch = p.GetUploadableBranch(head, remote, remoteRevision)
+				uploadBranch = p.GetUploadableBranch(head, remote, remoteRevision, v.O.ReRun)
 			} else {
 				uploadBranch = p.GetUploadableBranchForChange(head, remote, &v.O.CodeReview)
 			}
@@ -1110,13 +1117,13 @@ func (v uploadCommand) Execute(args []string) error {
 			cbr := p.GetHead()
 			remote := p.GetBranchRemote(cbr, false)
 			if cbr != "" && remote != nil {
-				uploadBranch := p.GetUploadableBranch(cbr, remote, "")
+				uploadBranch := p.GetUploadableBranch(cbr, remote, "", v.O.ReRun)
 				if uploadBranch != nil {
 					tasks[p.Path] = []project.ReviewableBranch{*uploadBranch}
 				}
 			}
 		} else {
-			uploadBranches := p.GetUploadableBranches(v.O.Branch)
+			uploadBranches := p.GetUploadableBranches(v.O.Branch, v.O.ReRun)
 			if len(uploadBranches) == 0 {
 				continue
 			}
