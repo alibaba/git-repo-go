@@ -97,11 +97,15 @@ func (v ExternalProtoHelper) GetGitPushCommand(o *config.UploadOptions) (*GitPus
 	return &pushCmd, nil
 }
 
-// GetDownloadRef returns reference name of the specific code review.
-func (v ExternalProtoHelper) GetDownloadRef(cr, patch string) (string, error) {
+// GetDownloadRefOptions returns reference name of the specific code review.
+func (v ExternalProtoHelper) GetDownloadRefOptions(cr, patch string) (string, []string, error) {
+	var (
+		ref     string
+		options []string
+	)
 	program, err := exec.LookPath(v.Program())
 	if err != nil {
-		return "", fmt.Errorf("cannot find helper '%s'", v.Program())
+		return "", nil, fmt.Errorf("cannot find helper '%s'", v.Program())
 	}
 
 	cmdArgs := []string{program, "--download"}
@@ -113,8 +117,13 @@ func (v ExternalProtoHelper) GetDownloadRef(cr, patch string) (string, error) {
 	out, err := cmd.Output()
 	if err != nil {
 		if exitError, ok := err.(*exec.ExitError); ok {
-			return "", fmt.Errorf("aaa fail to run %s: %s", v.Program(), exitError.Stderr)
+			return "", nil, fmt.Errorf("aaa fail to run %s: %s", v.Program(), exitError.Stderr)
 		}
 	}
-	return strings.TrimSpace(string(out)), err
+	items := strings.Split(strings.TrimSpace(string(out)), " ")
+	ref = items[0]
+	if len(items) > 1 {
+		options = items[1:]
+	}
+	return ref, options, err
 }

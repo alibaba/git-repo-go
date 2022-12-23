@@ -47,7 +47,7 @@ type projectChange struct {
 }
 
 var (
-	reChange = regexp.MustCompile(`^([1-9][0-9]*)(?:[/\.-]([1-9][0-9]*))?$`)
+	reChange = regexp.MustCompile(`^([1-9][0-9]*)(?:[/\. -]([1-9][0-9]*))?$`)
 )
 
 func (v *downloadCommand) Command() *cobra.Command {

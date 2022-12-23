@@ -6,57 +6,67 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestGetReviewRef(t *testing.T) {
+func TestGetReviewRefOptions(t *testing.T) {
 	var (
 		ref string
 		err error
+		o   []string
 	)
 
 	assert := assert.New(t)
 
 	sshInfo := SSHInfo{}
-	ref, err = sshInfo.GetReviewRef("123", "1")
+	ref, o, err = sshInfo.GetReviewRefOptions("123", "1")
 	assert.NotNil(err)
 	assert.Empty(ref)
+	assert.Empty(o)
 
 	sshInfo.ReviewRefPattern = "refs/heads/master"
-	ref, err = sshInfo.GetReviewRef("123", "1")
+	ref, o, err = sshInfo.GetReviewRefOptions("123", "1")
 	assert.Nil(err)
+	assert.Empty(o)
 	assert.Equal("refs/heads/master", ref)
 
 	sshInfo.ReviewRefPattern = "refs/changes/{id:right:2}/{id}/{patch}"
-	ref, err = sshInfo.GetReviewRef("123", "1")
+	ref, o, err = sshInfo.GetReviewRefOptions("123", "1")
 	assert.Nil(err)
+	assert.Empty(o)
 	assert.Equal("refs/changes/23/123/1", ref)
 
 	sshInfo.ReviewRefPattern = "refs/changes/{id:right:2}/{id}/{patch}"
-	ref, err = sshInfo.GetReviewRef("9", "1")
+	ref, o, err = sshInfo.GetReviewRefOptions("9", "1")
 	assert.Nil(err)
+	assert.Empty(o)
 	assert.Equal("refs/changes/09/9/1", ref)
 
 	sshInfo.ReviewRefPattern = "refs/changes/{id:left:2}/{id}/{patch}"
-	ref, err = sshInfo.GetReviewRef("123", "1")
+	ref, o, err = sshInfo.GetReviewRefOptions("123", "1")
 	assert.Nil(err)
+	assert.Empty(o)
 	assert.Equal("refs/changes/12/123/1", ref)
 
 	sshInfo.ReviewRefPattern = "refs/changes/{id:left:2}/{id}/{patch}"
-	ref, err = sshInfo.GetReviewRef("9", "1")
+	ref, o, err = sshInfo.GetReviewRefOptions("9", "1")
 	assert.Nil(err)
+	assert.Empty(o)
 	assert.Equal("refs/changes/09/9/1", ref)
 
 	sshInfo.ReviewRefPattern = "refs/pull/{id}/head"
-	ref, err = sshInfo.GetReviewRef("123", "1")
+	ref, o, err = sshInfo.GetReviewRefOptions("123", "1")
 	assert.Nil(err)
+	assert.Empty(o)
 	assert.Equal("refs/pull/123/head", ref)
 
 	sshInfo.ReviewRefPattern = "refs}/pull/{id}/head"
-	ref, err = sshInfo.GetReviewRef("123", "1")
+	ref, o, err = sshInfo.GetReviewRefOptions("123", "1")
 	assert.Nil(err)
+	assert.Empty(o)
 	assert.Equal("refs}/pull/123/head", ref, "unmatched right quote")
 
 	sshInfo.ReviewRefPattern = "refs/{pull}/{id}/head"
-	ref, err = sshInfo.GetReviewRef("123", "1")
+	ref, o, err = sshInfo.GetReviewRefOptions("123", "1")
 	assert.Nil(err)
+	assert.Empty(o)
 	assert.Equal("refs/{pull}/123/head", ref, "unknown key")
 }
 

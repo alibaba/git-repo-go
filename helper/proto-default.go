@@ -46,7 +46,7 @@ func (v DefaultProtoHelper) GetGitPushCommand(o *config.UploadOptions) (*GitPush
 	return nil, errors.New("not implement")
 }
 
-// GetDownloadRef returns reference name of the specific code review.
-func (v DefaultProtoHelper) GetDownloadRef(cr, patch string) (string, error) {
-	return "", errors.New("not implement")
+// GetDownloadRefOptions returns reference name of the specific code review.
+func (v DefaultProtoHelper) GetDownloadRefOptions(cr, patch string) (string, []string, error) {
+	return "", nil, errors.New("not implement")
 }

@@ -35,7 +35,11 @@ type AGitProtoHelper struct {
 // NewAGitProtoHelper returns AGitProtoHelper object.
 func NewAGitProtoHelper(sshInfo *SSHInfo) *AGitProtoHelper {
 	if sshInfo.ReviewRefPattern == "" {
-		sshInfo.ReviewRefPattern = "refs/merge-requests/{id}/head"
+		if sshInfo.ProtoVersion <= 2 {
+			sshInfo.ReviewRefPattern = "refs/merge-requests/{id}/head"
+		} else {
+			sshInfo.ReviewRefPattern = "refs/changes/{id}/{patch}"
+		}
 	}
 	return &AGitProtoHelper{sshInfo: sshInfo}
 }
@@ -200,11 +204,16 @@ func (v AGitProtoHelper) GetGitPushCommand(o *config.UploadOptions) (*GitPushCom
 	return &gitPushCmd, nil
 }
 
-// GetDownloadRef returns reference name of the specific code review.
-func (v AGitProtoHelper) GetDownloadRef(id, patch string) (string, error) {
+// GetDownloadRefOptions returns reference name of the specific code review.
+func (v AGitProtoHelper) GetDownloadRefOptions(id, patch string) (string, []string, error) {
 	_, err := strconv.Atoi(id)
 	if err != nil {
-		return "", fmt.Errorf("bad review ID %s: %s", id, err)
+		return "", nil, fmt.Errorf("bad review ID %s: %s", id, err)
 	}
-	return v.sshInfo.GetReviewRef(id, patch)
+	if patch != "" {
+		if _, err := strconv.Atoi(patch); err != nil {
+			return "", nil, fmt.Errorf("bad patch ID %s: %s", patch, err)
+		}
+	}
+	return v.sshInfo.GetReviewRefOptions(id, patch)
 }

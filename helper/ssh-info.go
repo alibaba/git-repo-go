@@ -73,15 +73,24 @@ func (v SSHInfo) ToJSON() string {
 	return string(buf)
 }
 
-// GetReviewRef gets review ref from ReviewRefPattern.
-func (v SSHInfo) GetReviewRef(id, patch string) (string, error) {
+// GetReviewRefOptions gets review ref from ReviewRefPattern.
+func (v SSHInfo) GetReviewRefOptions(id, patch string) (string, []string, error) {
+	var (
+		ref     string
+		options []string
+	)
 	if v.ReviewRefPattern == "" {
-		return "", errors.New("empty review_ref in ssh_info")
+		return "", nil, errors.New("empty review_ref in ssh_info")
 	}
-	return ReplaceMacros(v.ReviewRefPattern,
-		map[string]string{
-			"id":    id,
-			"patch": patch}), nil
+	if patch == "" || patch == "0" {
+		patch = "head"
+	}
+	ref = ReplaceMacros(v.ReviewRefPattern,
+		map[string]string{"id": id, "patch": patch})
+	if v.ProtoType == ProtoTypeAGit && v.ProtoVersion > 2 {
+		options = append(options, "review="+id)
+	}
+	return ref, options, nil
 }
 
 // Validate checks format of SSHInfo.

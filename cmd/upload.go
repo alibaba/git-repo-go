@@ -1054,7 +1054,7 @@ func (v uploadCommand) Execute(args []string) error {
 			}
 
 			if v.O.CodeReview.ID != "" {
-				v.O.CodeReview.Ref, err = remote.GetDownloadRef(v.O.CodeReview.ID, "")
+				v.O.CodeReview.Ref, _, err = remote.GetDownloadRefOptions(v.O.CodeReview.ID, "")
 				if err != nil {
 					return fmt.Errorf("fail to get local ref for code review #%s: %s",
 						v.O.CodeReview.ID,

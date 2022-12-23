@@ -41,7 +41,7 @@ type ProtoHelper interface {
 	GetType() string
 	GetSSHInfo() *SSHInfo
 	GetGitPushCommand(*config.UploadOptions) (*GitPushCommand, error)
-	GetDownloadRef(string, string) (string, error)
+	GetDownloadRefOptions(string, string) (string, []string, error)
 }
 
 // NewProtoHelper returns proto helper for specific proto type.

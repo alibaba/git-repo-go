@@ -72,6 +72,7 @@ func (v *helperProtoCommand) Execute(arts []string) error {
 		buf         []byte
 		err         error
 		ref         string
+		options     []string
 		protoHelper helper.ProtoHelper
 	)
 
@@ -86,18 +87,26 @@ func (v *helperProtoCommand) Execute(arts []string) error {
 	}
 
 	if v.O.Download {
+		var (
+			id, patch string
+		)
 		buf, err = ioutil.ReadAll(os.Stdin)
 		if err != nil {
 			return err
 		}
-		slices := strings.SplitN(strings.TrimSpace(string(buf)), " ", 2)
-		if len(slices) == 2 {
-			ref, err = protoHelper.GetDownloadRef(slices[0], slices[1])
-		} else {
-			ref, err = protoHelper.GetDownloadRef(slices[0], "")
+		matches := reChange.FindStringSubmatch(strings.TrimSpace(string(buf)))
+		if len(matches) >= 2 {
+			id = matches[1]
 		}
+		if len(matches) >= 3 {
+			patch = matches[2]
+		}
+		ref, options, err = protoHelper.GetDownloadRefOptions(id, patch)
 		if err != nil {
 			return err
+		}
+		for _, option := range options {
+			fmt.Printf("-o %s\n", option)
 		}
 		fmt.Println(ref)
 		return nil

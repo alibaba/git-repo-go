@@ -142,8 +142,8 @@ func (v GerritProtoHelper) GetGitPushCommand(o *config.UploadOptions) (*GitPushC
 	return &cmd, nil
 }
 
-// GetDownloadRef returns reference name of the specific code review.
-func (v GerritProtoHelper) GetDownloadRef(cr, patch string) (string, error) {
+// GetDownloadRefOptions returns reference name of the specific code review.
+func (v GerritProtoHelper) GetDownloadRefOptions(cr, patch string) (string, []string, error) {
 	var (
 		patchID int
 		err     error
@@ -151,13 +151,13 @@ func (v GerritProtoHelper) GetDownloadRef(cr, patch string) (string, error) {
 
 	_, err = strconv.Atoi(cr)
 	if err != nil {
-		return "", fmt.Errorf("bad review ID %s: %s", cr, err)
+		return "", nil, fmt.Errorf("bad review ID %s: %s", cr, err)
 	}
 
 	if patch != "" {
 		patchID, err = strconv.Atoi(patch)
 		if err != nil {
-			return "", fmt.Errorf("bad patch ID %s: %s", patch, err)
+			return "", nil, fmt.Errorf("bad patch ID %s: %s", patch, err)
 		}
 	}
 
@@ -165,5 +165,5 @@ func (v GerritProtoHelper) GetDownloadRef(cr, patch string) (string, error) {
 		log.Warn("Patch ID should not be 0, set it to 1")
 		patch = "1"
 	}
-	return v.sshInfo.GetReviewRef(cr, patch)
+	return v.sshInfo.GetReviewRefOptions(cr, patch)
 }

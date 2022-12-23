@@ -30,7 +30,7 @@ func (v Project) DownloadPatchSet(remoteName string, reviewID, patchID int) (*Pa
 		log.Fatalf("%snot remote tracking defined, and do not know where to download",
 			v.Prompt())
 	}
-	reviewRef, err := remote.GetDownloadRef(strconv.Itoa(reviewID), strconv.Itoa(patchID))
+	reviewRef, options, err := remote.GetDownloadRefOptions(strconv.Itoa(reviewID), strconv.Itoa(patchID))
 	if err != nil {
 		return nil, err
 	}
@@ -41,10 +41,11 @@ func (v Project) DownloadPatchSet(remoteName string, reviewID, patchID int) (*Pa
 	cmdArgs := []string{
 		GIT,
 		"fetch",
-		remote.Name,
-		"+" + reviewRef + ":" + reviewRef,
-		"--",
 	}
+	for _, option := range options {
+		cmdArgs = append(cmdArgs, "-o", option)
+	}
+	cmdArgs = append(cmdArgs, remote.Name, "+"+reviewRef+":"+reviewRef, "--")
 	log.Debugf("%swill execute: %s", v.Prompt(), strings.Join(cmdArgs, " "))
 	err = executeCommandIn(v.WorkDir, cmdArgs)
 	if err != nil {
