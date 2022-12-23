@@ -5,6 +5,11 @@
 
 test_description='Test git repo sync with submoudles'
 
+# Note: In order to allow link local repos for git-submodule,
+#       we need to enable file protocol, e.g.:
+#
+#       git -c protocol.file.allow=always submodule ...
+
 . ./lib/sharness.sh
 
 test_expect_success 'setup submodules' '
@@ -50,7 +55,7 @@ test_expect_success 'setup submodules' '
 	) &&
 	(
 		cd work1/main &&
-		git submodule add ../submodule-1.git submodule-1
+		git -c protocol.file.allow=always submodule add ../submodule-1.git submodule-1
 	) &&
 	(
 		cd work1/main/submodule-1 &&
@@ -69,7 +74,7 @@ test_expect_success 'setup submodules' '
 	) &&
 	(
 		cd work1/main &&
-		git submodule add ../submodule-2.git submodule-2
+		git -c protocol.file.allow=always submodule add ../submodule-2.git submodule-2
 	) &&
 	(
 		cd work1/main/submodule-2 &&
@@ -88,7 +93,7 @@ test_expect_success 'setup submodules' '
 	) &&
 	(
 		cd work1/main/submodule-1 &&
-		git submodule add ../submodule-1-1.git submodule-1-1
+		git -c protocol.file.allow=always submodule add ../submodule-1-1.git submodule-1-1
 	) &&
 	(
 		cd work1/main/submodule-1/submodule-1-1 &&
@@ -171,7 +176,7 @@ test_expect_success 'git repo sync and update submodules' '
 	(
 		cd work2/main &&
 		git submodule init &&
-		git submodule update --recursive --init
+		git -c protocol.file.allow=always submodule update --recursive --init
 	) &&
 	(
 		cd work2/main &&
