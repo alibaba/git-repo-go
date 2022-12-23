@@ -30,6 +30,12 @@ test_tick () {
 repo_create_test_repositories () {
 	# create lock
 	lockmsg="locked by $$" &&
+
+	if test_repositories_is_uptodate
+	then
+		return
+	fi &&
+
 	while :
 	do
 		if test -f "${REPO_TEST_REPOSITORIES}.lock"
@@ -47,6 +53,7 @@ repo_create_test_repositories () {
 
 	if test_repositories_is_uptodate
 	then
+		rm -f "${REPO_TEST_REPOSITORIES}.lock" &&
 		return
 	fi &&
 
@@ -418,9 +425,6 @@ get_manifest_commits () {
 # Run test_tick to initial author/committer name and time
 test_tick &&
 
-if ! test_repositories_is_uptodate
-then
-	repo_create_test_repositories
-fi &&
+repo_create_test_repositories &&
 
 get_manifest_commits
