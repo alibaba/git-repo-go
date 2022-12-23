@@ -20,9 +20,9 @@ import (
 
 	"github.com/alibaba/git-repo-go/config"
 	"github.com/alibaba/git-repo-go/path"
+	"github.com/h2non/gock"
 	"github.com/jiangxin/goconfig"
 	log "github.com/jiangxin/multi-log"
-	"gopkg.in/h2non/gock.v1"
 )
 
 const (
