@@ -1,6 +1,6 @@
 #!/bin/sh
 
-REPO_TEST_REPOSITORIES_VERSION=13
+REPO_TEST_REPOSITORIES_VERSION=14
 
 # Create test repositories in .repositories
 REPO_TEST_REPOSITORIES="${SHARNESS_TEST_SRCDIR}/test-repositories"
@@ -138,12 +138,15 @@ test_create_repository () {
 	git add -u &&
 	git commit -m "Version 2.0.0-dev" &&
 
-	# refs/changes/45/12345/1
+	# Gerrit: refs/changes/45/12345/1
 	git checkout v0.1.0 &&
 	echo "$name: patch-1" >topic.txt &&
 	git add topic.txt &&
 	git commit -m "New topic" &&
 	git update-ref refs/changes/45/12345/1 HEAD &&
+
+	# AGit-v3: refs/changes/123/1
+	git update-ref refs/changes/123/1 HEAD &&
 
 	# refs/changes/45/12345/2
 	echo "$name: patch-2" >topic.txt &&
@@ -151,11 +154,19 @@ test_create_repository () {
 	git commit --amend -m "New topic" &&
 	git update-ref refs/changes/45/12345/2 HEAD &&
 
-	# refs/merge-requests/12345/head
+	# AGit-v3: refs/changes/123/2
+	git update-ref refs/changes/123/2 HEAD &&
+	git update-ref refs/changes/123/head HEAD &&
+
+	# AGit-v2: refs/merge-requests/12345/head
 	echo "$name: patch-3" >topic.txt &&
 	git add topic.txt &&
 	git commit --amend -m "New topic" &&
 	git update-ref refs/merge-requests/12345/head HEAD &&
+
+	# AGit-v3: refs/changes/123/3 and head
+	git update-ref refs/changes/123/3 HEAD &&
+	git update-ref refs/changes/123/head HEAD &&
 
 	# v1.0.1
 	git checkout v1.0.0 &&
