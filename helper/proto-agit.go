@@ -54,6 +54,10 @@ func (v AGitProtoHelper) GetSSHInfo() *SSHInfo {
 	return v.sshInfo
 }
 
+func (v AGitProtoHelper) supportV3() bool {
+	return v.sshInfo.ProtoVersion >= 3
+}
+
 // GetGitPushCommand reads upload options and returns git push command.
 func (v AGitProtoHelper) GetGitPushCommand(o *config.UploadOptions) (*GitPushCommand, error) {
 	var (
@@ -99,10 +103,8 @@ func (v AGitProtoHelper) GetGitPushCommand(o *config.UploadOptions) (*GitPushCom
 
 	uploadType := ""
 	refSpec := ""
-	localBranch := o.LocalBranch
-	if strings.HasPrefix(localBranch, config.RefsHeads) {
-		localBranch = strings.TrimPrefix(localBranch, config.RefsHeads)
-	}
+	localBranch := strings.TrimPrefix(o.LocalBranch, config.RefsHeads)
+	destBranch := strings.TrimPrefix(o.DestBranch, config.RefsHeads)
 	if localBranch == "" {
 		refSpec = "HEAD"
 	} else {
@@ -110,20 +112,23 @@ func (v AGitProtoHelper) GetGitPushCommand(o *config.UploadOptions) (*GitPushCom
 	}
 
 	if !o.CodeReview.Empty() {
-		uploadType = "for-review"
-		refSpec += fmt.Sprintf(":refs/%s/%s",
-			uploadType,
-			o.CodeReview.ID)
+		if v.supportV3() {
+			if !gitCanPushOptions {
+				log.Fatalln("cannot send push options, for your git version is too low")
+			}
+			cmds = append(cmds, "-o", "review="+o.CodeReview.ID)
+			refSpec += fmt.Sprintf(":refs/heads/%s", destBranch)
+		} else {
+			uploadType = "for-review"
+			refSpec += fmt.Sprintf(":refs/%s/%s",
+				uploadType,
+				o.CodeReview.ID)
+		}
 	} else {
 		if o.Draft {
 			uploadType = "drafts"
 		} else {
 			uploadType = "for"
-		}
-
-		destBranch := o.DestBranch
-		if strings.HasPrefix(destBranch, config.RefsHeads) {
-			destBranch = strings.TrimPrefix(destBranch, config.RefsHeads)
 		}
 
 		refSpec += fmt.Sprintf(":refs/%s/%s/%s",

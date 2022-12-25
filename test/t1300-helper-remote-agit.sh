@@ -304,6 +304,59 @@ cat >expect <<EOF
 	"args": [
 		"push",
 		"-o",
+		"review=123",
+		"-o",
+		"title=title of code review",
+		"-o",
+		"description=description of code review",
+		"-o",
+		"issue=123",
+		"-o",
+		"reviewers=u1,u2",
+		"-o",
+		"cc=u3,u4",
+		"ssh://git@example.com:29418/test/repo.git",
+		"refs/heads/my/topic:refs/heads/master"
+	],
+	"env": [
+		"AGIT_FLOW=git-repo/n.n.n.n"
+	]
+}
+EOF
+
+test_expect_success "upload command (SSH protocol with code review ID, version 3)" '
+	cat <<-EOF |
+	{
+	  "CodeReview": {"ID": "123", "Ref": "refs/changes/123/head"},
+	  "Description": "description of code review",
+	  "DestBranch": "master",
+	  "Draft": false,
+	  "Issue": "123",
+	  "LocalBranch": "my/topic",
+	  "People":[
+		["u1", "u2"],
+		["u3", "u4"]
+	  ],
+	  "ProjectName": "test/repo",
+	  "RemoteName": "",
+	  "RemoteURL": "ssh://git@example.com:29418/test/repo.git",
+	  "Title": "title of code review",
+	  "UserEmail": "Jiang Xin <worldhello.net@gmail.com>",
+	  "Version": 1
+	}
+	EOF
+	git-repo helper proto --type agit --version 3 --upload >out 2>&1 &&
+	sed -e "s/git-repo\/[^ \"\\]*/git-repo\/n.n.n.n/g" <out >actual &&
+
+	test_cmp expect actual
+'
+
+cat >expect <<EOF
+{
+	"cmd": "git",
+	"args": [
+		"push",
+		"-o",
 		"title=title of code review",
 		"-o",
 		"description=description of code review",
