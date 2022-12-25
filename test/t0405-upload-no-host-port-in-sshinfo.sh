@@ -145,7 +145,7 @@ test_expect_success "no host/port in ssh_info: use project's ssh address" '
 		         <hash>
 		         <hash>
 		to https://example.com (y/N)? Yes
-		NOTE: main> will execute command: git push -o oldoid=<hash> aone refs/heads/my/topic1:refs/for/Maint/my/topic1
+		NOTE: main> will execute command: git push -o old-oid=<hash> aone refs/heads/my/topic1:refs/for/Maint/my/topic1
 		NOTE: main> with extra environment: AGIT_FLOW=git-repo/n.n.n.n
 		NOTE: main> with extra environment: GIT_SSH_COMMAND=ssh -o SendEnv=AGIT_FLOW
 		

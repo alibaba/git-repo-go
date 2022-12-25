@@ -102,7 +102,7 @@ test_expect_success "pushurl in manifest override ssh-info response" '
 		         <hash>
 		         <hash>
 		to https://example.com (y/N)? Yes
-		NOTE: main> will execute command: git push -o oldoid=<hash> ssh://committer@aone.example.com/agit/main.git refs/heads/my/topic1:refs/for/Maint/my/topic1
+		NOTE: main> will execute command: git push -o old-oid=<hash> ssh://committer@aone.example.com/agit/main.git refs/heads/my/topic1:refs/for/Maint/my/topic1
 		NOTE: main> with extra environment: AGIT_FLOW=git-repo/n.n.n.n
 		NOTE: main> with extra environment: GIT_SSH_COMMAND=ssh -o SendEnv=AGIT_FLOW
 		NOTE: main> will update-ref refs/published/my/topic1 on refs/heads/my/topic1, reason: review from my/topic1 to Maint on https://example.com
@@ -140,7 +140,7 @@ test_expect_success "use pushurl in ssh-info response" '
 		         <hash>
 		         <hash>
 		to https://example.com (y/N)? Yes
-		NOTE: main> will execute command: git -c http.extraHeader=AGIT-FLOW: git-repo/n.n.n.n push -o oldoid=<hash> https://committer@git.example.com/agit/main.git refs/heads/my/topic1:refs/for/Maint/my/topic1
+		NOTE: main> will execute command: git -c http.extraHeader=AGIT-FLOW: git-repo/n.n.n.n push -o old-oid=<hash> https://committer@git.example.com/agit/main.git refs/heads/my/topic1:refs/for/Maint/my/topic1
 		NOTE: main> will update-ref refs/published/my/topic1 on refs/heads/my/topic1, reason: review from my/topic1 to Maint on https://example.com
 		
 		----------------------------------------------------------------------

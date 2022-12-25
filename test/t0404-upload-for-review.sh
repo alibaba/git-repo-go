@@ -91,7 +91,7 @@ NOTE: no editor, input data unchanged
 #         <hash>
 #         <hash>
 
-NOTE: will execute command: git push -o oldoid=<hash> ssh://git@ssh.example.com/repository/main.git refs/heads/review:refs/for-review/12345
+NOTE: will execute command: git push -o old-oid=<hash> ssh://git@ssh.example.com/repository/main.git refs/heads/review:refs/for-review/12345
 NOTE: with extra environment: AGIT_FLOW=git-repo/n.n.n.n
 NOTE: with extra environment: GIT_SSH_COMMAND=ssh -o SendEnv=AGIT_FLOW
 NOTE: will update-ref refs/merge-requests/12345/head on refs/heads/review, reason: update code review #12345 of http://example.com

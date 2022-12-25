@@ -369,7 +369,7 @@ test_expect_success "upload again with --re-run option" '
 		  branch my/topic1 ( 1 commit(s)):
 		         <hash>
 		to https://example.com (y/N)? Yes
-		NOTE: main> will execute command: git push -o oldoid=<hash> ssh://git@ssh.example.com/main.git refs/heads/my/topic1:refs/for/Maint/my/topic1
+		NOTE: main> will execute command: git push -o old-oid=<hash> ssh://git@ssh.example.com/main.git refs/heads/my/topic1:refs/for/Maint/my/topic1
 		NOTE: main> with extra environment: AGIT_FLOW=git-repo/n.n.n.n
 		NOTE: main> with extra environment: GIT_SSH_COMMAND=ssh -o SendEnv=AGIT_FLOW
 		NOTE: main> will update-ref refs/published/my/topic1 on refs/heads/my/topic1, reason: review from my/topic1 to Maint on https://example.com
