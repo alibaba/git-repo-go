@@ -2,7 +2,7 @@
 
 test_description="git-repo sync --detach"
 
-. ./lib/sharness.sh
+. lib/test-lib.sh
 
 # Create manifest repositories
 manifest_url="file://${HOME}/repositories/manifests.git"

@@ -2,7 +2,7 @@
 
 test_description="sync won't overwrite modified files in a tracking branch"
 
-. ./lib/sharness.sh
+. lib/test-lib.sh
 
 # Create manifest repositories
 manifest_url="file://${REPO_TEST_REPOSITORIES}/hello/manifests"

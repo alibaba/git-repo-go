@@ -2,7 +2,7 @@
 
 test_description="test git-repo version"
 
-. ./lib/sharness.sh
+. lib/test-lib.sh
 
 test_expect_success "git-repo version output test" '
 	git-repo version >out &&

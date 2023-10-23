@@ -2,7 +2,7 @@
 
 test_description="check tracking branch for start command"
 
-. ./lib/sharness.sh
+. lib/test-lib.sh
 
 # Create manifest repositories
 manifest_url="file://${REPO_TEST_REPOSITORIES}/hello/manifests"

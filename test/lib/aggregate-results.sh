@@ -1,19 +1,4 @@
 #!/bin/sh
-#
-# Copyright (c) 2008-2012 Git project
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 2 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see http://www.gnu.org/licenses/ .
 
 failed_tests=
 fixed=0
@@ -21,37 +6,58 @@ success=0
 failed=0
 broken=0
 total=0
+missing_prereq=
 
-while read -r file; do
-	while read -r type value; do
+for file in "$1"/t*-*.counts
+do
+	while read type value
+	do
 		case $type in
 		'')
 			continue ;;
 		fixed)
-			fixed=$((fixed + value)) ;;
+			fixed=$(($fixed + $value)) ;;
 		success)
-			success=$((success + value)) ;;
+			success=$(($success + $value)) ;;
 		failed)
-			failed=$((failed + value))
-			if test "$value" != 0; then
-				test_name=$(expr "$file" : 'test-results/\(.*\)\.[0-9]*\.counts')
-				failed_tests="$failed_tests $test_name"
+			failed=$(($failed + $value))
+			if test $value != 0
+			then
+				testnum=$(expr "$file" : 'test-results/\(t[0-9]*\)-')
+				failed_tests="$failed_tests $testnum"
 			fi
 			;;
 		broken)
-			broken=$((broken + value)) ;;
+			broken=$(($broken + $value)) ;;
 		total)
-			total=$((total + value)) ;;
+			total=$(($total + $value)) ;;
+		missing_prereq)
+			missing_prereq="$missing_prereq,$value" ;;
 		esac
 	done <"$file"
 done
 
-if test -n "$failed_tests"; then
-	printf '\nfailed test(s):%s\n\n' "$failed_tests"
+if test -n "$missing_prereq"
+then
+	unique_missing_prereq=$(
+		echo $missing_prereq |
+		tr -s "," "\n" |
+		grep -v '^$' |
+		sort -u |
+		paste -s -d ' ')
+	if test -n "$unique_missing_prereq"
+	then
+		printf "\nmissing prereq: $unique_missing_prereq\n\n"
+	fi
 fi
 
-printf '%-8s%d\n' fixed $fixed
-printf '%-8s%d\n' success $success
-printf '%-8s%d\n' failed $failed
-printf '%-8s%d\n' broken $broken
-printf '%-8s%d\n' total $total
+if test -n "$failed_tests"
+then
+	printf "\nfailed test(s):$failed_tests\n\n"
+fi
+
+printf "%-8s%d\n" fixed $fixed
+printf "%-8s%d\n" success $success
+printf "%-8s%d\n" failed $failed
+printf "%-8s%d\n" broken $broken
+printf "%-8s%d\n" total $total

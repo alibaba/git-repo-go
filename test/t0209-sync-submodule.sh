@@ -10,7 +10,7 @@ test_description='Test git repo sync with submoudles'
 #
 #       git -c protocol.file.allow=always submodule ...
 
-. ./lib/sharness.sh
+. lib/test-lib.sh
 
 test_expect_success 'setup submodules' '
 	mkdir repo &&

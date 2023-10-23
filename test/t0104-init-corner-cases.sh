@@ -2,7 +2,7 @@
 
 test_description="git-repo init"
 
-. ./lib/sharness.sh
+. lib/test-lib.sh
 
 manifest_url="file://${REPO_TEST_REPOSITORIES}/hello/manifests"
 main_repo_url="file://${REPO_TEST_REPOSITORIES}/hello/main.git"

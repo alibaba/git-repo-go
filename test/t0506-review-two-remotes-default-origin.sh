@@ -2,7 +2,7 @@
 
 test_description="single repo with two remotes, one is origin"
 
-. ./lib/sharness.sh
+. lib/test-lib.sh
 
 main_repo_url="file://${REPO_TEST_REPOSITORIES}/hello/main.git"
 

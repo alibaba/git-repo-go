@@ -2,7 +2,7 @@
 
 test_description="install extra config"
 
-. ./lib/sharness.sh
+. lib/test-lib.sh
 
 test_expect_success "before install extra git config" '
 	test ! -f .gitconfig &&

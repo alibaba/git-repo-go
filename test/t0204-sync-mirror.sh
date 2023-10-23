@@ -2,7 +2,7 @@
 
 test_description="sync overwrites dirty workdir if workdir is in detached mode"
 
-. ./lib/sharness.sh
+. lib/test-lib.sh
 
 # Create manifest repositories
 manifest_url="file://${REPO_TEST_REPOSITORIES}/hello/manifests"

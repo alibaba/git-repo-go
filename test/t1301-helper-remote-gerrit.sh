@@ -2,7 +2,7 @@
 
 test_description="git-repo helper proto --type gerrit"
 
-. ./lib/sharness.sh
+. lib/test-lib.sh
 
 cat >expect <<EOF
 {

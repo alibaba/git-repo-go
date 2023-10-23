@@ -2,7 +2,7 @@
 
 test_description="if manifests project changed, when running 'git-repo sync', manifests project should sync successful"
 
-. ./lib/sharness.sh
+. lib/test-lib.sh
 
 # Create manifest repositories
 manifest_url="file://${HOME}/r/hello/manifests.git"

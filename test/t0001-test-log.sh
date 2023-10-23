@@ -2,7 +2,7 @@
 
 test_description="git-repo test log"
 
-. ./lib/sharness.sh
+. lib/test-lib.sh
 
 cat >expect <<EOF
 WARNING: warn message...

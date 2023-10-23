@@ -2,7 +2,7 @@
 
 test_description="sync with rebased/squashed commit"
 
-. ./lib/sharness.sh
+. lib/test-lib.sh
 
 # Create manifest repositories
 manifest_url="file://${HOME}/r/hello/manifests.git"

@@ -1,0 +1,12 @@
+#!/bin/sh
+
+: "${PYTHON_PATH:=$(which python)}"
+
+if test -z "$PYTHON_PATH"
+then
+	echo >&2 "ERROR: python not installed, cannot run test-tool."
+	exit 1
+fi
+
+helper_dir=$(cd "$(dirname $0)" && pwd)
+"$PYTHON_PATH" "$helper_dir"/test-tool.py "$@"

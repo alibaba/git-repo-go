@@ -2,7 +2,7 @@
 
 test_description="git-repo sync multiple jobs test"
 
-. ./lib/sharness.sh
+. lib/test-lib.sh
 
 # Create manifest repositories
 manifest_url="file://${REPO_TEST_REPOSITORIES}/hello/manifests"

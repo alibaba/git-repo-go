@@ -2,7 +2,7 @@
 
 test_description="git peer-review on one remote with no tracking"
 
-. ./lib/sharness.sh
+. lib/test-lib.sh
 
 main_repo_url="file://${REPO_TEST_REPOSITORIES}/hello/main.git"
 
