@@ -66,7 +66,7 @@ test_expect_success "download again with already merged notice" '
 	(
 		cd work/main &&
 		echo "Branch: $(git_current_branch)" &&
-		git log --pretty="    %s" -2
+		git log --pretty="    %s" -2 &&
 		git show-ref | cut -c 42- | grep merge-requests
 	) >out 2>&1 &&
 	sed -e "s/(no branch)/Detached HEAD/g" out >actual &&
@@ -104,7 +104,7 @@ test_expect_success "download using cherry-pick" '
 	(
 		cd work/main &&
 		echo "Branch: $(git_current_branch)" &&
-		git log --pretty="    %s" -2
+		git log --pretty="    %s" -2 &&
 		git show-ref | cut -c 42- | grep merge-requests
 	) >actual 2>&1 &&
 	cat >expect<<-EOF &&

@@ -140,7 +140,7 @@ test_expect_success "upload error: no remote URL" '
 			git checkout -q my/topic-test &&
 			git config branch.my/topic-test.remote origin &&
 			git config branch.my/topic-test.merge refs/heads/master &&
-			git config --unset remote.origin.url
+			git config --unset remote.origin.url &&
 			test_must_fail git peer-review \
 				--no-cache
 		) >actual 2>&1 &&
@@ -638,7 +638,8 @@ test_expect_success "create more commits" '
 		for i in $(test_seq 1 10)
 		do
 			test_tick &&
-			git commit --allow-empty -m "commit #$i"
+			git commit --allow-empty -m "commit #$i" ||
+			exit 1
 		done
 	)
 '

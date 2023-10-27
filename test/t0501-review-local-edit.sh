@@ -49,7 +49,7 @@ test_expect_success "new commit in main project" '
 test_expect_success "confirm if has local edit" '
 	(
 		cd work &&
-		echo "hack again" >>main/topic1.txt
+		echo "hack again" >>main/topic1.txt &&
 		cat >expect<<-EOF &&
 		Upload project (jiangxin/main) to remote branch master:
 		  branch my/topic-test ( 1 commit(s)):

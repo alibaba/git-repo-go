@@ -18,7 +18,7 @@ test_expect_success "setup" '
 		git clone --no-local ../repositories/manifests.git &&
 		git clone --no-local ../repositories/app1.git &&
 		git clone --no-local ../repositories/app2.git
-	)
+	) &&
 	touch .repo &&
 	mkdir work
 '

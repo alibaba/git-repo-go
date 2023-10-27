@@ -404,7 +404,7 @@ test_expect_success "upload command (HTTP protocol with code review ID, draft)" 
 test_expect_success "download MR 123456 (agit-v2)" '
 	printf "12345\n" | \
 	git-repo helper proto --type agit --version 2 --download >actual 2>&1 &&
-	cat >expect <<-EOF
+	cat >expect <<-EOF &&
 		refs/merge-requests/12345/head
 	EOF
 	test_cmp expect actual
@@ -413,7 +413,7 @@ test_expect_success "download MR 123456 (agit-v2)" '
 test_expect_success "download CR 123 (agit-v3)" '
 	printf "123\n" | \
 	git-repo helper proto --type agit --version 3 --download >actual 2>&1 &&
-	cat >expect <<-EOF
+	cat >expect <<-EOF &&
 		-o review=123
 		refs/changes/123/head
 	EOF
@@ -423,7 +423,7 @@ test_expect_success "download CR 123 (agit-v3)" '
 test_expect_success "download CR 123/2 (agit-v3)" '
 	printf "123/2\n" | \
 	git-repo helper proto --type agit --version 3 --download >actual 2>&1 &&
-	cat >expect <<-EOF
+	cat >expect <<-EOF &&
 		-o review=123
 		refs/changes/123/2
 	EOF

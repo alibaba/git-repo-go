@@ -328,7 +328,8 @@ test_expect_success "create commits" '
 			for i in $(test_seq 1 5)
 			do
 				test_tick &&
-				git commit --allow-empty -m "commit #$i"
+				git commit --allow-empty -m "commit #$i" ||
+				exit 1
 			done
 		)
 	)
