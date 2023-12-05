@@ -8,7 +8,7 @@ test_description="sync with rebased/squashed commit"
 manifest_url="file://${HOME}/r/hello/manifests.git"
 
 test_expect_success "setup" '
-	cp -a "${REPO_TEST_REPOSITORIES}" r &&
+	cp -R "${REPO_TEST_REPOSITORIES}" r &&
 	mkdir work
 '
 

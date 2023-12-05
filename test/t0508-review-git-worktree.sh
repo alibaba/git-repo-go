@@ -633,7 +633,7 @@ test_expect_success "upload to a ssh review using rcp style URL" '
 test_expect_success "create more commits" '
 	(
 		cd work/Maint &&
-		for i in $(seq 1 10)
+		for i in $(test_seq 1 10)
 		do
 			test_tick &&
 			git commit --allow-empty -m "commit #$i"

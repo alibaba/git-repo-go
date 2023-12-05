@@ -325,7 +325,7 @@ test_expect_success "create commits" '
 		git repo start --all my/topic1 &&
 		(
 			cd projects/app1 &&
-			for i in $(seq 1 5)
+			for i in $(test_seq 1 5)
 			do
 				test_tick &&
 				git commit --allow-empty -m "commit #$i"

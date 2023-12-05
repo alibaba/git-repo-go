@@ -8,7 +8,7 @@ test_description="if manifests project changed, when running 'git-repo sync', ma
 manifest_url="file://${HOME}/r/hello/manifests.git"
 
 test_expect_success "setup" '
-	cp -a "${REPO_TEST_REPOSITORIES}" r &&
+	cp -R "${REPO_TEST_REPOSITORIES}" r &&
 	mkdir work
 '
 

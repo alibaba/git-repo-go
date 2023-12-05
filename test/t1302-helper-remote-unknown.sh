@@ -4,7 +4,8 @@ test_description="git-repo helper proto --type agit"
 
 . lib/test-lib.sh
 
-export PATH="$HOME/bin":$PATH
+PATH="$HOME/bin":$PATH
+export PATH
 
 test_expect_success "setup" '
 	(
