@@ -130,6 +130,8 @@ func (v Project) Rebase(args ...string) error {
 func (v Project) FastForward(args ...string) error {
 	cmdArgs := []string{
 		GIT,
+		"-c",
+		"advice.diverging=false",
 		"merge",
 	}
 	cmdArgs = append(cmdArgs, args...)
